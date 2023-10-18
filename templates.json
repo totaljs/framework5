@@ -1,0 +1,74 @@
+{
+	"empty": {
+		"id": "emptyproject",
+		"name": "Empty",
+		"total": 4,
+		"description": "Empty project without any special setup"
+	},
+	"typescript": {
+		"id": "emptyproject-typescript",
+		"name": "Typescript",
+		"total": 4,
+		"description": "Total.js with typescript"
+	},
+	"website": {
+		"id": "emptyproject-website",
+		"name": "Website",
+		"total": 4,
+		"description": "Website example"
+	},
+	"postgres": {
+		"id": "emptyproject-postgresql",
+		"name": "Postgres template",
+		"total": 4,
+		"description": "Empty project ready to be used with PostgreSQL"
+	},
+	"app-builder": {
+		"id": "emptyproject-builder",
+		"name": "App Builder",
+		"total": 4,
+		"description": "Tool for creating Total.js server-side applications"
+	},
+	"empty-spa": {
+		"id": "emptyproject-emptyspa",
+		"name": "Empty SPA",
+		"total": 4,
+		"description": "Empty single page application project"
+	},
+	"spa": {
+		"id": "emptyproject-spa",
+		"name": "SPA",
+		"total": 4,
+		"description": "Single page application template"
+	},
+	"pwa": {
+		"id": "emptyproject-emptyspa",
+		"name": "PWA",
+		"total": 4,
+		"description": "Progressive web application template"
+	},
+	"flow": {
+		"id": "emptyproject-flow",
+		"name": "Flow",
+		"total": 4,
+		"description": "Visual programming interface for IoT"
+	},
+	"flowstream": {
+		"id": "flowstream",
+		"name": "FlowStream",
+		"total": 4,
+		"description": "Total.js FlowStream"
+	},
+	"tms": {
+		"id": "tms",
+		"name": "TMS",
+		"total": 4,
+		"description": "Total.js Message Service integrator"
+	},
+	"cms": {
+		"id": "cmsbundle",
+		"name": "CMS",
+		"total": 4,
+		"description": "Total.js CMS"
+	}
+}
