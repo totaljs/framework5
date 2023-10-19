@@ -128,6 +128,10 @@ exports.route = function(url, action, size) {
 	}
 };
 
+exports.cors = function(url) {
+	F.config.$cors = url;
+};
+
 exports.sort = function() {
 
 	var db = exports.db;
@@ -359,8 +363,33 @@ exports.split = function(url, lowercase) {
 	return arr;
 };
 
-exports.cors = function(ctrl) {
+exports.lookupcors = function(ctrl) {
 
+	// Custom handling
+	if (DEF.onCORS) {
+		DEF.onCORS(ctrl);
+		return false;
+	}
+
+	var origin = ctrl.headers.origin;
+
+	if (!F.config.$cors || (F.config.$cors != '*' && F.config.$cors.indexOf(origin) == -1)) {
+		ctrl.system(400, 'Invalid origin (CORS)');
+		return false;
+	}
+
+	ctrl.response.headers['access-control-allow-origin'] = origin;
+	ctrl.response.headers['access-control-allow-credentials'] = 'true';
+	ctrl.response.headers['access-control-allow-methods'] = '*';
+	ctrl.response.headers['access-control-allow-headers'] = '*';
+	ctrl.response.headers['access-control-expose-headers'] = '*';
+
+	if (ctrl.method === 'OPTIONS') {
+		ctrl.flush();
+		return false;
+	}
+
+	// Continue
 	return true;
 
 };

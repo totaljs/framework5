@@ -30,7 +30,11 @@ exports.listen = function(req, res) {
 	if (!ctrl.uri.file)
 		F.temporary.pending.push(ctrl);
 
-	ctrl.$route();
+	if (!ctrl.uri.file && DEF.onCORS && F.config.$cors) {
+		if (F.TRouting.lookupcors(ctrl))
+			ctrl.$route();
+	} else
+		ctrl.$route();
 
 	// stream.headers
 	// stream.url
