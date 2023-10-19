@@ -37,48 +37,48 @@ function parseURI(url) {
 
 function Controller(req, res) {
 
-	var t = this;
+	var ctrl = this;
 
-	t.req = req;
-	t.res = res;
-	t.method = t.req.method;
-	t.route = null;
-	t.isfile = false;
-	t.uri = parseURI(req.url);
-	t.language = '';
-	t.headers = req.headers;
-	t.split = t.uri.split;
-	t.split2 = [];
-	t.released = false;
-	t.downloaded = false;
+	ctrl.req = req;
+	ctrl.res = res;
+	ctrl.method = ctrl.req.method;
+	ctrl.route = null;
+	ctrl.isfile = false;
+	ctrl.uri = parseURI(req.url);
+	ctrl.language = '';
+	ctrl.headers = req.headers;
+	ctrl.split = ctrl.uri.split;
+	ctrl.split2 = [];
+	ctrl.released = false;
+	ctrl.downloaded = false;
 
-	for (let path of t.split)
-		t.split2.push(path.toLowerCase());
+	for (let path of ctrl.split)
+		ctrl.split2.push(path.toLowerCase());
 
-	t.params = {};
-	t.query = {};
-	t.files = [];
-	t.body = {};
+	ctrl.params = {};
+	ctrl.query = {};
+	ctrl.files = [];
+	ctrl.body = {};
 
-	// t.payload = null;
-	// t.payloadsize = 0;
-	// t.user = null;
-	t.datatype = ''; // json|xml|multipart|urlencoded
+	// ctrl.payload = null;
+	// ctrl.payloadsize = 0;
+	// ctrl.user = null;
+	ctrl.datatype = ''; // json|xml|multipart|urlencoded
 
-	t.response = {
+	ctrl.response = {
 		status: 200,
 		headers: {}
 	};
 
-	if (CHECK_DATA[t.method]) {
+	if (CHECK_DATA[ctrl.method]) {
 
-		if (t.uri.file) {
-			t.destroyed = true;
-			t.req.destroy();
+		if (ctrl.uri.file) {
+			ctrl.destroyed = true;
+			ctrl.req.destroy();
 			return;
 		}
 
-		let type = t.headers['content-type'] || '';
+		let type = ctrl.headers['content-type'] || '';
 		let index = type.indexOf(';', 10);
 
 		if (index != -1)
@@ -87,24 +87,24 @@ function Controller(req, res) {
 		switch (type) {
 			case 'application/json':
 			case 'text/json':
-				t.datatype = 'json';
+				ctrl.datatype = 'json';
 				break;
 			case 'application/x-www-form-urlencoded':
-				t.datatype = 'urlencoded';
+				ctrl.datatype = 'urlencoded';
 				break;
 			case 'multipart/form-data':
-				t.datatype = 'multipart';
+				ctrl.datatype = 'multipart';
 				break;
 			case 'application/xml':
 			case 'text/xml':
-				t.datatype = 'xml';
+				ctrl.datatype = 'xml';
 				break;
 			case 'text/html':
 			case 'text/plain':
-				t.datatype = 'text';
+				ctrl.datatype = 'text';
 				break;
 			default:
-				t.datatype = 'binary';
+				ctrl.datatype = 'binary';
 				break;
 		}
 	}
@@ -143,7 +143,11 @@ Controller.prototype.csrf = function() {
 };
 
 Controller.prototype.redirect = function(value, permanent) {
-
+	var ctrl = this;
+	ctrl.response.headers.Location = value;
+	ctrl.response.status = permanent ? 301 : 302;
+	ctrl.flush();
+	F.stats.response.redirect++;
 };
 
 Controller.prototype.html = function(value) {
@@ -152,6 +156,7 @@ Controller.prototype.html = function(value) {
 	if (value != null)
 		ctrl.response.value = value;
 	ctrl.flush();
+	F.stats.response.html++;
 };
 
 Controller.prototype.text = function(value) {
@@ -160,6 +165,7 @@ Controller.prototype.text = function(value) {
 	if (value != null)
 		ctrl.response.value = value;
 	ctrl.flush();
+	F.stats.response.text++;
 };
 
 Controller.prototype.json = function(value, beautify, replacer) {
@@ -167,6 +173,7 @@ Controller.prototype.json = function(value, beautify, replacer) {
 	ctrl.response.headers['content-type'] = 'application/json; charset=utf-8';
 	ctrl.response.value = JSON.stringify(value, beautify ? '\t' : null, replacer);
 	ctrl.flush();
+	F.stats.response.json++;
 };
 
 Controller.prototype.jsonstring = function(value) {
@@ -174,10 +181,14 @@ Controller.prototype.jsonstring = function(value) {
 	ctrl.response.headers['content-type'] = 'application/json; charset=utf-8';
 	ctrl.response.value = value;
 	ctrl.flush();
+	F.stats.response.json++;
 };
 
-Controller.prototype.empty = function(value) {
-
+Controller.prototype.empty = function() {
+	var ctrl = this;
+	ctrl.response.status = 204;
+	ctrl.flush();
+	F.stats.response.empty++;
 };
 
 Controller.prototype.invalid = function(value) {
@@ -188,6 +199,9 @@ Controller.prototype.invalid = function(value) {
 	ctrl.response.value = JSON.stringify(err.output(ctrl.language));
 	ctrl.response.status = err.status;
 	ctrl.flush();
+	var key = 'error' + err.status;
+	if (F.stats.response[key] != null)
+		F.stats.response[key]++;
 };
 
 Controller.prototype.flush = function() {
@@ -200,10 +214,10 @@ Controller.prototype.flush = function() {
 	}
 };
 
-Controller.prototype.system = function(code, error) {
-	var t = this;
-	t.res.writeHead(code);
-	t.res.end();
+Controller.prototype.fallback = function(code, error) {
+	var ctrl = this;
+	ctrl.res.writeHead(code);
+	ctrl.res.end();
 };
 
 Controller.prototype.view = function(value, model) {
@@ -222,8 +236,19 @@ Controller.prototype.filefs = function(id) {
 
 };
 
-Controller.prototype.binary = function() {
+Controller.prototype.binary = function(buffer, type, download) {
 
+	var ctrl = this;
+
+	ctrl.response.headers['content-type'] = type;
+
+	if (download)
+		ctrl.response.headers['content-disposition'] = 'attachment; filename*=utf-8\'\'' + encodeURIComponent(download);
+
+	ctrl.response.value = buffer;
+	ctrl.flush();
+
+	F.stats.response.binary++;
 };
 
 Controller.prototype.proxy = function() {
@@ -235,15 +260,40 @@ Controller.prototype.success = function(value) {
 	this.json(F.TUtils.success);
 };
 
+Controller.prototype.clear = function() {
+
+	var ctrl = this;
+
+	if (ctrl.files.length) {
+		let remove = [];
+		for (var file of ctrl.files) {
+			if (file.removable)
+				remove.push(file.path);
+		}
+		F.path.unlink(remove);
+		ctrl.files.length = 0;
+	}
+
+};
+
+Controller.prototype.autoclear = function(value) {
+	this.preventclearfiles = value === false;
+};
+
 Controller.prototype.free = function() {
 
-	var t = this;
-	if (t.released)
+	var ctrl = this;
+
+	if (ctrl.released)
 		return;
 
-	t.released = true;
-	// Remove files
+	ctrl.released = true;
+
+	if (ctrl.preventclearfiles != true)
+		ctrl.clear();
+
 	// Clear resources
+
 };
 
 Controller.prototype.$route = function() {
@@ -251,16 +301,14 @@ Controller.prototype.$route = function() {
 	var ctrl = this;
 
 	if (ctrl.uri.file) {
-		ctrl.destroyed = true;
-		ctrl.system(404);
+		ctrl.fallback(404);
 		return;
 	}
 
 	// Check CORS
 	if (F.routing.cors.length) {
 		if (!F.TRouting.cors(ctrl)) {
-			ctrl.destroyed = true;
-			ctrl.system(404);
+			ctrl.fallback(404);
 			return;
 		}
 	}
@@ -309,12 +357,72 @@ Controller.prototype.$route = function() {
 			authorize(ctrl);
 
 	} else
-		ctrl.system(404);
+		ctrl.fallback(404);
 
 };
 
 function multipart(ctrl) {
-	authorize(ctrl);
+
+	var type = ctrl.headers['content-type'];
+	var index = type.indexOf('boundary=');
+	if (index === -1) {
+		ctrl.fallback(400);
+		return;
+	}
+
+	var end = type.length;
+
+	for (var i = (index + 10); i < end; i++) {
+		if (type[i] === ';' || type[i] === ' ') {
+			end = i;
+			break;
+		}
+	}
+
+	var boundary = type.substring(index + 9, end);
+	var parser = U.multipartparser(boundary, ctrl, function(err, meta) {
+
+		F.stats.performance.download += meta.size / 1024 / 1024;
+
+		for (var i = 0; i < meta.files.length; i++) {
+
+			var item = meta.files[i];
+			var file = new HttpFile(item);
+
+			// IE9 sends absolute filename
+			var index = file.filename.lastIndexOf('\\');
+
+			// For Unix like senders
+			if (index === -1)
+				index = file.filename.lastIndexOf('/');
+
+			if (index !== -1)
+				file.filename = file.filename.substring(index + 1);
+
+			ctrl.files.push(file);
+		}
+
+		// Error
+		if (err) {
+			ctrl.clear();
+			switch (err[0][0]) {
+				case '4':
+				case '5':
+				case '6':
+					ctrl.fallback(431, err[0]);
+					break;
+				default:
+					ctrl.fallback(400, err[0]);
+					break;
+			}
+		} else {
+			ctrl.body = meta.body;
+			authorize(ctrl);
+		}
+	});
+
+	parser.skipcheck = !F.config.$uploadchecktypes;
+	parser.limits.total = ctrl.route.size || F.config.$uploadsize;
 }
 
 function authorize(ctrl) {
@@ -328,7 +436,7 @@ function authorize(ctrl) {
 				if (ctrl.route)
 					execute(ctrl.route);
 				else
-					ctrl.system(401);
+					ctrl.fallback(401);
 			}
 		};
 		DEF.onAuthorize(opt);
@@ -354,4 +462,153 @@ function execute(ctrl) {
 
 }
 
+function HttpFile(meta) {
+	var self = this;
+	self.path = meta.path;
+	self.name = meta.name;
+	self.filename = meta.filename;
+	self.size = meta.size || 0;
+	self.width = meta.width || 0;
+	self.height = meta.height || 0;
+	self.type = meta.type;
+	self.removable = true;
+}
+
+HttpFile.prototype.rename = HttpFile.prototype.move = function(filename, callback) {
+	var self = this;
+	if (callback)
+		return self.$move(filename, callback);
+	else
+		return new Promise((resolve, reject) => self.$move(filename, err => err ? reject(err) : resolve()));
+};
+
+HttpFile.prototype.$move = function(filename, callback) {
+	var self = this;
+	F.Fs.rename(self.path, filename, function(err) {
+		if (err && err.code === 'EXDEV') {
+			self.copy(filename, function(err){
+
+				F.path.unlink(self.path, NOOP);
+
+				if (!err) {
+					self.path = filename;
+					self.removable = false;
+				}
+
+				callback && callback(err);
+			});
+		} else {
+			if (!err) {
+				self.path = filename;
+				self.rem = false;
+			}
+			callback && callback(err);
+		}
+	});
+	return self;
+};
+
+HttpFile.prototype.copy = function(filename, callback) {
+	var self = this;
+	if (callback)
+		return self.$copy(filename, callback);
+	else
+		return new Promise((resolve, reject) => self._copy(filename, err => err ? reject(err) : resolve()));
+};
+
+HttpFile.prototype.$copy = function(filename, callback) {
+
+	var self = this;
+
+	if (!callback) {
+		F.Fs.createReadStream(self.path).pipe(F.Fs.createWriteStream(filename));
+		return;
+	}
+
+	var reader = F.Fs.createReadStream(self.path);
+	var writer = F.Fs.createWriteStream(filename);
+
+	reader.on('close', callback);
+	reader.pipe(writer);
+
+	return self;
+};
+
+HttpFile.prototype.read = function(callback) {
+	var self = this;
+	if (callback)
+		return self.$read(callback);
+	else
+		return new Promise((resolve, reject) => self.$read((err, res) => err ? reject(err) : resolve(res)));
+};
+
+HttpFile.prototype.$read = function(callback) {
+	var self = this;
+	F.Fs.readFile(self.path, callback);
+	return self;
+};
+
+HttpFile.prototype.md5 = function(callback) {
+	var self = this;
+	if (callback)
+		return self.$md5(callback);
+	else
+		return new Promise((resolve, reject) => self.$md5((err, res) => err ? reject(err) : resolve(res)));
+};
+
+HttpFile.prototype.$md5 = function(callback) {
+
+	var self = this;
+	var md5 = F.Crypto.createHash('md5');
+	var stream = F.Fs.createReadStream(self.path);
+
+	stream.on('data', (buffer) => md5.update(buffer));
+	stream.on('error', function(error) {
+		if (callback) {
+			callback(error, null);
+			callback = null;
+		}
+	});
+
+	CLEANUP(stream, function() {
+		if (callback) {
+			callback(null, md5.digest('hex'));
+			callback = null;
+		}
+	});
+
+	return self;
+};
+
+HttpFile.prototype.stream = function(opt) {
+	return F.Fs.createReadStream(this.path, opt);
+};
+
+HttpFile.prototype.pipe = function(stream, opt) {
+	return F.Fs.createReadStream(this.path, opt).pipe(stream, opt);
+};
+
+HttpFile.prototype.isImage = function() {
+	return this.type.indexOf('image/') !== -1;
+};
+
+HttpFile.prototype.isVideo = function() {
+	return this.type.indexOf('video/') !== -1;
+};
+
+HttpFile.prototype.isAudio = function() {
+	return this.type.indexOf('audio/') !== -1;
+};
+
+HttpFile.prototype.image = function(im) {
+	if (im === undefined)
+		im = F.config.default_image_converter === 'im';
+	return F.TImage.init(this.path, im, this.width, this.height);
+};
+
+HttpFile.prototype.fs = function(storage, fileid, callback, custom, expire) {
+	return FILESTORAGE(storage).save(fileid, this.filename, this.path, callback, custom, expire);
+};
+
 exports.Controller = Controller;
+exports.HttpFile = HttpFile;

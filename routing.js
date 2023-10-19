@@ -17,10 +17,10 @@ exports.db = {
 };
 
 // Total.js routing
-function Route(url, action, length) {
+function Route(url, action, size) {
 
 	if (typeof(action) === 'number') {
-		length = action;
+		size = action;
 		action = null;
 	}
 
@@ -68,7 +68,7 @@ function Route(url, action, length) {
 			break;
 	}
 
-	t.length = length || 0;
+	t.size = size || 0;
 	t.flags = {};
 	t.middleware = [];
 	t.wildcard = t.url.indexOf('*') != -1;
@@ -77,7 +77,7 @@ function Route(url, action, length) {
 		t.url = t.url.replace(/\*/g, '');
 
 	url = url.replace(/<\d+/g, function(text) {
-		t.length = +text.substring(1);
+		t.size = +text.substring(1);
 		return '';
 	});
 
@@ -109,8 +109,8 @@ Route.prototype.compare = function(ctrl) {
 	return true;
 };
 
-exports.route = function(url, action, length) {
-	var route = new Route(url, action, length);
+exports.route = function(url, action, size) {
+	var route = new Route(url, action, size);
 	if (route) {
 		switch (route.method) {
 			case 'SOCKET':

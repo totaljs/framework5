@@ -129,7 +129,7 @@ PATHMODULES = PATHMODULES.substring(0, PATHMODULES.length - 8);
 		},
 		response: {
 			ddos: 0,
-			view: 0,
+			html: 0,
 			json: 0,
 			websocket: 0,
 			timeout: 0,
@@ -141,7 +141,7 @@ PATHMODULES = PATHMODULES.substring(0, PATHMODULES.length - 8);
 			destroy: 0,
 			stream: 0,
 			streaming: 0,
-			plain: 0,
+			text: 0,
 			empty: 0,
 			redirect: 0,
 			forward: 0,
@@ -318,6 +318,11 @@ PATHMODULES = PATHMODULES.substring(0, PATHMODULES.length - 8);
 	CONF.default_interval_clear_cache = 10;
 	CONF.default_interval_clear_dnscache = 30;
 	CONF.default_interval_websocket_ping = 2000;
+
+
+	// New internal configuration
+	CONF.$uploadsize = 1024;
+	CONF.$uploadchecktypes = true;
 
 })(global.CONF);
 
