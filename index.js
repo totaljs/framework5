@@ -16,6 +16,7 @@ const TUtils = require('./utils');
 const THttp = require('./http');
 const TViewEngine = require('./viewengine');
 const TBuilders = require('./builders');
+const TInternal = require('./internal');
 
 const NODE_MODULES = { buffer: 1, child_process: 1, process: 1, fs: 1, events: 1, http: 1, https: 1, http2: 1, util: 1, net: 1, os: 1, path: 1, punycode: 1, readline: 1, repl: 1, stream: 1, string_decoder: 1, tls: 1, trace_events: 1, tty: 1, dgram: 1, url: 1, v8: 1, vm: 1, wasi: 1, worker_threads: 1, zlib: 1, crypto: 1 };
 const EMPTYOBJECT = {};
@@ -186,6 +187,7 @@ global.DEF = {};
 	F.TUtils = TUtils;
 	F.TBuilders = TBuilders;
 	F.TViewEngine = TViewEngine;
+	F.TInternal = TInternal;
 
 	F.directory = TUtils.$normalize(require.main ? Path.dirname(require.main.filename) : process.cwd());
 	F.path = {};
@@ -422,6 +424,8 @@ function unlink(arr, callback) {
 	CONF.$ip = '0.0.0.0';
 	CONF.$unixsocket = '';
 	CONF.$timezone = 'utc';
+	CONF.$insecure = false;
+	CONF.$performance = false;
 
 	CONF.$node_modules = require.resolve('./index');
 	CONF.$node_modules = CONF.$node_modules.substring(0, CONF.$node_modules.length - (8 + 7));
@@ -440,9 +444,12 @@ function unlink(arr, callback) {
 F.loadconfig = function(value) {
 
 	var cfg = F.TUtils.parseconfig(value);
+
 	for (let key in cfg) {
 
 		switch (key) {
+			case '$tms':
+				break;
 			case 'mail_from':
 			case 'mail_options':
 			case 'mail_smtp':
@@ -462,6 +469,19 @@ F.loadconfig = function(value) {
 		F.config[key] = cfg[key];
 	}
 
+	if (!F.config.$secret_uid)
+		F.config.$secret_uid = (F.config.name).crc32(true) + '';
+
+	// CMD('refresh_tms');
+
+	if (F.config.$performance)
+		Http.globalAgent.maxSockets = 9999;
+
+	if (!F.config.$httpetag)
+		F.config.$httpetag = F.config.version.replace(/\.|\s/g, '');
+
+	process.env.NODE_TLS_REJECT_UNAUTHORIZED = F.config.$insecure ? '1' : '0';
+	F.logger(F.config.$logger == true);
 };
 
 F.loadresource = function(name, value) {
@@ -653,6 +673,99 @@ F.require = function(name) {
 	return NODE_MODULES[name] ? require(name) : require(F.Path.join(F.config.$node_modules, name));
 };
 
+F.import = function(url, callback) {
+
+	if (callback == null)
+		return new Promise((resolve, reject) => F.import(url, (err, response) => err ? reject(err) : resolve(response)));
+
+	var filename = F.path.tmp((F.id ? (F.id + '_') : '') + url.makeid() + '.js');
+
+	if (F.temporary.dependencies[url]) {
+		callback && callback(null, require(filename));
+		return;
+	}
+
+	F.download(url, filename, function(err, response) {
+		var m;
+		if (!err) {
+			m = require(filename);
+			F.temporary.dependencies[url] = 1;
+		}
+		callback && callback(err, m, response);
+	});
+};
+
+F.download = function(url, filename, callback, timeout) {
+
+	if (!callback)
+		return new Promise((resolve, reject) => F.download(url, filename, (err, response) => err ? reject(err) : resolve(response), timeout));
+
+	var opt = {};
+
+	if (typeof(url) === 'object')
+		opt.unixsocket = url;
+	else
+		opt.url = framework_internal.preparepath(url);
+
+	opt.custom = true;
+	opt.resolve = true;
+	opt.timeout = timeout;
+	opt.callback = function(err, response) {
+
+		if (response)
+			response.filename = filename;
+
+		if (err) {
+			callback && callback(err, response);
+			callback = null;
+			return;
+		}
+
+		var stream = Fs.createWriteStream(filename);
+
+		var done = function(err) {
+			if (callback) {
+				callback(err, response);
+				callback = null;
+			}
+		};
+
+		response.stream.pipe(stream);
+		response.stream.on('error', done);
+		stream.on('error', done);
+		F.cleanup(stream, done);
+	};
+
+	REQUEST(opt);
+};
+
+F.cleanup = function(stream, callback) {
+
+	if (!callback)
+		return new Promise(resolve => CLEANUP(stream, resolve));
+
+	F.TInternal.onFinished(stream, function() {
+		F.TInternal.destroyStream(stream);
+		if (callback) {
+			callback();
+			callback = null;
+		}
+	});
+};
+
+F.pipinstall = function(name, callback) {
+
+	if (!callback)
+		return new Promise((resolve, reject) => F.npminstall(name, err => err ? reject(err) : resolve()));
+
+	var args = {};
+	args.cwd = F.directory;
+	F.Child.exec('pip install ' + name, args, function(err, response, output) {
+		callback && callback(err ? (output || err) : null, null);
+	});
+
+};
+
 F.npminstall = function(name, callback) {
 
 	if (!callback)
@@ -817,6 +930,72 @@ F.http = function(opt) {
 		server.listen(opt.port || F.config.$port, opt.ip || F.config.$ip);
 		F.console();
 	});
+};
+
+F.logger = function(enable) {
+
+	if (enable == null)
+		enable = true;
+
+	if (enable) {
+
+		if (console.$backup)
+			return;
+
+	} else {
+
+		if (!console.$backup)
+			return;
+
+		console.log = console.$backup.log;
+		console.warn = console.$backup.warn;
+		console.error = console.$backup.error;
+		console.time = console.$backup.time;
+		console.timeEnd = console.$backup.timeEnd;
+		console.$backup = null;
+		return;
+	}
+
+	var Console = require('node:console').Console;
+
+	var path = F.path.root();
+
+	if (path.substring(path.length - 5, path.length - 1) === '.src')
+		path = F.Path.join(path.substring(0, path.length - 5), 'logs/');
+	else
+		path = F.Path.join(path, 'logs/');
+
+	PATH.mkdir(path);
+
+	var output = F.Fs.createWriteStream(F.Path.join(path, 'debug.log'), { flags: 'a' });
+	var logger = new Console({ stdout: output, stderr: output });
+
+	console.$backup = {};
+	console.$backup.log = console.log;
+	console.$backup.warn = console.warn;
+	console.$backup.error = console.error;
+	console.$backup.time = console.time;
+	console.$backup.timeEnd = console.timeEnd;
+
+	console.log = function() {
+		logger.log.apply(logger, arguments);
+	};
+
+	console.warn = function() {
+		logger.warn.apply(logger, arguments);
+	};
+
+	console.error = function() {
+		logger.error.apply(logger, arguments);
+	};
+
+	console.time = function() {
+		logger.time.apply(logger, arguments);
+	};
+
+	console.timeEnd = function() {
+		logger.timeEnd.apply(logger, arguments);
+	};
 };
 
 require('./global');
