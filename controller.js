@@ -3,7 +3,13 @@
 // Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
 
 const REG_DOUBLESLASH = /\/{2}/g;
+const REG_RANGE = /bytes=/;
 const CHECK_DATA = { POST: 1, PUT: 1, PATCH: 1, DELETE: 1 };
+const CHECK_COMPRESSION = { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'image/svg+xml': true, 'text/x-markdown': true, 'text/html': true };
+const CHECK_CHARSET =  { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'text/x-markdown': true, 'text/html': true };
+const CHECK_NOCACHE = { zip: 1, rar: 1 };
+const GZIP_FILE = { memLevel: 9 };
+const GZIP_STREAM = { memLevel: 1 };
 
 function parseURI(url) {
 
@@ -32,7 +38,7 @@ function parseURI(url) {
 			split = url.split('/').slice(1);
 	}
 
-	return { pathname: url, search: search, file: index != -1, ext: index == -1 ? '' : url.substring(index + 1), split: split };
+	return { key: url.toLowerCase(), pathname: url, search: search, file: index != -1, ext: index == -1 ? '' : url.substring(index + 1), split: split };
 }
 
 function Controller(req, res) {
@@ -47,6 +53,7 @@ function Controller(req, res) {
 	ctrl.uri = parseURI(req.url);
 	ctrl.language = '';
 	ctrl.headers = req.headers;
+	ctrl.ext = ctrl.uri.ext;
 	ctrl.split = ctrl.uri.split;
 	ctrl.split2 = [];
 	ctrl.released = false;
@@ -67,6 +74,7 @@ function Controller(req, res) {
 
 	ctrl.response = {
 		status: 200,
+		cache: true,
 		headers: {}
 	};
 
@@ -144,6 +152,10 @@ Controller.prototype.csrf = function() {
 
 Controller.prototype.redirect = function(value, permanent) {
 	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
 	ctrl.response.headers.Location = value;
 	ctrl.response.status = permanent ? 301 : 302;
 	ctrl.flush();
@@ -152,7 +164,11 @@ Controller.prototype.redirect = function(value, permanent) {
 
 Controller.prototype.html = function(value) {
 	var ctrl = this;
-	ctrl.response.headers['content-type'] = 'text/html; charset=utf-8';
+
+	if (ctrl.destroyed)
+		return;
+
+	ctrl.response.headers['content-type'] = 'text/html';
 	if (value != null)
 		ctrl.response.value = value;
 	ctrl.flush();
@@ -161,78 +177,210 @@ Controller.prototype.html = function(value) {
 
 Controller.prototype.text = function(value) {
 	var ctrl = this;
-	ctrl.response.headers['content-type'] = 'text/plain; charset=utf-8';
+
+	if (ctrl.destroyed)
+		return;
+
+	ctrl.response.headers['content-type'] = 'text/plain';
+
 	if (value != null)
 		ctrl.response.value = value;
+
 	ctrl.flush();
 	F.stats.response.text++;
 };
 
 Controller.prototype.json = function(value, beautify, replacer) {
 	var ctrl = this;
-	ctrl.response.headers['content-type'] = 'application/json; charset=utf-8';
-	ctrl.response.value = JSON.stringify(value, beautify ? '\t' : null, replacer);
+
+	if (ctrl.destroyed)
+		return;
+
+	var response = ctrl.response;
+	response.headers['content-type'] = 'application/json';
+	response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
+	response.headers.vary = 'Accept-Encoding, Last-Modified, User-Agent';
+	response.headers.expires = '-1';
+	response.value = JSON.stringify(value, beautify ? '\t' : null, replacer);
 	ctrl.flush();
 	F.stats.response.json++;
 };
 
 Controller.prototype.jsonstring = function(value) {
 	var ctrl = this;
-	ctrl.response.headers['content-type'] = 'application/json; charset=utf-8';
-	ctrl.response.value = value;
+
+	if (ctrl.destroyed)
+		return;
+
+	var response = ctrl.response;
+	response.headers['content-type'] = 'application/json';
+	response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
+	response.headers.vary = 'Accept-Encoding, Last-Modified, User-Agent';
+	response.headers.expires = '-1';
+	response.value = value;
+	response.type = 'json';
 	ctrl.flush();
 	F.stats.response.json++;
 };
 
 Controller.prototype.empty = function() {
 	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
 	ctrl.response.status = 204;
 	ctrl.flush();
 	F.stats.response.empty++;
 };
 
 Controller.prototype.invalid = function(value) {
+
 	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
+	var response = ctrl.response;
 	var err = new F.TBuilders.ErrorBuilder();
 	err.push(value);
-	ctrl.response.headers['content-type'] = 'application/json; charset=utf-8';
-	ctrl.response.value = JSON.stringify(err.output(ctrl.language));
-	ctrl.response.status = err.status;
+	response.headers['content-type'] = 'application/json';
+	response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
+	response.headers.vary = 'Accept-Encoding, Last-Modified, User-Agent';
+	response.value = JSON.stringify(err.output(ctrl.language));
+	response.status = err.status;
 	ctrl.flush();
+
 	var key = 'error' + err.status;
+
 	if (F.stats.response[key] != null)
 		F.stats.response[key]++;
 };
 
 Controller.prototype.flush = function() {
+
 	var ctrl = this;
-	if (!ctrl.destroyed) {
-		var response = ctrl.response;
-		ctrl.res.writeHead(response.status, response.headers);
-		ctrl.res.end(response.value);
-		ctrl.free();
+
+	if (ctrl.destroyed)
+		return;
+
+	let accept = ctrl.headers['accept-encoding'];
+	let response = ctrl.response;
+	let buffer = response.value ? response.value instanceof Buffer ? response.value : Buffer.from(response.value, 'utf8') : null;
+	let type = response.headers['content-type'];
+
+	response.headers['x-powered-by'] = F.config.$xpoweredby;
+
+	// GZIP compression
+	if (F.config.$httpcompress && buffer && accept && buffer.length > 256 && accept.indexOf('gzip') !== -1) {
+		if (CHECK_COMPRESSION[type]) {
+
+			if (CHECK_CHARSET[type])
+				response.headers['content-type'] += '; charset=utf-8';
+
+			F.Zlib.gzip(buffer, function(err, buffer) {
+				if (err) {
+					ctrl.fallback(400, err.toString());
+				} else {
+					response.headers['content-encoding'] = 'gzip';
+					ctrl.res.writeHead(response.status, response.headers);
+					ctrl.res.end(buffer, 'utf8');
+					F.stats.performance.upload += buffer.length / 1024 / 1024;
+				}
+			});
+			return;
+		}
 	}
+
+	if (CHECK_CHARSET[type])
+		response.headers['content-type'] += '; charset=utf-8';
+
+	ctrl.res.writeHead(response.status, response.headers);
+	ctrl.res.end(buffer);
+	ctrl.free();
+
+	F.stats.performance.upload += buffer.length / 1024 / 1024;
 };
 
 Controller.prototype.fallback = function(code, error) {
 	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
 	ctrl.res.writeHead(code);
 	ctrl.res.end();
 };
 
 Controller.prototype.view = function(value, model) {
 
+	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
 };
 
-Controller.prototype.file = function(path) {
+Controller.prototype.file = function(path, download) {
 
+	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
+	var response = ctrl.response;
+
+	if (download) {
+		if (typeof(download) !== 'string')
+			download = F.TUtils.getName(path);
+		response.headers['content-disposition'] = 'attachment; filename*=utf-8\'\'' + encodeURIComponent(download);
+	}
+
+	var ext = F.TUtils.getName(path);
+
+	switch (ext) {
+		case 'js':
+			send_js(ctrl, path);
+			break;
+		case 'css':
+			send_css(ctrl, path);
+			break;
+		case 'html':
+			send_html(ctrl, path);
+			break;
+		default:
+			send_file(ctrl, path, ext);
+			break;
+	}
+
+	ctrl.res.writeHead(response.status, response.headers);
+	ctrl.res.end();
+	F.stats.response.stream++;
 };
 
-Controller.prototype.stream = function(path) {
+Controller.prototype.stream = function(type, stream, download) {
 
+	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
+	var response = ctrl.response;
+
+	if (download && typeof(download) === 'string')
+		response.headers['content-disposition'] = 'attachment; filename*=utf-8\'\'' + encodeURIComponent(download);
+
+	ctrl.res.writeHead(response.status, response.headers);
+	ctrl.res.end();
+	F.stats.response.stream++;
 };
 
 Controller.prototype.filefs = function(id) {
+
+	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
 
 };
 
@@ -240,18 +388,29 @@ Controller.prototype.binary = function(buffer, type, download) {
 
 	var ctrl = this;
 
-	ctrl.response.headers['content-type'] = type;
+	if (ctrl.destroyed)
+		return;
 
-	if (download)
-		ctrl.response.headers['content-disposition'] = 'attachment; filename*=utf-8\'\'' + encodeURIComponent(download);
+	var response = ctrl.response;
 
-	ctrl.response.value = buffer;
+	response.headers['content-type'] = type;
+	response.type = 'binary';
+
+	if (typeof(download) === 'string')
+		response.headers['content-disposition'] = 'attachment; filename*=utf-8\'\'' + encodeURIComponent(download);
+
+	response.value = buffer;
 	ctrl.flush();
 
 	F.stats.response.binary++;
 };
 
 Controller.prototype.proxy = function() {
+
+	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
 
 };
 
@@ -278,6 +437,39 @@ Controller.prototype.clear = function() {
 
 Controller.prototype.autoclear = function(value) {
 	this.preventclearfiles = value === false;
+};
+
+Controller.prototype.resume = function() {
+
+	var ctrl = this;
+
+	if (ctrl.uri.file) {
+
+		// @TODO: security escaping
+		var path = ctrl.uri.key.substring(1);
+
+		if (path[0] === '_')
+			path = F.path.plugins('public/' + path.substring(1));
+		else
+			path = F.path.root(path.substring(1));
+
+		switch (ctrl.ext) {
+			case 'js':
+				send_js(ctrl, path);
+				break;
+			case 'css':
+				send_css(ctrl, path);
+				break;
+			case 'html':
+				send_html(ctrl, path);
+				break;
+			default:
+				send_file(ctrl, path, ctrl.ext);
+				break;
+		}
+
+	} else
+		ctrl.system(404);
 };
 
 Controller.prototype.free = function() {
@@ -361,6 +553,38 @@ Controller.prototype.$route = function() {
 
 };
 
+function readfile(filename, callback) {
+	F.Fs.lstat(filename, function(err, stats) {
+
+		if (err) {
+			callback(err);
+			return;
+		}
+
+		F.Fs.readFile(filename, 'utf8', function(err, text) {
+			if (err) {
+				callback(err);
+			} else {
+				var obj = {};
+				obj.date = stats.mtime.toUTCString();
+				obj.body = text;
+				callback(null, text);
+			}
+		});
+	});
+}
+
+function notmodified(ctrl, date) {
+	if (ctrl.headers['if-modified-since'] === date) {
+		ctrl.response.status = 304;
+		ctrl.response.headers['cache-control'] = 'public, max-age=11111111';
+		ctrl.response.headers['last-modified'] = date;
+		ctrl.flush();
+		F.stats.response.notmodified++;
+		return true;
+	}
+}
+
 function multipart(ctrl) {
 
 	var type = ctrl.headers['content-type'];
@@ -380,7 +604,7 @@ function multipart(ctrl) {
 	}
 
 	var boundary = type.substring(index + 9, end);
-	var parser = U.multipartparser(boundary, ctrl, function(err, meta) {
+	var parser = F.TUtils.multipartparser(boundary, ctrl, function(err, meta) {
 
 		F.stats.performance.download += meta.size / 1024 / 1024;
 
@@ -459,7 +683,137 @@ function execute(ctrl) {
 		// schema/actions?
 		// ctrl.route.action(ctrl);
 	}
+}
 
+function send_html(ctrl, path) {
+
+	if (F.config.$localize) {
+		var cache = F.temporary.tmp[key];
+		var key = 'file_' + ctrl.language + '_' + HASH(path);
+		if (ctrl.response.cache && cache) {
+
+			// HTTP Cache
+			if (notmodified(ctrl, cache.date))
+				return;
+
+			ctrl.response.headers['last-modified'] = cache.date;
+			ctrl.response.headers['content-type'] = 'text/html';
+			ctrl.response.value = cache.body;
+			ctrl.flush();
+
+		} else {
+
+			if (F.temporary.notfound[ctrl.uri.key]) {
+				ctrl.fallback(404);
+				return;
+			}
+
+			readfile(path, function(err, output) {
+
+				if (err) {
+					F.temporary.notfound[ctrl.uri.key] = 1;
+					ctrl.fallback(404);
+					return;
+				}
+
+				output.body = F.translate(ctrl.language, output.body);
+				ctrl.response.headers['last-modified'] = output.date;
+				ctrl.response.headers['content-type'] = 'text/html';
+				ctrl.response.value = cache.body;
+				ctrl.flush();
+
+				if (ctrl.response.cache)
+					F.temporary.tmp[key] = output;
+
+			});
+		}
+	} else
+		send_file(ctrl, path, 'html');
+}
+
+function send_file(ctrl, path, ext) {
+
+	// Check the file existence
+	if (F.temporary.notfound[ctrl.uri.key]) {
+		ctrl.fallback(404);
+		return;
+	}
+
+	var cache = F.temporary.tmp[ctrl.uri.key];
+
+	// HTTP Cache
+	if (ctrl.response.cache && cache && notmodified(ctrl, cache.date))
+		return;
+
+	var accept = ctrl.headers['accept-encoding'];
+	var type = F.TUtils.getContentType(ext);
+	var compress = F.config.$httpcompress && accept && CHECK_COMPRESSION[type] && accept.indexOf('gzip') !== -1;
+	var range = ctrl.headers.range;
+	var httpcache = ctrl.response.cache && !CHECK_NOCACHE[ext] && F.config.$httpexpire;
+
+	F.Fs.lstat(path, function(err, stats) {
+
+		if (err) {
+			F.temporary.notfound[ctrl.uri.key] = true;
+			ctrl.fallback(404);
+			return;
+		}
+
+		if (httpcache)
+			ctrl.response.headers.expires = F.config.$httpexpire;
+		else if (ctrl.response.headers.expires)
+			delete ctrl.response.headers.expires;
+
+		cache = { date: stats.mtime.toUTCString(), size: stats.size };
+
+		ctrl.response.headers['last-modified'] = cache.date;
+		ctrl.response.headers.etag = '858' + CONF.$httpetag;
+
+		F.temporary.tmp[ctrl.uri.key] = cache;
+
+		var reader;
+
+		if (range) {
+
+			let size = range.replace(REG_RANGE, '').split('-');
+			let beg = +size[0] || 0;
+			let end = +size[1] || 0;
+
+			if (end <= 0)
+				end = beg + (1024 * F.config.$httprangebuffer); // 5 MB
+
+			if (beg > end) {
+				beg = 0;
+				end = stats.size - 1;
+			}
+
+			if (end > stats.size)
+				end = stats.size - 1;
+
+			ctrl.response.headers['content-length'] = (end - beg) + 1;
+			ctrl.response.headers['content-range'] = 'bytes ' + beg + '-' + end + '/' + stats.size;
+			ctrl.res.writeHead(206, ctrl.response.headers);
+			reader = F.Fs.createReadStream(path, { start: beg, end: end });
+			reader.pip(ctrl.res);
+			F.stats.response.streaming++;
+
+		} else {
+
+			reader = F.Fs.createReadStream(path);
+
+			if (compress)
+				ctrl.response.headers['content-encoding'] = 'gzip';
+
+			ctrl.res.writeHead(ctrl.response.status, ctrl.response.headers);
+
+			if (compress)
+				reader.pipe(F.Zlib.createGzip(GZIP_FILE)).pipe(ctrl.res);
+			else
+				reader.pipe(ctrl.res);
+
+			F.stats.response.file++;
+		}
+	});
 }
 
 function HttpFile(meta) {

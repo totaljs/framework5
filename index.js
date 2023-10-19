@@ -14,6 +14,7 @@ const TRouting = require('./routing');
 const TQueryBuilder = require('./querybuilder');
 const TUtils = require('./utils');
 const THttp = require('./http');
+const TViewEngine = require('./viewengine');
 const TBuilders = require('./builders');
 
 const EMPTYOBJECT = {};
@@ -52,6 +53,7 @@ PATHMODULES = PATHMODULES.substring(0, PATHMODULES.length - 8);
 	F.connections = {};    // WebSocket connections
 	F.schedules = {};      // Registered schedulers
 	F.routing = TRouting.db;
+	F.config = CONF;
 
 	// Internal cache
 	F.temporary = {
@@ -71,7 +73,7 @@ PATHMODULES = PATHMODULES.substring(0, PATHMODULES.length - 8);
 		exec: {}, // a temporary cach for EXEC() method
 		service: { redirect: 0, request: 0, file: 0, usage: 0 },
 		pending: [],
-		timeoutticks: 0
+		tmp: {}
 	};
 
 	// Internal stats
@@ -176,9 +178,38 @@ PATHMODULES = PATHMODULES.substring(0, PATHMODULES.length - 8);
 	F.TRouting = TRouting;
 	F.TUtils = TUtils;
 	F.TBuilders = TBuilders;
-	// F.path.fs = Fs;
+	F.TViewEngine = TViewEngine;
+
+	F.directory = TUtils.$normalize(require.main ? Path.dirname(require.main.filename) : process.cwd());
+	F.path = {};
+	F.path.fs = Fs;
+	F.path.root = path => Path.join(F.directory, path || '');
+	F.path.public = path => Path.join(F.directory, 'public', path || '');
+	F.path.databases = path => Path.join(F.directory, 'databases', path || '');
+	F.path.flowstreams = path => Path.join(F.directory, 'flowstreams', path || '');
+	F.path.plugins = path => Path.join(F.directory, 'plugins', path || '');
+	F.path.private = path => Path.join(F.directory, 'private', path || '');
+	F.path.tmp = F.path.temp = path => Path.join(F.directory, 'tmp', path || '');
+	F.path.unlink = unlink;
 
 })(global.F);
+
+function unlink(arr, callback) {
+
+	if (typeof(arr) === 'string')
+		arr = [arr];
+
+	if (!arr.length) {
+		callback && callback();
+		return;
+	}
+
+	var filename = arr.shift();
+	if (filename)
+		Fs.unlink(filename, () => unlink(arr, callback));
+	else if (callback)
+		callback();
+}
 
 (function(CONF) {
 
@@ -194,34 +225,6 @@ PATHMODULES = PATHMODULES.substring(0, PATHMODULES.length - 8);
 	CONF.secret_tms = null,
 	CONF.node_modules = 'node_modules',
 
-	CONF['security.txt'] = 'Contact: mailto:support@totaljs.com\nContact: https://www.totaljs.com/contact/';
-	CONF.etag_version = '';
-	CONF.directory_src = '/.src/';
-	CONF.directory_bundles = '/bundles/';
-	CONF.directory_controllers = '/controllers/';
-	CONF.directory_templates = '/templates/';
-	CONF.directory_views = '/views/';
-	CONF.directory_definitions = '/definitions/';
-	CONF.directory_plugins = '/plugins/';
-	CONF.directory_temp = '/tmp/';
-	CONF.directory_models = '/models/';
-	CONF.directory_actions = '/actions/';
-	CONF.directory_schemas = '/schemas/';
-	CONF.directory_flowstreams = '/flowstreams/';
-	CONF.directory_extensions = '/extensions/';
-	CONF.directory_resources = '/resources/';
-	CONF.directory_public = '/public/';
-	CONF.directory_modules = '/modules/';
-	CONF.directory_logs = '/logs/';
-	CONF.directory_tests = '/tests/';
-	CONF.directory_databases = '/databases/';
-	CONF.directory_workers = '/workers/';
-	CONF.directory_private = '/private/';
-	CONF.directory_configs = '/configs/';
-	CONF.directory_services = '/services/';
-	CONF.directory_themes = '/themes/';
-	CONF.directory_updates = '/updates/';
-
 	// all HTTP static request are routed to directory-public
 	CONF.static_url = '';
 	CONF.static_url_script = '/js/';
@@ -231,7 +234,6 @@ PATHMODULES = PATHMODULES.substring(0, PATHMODULES.length - 8);
 	CONF.static_url_font = '/fonts/';
 	CONF.static_url_download = '/download/';
 	CONF.static_url_components = '/components.';
-	CONF.static_accepts = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true };
 
 	// 'static-accepts-custom' = [],
 	CONF.default_crypto_iv = Buffer.from(F.syshash).slice(0, 16);
@@ -319,10 +321,19 @@ PATHMODULES = PATHMODULES.substring(0, PATHMODULES.length - 8);
 	CONF.default_interval_clear_dnscache = 30;
 	CONF.default_interval_websocket_ping = 2000;
 
-
 	// New internal configuration
 	CONF.$uploadsize = 1024;
 	CONF.$uploadchecktypes = true;
+	CONF.$cors = '';
+	CONF.$root = '';
+	CONF.$reqlimit = 0; // request limit per ip
+	CONF.$httpcompress = true;
+	CONF.$httpetag = '';
+	CONF.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
+	CONF.$httprangebuffer = 5120; // 5 MB
+	CONF.$xpoweredby = 'Total.js';
+	CONF.$localize = true;
+	CONF.$static_accepts = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true };
 
 })(global.CONF);
 
@@ -339,7 +350,7 @@ F.loadconfig = function(value) {
 };
 
 F.loadresource = function(name, value) {
-
+	F.resources[name] = value.parseConfig();
 };
 
 F.loadenv = function(value) {
@@ -347,7 +358,52 @@ F.loadenv = function(value) {
 };
 
 F.translate = function(language, value) {
-	return value.substring(2, value.length - 1);
+
+	var index = -1;
+
+	while (true) {
+
+		index = value.indexOf('@(', index);
+
+		if (index === -1)
+			break;
+
+		var counter = 0;
+		for (let i = index + 2; i < value.length; i++) {
+
+			var c = value[i];
+
+			if (c == '(') {
+				counter++;
+			} else if (c === ')') {
+
+				if (counter) {
+					counter--;
+					continue;
+				}
+
+				var text = value.substring(index, i + 1);
+				var translate = text.substring(2, text.length - 1);
+				var translated = F.resource(language, 'T' + translate.hash(true).toString(36));
+				value = value.replaceAll(text, translated || translate);
+				index += translated.length - 2;
+				break;
+			}
+		}
+	}
+
+	return value;
+};
+
+F.resource = function(language, key) {
+	var dict = F.resources[language];
+	if (dict && dict[key])
+		return dict[key];
+	return language === 'default' ? '' : F.resource('default', key);
+};
+
+F.load = function() {
+
 };
 
 F.http = function(opt) {

@@ -24,11 +24,37 @@ exports.listen = function(req, res) {
 		return;
 	}
 
+	// Not supported
+	if (req.method === 'HEAD') {
+		F.stats.request.blocked++;
+		req.destroy();
+		return;
+	}
+
 	var ctrl = new TController.Controller(req, res);
 
+	if (F.config.$reqlimit) {
+		if (F.temporary.ddos[ctrl.ip] > F.config.$reqlimit) {
+			F.stats.response.ddos++;
+			ctrl.fallback(503);
+			return;
+		}
+		if (F.temporary.ddos[ctrl.ip])
+			F.temporary.ddos[ctrl.ip]++;
+		else
+			F.temporary.ddos[ctrl.ip] = 1;
+	}
+
+	if (ctrl.uri.file) {
+		if (F.config.$static_accepts[ctrl.ext])
+			ctrl.resume();
+		else
+			ctrl.fallback(404);
+		return;
+	}
+
 	// Pending requests
-	if (!ctrl.uri.file)
-		F.temporary.pending.push(ctrl);
+	F.temporary.pending.push(ctrl);
 
 	if (!ctrl.uri.file && DEF.onCORS && F.config.$cors) {
 		if (F.TRouting.lookupcors(ctrl))
