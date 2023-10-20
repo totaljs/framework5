@@ -17,10 +17,13 @@ const THttp = require('./http');
 const TViewEngine = require('./viewengine');
 const TBuilders = require('./builders');
 const TInternal = require('./internal');
+const TMinificators = require('./minificators');
 
 const NODE_MODULES = { buffer: 1, child_process: 1, process: 1, fs: 1, events: 1, http: 1, https: 1, http2: 1, util: 1, net: 1, os: 1, path: 1, punycode: 1, readline: 1, repl: 1, stream: 1, string_decoder: 1, tls: 1, trace_events: 1, tty: 1, dgram: 1, url: 1, v8: 1, vm: 1, wasi: 1, worker_threads: 1, zlib: 1, crypto: 1 };
 const EMPTYOBJECT = {};
 const EMPTYARRAY = [];
+
+const REG_SKIPERRORS = /epipe|invalid\sdistance/i;
 
 Object.freeze(EMPTYOBJECT);
 Object.freeze(EMPTYARRAY);
@@ -43,7 +46,7 @@ global.DEF = {};
 
 (function(F) {
 
-	F.$id = null; // F.id ==> property
+	F.id = '';
 	F.is5 = F.version = 5000;
 	F.version_header = '5';
 	F.version_node = process.version + '';
@@ -54,12 +57,26 @@ global.DEF = {};
 	F.schedules = {};      // Registered schedulers
 	F.modules = {};
 	F.plugins = {};
-	F.routing = TRouting.db;
+	F.processing = {};
 	F.config = CONF;
+	F.def = DEF;
+	F.errors = [];
+
 	F.internal = {
 		ticks: 0,
 		counter: 0,
 		timeouts: null // setInterval identifier
+	};
+
+	F.routes = {
+		internal: {},
+		virtual: {},
+		routes: [],
+		routescache: {},
+		websockets: [],
+		websocketscache: {},
+		files: [],
+		timeout: null
 	};
 
 	// Internal cache
@@ -80,7 +97,9 @@ global.DEF = {};
 		exec: {}, // a temporary cach for EXEC() method
 		service: { redirect: 0, request: 0, file: 0, usage: 0 },
 		pending: [],
-		tmp: {}
+		tmp: {},
+		merged: {},
+		minified: {}
 	};
 
 	// Internal stats
@@ -188,6 +207,7 @@ global.DEF = {};
 	F.TBuilders = TBuilders;
 	F.TViewEngine = TViewEngine;
 	F.TInternal = TInternal;
+	F.TMinificators = TMinificators;
 
 	F.directory = TUtils.$normalize(require.main ? Path.dirname(require.main.filename) : process.cwd());
 	F.path = {};
@@ -199,7 +219,12 @@ global.DEF = {};
 	F.path.flowstreams = path => Path.join(F.directory, 'flowstreams', path || '');
 	F.path.plugins = path => Path.join(F.directory, 'plugins', path || '');
 	F.path.private = path => Path.join(F.directory, 'private', path || '');
-	F.path.tmp = F.path.temp = path => Path.join(F.directory, 'tmp', path || '');
+	F.path.tmp = F.path.temp = function(path) {
+		if (!F.temporary.path.directory_tmp)
+			F.path.verify('tmp');
+		return Path.join(F.directory, 'tmp', path || '');
+	};
+
 	F.path.unlink = unlink;
 	F.path.verify = function(name) {
 
@@ -311,102 +336,6 @@ function unlink(arr, callback) {
 	CONF.secret_tms = null,
 	CONF.node_modules = 'node_modules',
 
-	// all HTTP static request are routed to directory-public
-	CONF.static_url = '';
-	CONF.static_url_script = '/js/';
-	CONF.static_url_style = '/css/';
-	CONF.static_url_image = '/img/';
-	CONF.static_url_video = '/videos/';
-	CONF.static_url_font = '/fonts/';
-	CONF.static_url_download = '/download/';
-	CONF.static_url_components = '/components.';
-
-	// 'static-accepts-custom' = [],
-	CONF.default_crypto_iv = Buffer.from(F.syshash).slice(0, 16);
-	CONF.default_xpoweredby = 'Total.js';
-	CONF.default_layout = 'layout';
-	CONF.default_theme = '';
-	CONF.default_proxy = '';
-	CONF.default_request_maxkeys = 33;
-	CONF.default_request_maxkey = 25;
-	CONF.default_cookies_samesite = 'Lax';
-	CONF.default_cookies_secure = false;
-
-	// default maximum request size / length
-	// default 10 kB
-	CONF.default_request_maxlength = 10;
-	CONF.default_websocket_maxlength = 2;
-	CONF.default_websocket_maxlatency = 2000;
-	CONF.default_websocket_encodedecode = false;
-	CONF.default_maxopenfiles = 100;
-	CONF.default_timezone = 'utc';
-	CONF.default_root = '';
-	CONF.default_response_maxage = '11111111';
-	CONF.default_errorbuilder_errors = false;
-	CONF.default_errorbuilder_status = 400;
-	CONF.default_errorbuilder_forxhr = true;
-	CONF.default_tms_url = '/$tms/';
-	CONF.default_tms_maxlength = 1024; // max. 1 MB
-
-	// Default originators
-	CONF.default_cors = null;
-
-	// Seconds (2 minutes)
-	CONF.default_cors_maxage = 120;
-	CONF.default_csrf_maxage = '30 minutes';
-
-	// in milliseconds
-	CONF.default_request_timeout = 3000;
-	CONF.default_restbuilder_timeout = 10000;
-
-	// otherwise is used ImageMagick (Heroku supports ImageMagick)
-	// gm = graphicsmagick or im = imagemagick or magick (new version of ImageMagick)
-	CONF.default_image_converter = 'gm'; // command-line name;
-	CONF.default_image_quality = 93;
-	CONF.default_image_consumption = 0; // disabled because e.g. GM v1.3.32 throws some error about the memory
-	CONF.default_tapi = 'eu';
-
-	CONF.allow_tms = false;
-	CONF.allow_totalapi = true;
-	CONF.allow_totalapilogger = false;
-	CONF.allow_static_encryption = false;
-	CONF.allow_static_files = true;
-	CONF.allow_gzip = true;
-	CONF.allow_websocket = true;
-	CONF.allow_websocket_compression = true;
-	CONF.allow_compile = true;
-	CONF.allow_compile_script = true;
-	CONF.allow_compile_style = true;
-	CONF.allow_compile_html = true;
-	CONF.allow_localize = true;
-	CONF.allow_stats_snapshot = true;
-	CONF.allow_stats_status = true;
-	CONF.allow_performance = false;
-	CONF.allow_custom_titles = false;
-	CONF.allow_cache_snapshot = false;
-	CONF.allow_cache_cluster = false;
-	CONF.allow_head = false;
-	CONF.allow_filter_errors = true;
-	CONF.allow_clear_temp = true;
-	CONF.allow_ssc_validation = true;
-	CONF.allow_workers_silent = false;
-	CONF.allow_sessions_unused = '-20 minutes';
-	CONF.allow_reqlimit = 0;
-	CONF.allow_persistent_images = true;
-	CONF.allow_check_upload = true;
-
-	CONF.textdb_worker = false;
-	CONF.textdb_inmemory = 0; // in MB
-
-	CONF.mail_smtp_keepalive = '10 minutes';
-
-	// Used in F.service()
-	// All values are in minutes
-	CONF.default_interval_clear_resources = 20;
-	CONF.default_interval_clear_cache = 10;
-	CONF.default_interval_clear_dnscache = 30;
-	CONF.default_interval_websocket_ping = 2000;
-
 	// New internal configuration
 	CONF.$uploadsize = 1024;
 	CONF.$uploadchecktypes = true;
@@ -417,15 +346,20 @@ function unlink(arr, callback) {
 	CONF.$httpetag = '';
 	CONF.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
 	CONF.$httprangebuffer = 5120; // 5 MB
+	CONF.$httptimeout = 5; // 5 seconds
 	CONF.$xpoweredby = 'Total.js';
+	CONF.$minifyjs = true;
+	CONF.$minifycss = true;
+	CONF.$minifyhtml = true;
 	CONF.$localize = true;
-	CONF.$static_accepts = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true };
+	CONF.$httpfiles = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true };
 	CONF.$port = 8000;
 	CONF.$ip = '0.0.0.0';
 	CONF.$unixsocket = '';
 	CONF.$timezone = 'utc';
 	CONF.$insecure = false;
 	CONF.$performance = false;
+	CONF.$filtererrors = true;
 
 	CONF.$node_modules = require.resolve('./index');
 	CONF.$node_modules = CONF.$node_modules.substring(0, CONF.$node_modules.length - (8 + 7));
@@ -438,6 +372,24 @@ function unlink(arr, callback) {
 (function(DEF) {
 
 	DEF.blacklist = {};
+	DEF.onError = function(err, name, url) {
+
+		NOW = new Date();
+
+		if (!name && err.name)
+			name = err.name;
+
+		err = err.toString();
+		console.log('ERROR ======= ' + (NOW.format('yyyy-MM-dd HH:mm:ss')) + ': ' + (name ? name + ' ---> ' : '') + err + (url ? (' (' + url + ')') : ''), err.stack ? err.stack : '');
+
+		var obj = { error: err, name: name, url: url, date: NOW };
+
+		if (F.errors.push(obj) > 5)
+			F.errors.shift();
+
+		EMIT('error', obj);
+		F.stats.error++;
+	};
 
 })(global.DEF);
 
@@ -446,6 +398,9 @@ F.loadconfig = function(value) {
 	var cfg = F.TUtils.parseconfig(value);
 
 	for (let key in cfg) {
+
+		let val = cfg[key];
+		let tmp;
 
 		switch (key) {
 			case '$tms':
@@ -459,11 +414,16 @@ F.loadconfig = function(value) {
 			case '$root':
 				break;
 			case '$port':
-				cfg[key] = +cfg[key];
+				cfg[key] = +val;
 				break;
 			case '$timezone':
-				process.env.TZ = F.config.$timezone;
+				process.env.TZ = val;
 				break;
+			case '$httpfiles':
+				tmp = val.split(',').trim();
+				for (var m of tmp)
+					F.config.$httpfiles[m] = true;
+				continue;
 		}
 
 		F.config[key] = cfg[key];
@@ -480,7 +440,7 @@ F.loadconfig = function(value) {
 	if (!F.config.$httpetag)
 		F.config.$httpetag = F.config.version.replace(/\.|\s/g, '');
 
-	process.env.NODE_TLS_REJECT_UNAUTHORIZED = F.config.$insecure ? '1' : '0';
+	process.env.NODE_TLS_REJECT_UNAUTHORIZED = F.config.$insecure ? '0' : '1';
 	F.logger(F.config.$logger == true);
 };
 
@@ -997,5 +957,143 @@ F.logger = function(enable) {
 		logger.timeEnd.apply(logger, arguments);
 	};
 };
+
+
+F.componentator = function(name, components, removeprev) {
+
+	var meta = {};
+
+	meta.components = components;
+	meta.name = name;
+
+	F.$events.componentator && F.emit('componentator', meta);
+
+	var url = 'https://componentator.com/download.js?id=' + meta.components;
+	var nameid = meta.name.slug();
+	var relative = 'ui-' + (removeprev ? (nameid + '-') : '') + url.makeid() + '.min.js';
+	var filename = F.path.public(relative);
+
+	F.repo[meta.name] = '/' + relative;
+
+	if (removeprev) {
+		F.Fs.readdir(F.path.public(), function(err, files) {
+
+			var rem = [];
+			for (var m of files) {
+				if (m !== relative && m.indexOf('ui-' + nameid + '-') !== -1)
+					rem.push(F.path.public(m));
+			}
+
+			if (rem.length)
+				F.path.unlink(rem);
+
+		});
+	}
+
+	F.Fs.lstat(filename, function(err) {
+		if (err)
+			F.download(url, filename, F.error('COMPONENTATOR'));
+	});
+
+};
+
+F.error = function(err, name, uri) {
+
+	if (!arguments.length)
+		return F.errorcallback;
+
+	if (err)
+		F.def.onError(err, name, uri);
+};
+
+F.errorcallback = function(err) {
+	err && F.error(err);
+};
+
+F.merge = function(url) {
+
+	var arr = [];
+
+	for (let i = 1; i < arguments.length; i++) {
+		let links = arguments[i];
+		if (!(links instanceof Array))
+			links = [links];
+		for (let link of links)
+			arr.push(link);
+	}
+
+	if (url[0] !== '/')
+		url = '/' + url;
+
+	url = url.toLowerCase();
+
+	var ext = TUtils.getExtension(url);
+	var key = url.substring(1).replace(/\//g, '-').replace(/\.(js|html|css)$/, '') + '-min.' + ext;
+	var filename = F.path.tmp(F.id + 'merged_' + key);
+
+	F.routes.virtual[url] = async function(ctrl) {
+		if (DEBUG) {
+			var buffer = await F.TMinificators.merge(true, arr);
+			ctrl.binary(buffer, TUtils.contentTypes[ext] || TUtils.contentTypes.bin);
+		} else {
+			F.lock('merging_' + key, async function(next) {
+				if (!F.temporary.merged[key]) {
+					if (F.temporary.notfound[url])
+						delete F.temporary.notfound[url];
+					F.temporary.merged[key] = true;
+					await F.TMinificators.merge(filename, arr);
+				}
+				ctrl.response.minify = false;
+				ctrl.file(filename);
+				next();
+			});
+		}
+	};
+
+	return url;
+};
+
+F.lock = function(key, callback) {
+	if (F.processing[key]) {
+		F.processing[key].push(callback);
+	} else {
+		F.processing[key] = [];
+		callback(function() {
+			var pending = F.processing[key];
+			delete F.processing[key];
+			for (let fn of pending)
+				fn(F.TUtils.noop);
+		});
+	}
+};
+
+F.touch = function(url) {
+	if (url) {
+		delete F.temporary.minified[url];
+		delete F.temporary.tmp[url];
+		delete F.temporary.notfound[url];
+	} else {
+		F.temporary.minified = {};
+		F.temporary.tmp = {};
+		F.temporary.notfound = {};
+	}
+};
+
+process.on('unhandledRejection', function(e) {
+	F.error(e, '', null);
+});
+
+process.on('uncaughtException', function(e) {
+
+	var err = e + '';
+	if (err.indexOf('listen EADDRINUSE') !== -1) {
+		process.send && process.send('total:eaddrinuse');
+		console.log('\nThe IP address and the PORT is already in use.\nYou must change the PORT\'s number or IP address.\n');
+		process.exit(1);
+		return;
+	} else if (F.config.$filtererrors && REG_SKIPERRORS.test(err))
+		return;
+	F.error(e, '', null);
+});
 
 require('./global');
