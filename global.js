@@ -13,6 +13,8 @@ global.MERGE = F.merge;
 global.TOUCH = F.touch;
 global.AUTH = F.auth;
 global.CLEANUP = F.cleanup;
+global.NEWDB = F.newdb;
+global.REQUIRE = F.require;
 
 global.CORS = function(origin) {
 	CONF.$cors = origin || '*';

@@ -1,3 +1,7 @@
+// Total.js QueryBuilder
+// The MIT License
+// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+
 const REG_FIELDS_CLEANER = /"|`|\||'|\s/g;
 
 var CACHE = {};
@@ -36,16 +40,9 @@ function DB(conn) {
 function execdb(db) {
 	var conn = EVALUATOR[db.conn] || EVALUATOR['*'];
 	if (conn) {
-
 		if (db.options.checksum)
 			db.options.checksum = HASH(db.options.checksum).toString(36);
-
-		//conn.call(db, db.options, function(err, response) {
-		//	db.evaluate(err, response);
-		//});
-
 		conn.call(db, db.options, (err, response) => db.evaluate(err, response));
-
 	} else
 		db.evaluate('Database is not initialized');
 }
@@ -1369,6 +1366,5 @@ exports.evaluate = function(type, callback) {
 
 };
 
-global.QueryBuilderDB = Controller;
-global.QueryBuilder = QueryBuilder;
 exports.Controller = Controller;
+exports.QueryBuilder = QueryBuilder;

@@ -43,6 +43,9 @@ global.EMPTYARRAY = EMPTYARRAY;
 global.DATA = new TQueryBuilder.Controller(true);
 global.NOW = new Date();
 global.DEF = {};
+global.DB = function() {
+	return new TQueryBuilder.Controller();
+};
 
 (function(F) {
 
@@ -721,7 +724,7 @@ F.load = async function(types = [], callback) {
 F.require = function(name) {
 	if (name.startsWith('node:'))
 		return require(name);
-	return NODE_MODULES[name] ? require(name) : require(F.Path.join(F.config.$node_modules, name));
+	return NODE_MODULES[name] ? require(name) : require(F.Path.join(F.directory, name));
 };
 
 F.import = function(url, callback) {
@@ -1315,6 +1318,8 @@ F.clear = function(init = true, callback) {
 	if (!init)
 		F.touch();
 };
+
+F.newdb = TQueryBuilder.evaluate;
 
 function httptuningperformance(socket) {
 	socket.setNoDelay(true);
