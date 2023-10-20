@@ -4,18 +4,6 @@
 
 const EMPTYREQSPLIT = ['/'];
 
-exports.db = {
-	internal: {},
-	routes: [],
-	routescache: {},
-	files: [],
-	cors: [],
-	websockets: [],
-	websocketscache: {},
-	timeout: null,
-	middleware: {}
-};
-
 // Total.js routing
 function Route(url, action, size) {
 
@@ -31,7 +19,7 @@ function Route(url, action, size) {
 		t.url = [url[0].substring(1)];
 		t.action = action;
 		t.internal = true;
-		exports.db.internal[t.url[0]] = t;
+		F.routes.internal[t.url[0]] = t;
 		return;
 	}
 
@@ -114,17 +102,17 @@ exports.route = function(url, action, size) {
 	if (route) {
 		switch (route.method) {
 			case 'SOCKET':
-				exports.db.websockets.push(route);
+				F.routes.websockets.push(route);
 				break;
 			case 'FILE':
-				exports.db.files.push(route);
+				F.routes.files.push(route);
 				break;
 			default:
-				exports.db.routes.push(route);
+				F.routes.routes.push(route);
 				break;
 		}
-		exports.db.timeout && clearTimeout(exports.db.timeout);
-		exports.db.timeout = setTimeout(exports.sort, 100);
+		F.routes.timeout && clearTimeout(F.routes.timeout);
+		F.routes.timeout = setTimeout(exports.sort, 100);
 	}
 };
 
@@ -134,13 +122,11 @@ exports.cors = function(url) {
 
 exports.sort = function() {
 
-	var db = exports.db;
-
 	var cache = {};
 	var tmp;
 	var key;
 
-	for (let route of db.routes) {
+	for (let route of F.routes.routes) {
 
 		key = route.method;
 		tmp = cache[key];
@@ -166,10 +152,10 @@ exports.sort = function() {
 			tmp[k] = [route];
 	}
 
-	db.routescache = cache;
+	F.routes.routescache = cache;
 	cache = {};
 
-	for (let route of db.websockets) {
+	for (let route of F.routes.websockets) {
 
 		tmp = cache;
 
@@ -191,7 +177,7 @@ exports.sort = function() {
 			tmp[k] = [route];
 	}
 
-	db.websocketscache = cache;
+	F.routes.websocketscache = cache;
 };
 
 function compareflags(ctrl, routes, auth) {
@@ -254,7 +240,7 @@ exports.lookup = function(ctrl, auth, skip) {
 	// membertype 2: unlogged
 
 	var key = ctrl.method;
-	var tmp = exports.db.routescache[key];
+	var tmp = F.routes.routescache[key];
 	if (!tmp)
 		return null;
 
