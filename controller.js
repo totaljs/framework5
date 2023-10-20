@@ -2,7 +2,8 @@
 // The MIT License
 // Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
 
-const REG_DOUBLESLASH = /\/{2}/g;
+const REG_DOUBLESLASH = /\/{2}|\.{2,}|\.{1,}\/|/g;
+const REG_FILETMP = /\//g;
 const REG_RANGE = /bytes=/;
 const CHECK_DATA = { POST: 1, PUT: 1, PATCH: 1, DELETE: 1 };
 const CHECK_COMPRESSION = { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'image/svg+xml': true, 'text/x-markdown': true, 'text/html': true };
@@ -22,7 +23,7 @@ function parseURI(url) {
 	}
 
 	url = url.replace(REG_DOUBLESLASH, '');
-	index = url.lastIndexOf('.', 10); // max. 10 chars for extension
+	index = url.indexOf('.', url.length - 10); // max. 10 chars for extension
 
 	if (index == -1 && url[url.length - 1] !== '/')
 		url += '/';
@@ -49,13 +50,14 @@ function Controller(req, res) {
 	ctrl.res = res;
 	ctrl.method = ctrl.req.method;
 	ctrl.route = null;
-	ctrl.isfile = false;
 	ctrl.uri = parseURI(req.url);
+	ctrl.isfile = ctrl.uri.file;
 	ctrl.language = '';
 	ctrl.headers = req.headers;
 	ctrl.ext = ctrl.uri.ext;
 	ctrl.split = ctrl.uri.split;
 	ctrl.split2 = [];
+	ctrl.url = ctrl.uri.key;
 	ctrl.released = false;
 	ctrl.downloaded = false;
 
@@ -74,13 +76,14 @@ function Controller(req, res) {
 
 	ctrl.response = {
 		status: 200,
-		cache: true,
+		cache: DEBUG,
+		minify: true,
 		headers: {}
 	};
 
 	if (CHECK_DATA[ctrl.method]) {
 
-		if (ctrl.uri.file) {
+		if (ctrl.isfile) {
 			ctrl.destroyed = true;
 			ctrl.req.destroy();
 			return;
@@ -169,8 +172,11 @@ Controller.prototype.html = function(value) {
 		return;
 
 	ctrl.response.headers['content-type'] = 'text/html';
-	if (value != null)
-		ctrl.response.value = value;
+
+	if (value != null) {
+		ctrl.response.value = ctrl.response.minify && F.config.$minifyhtml ? F.TMinificators.html(value) : value;
+	}
+
 	ctrl.flush();
 	F.stats.response.html++;
 };
@@ -298,8 +304,6 @@ Controller.prototype.flush = function() {
 	ctrl.res.writeHead(response.status, response.headers);
 	ctrl.res.end(buffer);
 	ctrl.free();
-
-	F.stats.performance.upload += buffer.length / 1024 / 1024;
 };
 
 Controller.prototype.fallback = function(code, error) {
@@ -336,26 +340,38 @@ Controller.prototype.file = function(path, download) {
 		response.headers['content-disposition'] = 'attachment; filename*=utf-8\'\'' + encodeURIComponent(download);
 	}
 
-	var ext = F.TUtils.getName(path);
+	var ext = F.TUtils.getExtension(path);
 
-	switch (ext) {
-		case 'js':
-			send_js(ctrl, path);
-			break;
-		case 'css':
-			send_css(ctrl, path);
-			break;
-		case 'html':
-			send_html(ctrl, path);
-			break;
-		default:
-			send_file(ctrl, path, ext);
-			break;
+	if (ext === 'js') {
+		if (response.minify)
+			response.minify = F.config.$minifyjs;
+	} else if (ext === 'css') {
+		if (response.minify)
+			response.minify = F.config.$minifycss;
+	} else if (ext === 'html') {
+		if (response.minify)
+			response.minify = F.config.$minifyhtml;
 	}
 
-	ctrl.res.writeHead(response.status, response.headers);
-	ctrl.res.end();
-	F.stats.response.stream++;
+	if (response.minify) {
+		switch (ext) {
+			case 'js':
+				send_js(ctrl, path);
+				break;
+			case 'css':
+				send_css(ctrl, path);
+				break;
+			case 'html':
+				send_html(ctrl, path);
+				break;
+			default:
+				send_file(ctrl, path, ext);
+				break;
+		}
+	} else
+		send_file(ctrl, path, ext);
+
+	F.stats.response.file++;
 };
 
 Controller.prototype.stream = function(type, stream, download) {
@@ -443,15 +459,15 @@ Controller.prototype.resume = function() {
 
 	var ctrl = this;
 
-	if (ctrl.uri.file) {
+	if (ctrl.isfile) {
 
 		// @TODO: security escaping
-		var path = ctrl.uri.key.substring(1);
+		var path = ctrl.uri.key;
 
 		if (path[0] === '_')
 			path = F.path.plugins('public/' + path.substring(1));
 		else
-			path = F.path.root(path.substring(1));
+			path = F.path.public(path.substring(1));
 
 		switch (ctrl.ext) {
 			case 'js':
@@ -469,7 +485,7 @@ Controller.prototype.resume = function() {
 		}
 
 	} else
-		ctrl.system(404);
+		ctrl.fallback(404);
 };
 
 Controller.prototype.free = function() {
@@ -495,14 +511,6 @@ Controller.prototype.$route = function() {
 	if (ctrl.uri.file) {
 		ctrl.fallback(404);
 		return;
-	}
-
-	// Check CORS
-	if (F.routing.cors.length) {
-		if (!F.TRouting.cors(ctrl)) {
-			ctrl.fallback(404);
-			return;
-		}
 	}
 
 	let route = F.TRouting.lookup(ctrl);
@@ -568,7 +576,7 @@ function readfile(filename, callback) {
 				var obj = {};
 				obj.date = stats.mtime.toUTCString();
 				obj.body = text;
-				callback(null, text);
+				callback(null, obj);
 			}
 		});
 	});
@@ -670,7 +678,7 @@ function authorize(ctrl) {
 
 function execute(ctrl) {
 
-	ctrl.timeout = ctrl.route.timeout || 5;
+	ctrl.timeout = ctrl.route.timeout || F.config.$httptimeout;
 
 	for (let param of ctrl.route.params) {
 		let value = ctrl.split[param.index];
@@ -687,48 +695,136 @@ function execute(ctrl) {
 
 function send_html(ctrl, path) {
 
-	if (F.config.$localize) {
-		var cache = F.temporary.tmp[key];
-		var key = 'file_' + ctrl.language + '_' + HASH(path);
-		if (ctrl.response.cache && cache) {
+	if (F.temporary.notfound[ctrl.uri.key]) {
+		ctrl.fallback(404);
+		return;
+	}
 
-			// HTTP Cache
-			if (notmodified(ctrl, cache.date))
-				return;
+	let filename = F.temporary.minified[ctrl.uri.key];
+	if (filename) {
+		send_file(ctrl, filename, 'html');
+		return;
+	}
 
-			ctrl.response.headers['last-modified'] = cache.date;
+	readfile(path, function(err, output) {
+
+		if (err) {
+			F.temporary.notfound[ctrl.uri.key] = 1;
+			ctrl.fallback(404);
+			return;
+		}
+
+		output.body = F.translate(ctrl.language, output.body);
+
+		if (ctrl.response.minify && F.config.$minifyhtml)
+			output.body = F.TMinificators.html(output.body);
+
+		if (DEBUG) {
+			ctrl.response.headers['last-modified'] = output.date;
 			ctrl.response.headers['content-type'] = 'text/html';
-			ctrl.response.value = cache.body;
+			ctrl.response.value = output.body;
 			ctrl.flush();
-
 		} else {
-
-			if (F.temporary.notfound[ctrl.uri.key]) {
-				ctrl.fallback(404);
-				return;
-			}
-
-			readfile(path, function(err, output) {
-
+			let filename = F.path.tmp(F.id + (ctrl.language ? (ctrl.language + '-') : '') + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.html');
+			F.Fs.writeFile(filename, output.body, function(err) {
 				if (err) {
 					F.temporary.notfound[ctrl.uri.key] = 1;
-					ctrl.fallback(404);
-					return;
+					ctrl.fallback(404, err.toString());
+				} else {
+					F.temporary.minified[ctrl.uri.key] = filename;
+					send_file(ctrl, filename, 'html');
 				}
-
-				output.body = F.translate(ctrl.language, output.body);
-				ctrl.response.headers['last-modified'] = output.date;
-				ctrl.response.headers['content-type'] = 'text/html';
-				ctrl.response.value = cache.body;
-				ctrl.flush();
-
-				if (ctrl.response.cache)
-					F.temporary.tmp[key] = output;
-
 			});
 		}
-	} else
-		send_file(ctrl, path, 'html');
+	});
+}
+
+function send_css(ctrl, path) {
+
+	if (F.temporary.notfound[ctrl.uri.key]) {
+		ctrl.fallback(404);
+		return;
+	}
+
+	let filename = F.temporary.minified[ctrl.uri.key];
+	if (filename) {
+		send_file(ctrl, filename, 'css');
+		return;
+	}
+
+	readfile(path, function(err, output) {
+
+		if (err) {
+			F.temporary.notfound[ctrl.uri.key] = 1;
+			ctrl.fallback(404);
+			return;
+		}
+
+		if (ctrl.response.minify && F.config.$minifycss)
+			output.body = F.TMinificators.css(output.body);
+
+		if (DEBUG) {
+			ctrl.response.headers['last-modified'] = output.date;
+			ctrl.response.headers['content-type'] = 'text/css';
+			ctrl.response.value = output.body;
+			ctrl.flush();
+		} else {
+			let filename = F.path.tmp(F.id + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.css');
+			F.Fs.writeFile(filename, output.body, function(err) {
+				if (err) {
+					F.temporary.notfound[ctrl.uri.key] = 1;
+					ctrl.fallback(404, err.toString());
+				} else {
+					F.temporary.minified[ctrl.uri.key] = filename;
+					send_file(ctrl, filename, 'css');
+				}
+			});
+		}
+	});
+}
+
+function send_js(ctrl, path) {
+
+	if (F.temporary.notfound[ctrl.uri.key]) {
+		ctrl.fallback(404);
+		return;
+	}
+
+	let filename = F.temporary.minified[ctrl.uri.key];
+	if (filename) {
+		send_file(ctrl, filename, 'js');
+		return;
+	}
+
+	readfile(path, function(err, output) {
+
+		if (err) {
+			F.temporary.notfound[ctrl.uri.key] = 1;
+			ctrl.fallback(404);
+			return;
+		}
+
+		if (ctrl.response.minify && F.config.$minifyjs)
+			output.body = F.TMinificators.js(output.body);
+
+		if (DEBUG) {
+			ctrl.response.headers['last-modified'] = output.date;
+			ctrl.response.headers['content-type'] = 'text/javascript';
+			ctrl.response.value = output.body;
+			ctrl.flush();
+		} else {
+			let filename = F.path.tmp(F.id + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.js');
+			F.Fs.writeFile(filename, output.body, function(err) {
+				if (err) {
+					F.temporary.notfound[ctrl.uri.key] = 1;
+					ctrl.fallback(404, err.toString());
+				} else {
+					F.temporary.minified[ctrl.uri.key] = filename;
+					send_file(ctrl, filename, 'js');
+				}
+			});
+		}
+	});
 }
 
 function send_file(ctrl, path, ext) {
@@ -751,10 +847,13 @@ function send_file(ctrl, path, ext) {
 	var range = ctrl.headers.range;
 	var httpcache = ctrl.response.cache && !CHECK_NOCACHE[ext] && F.config.$httpexpire;
 
-	F.Fs.lstat(path, function(err, stats) {
+	var loadstats = function(err, stats, cache) {
 
 		if (err) {
-			F.temporary.notfound[ctrl.uri.key] = true;
+
+			if (ctrl.response.cache)
+				F.temporary.notfound[ctrl.uri.key] = true;
+
 			ctrl.fallback(404);
 			return;
 		}
@@ -764,11 +863,18 @@ function send_file(ctrl, path, ext) {
 		else if (ctrl.response.headers.expires)
 			delete ctrl.response.headers.expires;
 
-		cache = { date: stats.mtime.toUTCString(), size: stats.size };
+		if (!cache)
+			cache = { date: stats.mtime.toUTCString(), size: stats.size };
 
 		ctrl.response.headers['last-modified'] = cache.date;
 		ctrl.response.headers.etag = '858' + CONF.$httpetag;
 
+		var type = F.TUtils.contentTypes[ext] || F.TUtils.contentTypes.bin;
+
+		if (CHECK_CHARSET[type])
+			type += '; charset=utf-8';
+
+		ctrl.response.headers['content-type'] = type;
 		F.temporary.tmp[ctrl.uri.key] = cache;
 
 		var reader;
@@ -784,17 +890,17 @@ function send_file(ctrl, path, ext) {
 
 			if (beg > end) {
 				beg = 0;
-				end = stats.size - 1;
+				end = cache.size - 1;
 			}
 
-			if (end > stats.size)
-				end = stats.size - 1;
+			if (end > cache.size)
+				end = cache.size - 1;
 
 			ctrl.response.headers['content-length'] = (end - beg) + 1;
-			ctrl.response.headers['content-range'] = 'bytes ' + beg + '-' + end + '/' + stats.size;
+			ctrl.response.headers['content-range'] = 'bytes ' + beg + '-' + end + '/' + cache.size;
 			ctrl.res.writeHead(206, ctrl.response.headers);
 			reader = F.Fs.createReadStream(path, { start: beg, end: end });
-			reader.pip(ctrl.res);
+			reader.pipe(ctrl.res);
 			F.stats.response.streaming++;
 
 		} else {
@@ -813,7 +919,12 @@ function send_file(ctrl, path, ext) {
 
 			F.stats.response.file++;
 		}
-	});
+	};
+
+	if (cache)
+		loadstats(null, null, cache);
+	else
+		F.Fs.lstat(path, loadstats);
 }
 
 function HttpFile(meta) {
@@ -827,6 +938,18 @@ function HttpFile(meta) {
 	self.type = meta.type;
 	self.removable = true;
 }
+
+HttpFile.prototype = {
+	get isImage() {
+		this.type.indexOf('image/') !== -1;
+	},
+	get isVideo() {
+		this.type.indexOf('video/') !== -1;
+	},
+	get isAudio() {
+		this.type.indexOf('audio/') !== -1;
+	}
+};
 
 HttpFile.prototype.rename = HttpFile.prototype.move = function(filename, callback) {
 	var self = this;
@@ -940,18 +1063,6 @@ HttpFile.prototype.stream = function(opt) {
 
 HttpFile.prototype.pipe = function(stream, opt) {
 	return F.Fs.createReadStream(this.path, opt).pipe(stream, opt);
-};
-
-HttpFile.prototype.isImage = function() {
-	return this.type.indexOf('image/') !== -1;
-};
-
-HttpFile.prototype.isVideo = function() {
-	return this.type.indexOf('video/') !== -1;
-};
-
-HttpFile.prototype.isAudio = function() {
-	return this.type.indexOf('audio/') !== -1;
 };
 
 HttpFile.prototype.image = function(im) {
