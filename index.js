@@ -24,6 +24,7 @@ const EMPTYOBJECT = {};
 const EMPTYARRAY = [];
 
 const REG_SKIPERRORS = /epipe|invalid\sdistance/i;
+const REG_HTTPHTTPS = /^(http|https):\/\//i;
 
 Object.freeze(EMPTYOBJECT);
 Object.freeze(EMPTYARRAY);
@@ -47,6 +48,8 @@ global.DEF = {};
 (function(F) {
 
 	F.id = '';
+	F.bundling = true;
+	F.isWindows = Os.platform().substring(0, 3).toLowerCase() === 'win';
 	F.is5 = F.version = 5000;
 	F.version_header = '5';
 	F.version_node = process.version + '';
@@ -77,7 +80,8 @@ global.DEF = {};
 		websocketscache: {},
 		files: [],
 		filescache: {},
-		timeout: null
+		timeout: null,
+		middleware: {}
 	};
 
 	// Internal cache
@@ -88,6 +92,7 @@ global.DEF = {};
 		processing: {},
 		range: {},
 		views: {},
+		viewscache: [],
 		versions: {},
 		dependencies: {}, // temporary for module dependencies
 		other: {},
@@ -217,9 +222,27 @@ global.DEF = {};
 	F.path.root = path => Path.join(F.directory, path || '');
 	F.path.public = path => Path.join(F.directory, 'public', path || '');
 	F.path.databases = path => Path.join(F.directory, 'databases', path || '');
+	F.path.views = path => Path.join(F.directory, 'views', path || '');
 	F.path.flowstreams = path => Path.join(F.directory, 'flowstreams', path || '');
 	F.path.plugins = path => Path.join(F.directory, 'plugins', path || '');
 	F.path.private = path => Path.join(F.directory, 'private', path || '');
+
+	F.path.route = function(path, directory = 'root') {
+
+		// Absolute
+		if (path[0] === '~')
+			return path.substring(1);
+
+		// Plugins
+		if (path[0] === '_') {
+			let tmp = path.substring(1);
+			let index = tmp.indexOf('/', 1);
+			return F.path.plugins(tmp.substring(0, index) + (directory === 'root' ? '' : ('/' + directory)) + '/' + tmp.substring(index + 2));
+		}
+
+		return F.path[directory](path);
+	};
+
 	F.path.tmp = F.path.temp = function(path) {
 		if (!F.temporary.path.directory_tmp)
 			F.path.verify('tmp');
@@ -227,6 +250,7 @@ global.DEF = {};
 	};
 
 	F.path.unlink = unlink;
+	F.path.rmdir = rmdir;
 	F.path.verify = function(name) {
 
 		var key = 'directory_' + name;
@@ -295,6 +319,14 @@ global.DEF = {};
 
 	TUtils.EventEmitter2.extend(F);
 
+	F.on2 = F.on;
+	F.on = function(name, fn) {
+		if (name === 'ready' && F.isloaded)
+			fn();
+		else
+			F.on2(name, fn);
+	};
+
 })(global.F);
 
 function pathexists(filename, isfile) {
@@ -305,6 +337,29 @@ function pathexists(filename, isfile) {
 		return false;
 	}
 }
+
+function rmdir(arr, callback) {
+
+	if (typeof(arr) === 'string')
+		arr = [arr];
+
+	if (!arr.length) {
+		callback && callback();
+		return;
+	}
+
+	var path = arr.shift();
+	if (path) {
+		F.TUtils.ls(path, function(files, directories) {
+			directories.reverse();
+			directories.push(path);
+			files.wait((item, next) => F.Fs.unlink(item, next), function() {
+				directories.wait((item, next) => F.Fs.rmdir(item, next), () => rmdir(arr, callback));
+			});
+		});
+	} else if (callback)
+		callback();
+};
 
 function unlink(arr, callback) {
 
@@ -318,7 +373,7 @@ function unlink(arr, callback) {
 
 	var filename = arr.shift();
 	if (filename)
-		Fs.unlink(filename, () => unlink(arr, callback));
+		F.Fs.unlink(filename, () => unlink(arr, callback));
 	else if (callback)
 		callback();
 }
@@ -362,16 +417,24 @@ function unlink(arr, callback) {
 	CONF.$insecure = false;
 	CONF.$performance = false;
 	CONF.$filtererrors = true;
+	CONF.$cleartemp = true;
+	CONF.$customtitles = false;
+	CONF.$version = '';
 
 	CONF.$node_modules = require.resolve('./index');
 	CONF.$node_modules = CONF.$node_modules.substring(0, CONF.$node_modules.length - (8 + 7));
 	CONF.$npmcache = '/var/www/.npm';
+	CONF.$python = 'python3';
 
 	process.env.TZ = CONF.$timezone;
 
 })(global.CONF);
 
 (function(DEF) {
+
+	DEF.onView = function(name, html) {
+		return html;
+	};
 
 	DEF.onError = function(err, name, url) {
 
@@ -391,6 +454,8 @@ function unlink(arr, callback) {
 		EMIT('error', obj);
 		F.stats.error++;
 	};
+
+	DEF.helpers = {};
 
 })(global.DEF);
 
@@ -525,6 +590,10 @@ F.load = async function(types = [], callback) {
 
 	var beg = Date.now();
 
+	F.bundling = true;
+
+	await F.clear(true);
+
 	if (typeof(types) === 'string')
 		types = types.split(',').trim();
 
@@ -557,7 +626,7 @@ F.load = async function(types = [], callback) {
 			F.loadresource(F.TUtils.getName(resource).replace(/\.resource$/i, ''), await read(resource));
 	}
 
-	let loader = ['modules', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams'];
+	let loader = ['modules', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware'];
 	var files = [];
 	var tmp;
 
@@ -580,7 +649,7 @@ F.load = async function(types = [], callback) {
 
 			files.push({ id: F.TUtils.getName(plugin).replace(/\.js$/, ''), type: 'plugins', filename: F.path.root('plugins/' + plugin + '/index.js') });
 
-			let loader = ['controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams'];
+			let loader = ['controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware'];
 			for (let type of loader) {
 				tmp = await list(F.path.root('plugins/' + plugin + '/' + type), type === 'flowstreams' ? 'flow' : 'js');
 				if (tmp.length)
@@ -588,6 +657,17 @@ F.load = async function(types = [], callback) {
 			}
 		}
 	}
+
+	files.sort(function(a, b) {
+
+		if (a.type === 'middleware')
+			return 1;
+
+		if (a.type === 'middleware')
+			return -1;
+
+		return 0;
+	});
 
 	for (let file of files) {
 
@@ -603,27 +683,36 @@ F.load = async function(types = [], callback) {
 				if (tmp.id)
 					F.modules[tmp.id] = tmp;
 
+				tmp.install && tmp.install();
 				break;
+
 			case 'plugins':
 				tmp = require(file.filename);
 				F.plugins[file.id] = tmp;
+				tmp.install && tmp.install();
 				break;
+
 			case 'controllers':
 			case 'schemas':
 			case 'actions':
 			case 'models':
 			case 'definitions':
-				require(file.filename);
+			case 'middleware':
+				tmp = require(file.filename);
+				tmp.install && tmp.install();
 				break;
+
 			case 'flowstreams':
 				// @TODO: missing FlowStream implementation
 				break;
+
 		}
 
 	}
 
 	F.loadservices();
 	F.stats.compilation = Date.now() - beg;
+	F.isloaded = true;
 	callback && callback();
 
 };
@@ -714,6 +803,12 @@ F.cleanup = function(stream, callback) {
 	});
 };
 
+F.python = function(filename, callback) {
+	if (!callback)
+		return new Promise((resolve, reject) => F.python(filename, data, (err, response) => err ? reject(err) : response));
+	F.Child.exec(F.config.$python + ' ' + filename, { cwd: F.Path.dirname(filename) }, callback);
+};
+
 F.pipinstall = function(name, callback) {
 
 	if (!callback)
@@ -721,7 +816,7 @@ F.pipinstall = function(name, callback) {
 
 	var args = {};
 	args.cwd = F.directory;
-	F.Child.exec('pip install ' + name, args, function(err, response, output) {
+	F.Child.exec(F.config.$python + ' -m pip install ' + name, args, function(err, response, output) {
 		callback && callback(err ? (output || err) : null, null);
 	});
 
@@ -864,7 +959,7 @@ F.loadservices = function() {
 				if (ctrl.destroyed) {
 					F.temporary.pending.splice(index, 1);
 				} else if (ctrl.timeout <= 0) {
-					ctrl.system(408);
+					ctrl.fallback(408);
 					F.temporary.pending.splice(index, 1);
 				} else {
 					F.stats.request.pending++;
@@ -887,9 +982,15 @@ F.http = function(opt) {
 		opt = {};
 
 	F.load([], function() {
-		var server = Http.createServer(THttp.listen);
-		server.listen(opt.port || F.config.$port, opt.ip || F.config.$ip);
-		F.console();
+
+		F.server = Http.createServer(THttp.listen);
+		F.server.listen(opt.port || F.config.$port, opt.ip || F.config.$ip);
+
+		CONF.$performance && F.server.on('connection', httptuningperformance);
+
+		if (!process.connected)
+			F.console();
+
 	});
 };
 
@@ -1017,6 +1118,29 @@ F.merge = function(url) {
 
 	for (let i = 1; i < arguments.length; i++) {
 		let links = arguments[i];
+
+		if (typeof(links) === 'string') {
+			let tmp = links.split('+').trim();
+			for (let link of tmp) {
+
+				if (REG_HTTPHTTPS.test(link)) {
+					arr.push(link);
+					continue;
+				}
+
+				if (link[0] !== '~' && link[0] !== '_') {
+					let ext = F.TUtils.getExtension(link);
+					if (ext === 'js')
+						link = F.path.public('/js/' + link);
+					else
+						link = F.path.public('/css/' + link);
+					arr.push(link);
+				} else
+					arr.push(F.path.route(link, 'public'));
+			}
+			continue;
+		}
+
 		if (!(links instanceof Array))
 			links = [links];
 		for (let link of links)
@@ -1038,7 +1162,12 @@ F.merge = function(url) {
 			ctrl.binary(buffer, TUtils.contentTypes[ext] || TUtils.contentTypes.bin);
 		} else {
 			F.lock('merging_' + key, async function(next) {
-				if (!F.temporary.merged[key]) {
+				if (F.temporary.merged[key]) {
+					if (F.temporary.notfound[url]) {
+						ctrl.fallback(404);
+						return;
+					}
+				} else {
 					if (F.temporary.notfound[url])
 						delete F.temporary.notfound[url];
 					F.temporary.merged[key] = true;
@@ -1082,8 +1211,118 @@ F.touch = function(url) {
 
 F.route = F.TRouting.route;
 
+F.middleware = function(name, fn, assign) {
+
+	if (fn == null) {
+		delete F.routes.middleware[name];
+		return;
+	}
+
+	F.routes.middleware[name] = fn;
+
+	if (assign) {
+
+		if (typeof(assign) === 'string')
+			assign = assign.split(',').trim();
+
+		var routes = ['routes', 'files', 'websockets'];
+
+		for (let a of assign) {
+
+			if (a === '*') {
+				for (let type of routes) {
+					for (let route of F.routes[type]) {
+						if (!route.middleware.includes(name))
+							route.middleware.push(name);
+					}
+				}
+			} else {
+				if (a === 'websocket' || a === 'file' || a === 'route')
+					a += 's';
+				let routes = F.routes[a];
+				if (routes) {
+					for (let route of routes) {
+						if (!route.middleware.includes(name))
+							route.middleware.push(name);
+					}
+				}
+			}
+		}
+	}
+};
+
+F.clear = function(init = true, callback) {
+
+	if (callback == null)
+		return new Promise(resolve => F.clear(init, () => resolve()));
+
+	var dir = F.path.tmp();
+	var plus = F.id;
+
+	if (dir[dir.length - 1] !== '/')
+		dir += '/';
+
+	if (F.isWindows)
+		dir = dir.replaceAll('/', '\\');
+
+	if (init) {
+
+		if (!F.config.$cleartemp) {
+			if (F.bundling) {
+				// clears only JS and CSS files
+				F.TUtils.ls(dir, function(files) {
+					F.path.unlink(files, callback);
+				}, function(filename, folder) {
+					if (folder || (plus && !filename.substring(dir.length).startsWith(plus)))
+						return false;
+					var ext = F.TUtils.getExtension(filename);
+					return ext === 'js' || ext === 'css' || ext === 'tmp' || ext === 'upload' || ext === 'html' || ext === 'htm';
+				});
+			}
+			return;
+		}
+	}
+
+	if (!pathexists(dir) || !F.bundling) {
+		callback && callback();
+		return;
+	}
+
+	F.TUtils.ls(dir, function(files, directories) {
+
+		if (init) {
+			var arr = [];
+			for (let file of files) {
+				var filename = file.substring(dir.length);
+				if (plus && !filename.startsWith(plus))
+					continue;
+
+				if (filename.indexOf('/') === -1 && !filename.endsWith('.cache'))
+					arr.push(file);
+			}
+
+			files = arr;
+			directories = directories.remove(function(name) {
+				name = F.TUtils.getName(name);
+				return name[0] !== '~';
+			});
+		}
+
+		F.path.unlink(files, () => F.path.rmdir(directories, callback));
+	});
+
+	if (!init)
+		F.touch();
+};
+
+function httptuningperformance(socket) {
+	socket.setNoDelay(true);
+	socket.setKeepAlive(true, 10);
+}
+
+/*
 process.on('unhandledRejection', function(e) {
-	F.error(e, '', null);
+	F.error(e, '');
 });
 
 process.on('uncaughtException', function(e) {
@@ -1096,7 +1335,8 @@ process.on('uncaughtException', function(e) {
 		return;
 	} else if (F.config.$filtererrors && REG_SKIPERRORS.test(err))
 		return;
-	F.error(e, '', null);
+	F.error(e, '');
 });
+*/
 
 require('./global');

@@ -1616,35 +1616,6 @@ exports.filestreamer = function(filename) {
 	return new Fs(filename);
 };
 
-exports.encode = function(str) {
-
-	if (str == null)
-		return '';
-
-	var type = typeof(str);
-	if (type !== 'string')
-		str = str.toString();
-
-	return str.encode();
-};
-
-exports.decode = function(str) {
-
-	if (str == null)
-		return '';
-
-	var type = typeof(str);
-	if (type !== 'string')
-		str = str.toString();
-
-	return str.decode();
-};
-
-exports.isStaticFile = function(url) {
-	var index = url.indexOf('.', url.length - 8);
-	return index !== -1;
-};
-
 exports.parseInt = function(obj, def) {
 	if (obj == null || obj === '')
 		return def === undefined ? 0 : def;
@@ -2997,7 +2968,7 @@ SP.parseXML = function(replace) {
 		if (beg === -1)
 			break;
 		end = xml.indexOf(']]>', beg + 9);
-		xml = xml.substring(0, beg) + xml.substring(beg + 9, end).trim().encode() + xml.substring(end + 3);
+		xml = xml.substring(0, beg) + xml.substring(beg + 9, end).trim().safehtml() + xml.substring(end + 3);
 		beg += 9;
 	}
 
@@ -3837,7 +3808,7 @@ SP.decrypt_uid = function(key) {
 	return exports.decrypt_uid(this, key);
 };
 
-SP.encode = function() {
+SP.safehtml = function() {
 	var output = '';
 	for (var i = 0, length = this.length; i < length; i++) {
 		var c = this[i];

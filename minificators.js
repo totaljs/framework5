@@ -273,7 +273,7 @@ exports.html = function(html, ischunk) {
 	for (var k in cache)
 		html = html.replacer(k, cache[k]);
 
-	return htmlcompresscss(htmlcompressjs(html));
+	return exports.htmlcss(exports.htmljs(html));
 };
 
 exports.htmlremovecomments = function(value) {
@@ -788,7 +788,7 @@ function cssvariables(value) {
 	return value;
 }
 
-function htmlcompressjs(html, index) {
+exports.htmljs = function(html, index = 0) {
 
 	if (!F.config.$minifyjs)
 		return html;
@@ -796,10 +796,10 @@ function htmlcompressjs(html, index) {
 	var strFrom = '<script type="text/javascript">';
 	var strTo = '</script>';
 
-	var indexBeg = html.indexOf(strFrom, index || 0);
+	var indexBeg = html.indexOf(strFrom, index);
 	if (indexBeg === -1) {
 		strFrom = '<script>';
-		indexBeg = html.indexOf(strFrom, index || 0);
+		indexBeg = html.indexOf(strFrom, index);
 		if (indexBeg === -1)
 			return html;
 	}
@@ -816,10 +816,10 @@ function htmlcompressjs(html, index) {
 	var val = js.substring(strFrom.length, js.length - strTo.length).trim();
 	var compiled = exports.js(val);
 	html = html.replacer(js, strFrom + compiled.trim() + strTo.trim());
-	return htmlcompressjs(html, indexBeg + compiled.length + 9);
-}
+	return exports.htmljs(html, indexBeg + compiled.length + 9);
+};
 
-function htmlcompresscss(html, index) {
+exports.htmlcss = function(html, index = 0) {
 
 	if (!F.config.$minifycss)
 		return html;
@@ -827,7 +827,7 @@ function htmlcompresscss(html, index) {
 	var strFrom = '<style';
 	var strTo = '</style>';
 
-	var indexBeg = html.indexOf(strFrom, index || 0);
+	var indexBeg = html.indexOf(strFrom, index);
 	if (indexBeg === -1)
 		return html;
 
@@ -844,5 +844,5 @@ function htmlcompresscss(html, index) {
 	var val = css.substring(strFrom.length, css.length - strTo.length).trim();
 	var compiled = exports.css(val);
 	html = html.replacer(css, (strFrom + compiled.trim() + strTo).trim());
-	return htmlcompresscss(html, indexBeg2 + compiled.length + 8);
-}
+	return exports.htmlcss(html, indexBeg2 + compiled.length + 8);
+};

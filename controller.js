@@ -5,6 +5,8 @@
 const REG_DOUBLESLASH = /\/{2}|\.{2,}|\.{1,}\/|/g;
 const REG_FILETMP = /\//g;
 const REG_RANGE = /bytes=/;
+const REG_ROBOT = /search|agent|bot|crawler|spider/i;
+const REG_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i;
 const CHECK_DATA = { POST: 1, PUT: 1, PATCH: 1, DELETE: 1 };
 const CHECK_COMPRESSION = { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'image/svg+xml': true, 'text/x-markdown': true, 'text/html': true };
 const CHECK_CHARSET =  { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'text/x-markdown': true, 'text/html': true };
@@ -124,27 +126,22 @@ function Controller(req, res) {
 Controller.prototype = {
 
 	get mobile() {
-		return null;
+		let ua = this.headers['user-agent'];
+		return ua ? REG_MOBILE.test(ua) : false;
 	},
 
 	get robot() {
-		return null;
+		let ua = this.headers['user-agent'];
+		return ua ? REG_ROBOT.test(ua) : false;
 	},
 
 	get ua() {
-		return null;
-	},
-
-	get ip() {
-		return null;
+		let ua = this.headers['user-agent'];
+		return ua ? ua.parseUA() : '';
 	},
 
 	get referrer() {
-		return null;
-	},
-
-	get buffer() {
-		return null;
+		return this.headers.referer;
 	}
 
 };
@@ -291,6 +288,7 @@ Controller.prototype.flush = function() {
 					response.headers['content-encoding'] = 'gzip';
 					ctrl.res.writeHead(response.status, response.headers);
 					ctrl.res.end(buffer, 'utf8');
+					ctrl.free();
 					F.stats.performance.upload += buffer.length / 1024 / 1024;
 				}
 			});
@@ -314,15 +312,19 @@ Controller.prototype.fallback = function(code, error) {
 
 	ctrl.res.writeHead(code);
 	ctrl.res.end();
+	ctrl.free();
 };
 
-Controller.prototype.view = function(value, model) {
+Controller.prototype.view = function(name, model) {
 
 	var ctrl = this;
 
 	if (ctrl.destroyed)
 		return;
 
+	var view = new F.TViewEngine.View(ctrl);
+	var output = view.render(name, model);
+	ctrl.html(output);
 };
 
 Controller.prototype.file = function(path, download) {
@@ -464,9 +466,18 @@ Controller.prototype.resume = function() {
 		// @TODO: security escaping
 		var path = ctrl.uri.key;
 
-		if (path[0] === '_')
-			path = F.path.plugins('public/' + path.substring(1));
-		else
+		if (path[0] === '_') {
+
+			let tmp = path.substring(1);
+			let index = tmp.indexOf('/', 1);
+			if (index === -1) {
+				ctrl.fallback(404);
+				return;
+			}
+
+			path = F.path.plugins(tmp.substring(0, index) + '/public/' + tmp.substring(index + 2));
+
+		} else
 			path = F.path.public(path.substring(1));
 
 		switch (ctrl.ext) {
@@ -496,6 +507,7 @@ Controller.prototype.free = function() {
 		return;
 
 	ctrl.released = true;
+	ctrl.destroyed = true;
 
 	if (ctrl.preventclearfiles != true)
 		ctrl.clear();
@@ -507,9 +519,25 @@ Controller.prototype.free = function() {
 Controller.prototype.$route = function() {
 
 	var ctrl = this;
+	if (ctrl.isfile) {
 
-	if (ctrl.uri.file) {
-		ctrl.fallback(404);
+		if (F.routes.files.length) {
+			let route = F.TRouting.lookupfiles(ctrl);
+			if (route) {
+				ctrl.route = route;
+				if (route.middleware.length)
+					middleware(ctrl);
+				else
+					route.action(ctrl);
+				return;
+			}
+		}
+
+		if (F.config.$httpfiles[ctrl.ext])
+			ctrl.resume();
+		else
+			ctrl.fallback(404);
+
 		return;
 	}
 
@@ -685,11 +713,15 @@ function execute(ctrl) {
 		ctrl.params[param.name] = value;
 	}
 
-	if (ctrl.route.action) {
-		ctrl.route.action(ctrl);
+	if (ctrl.route.middleware.length) {
+		middleware(ctrl);
 	} else {
-		// schema/actions?
-		// ctrl.route.action(ctrl);
+		if (ctrl.route.action) {
+			ctrl.route.action(ctrl);
+		} else {
+			// schema/actions?
+			// ctrl.route.action(ctrl);
+		}
 	}
 }
 
@@ -925,6 +957,17 @@ function send_file(ctrl, path, ext) {
 		loadstats(null, null, cache);
 	else
 		F.Fs.lstat(path, loadstats);
+}
+
+function middleware(ctrl) {
+	var run = function(index) {
+		var fn = ctrl.route.middleware[index];
+		if (fn)
+			fn(ctrl, () => run(index + 1));
+		else
+			ctrl.route.action(ctrl);
+	};
+	run(0);
 }
 
 function HttpFile(meta) {

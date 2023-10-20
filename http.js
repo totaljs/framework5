@@ -18,12 +18,6 @@ exports.listen = function(req, res) {
 	// @TODO: check blacklist
 	// @TODO: check allow_reqlimit
 
-	if (DEF.blacklist[req.ip]) {
-		F.stats.request.blocked++;
-		req.destroy();
-		return;
-	}
-
 	// Not supported
 	if (req.method === 'HEAD') {
 		F.stats.request.blocked++;
@@ -33,8 +27,14 @@ exports.listen = function(req, res) {
 
 	var ctrl = new TController.Controller(req, res);
 
-	if (F.config.$reqlimit) {
-		if (F.temporary.ddos[ctrl.ip] > F.config.$reqlimit) {
+	if (F.config.$blacklist && F.config.$blacklist.indexOf(ctrl.ip) !== -1) {
+		F.stats.request.blocked++;
+		ctrl.fallback(400, 'IP address is blocked');
+		return;
+	}
+
+	if (F.config.$httpreqlimit) {
+		if (F.temporary.ddos[ctrl.ip] > F.config.$httpreqlimit) {
 			F.stats.response.ddos++;
 			ctrl.fallback(503);
 			return;
@@ -47,15 +47,6 @@ exports.listen = function(req, res) {
 
 	if (F.routes.virtual[ctrl.url]) {
 		F.routes.virtual[ctrl.url](ctrl);
-		return;
-	}
-
-	if (ctrl.isfile) {
-		// @TODO: file routing
-		if (F.config.$httpfiles[ctrl.ext])
-			ctrl.resume();
-		else
-			ctrl.fallback(404);
 		return;
 	}
 
