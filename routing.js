@@ -37,54 +37,79 @@ function Route(url, action, size) {
 	url = url.substring(index + 1);
 
 	t.auth = 0;
-	t.params = [];
 	t.action = action;
-
-	for (let path of t.url) {
-		if (path[0] === '{') {
-			let tmp = path.split(':').trim();
-			t.params.push({ name: tmp[0].replace(/\{|\}/g, ''), type: tmp[1] || 'string', index: t.params.length });
-		}
-	}
 
 	switch (t.method[0]) {
 		case '+':
 			t.auth = 1;
+			t.method = t.method.substring(1);
 			break;
 		case '-':
 			t.auth = 2;
+			t.method = t.method.substring(1);
 			break;
 	}
 
-	t.size = size || 0;
+	if (t.method === 'FILE') {
+		let types = t.url[t.url.length - 1];
+		if (types === '*') {
+			t.url[t.url.length - 1] = '*';
+		} else if (types === '*.*') {
+			t.url.splice(t.url.length - 1, 1);
+		} else {
+			t.url.splice(t.url.length - 1, 1);
+			index = types.lastIndexOf('.');
+			types = types.substring(index + 1).split('|');
+			t.ext = {};
+			for (let type of types)
+				t.ext[type] = 1;
+		}
+	} else {
+		t.params = [];
+		for (let path of t.url) {
+			if (path[0] === '{') {
+				let tmp = path.split(':').trim();
+				t.params.push({ name: tmp[0].replace(/\{|\}/g, ''), type: tmp[1] || 'string', index: t.params.length });
+			}
+		}
+		t.size = size || 0;
+	}
+
 	t.flags = {};
 	t.middleware = [];
-	t.wildcard = t.url.indexOf('*') != -1;
 
-	if (t.wildcard)
-		t.url = t.url.replace(/\*/g, '');
+	index = t.url.indexOf('*');
+	t.wildcard = index != -1;
+
+	if (index != -1)
+		t.url.splice(index, 1);
 
 	url = url.replace(/<\d+/g, function(text) {
 		t.size = +text.substring(1);
 		return '';
 	});
 
+	t.priority = 100;
+
 	// Parse flags
 	url = url.replace(/(@|#)+[a-z0-9]+/gi, function(text) {
 		let tmp = text.trim();
-		if (tmp[0] === '#')
+		if (tmp[0] === '#') {
 			t.middleware.push(tmp.substring(1));
-		else
+		} else {
 			t.flags[tmp.substring(1)] = 1;
-
+			t.priority--;
+		}
 		return '';
 	}).trim();
 
 	index = url.indexOf('-->');
 
+	if (t.wildcard)
+		t.priority -= 50;
+
 	if (index !== -1)
 		t.action = url.replace(/\s{2,}/g, ' ');
-
 }
 
 Route.prototype.compare = function(ctrl) {
@@ -125,6 +150,10 @@ exports.sort = function() {
 	var cache = {};
 	var tmp;
 	var key;
+
+	F.routes.routes.quicksort('priority_desc');
+	F.routes.files.quicksort('priority_desc');
+	F.routes.websockets.quicksort('priority_desc');
 
 	for (let route of F.routes.routes) {
 
@@ -178,18 +207,26 @@ exports.sort = function() {
 	}
 
 	F.routes.websocketscache = cache;
+	cache = {};
+
+	for (let route of F.routes.files) {
+		tmp = cache;
+		let key = route.url.join('/')
+		if (cache[key])
+			cache[key].push(route);
+		else
+			cache[key] = [route];
+	}
+
+	F.routes.filescache = cache;
 };
 
 function compareflags(ctrl, routes, auth) {
 
-	var status = null;
-
 	for (let route of routes) {
 
-		if (auth && route.auth && route.auth !== auth) {
-			status = 0;
+		if (auth && route.auth && route.auth !== auth)
 			continue;
-		}
 
 		if (route.flags.referrer || route.flags.referer) {
 			if (!ctrl.headers.referer || ctrl.headers.referer.indexOf(ctrl.headers.host) === -1)
@@ -222,29 +259,20 @@ function compareflags(ctrl, routes, auth) {
 
 		return route;
 	}
-
-	return status;
 }
 
 exports.lookup = function(ctrl, auth, skip) {
 
-	// F.lookup = function(req, membertype, skip) {
-
-	// May returns three responses:
-	// {Route} with a route
-	// 0 {Number} unauthorized
-	// null {Object} 404
-
-	// membertype 0: does not matter
-	// membertype 1: logged
-	// membertype 2: unlogged
+	// auth 0: does not matter
+	// auth 1: logged
+	// auth 2: unlogged
 
 	var key = ctrl.method;
 	var tmp = F.routes.routescache[key];
 	if (!tmp)
 		return null;
 
-	var arr = ctrl.split.length ? ctrl.split : EMPTYREQSPLIT;
+	var arr = ctrl.split;
 	var length = arr.length;
 	var route;
 	var item;
@@ -378,4 +406,15 @@ exports.lookupcors = function(ctrl) {
 	// Continue
 	return true;
 
+};
+
+exports.lookupfiles = function(ctrl, auth) {
+	if (F.routes.files.length) {
+		let key = '';
+		for (let i = 0; i < ctrl.split2.length - 1; i++)
+			key += (i ? '/' : '') + ctrl.split2[i];
+		let routes = F.routes.filescache[key];
+		if (routes)
+			return compareflags(ctrl, routes, auth);
+	}
 };

@@ -76,6 +76,7 @@ global.DEF = {};
 		websockets: [],
 		websocketscache: {},
 		files: [],
+		filescache: {},
 		timeout: null
 	};
 
@@ -341,12 +342,13 @@ function unlink(arr, callback) {
 	CONF.$uploadchecktypes = true;
 	CONF.$cors = '';
 	CONF.$root = '';
-	CONF.$reqlimit = 0; // request limit per ip
+	CONF.$httpreqlimit = 0; // request limit per ip
 	CONF.$httpcompress = true;
 	CONF.$httpetag = '';
 	CONF.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
 	CONF.$httprangebuffer = 5120; // 5 MB
 	CONF.$httptimeout = 5; // 5 seconds
+	CONF.$blacklist = '';
 	CONF.$xpoweredby = 'Total.js';
 	CONF.$minifyjs = true;
 	CONF.$minifycss = true;
@@ -371,7 +373,6 @@ function unlink(arr, callback) {
 
 (function(DEF) {
 
-	DEF.blacklist = {};
 	DEF.onError = function(err, name, url) {
 
 		NOW = new Date();
@@ -1078,6 +1079,8 @@ F.touch = function(url) {
 		F.temporary.notfound = {};
 	}
 };
+
+F.route = F.TRouting.route;
 
 process.on('unhandledRejection', function(e) {
 	F.error(e, '', null);
