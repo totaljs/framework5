@@ -45,8 +45,14 @@ exports.listen = function(req, res) {
 			F.temporary.ddos[ctrl.ip] = 1;
 	}
 
-	if (ctrl.uri.file) {
-		if (F.config.$static_accepts[ctrl.ext])
+	if (F.routes.virtual[ctrl.url]) {
+		F.routes.virtual[ctrl.url](ctrl);
+		return;
+	}
+
+	if (ctrl.isfile) {
+		// @TODO: file routing
+		if (F.config.$httpfiles[ctrl.ext])
 			ctrl.resume();
 		else
 			ctrl.fallback(404);
@@ -56,7 +62,7 @@ exports.listen = function(req, res) {
 	// Pending requests
 	F.temporary.pending.push(ctrl);
 
-	if (!ctrl.uri.file && DEF.onCORS && F.config.$cors) {
+	if (!ctrl.uri.file && (DEF.onCORS || F.config.$cors)) {
 		if (F.TRouting.lookupcors(ctrl))
 			ctrl.$route();
 	} else
