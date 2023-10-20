@@ -524,7 +524,7 @@ function writeattachemnt_stream(attachment, obj, stream) {
 	stream.$mailerobj = obj;
 	stream.on('data', writeattachment_data);
 
-	CLEANUP(stream, function() {
+	F.cleanup(stream, function() {
 		mailer.$writeline(obj, CRLF);
 		mailer.$writeattachment(obj);
 	});

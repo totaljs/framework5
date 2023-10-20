@@ -16,7 +16,6 @@ const TUtils = require('./utils');
 const THttp = require('./http');
 const TViewEngine = require('./viewengine');
 const TBuilders = require('./builders');
-const TInternal = require('./internal');
 const TMinificators = require('./minificators');
 
 const NODE_MODULES = { buffer: 1, child_process: 1, process: 1, fs: 1, events: 1, http: 1, https: 1, http2: 1, util: 1, net: 1, os: 1, path: 1, punycode: 1, readline: 1, repl: 1, stream: 1, string_decoder: 1, tls: 1, trace_events: 1, tty: 1, dgram: 1, url: 1, v8: 1, vm: 1, wasi: 1, worker_threads: 1, zlib: 1, crypto: 1 };
@@ -212,7 +211,6 @@ global.DEF = {};
 	F.TUtils = TUtils;
 	F.TBuilders = TBuilders;
 	F.TViewEngine = TViewEngine;
-	F.TInternal = TInternal;
 	F.TMinificators = TMinificators;
 
 	F.directory = TUtils.$normalize(require.main ? Path.dirname(require.main.filename) : process.cwd());
@@ -313,7 +311,6 @@ global.DEF = {};
 
 			if (i >= beg && !pathexists(directory))
 				Fs.mkdirSync(directory);
-
 		}
 	};
 
@@ -586,6 +583,10 @@ F.resource = function(language, key) {
 	return language === 'default' ? '' : F.resource('default', key);
 };
 
+F.auth = function(fn) {
+	DEF.onAuthorize = fn;
+};
+
 F.load = async function(types = [], callback) {
 
 	var beg = Date.now();
@@ -792,10 +793,10 @@ F.download = function(url, filename, callback, timeout) {
 F.cleanup = function(stream, callback) {
 
 	if (!callback)
-		return new Promise(resolve => CLEANUP(stream, resolve));
+		return new Promise(resolve => F.cleanup(stream, resolve));
 
-	F.TInternal.onFinished(stream, function() {
-		F.TInternal.destroyStream(stream);
+	F.TUtils.onfinished(stream, function() {
+		F.TUtils.destroystream(stream);
 		if (callback) {
 			callback();
 			callback = null;

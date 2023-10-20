@@ -351,7 +351,7 @@ FP._read = function(id, callback, nostream) {
 			if (!nostream) {
 				F.stats.performance.open++;
 				meta.stream = Fs.createReadStream(filename, { fd: fd, start: HEADERSIZE });
-				CLEANUP(meta.stream, () => Fs.close(fd, NOOP));
+				F.cleanup(meta.stream, () => Fs.close(fd, NOOP));
 			} else
 				Fs.close(fd, NOOP);
 
@@ -412,7 +412,7 @@ FP._readbuffer = function(id, callback) {
 			var stream = Fs.createReadStream(filename, { fd: fd, start: HEADERSIZE });
 			stream.on('data', chunk => buffer.push(chunk));
 
-			CLEANUP(stream, function() {
+			F.cleanup(stream, function() {
 				Fs.close(fd, NOOP);
 				callback(err, Buffer.concat(buffer), meta);
 			});
@@ -939,7 +939,7 @@ FP._image = function(id, callback) {
 		var image = Image.load(stream);
 		stream.$totalfd = fd;
 		callback(err, image, obj);
-		CLEANUP(stream);
+		F.cleanup(stream);
 	}, true);
 
 	return self;

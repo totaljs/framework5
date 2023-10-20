@@ -224,7 +224,7 @@ Instance.prototype.httprouting = function() {
 						if (meta.filename) {
 							var stream = F.Fs.createReadStream(meta.filename);
 							self.stream(stream, meta.type, meta.download);
-							meta.remove && CLEANUP(stream, () => F.Fs.unlink(meta.filename, NOOP));
+							meta.remove && F.cleanup(stream, () => F.Fs.unlink(meta.filename, NOOP));
 						} else {
 							if (typeof(data) === 'string')
 								self.binary(Buffer.from(data, 'base64'), meta.type);

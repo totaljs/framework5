@@ -11,6 +11,8 @@ global.COMPONENTATOR = F.componentator;
 global.ERROR = F.error;
 global.MERGE = F.merge;
 global.TOUCH = F.touch;
+global.AUTH = F.auth;
+global.CLEANUP = F.cleanup;
 
 global.CORS = function(origin) {
 	CONF.$cors = origin || '*';

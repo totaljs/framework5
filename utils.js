@@ -7102,4 +7102,113 @@ function parsepath(path) {
 	return builder;
 }
 
+function destroyStreamopen() {
+	if (typeof(this.fd) === 'number')
+		this.close();
+}
+
+// Copyright (c) 2013 Jonathan Ong <me@jongleberry.com>
+// Copyright (c) 2014 Douglas Christopher Wilson <doug@somethingdoug.com>
+// MIT
+exports.destroystream = function(stream) {
+
+	if (stream instanceof ReadStream) {
+		stream.destroy();
+		typeof(stream.close) === 'function' && stream.on('open', destroyStreamopen);
+	} else if (stream instanceof Stream)
+		typeof(stream.destroy) === 'function' && stream.destroy();
+
+	if (stream.$totalfd) {
+		Fs.close(stream.$totalfd, NOOP);
+		stream.$totalfd = null;
+	}
+
+	return stream;
+};
+
+// Copyright (c) 2013 Jonathan Ong <me@jongleberry.com>
+// Copyright (c) 2014 Douglas Christopher Wilson <doug@somethingdoug.com>
+// MIT
+exports.onfinished = function(stream, fn) {
+
+	if (stream.$onFinished) {
+		fn && fn();
+		fn = null;
+		return;
+	}
+
+	if (stream.$onFinishedQueue) {
+		if (stream.$onFinishedQueue instanceof Array)
+			stream.$onFinishedQueue.push(fn);
+		else
+			stream.$onFinishedQueue = [stream.$onFinishedQueue, fn];
+		return;
+	} else
+		stream.$onFinishedQueue = fn;
+
+	var callback = function() {
+		!stream.$onFinished && (stream.$onFinished = true);
+		if (stream.$onFinishedQueue instanceof Array) {
+			while (stream.$onFinishedQueue.length)
+				stream.$onFinishedQueue.shift()();
+			stream.$onFinishedQueue = null;
+		} else if (stream.$onFinishedQueue) {
+			stream.$onFinishedQueue();
+			stream.$onFinishedQueue = null;
+		}
+	};
+
+	if (isFinished(stream)) {
+		setImmediate(callback);
+	} else {
+
+		if (stream.socket) {
+			if (!stream.socket.$totalstream) {
+				stream.socket.$totalstream = stream;
+				if (stream.socket.prependListener) {
+					stream.socket.prependListener('error', callback);
+					stream.socket.prependListener('close', callback);
+				} else {
+					stream.socket.on('error', callback);
+					stream.socket.on('close', callback);
+				}
+			}
+		}
+
+		if (stream.prependListener) {
+			stream.prependListener('error', callback);
+			stream.prependListener('end', callback);
+			stream.prependListener('close', callback);
+			stream.prependListener('aborted', callback);
+			stream.prependListener('finish', callback);
+		} else {
+			stream.on('error', callback);
+			stream.on('end', callback);
+			stream.on('close', callback);
+			stream.on('aborted', callback);
+			stream.on('finish', callback);
+		}
+	}
+};
+
+function isFinished(stream) {
+
+	// Response & Request
+	if (stream.socket) {
+		if (stream.writable && (!stream.socket._writableState || stream.socket._writableState.finished || stream.socket._writableState.destroyed))
+			return true;
+		if (stream.readable && (!stream.socket._readableState|| stream.socket._writableState.ended || stream.socket._readableState.destroyed))
+			return true;
+		return false;
+	}
+
+	if (stream._readableState && (stream._readableState.ended || stream._readableState.destroyed))
+		return true;
+
+	if (stream._writableState && (stream._writableState.finished || stream._writableState.destroyed))
+		return true;
+
+	return false;
+}
+
 !global.F && require('./index');

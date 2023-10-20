@@ -292,7 +292,7 @@ ImageProto.save = function(filename, callback, writer) {
 			self.currentStream.pipe(cmd.stdin);
 	}
 
-	CLEANUP(cmd.stdin);
+	F.cleanup(cmd.stdin);
 	writer && writer(cmd.stdin);
 	return self;
 };

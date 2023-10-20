@@ -347,13 +347,13 @@ WebSocketClientProto.free = function() {
 		self.req.connection && self.req.connection.destroy();
 		self.req.removeAllListeners();
 		self.req.destroy();
-		CLEANUP(self.req);
+		F.cleanup(self.req);
 	}
 
 	if (self.socket) {
 		self.socket.removeAllListeners();
 		self.socket.destroy();
-		CLEANUP(self.socket);
+		F.cleanup(self.socket);
 	}
 
 	self.socket = null;

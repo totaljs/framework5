@@ -1090,7 +1090,7 @@ HttpFile.prototype.$md5 = function(callback) {
 		}
 	});
 
-	CLEANUP(stream, function() {
+	F.cleanup(stream, function() {
 		if (callback) {
 			callback(null, md5.digest('hex'));
 			callback = null;

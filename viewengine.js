@@ -684,10 +684,13 @@ View.prototype.import = function() {
 				}
 
 				if (m.indexOf('+') === -1) {
-					if (REG_CHECKCSS.test(m))
-						tmp = '<link rel="stylesheet" href="/css/' + m + '" />';
-					else
-						tmp = '<scri' + 'pt src="/js/' + m + '"></scr' + 'ipt>';
+					let key = '/' + m;
+					if (REG_CHECKCSS.test(m)) {
+						tmp = '<link rel="stylesheet" href="/' + (F.routes.virtual[key] ? '' : 'css/') + m + '" />';
+					} else {
+
+						tmp = '<scri' + 'pt src="/' + (F.routes.virtual[key] ? '' : 'js/') + m + '"></scr' + 'ipt>';
+					}
 				} else {
 					let iscss = REG_CHECKCSS.test(m);
 					let path = '/' + F.TUtils.random_string(10).toLowerCase() + '-min.' + (iscss ? 'css' : 'js');
