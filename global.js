@@ -7,22 +7,16 @@ global.LOADCONFIG = F.loadconfig;
 global.LOADRESOURCE = F.loadresource;
 global.SHELL = F.shell;
 global.NPMINSTALL = F.npminstall;
+global.COMPONENTATOR = F.componentator;
+global.ERROR = F.error;
+global.MERGE = F.merge;
+global.TOUCH = F.touch;
 
 global.CORS = function(origin) {
 	CONF.$cors = origin || '*';
 };
 
-global.TOUCH = function(url) {
-	if (url) {
-		delete F.temporary.tmp[url];
-		delete F.temporary.notfound[url];
-	} else {
-		F.temporary.tmp = {};
-		F.temporary.notfound = {};
-	}
-};
-
-
 // Utils
 global.GUID = F.TUtils.guid;
 global.NOOP = F.TUtils.noop;
+global.REQUEST = F.TUtils.request;
