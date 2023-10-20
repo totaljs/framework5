@@ -2,7 +2,6 @@
 // The MIT License
 // Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
 
-const REG_DOUBLESLASH = /\/{2}|\.{2,}|\.{1,}\/|/g;
 const REG_FILETMP = /\//g;
 const REG_RANGE = /bytes=/;
 const REG_ROBOT = /search|agent|bot|crawler|spider/i;
@@ -14,36 +13,6 @@ const CHECK_NOCACHE = { zip: 1, rar: 1 };
 const GZIP_FILE = { memLevel: 9 };
 const GZIP_STREAM = { memLevel: 1 };
 
-function parseURI(url) {
-
-	let index = url.indexOf('?');
-	let search = '';
-
-	if (index !== -1) {
-		search = url.substring(index);
-		url = url.substring(0, index);
-	}
-
-	url = url.replace(REG_DOUBLESLASH, '');
-	index = url.indexOf('.', url.length - 10); // max. 10 chars for extension
-
-	if (index == -1 && url[url.length - 1] !== '/')
-		url += '/';
-
-	let split = null;
-
-	if (url === '/') {
-		split = [];
-	} else {
-		if (index == -1)
-			split = url.substring(1, url.length - 1).split('/');
-		else
-			split = url.split('/').slice(1);
-	}
-
-	return { key: url.toLowerCase(), pathname: url, search: search, file: index != -1, ext: index == -1 ? '' : url.substring(index + 1), split: split };
-}
-
 function Controller(req, res) {
 
 	var ctrl = this;
@@ -52,7 +21,7 @@ function Controller(req, res) {
 	ctrl.res = res;
 	ctrl.method = ctrl.req.method;
 	ctrl.route = null;
-	ctrl.uri = parseURI(req.url);
+	ctrl.uri = F.TUtils.parseURI2(req.url);
 	ctrl.isfile = ctrl.uri.file;
 	ctrl.language = '';
 	ctrl.headers = req.headers;
@@ -522,7 +491,7 @@ Controller.prototype.$route = function() {
 	if (ctrl.isfile) {
 
 		if (F.routes.files.length) {
-			let route = F.TRouting.lookupfiles(ctrl);
+			let route = F.TRouting.lookupfile(ctrl);
 			if (route) {
 				ctrl.route = route;
 				if (route.middleware.length)
@@ -694,7 +663,7 @@ function authorize(ctrl) {
 			if (ctrl.route.auth !== auth) {
 				ctrl.route = F.TRouting.lookup(ctrl, auth);
 				if (ctrl.route)
-					execute(ctrl.route);
+					execute(ctrl);
 				else
 					ctrl.fallback(401);
 			}

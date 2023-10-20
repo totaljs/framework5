@@ -28,6 +28,7 @@ const REGREPLACEARR = /\[\]/g;
 const REG_JPG = /jfif|exif/;
 const REG_WEBP = /jfif|webp|exif/;
 const REG_SVG = /xml|svg/i;
+const REG_DOUBLESLASH = /\/{2}|\.{2,}|\.{1,}\/|/g;
 
 var regexpSTATIC = /\.\w{2,8}($|\?)+/;
 const regexpTRIM = /^[\s]+|[\s]+$/g;
@@ -7101,6 +7102,37 @@ function parsepath(path) {
 
 	return builder;
 }
+
+// Internal for HTTP Web/Files/WebSocket routes
+exports.parseURI2 = function(url) {
+
+	let index = url.indexOf('?');
+	let search = '';
+
+	if (index !== -1) {
+		search = url.substring(index);
+		url = url.substring(0, index);
+	}
+
+	url = url.replace(REG_DOUBLESLASH, '');
+	index = url.indexOf('.', url.length - 10); // max. 10 chars for extension
+
+	if (index == -1 && url[url.length - 1] !== '/')
+		url += '/';
+
+	let split = null;
+
+	if (url === '/') {
+		split = [];
+	} else {
+		if (index == -1)
+			split = url.substring(1, url.length - 1).split('/');
+		else
+			split = url.split('/').slice(1);
+	}
+
+	return { key: url.toLowerCase(), pathname: url, search: search, file: index != -1, ext: index == -1 ? '' : url.substring(index + 1), split: split };
+};
 
 function destroyStreamopen() {
 	if (typeof(this.fd) === 'number')

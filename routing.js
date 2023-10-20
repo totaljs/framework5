@@ -277,7 +277,7 @@ exports.lookup = function(ctrl, auth, skip) {
 	var route;
 	var item;
 
-	var url = (ctrl.uri.pathname[ctrl.uri.pathname.length - 1] === '/' ? ctrl.uri.pathname.substring(1, ctrl.uri.pathname.length - 1) : ctrl.uri.pathname.substring(1)).toLowerCase();
+	var url = (ctrl.uri.key[ctrl.uri.key.length - 1] === '/' ? ctrl.uri.key.substring(1, ctrl.uri.key.length - 1) : ctrl.uri.key.substring(1));
 
 	// Checks fixed URL
 	var routes = tmp[url];
@@ -317,7 +317,7 @@ exports.lookup = function(ctrl, auth, skip) {
 	// Wildcard
 	routes = [];
 	for (var i = 0; i < length; i++) {
-		var url = ctrl.split.slice(0, length - i).join('/') + '/*';
+		var url = ctrl.split2.slice(0, length - i).join('/') + '/*';
 		item = tmp[url];
 		if (item) {
 			if (skip)
@@ -408,7 +408,7 @@ exports.lookupcors = function(ctrl) {
 
 };
 
-exports.lookupfiles = function(ctrl, auth) {
+exports.lookupfile = function(ctrl, auth) {
 	if (F.routes.files.length) {
 		let key = '';
 		for (let i = 0; i < ctrl.split2.length - 1; i++)
@@ -417,4 +417,73 @@ exports.lookupfiles = function(ctrl, auth) {
 		if (routes)
 			return compareflags(ctrl, routes, auth);
 	}
+};
+
+exports.lookupwebsocket = function(ctrl, auth, skip = false) {
+
+	// auth 0: does not matter
+	// auth 1: logged
+	// auth 2: unlogged
+
+	var tmp = F.routes.websocketscache;
+	var arr = ctrl.split2;
+	var length = arr.length;
+	var route;
+	var item;
+
+	var url = (ctrl.uri.key[ctrl.uri.key.length - 1] === '/' ? ctrl.uri.key.substring(1, ctrl.uri.key.length - 1) : ctrl.uri.key.substring(1));
+
+	// Checks fixed URL
+	var routes = tmp[url];
+	if (routes) {
+		if (skip)
+			return routes[0];
+		route = compareflags(ctrl, routes, auth);
+		if (route)
+			return route;
+		routes = null;
+	}
+
+	// Dynamic routes
+	if (tmp.D) {
+		for (var i = 0; i < tmp.D.length; i++) {
+			var r = tmp.D[i];
+			if (r.url.length === length || r.wildcard) {
+				if (r.compare(req)) {
+					if (!routes)
+						routes = [];
+					routes.push(r);
+				}
+			}
+		}
+		if (routes) {
+			if (skip)
+				return routes[0];
+			route = compareflags(ctrl, routes, auth);
+			if (route)
+				return route;
+		}
+		routes = null;
+	}
+
+	// Wildcard
+	routes = [];
+	for (var i = 0; i < length; i++) {
+		var url = ctrl.split2.slice(0, length - i).join('/') + '/*';
+		item = tmp[url];
+		if (item) {
+			if (skip)
+				return item[0];
+			routes.push.apply(routes, item);
+		}
+	}
+
+	item = tmp['/*'];
+	if (item) {
+		if (skip)
+			return item[0];
+		routes.push.apply(routes, item);
+	}
+
+	return routes && routes.length ? compareflags(ctrl, routes, auth) : null;
 };

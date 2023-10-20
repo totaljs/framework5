@@ -17,6 +17,7 @@ const THttp = require('./http');
 const TViewEngine = require('./viewengine');
 const TBuilders = require('./builders');
 const TMinificators = require('./minificators');
+const TWebSocket = require('./websocket');
 
 const NODE_MODULES = { buffer: 1, child_process: 1, process: 1, fs: 1, events: 1, http: 1, https: 1, http2: 1, util: 1, net: 1, os: 1, path: 1, punycode: 1, readline: 1, repl: 1, stream: 1, string_decoder: 1, tls: 1, trace_events: 1, tty: 1, dgram: 1, url: 1, v8: 1, vm: 1, wasi: 1, worker_threads: 1, zlib: 1, crypto: 1 };
 const EMPTYOBJECT = {};
@@ -215,6 +216,7 @@ global.DB = function() {
 	F.TBuilders = TBuilders;
 	F.TViewEngine = TViewEngine;
 	F.TMinificators = TMinificators;
+	F.TWebSocket = TWebSocket;
 
 	F.directory = TUtils.$normalize(require.main ? Path.dirname(require.main.filename) : process.cwd());
 	F.path = {};
@@ -425,6 +427,9 @@ function unlink(arr, callback) {
 	CONF.$node_modules = CONF.$node_modules.substring(0, CONF.$node_modules.length - (8 + 7));
 	CONF.$npmcache = '/var/www/.npm';
 	CONF.$python = 'python3';
+	CONF.$wscompress = true;
+	CONF.$wsencodedecode = false;
+	CONF.$wsmaxlatency = 2000;
 
 	process.env.TZ = CONF.$timezone;
 
@@ -949,6 +954,9 @@ F.loadservices = function() {
 			F.internal.counter++;
 			F.emit('service', F.internal.counter);
 		}
+
+		if (F.internal.ticks == 6 || F.internal.ticks == 12)
+			F.TWebSocket.ping();
 
 		if (!F.temporary.pending.length) {
 			F.stats.request.pending = 0;

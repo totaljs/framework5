@@ -1,5 +1,6 @@
 - internal routes (fallback)
 - schemas
+- proxy
 - websocket
 - websocketclient
 - bundles
