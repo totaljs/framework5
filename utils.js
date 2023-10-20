@@ -730,7 +730,7 @@ function _request(opt, callback) {
 		request_call(uri, options);
 }
 
-global.REQUEST = function(opt, callback) {
+exports.request = function(opt, callback) {
 
 	if (callback)
 		opt.callback = callback;
@@ -988,7 +988,7 @@ function request_writefile(req, options, file, next) {
 				next();
 			}
 		};
-		REQUEST(opt);
+		exports.request(opt);
 	} else {
 		var stream = Fs.createReadStream(file.path || file.filename);
 		stream.once('close', next);
@@ -1677,6 +1677,8 @@ exports.getContentType = function(ext) {
 		ext = ext.substring(1);
 	return CONTENTTYPES[ext] || CT_OCTET;
 };
+
+exports.contentTypes = CONTENTTYPES;
 
 exports.getExtensionFromContentType = function(value) {
 	for (var key in CONTENTTYPES) {
@@ -6170,7 +6172,7 @@ exports.reader = function(items) {
 	if (items) {
 		if (typeof(items) === 'string') {
 			setTimeout(function() {
-				REQUEST({ url: items, custom: true }, function(err, response) {
+				exports.request({ url: items, custom: true }, function(err, response) {
 					if (response.stream)
 						instance.stream(response.stream);
 					else
