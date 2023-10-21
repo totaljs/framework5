@@ -1,25 +1,6 @@
 'use strict';
 
-const Os = require('node:os');
-const Fs = require('node:fs');
-const Zlib = require('node:zlib');
-const Path = require('node:path');
-const Crypto = require('node:crypto');
-const Parser = require('node:url');
-const Child = require('node:child_process');
-const Http = require('node:http');
-const Https = require('node:https');
-const Worker = require('node:worker_threads');
-const TRouting = require('./routing');
-const TQueryBuilder = require('./querybuilder');
-const TUtils = require('./utils');
-const THttp = require('./http');
-const TViewEngine = require('./viewengine');
-const TBuilders = require('./builders');
-const TMinificators = require('./minificators');
-const TWebSocket = require('./websocket');
-
-const NODE_MODULES = { buffer: 1, child_process: 1, process: 1, fs: 1, events: 1, http: 1, https: 1, http2: 1, util: 1, net: 1, os: 1, path: 1, punycode: 1, readline: 1, repl: 1, stream: 1, string_decoder: 1, tls: 1, trace_events: 1, tty: 1, dgram: 1, url: 1, v8: 1, vm: 1, wasi: 1, worker_threads: 1, zlib: 1, crypto: 1 };
+const NODE_MODULES = { buffer: 1, child_process: 1, process: 1, fs: 1, events: 1, http: 1, https: 1, http2: 1, util: 1, net: 1, os: 1, path: 1, punycode: 1, readline: 1, repl: 1, stream: 1, string_decoder: 1, tls: 1, trace_events: 1, tty: 1, dgram: 1, url: 1, v8: 1, vm: 1, wasi: 1, worker_threads: 1, zlib: 1, crypto: 1, dns: 1 };
 const EMPTYOBJECT = {};
 const EMPTYARRAY = [];
 
@@ -38,25 +19,19 @@ global.MAIN = {};
 global.TEMP = {};
 global.FUNC = {};
 global.PERF = {};
-global.EMPTYBUFFER = Buffer.alloc(0);
+// global.EMPTYBUFFER = Buffer.alloc(0);
 global.EMPTYOBJECT = EMPTYOBJECT;
 global.EMPTYARRAY = EMPTYARRAY;
-global.DATA = new TQueryBuilder.Controller(true);
 global.NOW = new Date();
 global.DEF = {};
-global.DB = function() {
-	return new TQueryBuilder.Controller();
-};
 
 (function(F) {
 
 	F.id = '';
 	F.bundling = true;
-	F.isWindows = Os.platform().substring(0, 3).toLowerCase() === 'win';
 	F.is5 = F.version = 5000;
 	F.version_header = '5';
 	F.version_node = process.version + '';
-	F.syshash = (__dirname + '-' + Os.hostname() + '-' + Os.platform() + '-' + Os.arch() + '-' + Os.release() + '-' + Os.tmpdir() + JSON.stringify(process.versions)).md5();
 
 	F.resources = {};      // Loaded resources
 	F.connections = {};    // WebSocket connections
@@ -67,6 +42,7 @@ global.DB = function() {
 	F.config = CONF;
 	F.def = DEF;
 	F.errors = [];
+	F.paused = [];
 
 	F.internal = {
 		ticks: 0,
@@ -84,7 +60,8 @@ global.DB = function() {
 		files: [],
 		filescache: {},
 		timeout: null,
-		middleware: {}
+		middleware: {},
+		proxies: []
 	};
 
 	// Internal cache
@@ -200,35 +177,14 @@ global.DB = function() {
 		}
 	};
 
-	// Node.js modules
-	F.Zlib = Zlib;
-	F.Fs = Fs;
-	F.Path = Path;
-	F.Http = Http;
-	F.Https = Https;
-	F.Worker = Worker;
-	F.Crypto = Crypto;
-	F.Child = Child;
-	F.Os = Os;
-	F.Url = Parser;
-	F.TRouting = TRouting;
-	F.TUtils = TUtils;
-	F.TBuilders = TBuilders;
-	F.TViewEngine = TViewEngine;
-	F.TMinificators = TMinificators;
-	F.TWebSocket = TWebSocket;
-
-	F.directory = TUtils.$normalize(require.main ? Path.dirname(require.main.filename) : process.cwd());
 	F.path = {};
-	F.path.fs = Fs;
-	F.path.join = F.Path.join;
-	F.path.root = path => Path.join(F.directory, path || '');
-	F.path.public = path => Path.join(F.directory, 'public', path || '');
-	F.path.databases = path => Path.join(F.directory, 'databases', path || '');
-	F.path.views = path => Path.join(F.directory, 'views', path || '');
-	F.path.flowstreams = path => Path.join(F.directory, 'flowstreams', path || '');
-	F.path.plugins = path => Path.join(F.directory, 'plugins', path || '');
-	F.path.private = path => Path.join(F.directory, 'private', path || '');
+	F.path.root = path => F.Path.join(F.directory, path || '');
+	F.path.public = path => F.Path.join(F.directory, 'public', path || '');
+	F.path.databases = path => F.Path.join(F.directory, 'databases', path || '');
+	F.path.views = path => F.Path.join(F.directory, 'views', path || '');
+	F.path.flowstreams = path => F.Path.join(F.directory, 'flowstreams', path || '');
+	F.path.plugins = path => F.Path.join(F.directory, 'plugins', path || '');
+	F.path.private = path => F.Path.join(F.directory, 'private', path || '');
 
 	F.path.route = function(path, directory = 'root') {
 
@@ -249,7 +205,7 @@ global.DB = function() {
 	F.path.tmp = F.path.temp = function(path) {
 		if (!F.temporary.path.directory_tmp)
 			F.path.verify('tmp');
-		return Path.join(F.directory, 'tmp', path || '');
+		return F.Path.join(F.directory, 'tmp', path || '');
 	};
 
 	F.path.unlink = unlink;
@@ -264,9 +220,8 @@ global.DB = function() {
 		try {
 			if (!pathexists(dir))
 				F.Fs.mkdirSync(dir);
-		} finally {
-			F.temporary.path[key] = true;
-		}
+		} catch(e) {}
+		F.temporary.path[key] = true;
 	};
 
 	F.path.mkdir = function(p, cache) {
@@ -317,16 +272,6 @@ global.DB = function() {
 			if (i >= beg && !pathexists(directory))
 				Fs.mkdirSync(directory);
 		}
-	};
-
-	TUtils.EventEmitter2.extend(F);
-
-	F.on2 = F.on;
-	F.on = function(name, fn) {
-		if (name === 'ready' && F.isloaded)
-			fn();
-		else
-			F.on2(name, fn);
 	};
 
 })(global.F);
@@ -388,7 +333,6 @@ function unlink(arr, callback) {
 	CONF.version = '1.0.0';
 	CONF.author = '';
 	CONF.secret = F.syshash;
-	CONF.secret_uid = F.syshash.substring(10);
 	CONF.secret_encryption = null,
 	CONF.secret_csrf = null,
 	CONF.secret_tms = null,
@@ -401,7 +345,6 @@ function unlink(arr, callback) {
 	CONF.$httpcompress = true;
 	CONF.$httpetag = '';
 	CONF.$httpmaxsize = 256; // 256 kB
-	CONF.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
 	CONF.$httprangebuffer = 5120; // 5 MB
 	CONF.$httptimeout = 5; // 5 seconds
 	CONF.$httpfiles = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true };
@@ -431,6 +374,7 @@ function unlink(arr, callback) {
 	CONF.$wscompress = true;
 	CONF.$wsencodedecode = false;
 	CONF.$wsmaxlatency = 2000;
+	CONF.$proxytimeout = 5; // 5 seconds
 
 	process.env.TZ = CONF.$timezone;
 
@@ -467,7 +411,7 @@ function unlink(arr, callback) {
 
 F.loadconfig = function(value) {
 
-	var cfg = TUtils.parseconfig(value);
+	var cfg = F.TUtils.parseconfig(value);
 
 	for (let key in cfg) {
 
@@ -607,14 +551,14 @@ F.load = async function(types = [], callback) {
 	if (typeof(types) === 'string')
 		types = types.split(',').trim();
 
-	var list = async (path, extension) => new Promise(resolve => TUtils.ls(path, files => resolve(files), (isdir, path) => isdir ? true : path.indexOf('-bk') === -1 && path.indexOf('_bk') === -1 && TUtils.getExtension(path) === (extension || 'js')));
+	var list = async (path, extension) => new Promise(resolve => F.TUtils.ls(path, files => resolve(files), (isdir, path) => isdir ? true : path.indexOf('-bk') === -1 && path.indexOf('_bk') === -1 && F.TUtils.getExtension(path) === (extension || 'js')));
 	var read = async (path) => new Promise(resolve => F.Fs.readFile(path, 'utf8', (err, response) => resolve(response ? response : '')));
 
 	var update = function(type, arr) {
 		for (let i = 0; i < arr.length; i++) {
 			let id = '';
 			if (type === 'modules')
-				id = TUtils.getName(arr[i]).replace(/\.js$/, '');
+				id = F.TUtils.getName(arr[i]).replace(/\.js$/, '');
 			arr[i] = { id: id, type: type, filename: arr[i] };
 		}
 		return arr;
@@ -633,7 +577,7 @@ F.load = async function(types = [], callback) {
 	if (!types.length || types.includes('resources')) {
 		var resources = await list(F.path.root('resources'), 'resource');
 		for (let resource of resources)
-			F.loadresource(TUtils.getName(resource).replace(/\.resource$/i, ''), await read(resource));
+			F.loadresource(F.TUtils.getName(resource).replace(/\.resource$/i, ''), await read(resource));
 	}
 
 	let loader = ['modules', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware'];
@@ -657,7 +601,7 @@ F.load = async function(types = [], callback) {
 			if (plugin.indexOf('-bk') !== -1 || plugin.indexOf('_bk') !== -1)
 				continue;
 
-			files.push({ id: TUtils.getName(plugin).replace(/\.js$/, ''), type: 'plugins', filename: F.path.root('plugins/' + plugin + '/index.js') });
+			files.push({ id: F.TUtils.getName(plugin).replace(/\.js$/, ''), type: 'plugins', filename: F.path.root('plugins/' + plugin + '/index.js') });
 
 			let loader = ['controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware'];
 			for (let type of loader) {
@@ -730,7 +674,7 @@ F.load = async function(types = [], callback) {
 F.require = function(name) {
 	if (name.startsWith('node:'))
 		return require(name);
-	return NODE_MODULES[name] ? require(name) : require(F.Path.join(F.directory, name));
+	return NODE_MODULES[name] ? require('node:' + name) : require(F.Path.join(F.directory, name));
 };
 
 F.import = function(url, callback) {
@@ -804,8 +748,8 @@ F.cleanup = function(stream, callback) {
 	if (!callback)
 		return new Promise(resolve => F.cleanup(stream, resolve));
 
-	TUtils.onfinished(stream, function() {
-		TUtils.destroystream(stream);
+	F.TUtils.onfinished(stream, function() {
+		F.TUtils.destroystream(stream);
 		if (callback) {
 			callback();
 			callback = null;
@@ -996,8 +940,8 @@ F.http = function(opt) {
 
 	F.load([], function() {
 
-		F.server = Http.createServer(THttp.listen);
-		F.server.on('upgrade', TWebSocket.listen);
+		F.server = F.Http.createServer(F.THttp.listen);
+		F.server.on('upgrade', F.TWebSocket.listen);
 		F.server.listen(opt.port || F.config.$port, opt.ip || F.config.$ip);
 
 		CONF.$performance && F.server.on('connection', httptuningperformance);
@@ -1143,7 +1087,7 @@ F.merge = function(url) {
 				}
 
 				if (link[0] !== '~' && link[0] !== '_') {
-					let ext = TUtils.getExtension(link);
+					let ext = F.TUtils.getExtension(link);
 					if (ext === 'js')
 						link = F.path.public('/js/' + link);
 					else
@@ -1166,14 +1110,14 @@ F.merge = function(url) {
 
 	url = url.toLowerCase();
 
-	var ext = TUtils.getExtension(url);
+	var ext = F.TUtils.getExtension(url);
 	var key = url.substring(1).replace(/\//g, '-').replace(/\.(js|html|css)$/, '') + '-min.' + ext;
 	var filename = F.path.tmp(F.id + 'merged_' + key);
 
 	F.routes.virtual[url] = async function(ctrl) {
 		if (DEBUG) {
-			var buffer = await TMinificators.merge(true, arr);
-			ctrl.binary(buffer, TUtils.contentTypes[ext] || TUtils.contentTypes.bin);
+			var buffer = await F.TMinificators.merge(true, arr);
+			ctrl.binary(buffer, F.TUtils.contentTypes[ext] || F.TUtils.contentTypes.bin);
 		} else {
 			F.lock('merging_' + key, async function(next) {
 				if (F.temporary.merged[key]) {
@@ -1185,7 +1129,7 @@ F.merge = function(url) {
 					if (F.temporary.notfound[url])
 						delete F.temporary.notfound[url];
 					F.temporary.merged[key] = true;
-					await TMinificators.merge(filename, arr);
+					await F.TMinificators.merge(filename, arr);
 				}
 				ctrl.response.minify = false;
 				ctrl.file(filename);
@@ -1206,7 +1150,7 @@ F.lock = function(key, callback) {
 			var pending = F.processing[key];
 			delete F.processing[key];
 			for (let fn of pending)
-				fn(TUtils.noop);
+				fn(F.TUtils.noop);
 		});
 	}
 };
@@ -1222,8 +1166,6 @@ F.touch = function(url) {
 		F.temporary.notfound = {};
 	}
 };
-
-F.route = TRouting.route;
 
 F.middleware = function(name, fn, assign) {
 
@@ -1265,6 +1207,35 @@ F.middleware = function(name, fn, assign) {
 	}
 };
 
+F.pause = function(name, enable) {
+
+	var index;
+
+	if (enable !== undefined) {
+		if (enable) {
+			if (!F.paused.includes(name))
+				F.paused.push(name);
+		} else {
+			index = F.paused.indexOf(name);
+			if (index !== -1)
+				F.paused.splice(index, 1);
+		}
+		return enable;
+	}
+
+	index = F.paused.indexOf(name);
+
+	if (index != -1) {
+		F.paused.splice(index, 1);
+		enable = false;
+	} else {
+		F.paused.push(name);
+		enable = true;
+	}
+
+	return enable === true;
+};
+
 F.clear = function(init = true, callback) {
 
 	if (callback == null)
@@ -1284,12 +1255,12 @@ F.clear = function(init = true, callback) {
 		if (!F.config.$cleartemp) {
 			if (F.bundling) {
 				// clears only JS and CSS files
-				TUtils.ls(dir, function(files) {
+				F.TUtils.ls(dir, function(files) {
 					F.path.unlink(files, callback);
 				}, function(filename, folder) {
 					if (folder || (plus && !filename.substring(dir.length).startsWith(plus)))
 						return false;
-					var ext = TUtils.getExtension(filename);
+					var ext = F.TUtils.getExtension(filename);
 					return ext === 'js' || ext === 'css' || ext === 'tmp' || ext === 'upload' || ext === 'html' || ext === 'htm';
 				});
 			}
@@ -1302,7 +1273,7 @@ F.clear = function(init = true, callback) {
 		return;
 	}
 
-	TUtils.ls(dir, function(files, directories) {
+	F.TUtils.ls(dir, function(files, directories) {
 
 		if (init) {
 			var arr = [];
@@ -1317,7 +1288,7 @@ F.clear = function(init = true, callback) {
 
 			files = arr;
 			directories = directories.remove(function(name) {
-				name = TUtils.getName(name);
+				name = F.TUtils.getName(name);
 				return name[0] !== '~';
 			});
 		}
@@ -1328,8 +1299,6 @@ F.clear = function(init = true, callback) {
 	if (!init)
 		F.touch();
 };
-
-F.newdb = TQueryBuilder.evaluate;
 
 function httptuningperformance(socket) {
 	socket.setNoDelay(true);
@@ -1355,4 +1324,61 @@ process.on('uncaughtException', function(e) {
 });
 */
 
+(function(F) {
+
+	// Node.js modules
+	F.Zlib = F.require('zlib');
+	F.Fs = F.require('fs');
+	F.Path = F.require('path');
+	F.Http = F.require('http');
+	F.Https = F.require('https');
+	F.Worker = F.require('worker_threads');
+	F.Crypto = F.require('crypto');
+	F.Child = F.require('child_process');
+	F.Os = F.require('os');
+	F.Dns = F.require('dns');
+	F.Net = F.require('net');
+	F.Url = F.require('url');
+	F.Tls = F.require('tls');
+	F.Stream = F.require('stream');
+
+	// Total.js modules
+	F.TUtils = require('./utils');
+	F.TRouting = require('./routing');
+	F.TBuilders = require('./builders');
+	F.TViewEngine = require('./viewengine');
+	F.TMinificators = require('./minificators');
+	F.TWebSocket = require('./websocket');
+	F.TQueryBuilder = require('./querybuilder');
+	F.THttp = require('./http');
+
+	// Settings
+	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
+	F.isWindows = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
+	F.syshash = (__dirname + '-' + F.Os.hostname() + '-' + F.Os.platform() + '-' + F.Os.arch() + '-' + F.Os.release() + '-' + F.Os.tmpdir() + JSON.stringify(process.versions)).md5();
+
+	F.path.fs = F.Fs;
+	F.path.join = F.Path.join;
+
+	F.TUtils.EventEmitter2.extend(F);
+
+	F.on2 = F.on;
+	F.on = function(name, fn) {
+		if (name === 'ready' && F.isloaded)
+			fn();
+		else
+			F.on2(name, fn);
+	};
+
+	// Configuration
+	CONF.secret_uid = F.syshash.substring(10);
+	CONF.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
+
+	// Methods
+	F.route = F.TRouting.route;
+	F.newdb = F.TQueryBuilder.evaluate;
+
+})(F);
+
 require('./global');
+require('./Tangular');

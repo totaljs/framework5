@@ -1,7 +1,6 @@
 - internal routes (fallback)
+- uid
 - schemas
-- proxy
-- websocketclient
 - bundles
 - service
 - tmsclient
@@ -9,7 +8,6 @@
 - bundles
 - filestorage
 - images
-- Tangular
 - sourcemap
 - stats
 - debug / release mode
