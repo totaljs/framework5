@@ -352,7 +352,7 @@ function rmdir(arr, callback) {
 
 	var path = arr.shift();
 	if (path) {
-		F.TUtils.ls(path, function(files, directories) {
+		TUtils.ls(path, function(files, directories) {
 			directories.reverse();
 			directories.push(path);
 			files.wait((item, next) => F.Fs.unlink(item, next), function() {
@@ -395,23 +395,23 @@ function unlink(arr, callback) {
 	CONF.node_modules = 'node_modules',
 
 	// New internal configuration
-	CONF.$uploadsize = 1024;
-	CONF.$uploadchecktypes = true;
 	CONF.$cors = '';
 	CONF.$root = '';
 	CONF.$httpreqlimit = 0; // request limit per ip
 	CONF.$httpcompress = true;
 	CONF.$httpetag = '';
+	CONF.$httpmaxsize = 256; // 256 kB
 	CONF.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
 	CONF.$httprangebuffer = 5120; // 5 MB
 	CONF.$httptimeout = 5; // 5 seconds
+	CONF.$httpfiles = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true };
+	CONF.$httpchecktypes = true; // for multipart data only
 	CONF.$blacklist = '';
 	CONF.$xpoweredby = 'Total.js';
 	CONF.$minifyjs = true;
 	CONF.$minifycss = true;
 	CONF.$minifyhtml = true;
 	CONF.$localize = true;
-	CONF.$httpfiles = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true };
 	CONF.$port = 8000;
 	CONF.$ip = '0.0.0.0';
 	CONF.$unixsocket = '';
@@ -427,6 +427,7 @@ function unlink(arr, callback) {
 	CONF.$node_modules = CONF.$node_modules.substring(0, CONF.$node_modules.length - (8 + 7));
 	CONF.$npmcache = '/var/www/.npm';
 	CONF.$python = 'python3';
+	CONF.$wsmaxsize = 256; // 256 kB
 	CONF.$wscompress = true;
 	CONF.$wsencodedecode = false;
 	CONF.$wsmaxlatency = 2000;
@@ -466,7 +467,7 @@ function unlink(arr, callback) {
 
 F.loadconfig = function(value) {
 
-	var cfg = F.TUtils.parseconfig(value);
+	var cfg = TUtils.parseconfig(value);
 
 	for (let key in cfg) {
 
@@ -606,14 +607,14 @@ F.load = async function(types = [], callback) {
 	if (typeof(types) === 'string')
 		types = types.split(',').trim();
 
-	var list = async (path, extension) => new Promise(resolve => F.TUtils.ls(path, files => resolve(files), (isdir, path) => isdir ? true : path.indexOf('-bk') === -1 && path.indexOf('_bk') === -1 && F.TUtils.getExtension(path) === (extension || 'js')));
+	var list = async (path, extension) => new Promise(resolve => TUtils.ls(path, files => resolve(files), (isdir, path) => isdir ? true : path.indexOf('-bk') === -1 && path.indexOf('_bk') === -1 && TUtils.getExtension(path) === (extension || 'js')));
 	var read = async (path) => new Promise(resolve => F.Fs.readFile(path, 'utf8', (err, response) => resolve(response ? response : '')));
 
 	var update = function(type, arr) {
 		for (let i = 0; i < arr.length; i++) {
 			let id = '';
 			if (type === 'modules')
-				id = F.TUtils.getName(arr[i]).replace(/\.js$/, '');
+				id = TUtils.getName(arr[i]).replace(/\.js$/, '');
 			arr[i] = { id: id, type: type, filename: arr[i] };
 		}
 		return arr;
@@ -632,7 +633,7 @@ F.load = async function(types = [], callback) {
 	if (!types.length || types.includes('resources')) {
 		var resources = await list(F.path.root('resources'), 'resource');
 		for (let resource of resources)
-			F.loadresource(F.TUtils.getName(resource).replace(/\.resource$/i, ''), await read(resource));
+			F.loadresource(TUtils.getName(resource).replace(/\.resource$/i, ''), await read(resource));
 	}
 
 	let loader = ['modules', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware'];
@@ -656,7 +657,7 @@ F.load = async function(types = [], callback) {
 			if (plugin.indexOf('-bk') !== -1 || plugin.indexOf('_bk') !== -1)
 				continue;
 
-			files.push({ id: F.TUtils.getName(plugin).replace(/\.js$/, ''), type: 'plugins', filename: F.path.root('plugins/' + plugin + '/index.js') });
+			files.push({ id: TUtils.getName(plugin).replace(/\.js$/, ''), type: 'plugins', filename: F.path.root('plugins/' + plugin + '/index.js') });
 
 			let loader = ['controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware'];
 			for (let type of loader) {
@@ -803,8 +804,8 @@ F.cleanup = function(stream, callback) {
 	if (!callback)
 		return new Promise(resolve => F.cleanup(stream, resolve));
 
-	F.TUtils.onfinished(stream, function() {
-		F.TUtils.destroystream(stream);
+	TUtils.onfinished(stream, function() {
+		TUtils.destroystream(stream);
 		if (callback) {
 			callback();
 			callback = null;
@@ -956,7 +957,7 @@ F.loadservices = function() {
 		}
 
 		if (F.internal.ticks == 6 || F.internal.ticks == 12)
-			F.TWebSocket.ping();
+			TWebSocket.ping();
 
 		if (!F.temporary.pending.length) {
 			F.stats.request.pending = 0;
@@ -996,11 +997,12 @@ F.http = function(opt) {
 	F.load([], function() {
 
 		F.server = Http.createServer(THttp.listen);
+		F.server.on('upgrade', TWebSocket.listen);
 		F.server.listen(opt.port || F.config.$port, opt.ip || F.config.$ip);
 
 		CONF.$performance && F.server.on('connection', httptuningperformance);
 
-		if (!process.connected)
+		if (!process.connected && F.console)
 			F.console();
 
 	});
@@ -1141,7 +1143,7 @@ F.merge = function(url) {
 				}
 
 				if (link[0] !== '~' && link[0] !== '_') {
-					let ext = F.TUtils.getExtension(link);
+					let ext = TUtils.getExtension(link);
 					if (ext === 'js')
 						link = F.path.public('/js/' + link);
 					else
@@ -1170,7 +1172,7 @@ F.merge = function(url) {
 
 	F.routes.virtual[url] = async function(ctrl) {
 		if (DEBUG) {
-			var buffer = await F.TMinificators.merge(true, arr);
+			var buffer = await TMinificators.merge(true, arr);
 			ctrl.binary(buffer, TUtils.contentTypes[ext] || TUtils.contentTypes.bin);
 		} else {
 			F.lock('merging_' + key, async function(next) {
@@ -1183,7 +1185,7 @@ F.merge = function(url) {
 					if (F.temporary.notfound[url])
 						delete F.temporary.notfound[url];
 					F.temporary.merged[key] = true;
-					await F.TMinificators.merge(filename, arr);
+					await TMinificators.merge(filename, arr);
 				}
 				ctrl.response.minify = false;
 				ctrl.file(filename);
@@ -1204,7 +1206,7 @@ F.lock = function(key, callback) {
 			var pending = F.processing[key];
 			delete F.processing[key];
 			for (let fn of pending)
-				fn(F.TUtils.noop);
+				fn(TUtils.noop);
 		});
 	}
 };
@@ -1221,7 +1223,7 @@ F.touch = function(url) {
 	}
 };
 
-F.route = F.TRouting.route;
+F.route = TRouting.route;
 
 F.middleware = function(name, fn, assign) {
 
@@ -1282,12 +1284,12 @@ F.clear = function(init = true, callback) {
 		if (!F.config.$cleartemp) {
 			if (F.bundling) {
 				// clears only JS and CSS files
-				F.TUtils.ls(dir, function(files) {
+				TUtils.ls(dir, function(files) {
 					F.path.unlink(files, callback);
 				}, function(filename, folder) {
 					if (folder || (plus && !filename.substring(dir.length).startsWith(plus)))
 						return false;
-					var ext = F.TUtils.getExtension(filename);
+					var ext = TUtils.getExtension(filename);
 					return ext === 'js' || ext === 'css' || ext === 'tmp' || ext === 'upload' || ext === 'html' || ext === 'htm';
 				});
 			}
@@ -1300,7 +1302,7 @@ F.clear = function(init = true, callback) {
 		return;
 	}
 
-	F.TUtils.ls(dir, function(files, directories) {
+	TUtils.ls(dir, function(files, directories) {
 
 		if (init) {
 			var arr = [];
@@ -1315,7 +1317,7 @@ F.clear = function(init = true, callback) {
 
 			files = arr;
 			directories = directories.remove(function(name) {
-				name = F.TUtils.getName(name);
+				name = TUtils.getName(name);
 				return name[0] !== '~';
 			});
 		}
