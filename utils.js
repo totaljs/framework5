@@ -19,6 +19,7 @@ const REG_XSS = /<.*>/;
 const REG_SQLINJECTION = /'(''|[^'])*'|\b(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE|UNION( +ALL){0,1})\b/;
 const REG_GUID = (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
 const CT_OCTET = 'application/octet-stream';
+const Stream = require('node:stream');
 
 const COMPRESS = { gzip: 1, deflate: 1 };
 const CONCAT = [null, null];
@@ -2093,111 +2094,6 @@ function jsonparser(key, value) {
 }
 
 /**
- * Get WebSocket frame
- * @author Jozef Gula <gula.jozef@gmail.com>
- * @param {Number} code
- * @param {Buffer or String} message
- * @param {Hexa} type
- * @return {Buffer}
- */
-exports.getWebSocketFrame = function(code, message, type, compress, mask) {
-
-	if (mask)
-		mask = ((Math.random() * 214748364) >> 0) + 1;
-
-	var messageBuffer = getWebSocketFrameMessageBytes(code, message);
-	var lengthBuffer = getWebSocketFrameLengthBytes(messageBuffer.length);
-	var lengthMask = mask ? 4 : 0;
-	var frameBuffer = Buffer.alloc(1 + lengthBuffer.length + messageBuffer.length + lengthMask);
-
-	frameBuffer[0] = 0x80 | type;
-
-	if (compress)
-		frameBuffer[0] |= 0x40;
-
-	lengthBuffer.copy(frameBuffer, 1, 0, lengthBuffer.length);
-
-	if (mask) {
-		var offset = lengthBuffer.length + 1;
-		frameBuffer[1] |= 0x80;
-		frameBuffer.writeInt32BE(mask, offset);
-		for (var i = 0; i < messageBuffer.length; i++)
-			messageBuffer[i] = messageBuffer[i] ^ frameBuffer[offset + (i % 4)];
-	}
-
-	messageBuffer.copy(frameBuffer, lengthBuffer.length + 1 + lengthMask, 0, messageBuffer.length);
-	return frameBuffer;
-};
-
-/**
- * Get bytes of WebSocket frame message
- * @author Jozef Gula <gula.jozef@gmail.com>
- * @param  {Number} code
- * @param  {Buffer or String} message
- * @return {Buffer}
- */
-function getWebSocketFrameMessageBytes(code, message) {
-
-	var index = code ? 2 : 0;
-	var binary = message instanceof Int8Array || message instanceof Buffer;
-	var length = message.length;
-
-	var messageBuffer = Buffer.alloc(length + index);
-
-	for (var i = 0; i < length; i++) {
-		if (binary)
-			messageBuffer[i + index] = message[i];
-		else
-			messageBuffer[i + index] = message.charCodeAt(i);
-	}
-
-	if (code) {
-		messageBuffer[0] = code >> 8;
-		messageBuffer[1] = code;
-	}
-
-	return messageBuffer;
-}
-
-/**
- * Get length of WebSocket frame
- * @author Jozef Gula <gula.jozef@gmail.com>
- * @param  {Number} length
- * @return {Number}
- */
-function getWebSocketFrameLengthBytes(length) {
-	var lengthBuffer = null;
-
-	if (length <= 125) {
-		lengthBuffer = Buffer.alloc(1);
-		lengthBuffer[0] = length;
-		return lengthBuffer;
-	}
-
-	if (length <= 65535) {
-		lengthBuffer = Buffer.alloc(3);
-		lengthBuffer[0] = 126;
-		lengthBuffer[1] = (length >> 8) & 255;
-		lengthBuffer[2] = (length) & 255;
-		return lengthBuffer;
-	}
-
-	lengthBuffer = Buffer.alloc(9);
-
-	lengthBuffer[0] = 127;
-	lengthBuffer[1] = 0x00;
-	lengthBuffer[2] = 0x00;
-	lengthBuffer[3] = 0x00;
-	lengthBuffer[4] = 0x00;
-	lengthBuffer[5] = (length >> 24) & 255;
-	lengthBuffer[6] = (length >> 16) & 255;
-	lengthBuffer[7] = (length >> 8) & 255;
-	lengthBuffer[8] = (length) & 255;
-
-	return lengthBuffer;
-}
-
-/**
  * GPS distance in KM
  * @param  {Number} lat1
  * @param  {Number} lon1
@@ -2678,68 +2574,6 @@ SP.parseHTML = function(trim) {
 	return require('./htmlparser').parseHTML(this, trim);
 };
 
-/**
- * Checks if the string starts with the text
- * @see {@link http://docs.totaljs.com/SP/#SP.startsWith|Documentation}
- * @param {String} text Text to find.
- * @param {Boolean/Number} ignoreCase Ingore case sensitive or position in the string.
- * @return {Boolean}
- */
-SP.startsWith = function(text, ignoreCase) {
-	var self = this;
-	var length = text.length;
-	var tmp;
-
-	if (ignoreCase === true) {
-		tmp = self.substring(0, length);
-		return tmp.length === length && tmp.toLowerCase() === text.toLowerCase();
-	}
-
-	if (ignoreCase)
-		tmp = self.substr(ignoreCase, length);
-	else
-		tmp = self.substring(0, length);
-
-	return tmp.length === length && tmp === text;
-};
-
-/**
- * Checks if the string ends with the text
- * @see {@link http://docs.totaljs.com/SP/#SP.endsWith|Documentation}
- * @param {String} text Text to find.
- * @param {Boolean/Number} ignoreCase Ingore case sensitive or position in the string.
- * @return {Boolean}
- */
-SP.endsWith = function(text, ignoreCase) {
-	var self = this;
-	var length = text.length;
-	var tmp;
-
-	if (ignoreCase === true) {
-		tmp = self.substring(self.length - length);
-		return tmp.length === length && tmp.toLowerCase() === text.toLowerCase();
-	}
-
-	if (ignoreCase)
-		tmp = self.substr((self.length - ignoreCase) - length, length);
-	else
-		tmp = self.substring(self.length - length);
-
-	return tmp.length === length && tmp === text;
-};
-
-SP.replacer = function(find, text) {
-	var self = this;
-	var beg = self.indexOf(find);
-	return beg === -1 ? self : (self.substring(0, beg) + text + self.substring(beg + find.length));
-};
-
-/**
- * Hash string
- * @param {String} type Hash type.
- * @param {String} salt Optional, salt.
- * @return {String}
- */
 SP.hash = function(type, salt) {
 	var str = salt ? this + salt : this;
 	switch (type) {
@@ -4591,7 +4425,6 @@ if (!SP.padLeft) {
 	};
 }
 
-
 if (!SP.padRight) {
 	SP.padRight = function(max, c) {
 		var self = this;
@@ -5045,11 +4878,6 @@ AP.trim = function() {
 	return output;
 };
 
-/**
- * Skip items from array
- * @param {Number} count
- * @return {Array}
- */
 AP.skip = function(count) {
 	var arr = [];
 	var self = this;
@@ -5059,12 +4887,6 @@ AP.skip = function(count) {
 	return arr;
 };
 
-/**
- * Find items in Array
- * @param {Function(item, index) or String/Object} cb
- * @param {Object} value Optional.
- * @return {Array}
- */
 AP.findAll = function(cb, value) {
 
 	var self = this;
@@ -5134,12 +4956,6 @@ AP.findIndex = function(cb, value) {
 	return -1;
 };
 
-/**
- * Remove items from Array
- * @param {Function(item, index) or Object} cb
- * @param {Object} value Optional.
- * @return {Array}
- */
 AP.remove = function(cb, value) {
 
 	var self = this;
@@ -5221,11 +5037,6 @@ function next_wait(self, onItem, callback, thread, tmp) {
 	self.wait(onItem, callback, thread, tmp);
 }
 
-/**
- * Creates a function async list
- * @param {Function} callback Optional
- * @return {Array}
- */
 AP.async = function(thread, callback, tmp) {
 
 	var self = this;
@@ -5507,46 +5318,6 @@ exports.async = function(fn, isApply) {
 		return generator.value;
 	};
 };
-
-// MIT
-// Written by Jozef Gula
-// Optimized by Peter Sirka
-const CACHE_GML1 = [null, null, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-const CACHE_GML2 = [null, null, null, null, null, null, null, null];
-exports.getMessageLength = function(data, isLE) {
-
-	var length = data[1] & 0x7f;
-
-	if (length === 126) {
-		if (data.length < 4)
-			return -1;
-		CACHE_GML1[0] = data[3];
-		CACHE_GML1[1] = data[2];
-		return converBytesToInt64(CACHE_GML1, 0, isLE);
-	}
-
-	if (length === 127) {
-		if (data.Length < 10)
-			return -1;
-		CACHE_GML2[0] = data[9];
-		CACHE_GML2[1] = data[8];
-		CACHE_GML2[2] = data[7];
-		CACHE_GML2[3] = data[6];
-		CACHE_GML2[4] = data[5];
-		CACHE_GML2[5] = data[4];
-		CACHE_GML2[6] = data[3];
-		CACHE_GML2[7] = data[2];
-		return converBytesToInt64(CACHE_GML2, 0, isLE);
-	}
-
-	return length;
-};
-
-// MIT
-// Written by Jozef Gula
-function converBytesToInt64(data, startIndex, isLE) {
-	return isLE ? (data[startIndex] | (data[startIndex + 1] << 0x08) | (data[startIndex + 2] << 0x10) | (data[startIndex + 3] << 0x18) | (data[startIndex + 4] << 0x20) | (data[startIndex + 5] << 0x28) | (data[startIndex + 6] << 0x30) | (data[startIndex + 7] << 0x38)) : ((data[startIndex + 7] << 0x20) | (data[startIndex + 6] << 0x28) | (data[startIndex + 5] << 0x30) | (data[startIndex + 4] << 0x38) | (data[startIndex + 3]) | (data[startIndex + 2] << 0x08) | (data[startIndex + 1] << 0x10) | (data[startIndex] << 0x18));
-}
 
 exports.queuecache = {};
 
@@ -7110,7 +6881,7 @@ exports.parseURI2 = function(url) {
 	let search = '';
 
 	if (index !== -1) {
-		search = url.substring(index);
+		search = url.substring(index + 1);
 		url = url.substring(0, index);
 	}
 
@@ -7144,7 +6915,7 @@ function destroyStreamopen() {
 // MIT
 exports.destroystream = function(stream) {
 
-	if (stream instanceof ReadStream) {
+	if (stream instanceof F.Fs.ReadStream) {
 		stream.destroy();
 		typeof(stream.close) === 'function' && stream.on('open', destroyStreamopen);
 	} else if (stream instanceof Stream)
@@ -7242,5 +7013,3 @@ function isFinished(stream) {
 
 	return false;
 }
-
-!global.F && require('./index');
