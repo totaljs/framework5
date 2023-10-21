@@ -90,6 +90,7 @@ function Route(url, action, size) {
 	});
 
 	t.priority = 100;
+	t.type = t.method === 'WEBSOCKET' || t.method === 'SOCKET' ? 'websocket' : t.method === 'FILE' ? 'file' : 'route';
 
 	// Parse flags
 	url = url.replace(/(@|#)+[a-z0-9]+/gi, function(text) {
@@ -102,6 +103,18 @@ function Route(url, action, size) {
 		}
 		return '';
 	}).trim();
+
+	// Max. payload size
+	if (!t.size) {
+		switch (t.type) {
+			case 'websocket':
+				t.size = F.config.$wsmaxsize;
+				break;
+			case 'route':
+				t.size = F.config.$httpmaxsize;
+				break;
+		}
+	}
 
 	index = url.indexOf('-->');
 
@@ -127,6 +140,7 @@ exports.route = function(url, action, size) {
 	if (route) {
 		switch (route.method) {
 			case 'SOCKET':
+			case 'WEBSOCKET':
 				F.routes.websockets.push(route);
 				break;
 			case 'FILE':
@@ -449,7 +463,7 @@ exports.lookupwebsocket = function(ctrl, auth, skip = false) {
 		for (var i = 0; i < tmp.D.length; i++) {
 			var r = tmp.D[i];
 			if (r.url.length === length || r.wildcard) {
-				if (r.compare(req)) {
+				if (r.compare(ctrl)) {
 					if (!routes)
 						routes = [];
 					routes.push(r);
