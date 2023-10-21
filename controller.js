@@ -36,7 +36,7 @@ function Controller(req, res) {
 		ctrl.split2.push(path.toLowerCase());
 
 	ctrl.params = {};
-	ctrl.query = {};
+	ctrl.query = ctrl.uri.search.parseEncoded();
 	ctrl.files = [];
 	ctrl.body = {};
 
@@ -105,8 +105,26 @@ Controller.prototype = {
 	},
 
 	get ua() {
+		if (this.$ua != null)
+			return this.$ua;
 		let ua = this.headers['user-agent'];
-		return ua ? ua.parseUA() : '';
+		this.$ua = ua ? ua.parseUA() : '';
+		return this.$ua;
+	},
+
+	get ip() {
+
+		if (this.$ip != null)
+			return this.$ip;
+
+		// x-forwarded-for: client, proxy1, proxy2, ...
+		let proxy = this.headers['x-forwarded-for'];
+		if (proxy)
+			this.$ip = proxy.split(',', 1)[0] || this.req.connection.remoteAddress;
+		else if (!this.$ip)
+			this.$ip = this.req.connection.remoteAddress;
+
+		return this.$ip;
 	},
 
 	get referrer() {
@@ -524,16 +542,29 @@ Controller.prototype.$route = function() {
 
 			ctrl.payload = [];
 			ctrl.payloadsize = 0;
+			ctrl.toolarge = false;
 			ctrl.downloaded = false;
 
 			ctrl.req.on('data', function(chunk) {
-				// @TODO: add a check of the body size
 				ctrl.payloadsize += chunk.length;
-				ctrl.payload.push(chunk);
+				if (ctrl.payloadsize > ctrl.route.size) {
+					if (!ctrl.toolarge) {
+						ctrl.toolarge = true;
+						delete ctrl.payload;
+					}
+				} else
+					ctrl.payload.push(chunk);
 			});
 
 			ctrl.req.on('close', () => ctrl.free());
 			ctrl.req.on('end', function() {
+
+				ctrl.downloaded = true;
+
+				if (ctrl.toolarge) {
+					ctrl.fallback(431);
+					return;
+				}
 
 				ctrl.payload = Buffer.concat(ctrl.payload);
 
@@ -546,7 +577,6 @@ Controller.prototype.$route = function() {
 						break;
 				}
 
-				ctrl.downloaded = true;
 				authorize(ctrl);
 			});
 
@@ -650,8 +680,8 @@ function multipart(ctrl) {
 		}
 	});
 
-	parser.skipcheck = !F.config.$uploadchecktypes;
-	parser.limits.total = ctrl.route.size || F.config.$uploadsize;
+	parser.skipcheck = !F.config.$httpchecktypes;
+	parser.limits.total = ctrl.route.size;
 }
 
 function authorize(ctrl) {
