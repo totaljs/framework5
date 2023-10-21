@@ -1,7 +1,6 @@
 - internal routes (fallback)
 - schemas
 - proxy
-- websocket
 - websocketclient
 - bundles
 - service
@@ -23,3 +22,4 @@
 - utils
 - openclient
 - ldap
+- utils
