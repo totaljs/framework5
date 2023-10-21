@@ -6910,9 +6910,9 @@ function destroyStreamopen() {
 		this.close();
 }
 
+// MIT
 // Copyright (c) 2013 Jonathan Ong <me@jongleberry.com>
 // Copyright (c) 2014 Douglas Christopher Wilson <doug@somethingdoug.com>
-// MIT
 exports.destroystream = function(stream) {
 
 	if (stream instanceof F.Fs.ReadStream) {
@@ -6929,9 +6929,9 @@ exports.destroystream = function(stream) {
 	return stream;
 };
 
+// MIT
 // Copyright (c) 2013 Jonathan Ong <me@jongleberry.com>
 // Copyright (c) 2014 Douglas Christopher Wilson <doug@somethingdoug.com>
-// MIT
 exports.onfinished = function(stream, fn) {
 
 	if (stream.$onFinished) {
