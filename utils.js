@@ -1,41 +1,37 @@
 'use strict';
 
-const Dns = require('dns');
-const Url = require('url');
-const Http = require('http');
-const Https = require('https');
-const Path = require('path');
-const Fs = require('fs');
-const Crypto = require('crypto');
-const Zlib = require('zlib');
-const Tls = require('tls');
-const Net = require('net');
-const KeepAlive = new Http.Agent({ keepAlive: true, timeout: 60000 });
-const KeepAliveHttps = new Https.Agent({ keepAlive: true, timeout: 60000 });
-const SKIPBODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
+const KeepAlive = new F.Http.Agent({ keepAlive: true, timeout: 60000 });
+const KeepAliveHttps = new F.Https.Agent({ keepAlive: true, timeout: 60000 });
+
+// Flags
+const COMPRESS = { gzip: 1, deflate: 1 };
+const CONCAT = [null, null];
+const SKI_PPORTS = { '80': 1, '443': 1 };
+const SKIP_BODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
+const TYPE_OCTET = 'application/octet-stream';
+const RANDOM_STRING = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+const RANDOM_NUMBER = '0123456789';
+const RANDOM_TEXT = [...RANDOM_NUMBER, ...RANDOM_STRING];
+const CRC32TABLE = '00000000,77073096,EE0E612C,990951BA,076DC419,706AF48F,E963A535,9E6495A3,0EDB8832,79DCB8A4,E0D5E91E,97D2D988,09B64C2B,7EB17CBD,E7B82D07,90BF1D91,1DB71064,6AB020F2,F3B97148,84BE41DE,1ADAD47D,6DDDE4EB,F4D4B551,83D385C7,136C9856,646BA8C0,FD62F97A,8A65C9EC,14015C4F,63066CD9,FA0F3D63,8D080DF5,3B6E20C8,4C69105E,D56041E4,A2677172,3C03E4D1,4B04D447,D20D85FD,A50AB56B,35B5A8FA,42B2986C,DBBBC9D6,ACBCF940,32D86CE3,45DF5C75,DCD60DCF,ABD13D59,26D930AC,51DE003A,C8D75180,BFD06116,21B4F4B5,56B3C423,CFBA9599,B8BDA50F,2802B89E,5F058808,C60CD9B2,B10BE924,2F6F7C87,58684C11,C1611DAB,B6662D3D,76DC4190,01DB7106,98D220BC,EFD5102A,71B18589,06B6B51F,9FBFE4A5,E8B8D433,7807C9A2,0F00F934,9609A88E,E10E9818,7F6A0DBB,086D3D2D,91646C97,E6635C01,6B6B51F4,1C6C6162,856530D8,F262004E,6C0695ED,1B01A57B,8208F4C1,F50FC457,65B0D9C6,12B7E950,8BBEB8EA,FCB9887C,62DD1DDF,15DA2D49,8CD37CF3,FBD44C65,4DB26158,3AB551CE,A3BC0074,D4BB30E2,4ADFA541,3DD895D7,A4D1C46D,D3D6F4FB,4369E96A,346ED9FC,AD678846,DA60B8D0,44042D73,33031DE5,AA0A4C5F,DD0D7CC9,5005713C,270241AA,BE0B1010,C90C2086,5768B525,206F85B3,B966D409,CE61E49F,5EDEF90E,29D9C998,B0D09822,C7D7A8B4,59B33D17,2EB40D81,B7BD5C3B,C0BA6CAD,EDB88320,9ABFB3B6,03B6E20C,74B1D29A,EAD54739,9DD277AF,04DB2615,73DC1683,E3630B12,94643B84,0D6D6A3E,7A6A5AA8,E40ECF0B,9309FF9D,0A00AE27,7D079EB1,F00F9344,8708A3D2,1E01F268,6906C2FE,F762575D,806567CB,196C3671,6E6B06E7,FED41B76,89D32BE0,10DA7A5A,67DD4ACC,F9B9DF6F,8EBEEFF9,17B7BE43,60B08ED5,D6D6A3E8,A1D1937E,38D8C2C4,4FDFF252,D1BB67F1,A6BC5767,3FB506DD,48B2364B,D80D2BDA,AF0A1B4C,36034AF6,41047A60,DF60EFC3,A867DF55,316E8EEF,4669BE79,CB61B38C,BC66831A,256FD2A0,5268E236,CC0C7795,BB0B4703,220216B9,5505262F,C5BA3BBE,B2BD0B28,2BB45A92,5CB36A04,C2D7FFA7,B5D0CF31,2CD99E8B,5BDEAE1D,9B64C2B0,EC63F226,756AA39C,026D930A,9C0906A9,EB0E363F,72076785,05005713,95BF4A82,E2B87A14,7BB12BAE,0CB61B38,92D28E9B,E5D5BE0D,7CDCEFB7,0BDBDF21,86D3D2D4,F1D4E242,68DDB3F8,1FDA836E,81BE16CD,F6B9265B,6FB077E1,18B74777,88085AE6,FF0F6A70,66063BCA,11010B5C,8F659EFF,F862AE69,616BFFD3,166CCF45,A00AE278,D70DD2EE,4E048354,3903B3C2,A7672661,D06016F7,4969474D,3E6E77DB,AED16A4A,D9D65ADC,40DF0B66,37D83BF0,A9BCAE53,DEBB9EC5,47B2CF7F,30B5FFE9,BDBDF21C,CABAC28A,53B39330,24B4A3A6,BAD03605,CDD70693,54DE5729,23D967BF,B3667A2E,C4614AB8,5D681B02,2A6F2B94,B40BBE37,C30C8EA1,5A05DF1B,2D02EF8D'.split(',').map(s => parseInt(s, 16));
+
+// Regullar expressions
+const REG_ISARR = /\[\d+\]|\[\]$/;
+const REG_REPLACEARR = /\[\]/g;
 const REG_EMPTYBUFFER = /\0|%00|\\u0000/g;
 const REG_EMPTYBUFFER_TEST = /\0|%00|\\u0000/;
 const REG_XSS = /<.*>/;
 const REG_SQLINJECTION = /'(''|[^'])*'|\b(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE|UNION( +ALL){0,1})\b/;
 const REG_GUID = (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-const CT_OCTET = 'application/octet-stream';
-const Stream = require('node:stream');
-
-const COMPRESS = { gzip: 1, deflate: 1 };
-const CONCAT = [null, null];
-const SKIPPORTS = { '80': 1, '443': 1 };
-const REGISARR = /\[\d+\]|\[\]$/;
-const REGREPLACEARR = /\[\]/g;
 const REG_JPG = /jfif|exif/;
 const REG_WEBP = /jfif|webp|exif/;
 const REG_SVG = /xml|svg/i;
 const REG_DOUBLESLASH = /\/{2}|\.{2,}|\.{1,}\/|/g;
+const REG_TRIM = /^[\s]+|[\s]+$/g;
+const REG_DATE = /(\d{1,2}\.\d{1,2}\.\d{4})|(\d{4}-\d{1,2}-\d{1,2})|(\d{1,2}:\d{1,2}(:\d{1,2})?)/g;
+const REG_DATEFORMAT = /YYYY|yyyy|YY|yy|MMMM|MMM|MM|M|dddd|DDDD|DDD|ddd|DD|dd|D|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
+const REG_STRFORMAT = /\{\d+\}/g;
 
 var regexpSTATIC = /\.\w{2,8}($|\?)+/;
-const regexpTRIM = /^[\s]+|[\s]+$/g;
-const regexpDATE = /(\d{1,2}\.\d{1,2}\.\d{4})|(\d{4}-\d{1,2}-\d{1,2})|(\d{1,2}:\d{1,2}(:\d{1,2})?)/g;
-const regexpDATEFORMAT = /YYYY|yyyy|YY|yy|MMMM|MMM|MM|M|dddd|DDDD|DDD|ddd|DD|dd|D|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
-const regexpSTRINGFORMAT = /\{\d+\}/g;
 const regexpPATH = /\\/g;
 const regexpTags = /<\/?[^>]+(>|$)/g;
 const regexpDiacritics = /[^\u0000-\u007e]/g;
@@ -60,7 +56,6 @@ const DIACRITICSMAP = {};
 const ALPHA_INDEX = { '&lt': '<', '&gt': '>', '&quot': '"', '&apos': '\'', '&amp': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': '\'', '&amp;': '&' };
 const STREAMPIPE = { end: false };
 const CT = 'Content-Type';
-const CRC32TABLE = '00000000,77073096,EE0E612C,990951BA,076DC419,706AF48F,E963A535,9E6495A3,0EDB8832,79DCB8A4,E0D5E91E,97D2D988,09B64C2B,7EB17CBD,E7B82D07,90BF1D91,1DB71064,6AB020F2,F3B97148,84BE41DE,1ADAD47D,6DDDE4EB,F4D4B551,83D385C7,136C9856,646BA8C0,FD62F97A,8A65C9EC,14015C4F,63066CD9,FA0F3D63,8D080DF5,3B6E20C8,4C69105E,D56041E4,A2677172,3C03E4D1,4B04D447,D20D85FD,A50AB56B,35B5A8FA,42B2986C,DBBBC9D6,ACBCF940,32D86CE3,45DF5C75,DCD60DCF,ABD13D59,26D930AC,51DE003A,C8D75180,BFD06116,21B4F4B5,56B3C423,CFBA9599,B8BDA50F,2802B89E,5F058808,C60CD9B2,B10BE924,2F6F7C87,58684C11,C1611DAB,B6662D3D,76DC4190,01DB7106,98D220BC,EFD5102A,71B18589,06B6B51F,9FBFE4A5,E8B8D433,7807C9A2,0F00F934,9609A88E,E10E9818,7F6A0DBB,086D3D2D,91646C97,E6635C01,6B6B51F4,1C6C6162,856530D8,F262004E,6C0695ED,1B01A57B,8208F4C1,F50FC457,65B0D9C6,12B7E950,8BBEB8EA,FCB9887C,62DD1DDF,15DA2D49,8CD37CF3,FBD44C65,4DB26158,3AB551CE,A3BC0074,D4BB30E2,4ADFA541,3DD895D7,A4D1C46D,D3D6F4FB,4369E96A,346ED9FC,AD678846,DA60B8D0,44042D73,33031DE5,AA0A4C5F,DD0D7CC9,5005713C,270241AA,BE0B1010,C90C2086,5768B525,206F85B3,B966D409,CE61E49F,5EDEF90E,29D9C998,B0D09822,C7D7A8B4,59B33D17,2EB40D81,B7BD5C3B,C0BA6CAD,EDB88320,9ABFB3B6,03B6E20C,74B1D29A,EAD54739,9DD277AF,04DB2615,73DC1683,E3630B12,94643B84,0D6D6A3E,7A6A5AA8,E40ECF0B,9309FF9D,0A00AE27,7D079EB1,F00F9344,8708A3D2,1E01F268,6906C2FE,F762575D,806567CB,196C3671,6E6B06E7,FED41B76,89D32BE0,10DA7A5A,67DD4ACC,F9B9DF6F,8EBEEFF9,17B7BE43,60B08ED5,D6D6A3E8,A1D1937E,38D8C2C4,4FDFF252,D1BB67F1,A6BC5767,3FB506DD,48B2364B,D80D2BDA,AF0A1B4C,36034AF6,41047A60,DF60EFC3,A867DF55,316E8EEF,4669BE79,CB61B38C,BC66831A,256FD2A0,5268E236,CC0C7795,BB0B4703,220216B9,5505262F,C5BA3BBE,B2BD0B28,2BB45A92,5CB36A04,C2D7FFA7,B5D0CF31,2CD99E8B,5BDEAE1D,9B64C2B0,EC63F226,756AA39C,026D930A,9C0906A9,EB0E363F,72076785,05005713,95BF4A82,E2B87A14,7BB12BAE,0CB61B38,92D28E9B,E5D5BE0D,7CDCEFB7,0BDBDF21,86D3D2D4,F1D4E242,68DDB3F8,1FDA836E,81BE16CD,F6B9265B,6FB077E1,18B74777,88085AE6,FF0F6A70,66063BCA,11010B5C,8F659EFF,F862AE69,616BFFD3,166CCF45,A00AE278,D70DD2EE,4E048354,3903B3C2,A7672661,D06016F7,4969474D,3E6E77DB,AED16A4A,D9D65ADC,40DF0B66,37D83BF0,A9BCAE53,DEBB9EC5,47B2CF7F,30B5FFE9,BDBDF21C,CABAC28A,53B39330,24B4A3A6,BAD03605,CDD70693,54DE5729,23D967BF,B3667A2E,C4614AB8,5D681B02,2A6F2B94,B40BBE37,C30C8EA1,5A05DF1B,2D02EF8D'.split(',').map(s => parseInt(s, 16));
 const PROXYBLACKLIST = { 'localhost': 1, '127.0.0.1': 1, '0.0.0.0': 1 };
 const PROXYOPTIONS = { headers: {}, method: 'CONNECT', agent: false };
 const PROXYTLS = { headers: {}};
@@ -273,7 +268,7 @@ var CONTENTTYPES = {
 	ai: 'application/postscript',
 	appcache: 'text/cache-manifest',
 	avi: 'video/avi',
-	bin: CT_OCTET,
+	bin: TYPE_OCTET,
 	bmp: 'image/bmp',
 	coffee: 'text/coffeescript',
 	css: 'text/css',
@@ -282,7 +277,7 @@ var CONTENTTYPES = {
 	docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 	dtd: 'application/xml-dtd',
 	eps: 'application/postscript',
-	exe: CT_OCTET,
+	exe: TYPE_OCTET,
 	flac: 'audio/x-flac',
 	geojson: 'application/json',
 	gif: 'image/gif',
@@ -466,7 +461,7 @@ exports.resolve = function(url, callback, param) {
 	var uri;
 
 	try {
-		uri = Url.parse(url);
+		uri = F.Url.parse(url);
 	} catch (e) {
 		callback(e);
 		return;
@@ -483,7 +478,7 @@ exports.resolve = function(url, callback, param) {
 		return;
 	}
 
-	Dns.resolve4(uri.hostname, function(e, addresses) {
+	F.Dns.resolve4(uri.hostname, function(e, addresses) {
 		if (e)
 			setImmediate(dnsresolve_callback, uri, callback, param);
 		else {
@@ -495,7 +490,7 @@ exports.resolve = function(url, callback, param) {
 };
 
 function dnsresolve_callback(uri, callback, param) {
-	Dns.resolve4(uri.hostname, function(e, addresses) {
+	F.Dns.resolve4(uri.hostname, function(e, addresses) {
 		if (addresses && addresses.length) {
 			dnscache[uri.host] = addresses;
 			uri.host = addresses[0];
@@ -522,7 +517,7 @@ function parseProxy(p) {
 	if (p.indexOf('://') === -1)
 		p = 'http://' + p;
 
-	var obj = Url.parse(p);
+	var obj = F.Url.parse(p);
 
 	if (obj.auth)
 		obj._auth = 'Basic ' + Buffer.from(obj.auth).toString('base64');
@@ -599,7 +594,7 @@ function _request(opt, callback) {
 				opt.headers[CT] = 'text/html';
 				break;
 			case 'raw':
-				opt.headers[CT] = CT_OCTET;
+				opt.headers[CT] = TYPE_OCTET;
 				break;
 			case 'json':
 				opt.headers[CT] = 'application/json; charset=utf-8';
@@ -667,7 +662,7 @@ function _request(opt, callback) {
 		}
 	}
 
-	var uri = opt.unixsocket ? { socketPath: opt.unixsocket.socket, path: opt.unixsocket.path } : Url.parse(opt.url);
+	var uri = opt.unixsocket ? { socketPath: opt.unixsocket.socket, path: opt.unixsocket.path } : F.Url.parse(opt.url);
 
 	if ((opt.unixsocket && !uri.socketPath) || (!opt.unixsocket && (!uri.hostname || !uri.host))) {
 		options.response.canceled = true;
@@ -709,7 +704,7 @@ function _request(opt, callback) {
 	if (proxy && uri.protocol === 'https:') {
 		proxy.tls = true;
 		uri.agent = new ProxyAgent(options);
-		uri.agent.request = Http.request;
+		uri.agent.request = F.Http.request;
 		uri.agent.createSocket = createSecureSocket;
 		uri.agent.defaultPort = 443;
 	}
@@ -755,7 +750,7 @@ function request_resolve(err, uri, options, origin) {
 function ProxyAgent(options) {
 	var self = this;
 	self.options = options;
-	self.maxSockets = Http.Agent.defaultMaxSockets;
+	self.maxSockets = F.Http.Agent.defaultMaxSockets;
 	self.requests = [];
 }
 
@@ -826,7 +821,7 @@ function createSecureSocket(options, callback) {
 		PROXYTLS.servername = self.options.uri.hostname;
 		PROXYTLS.headers = self.options.uri.headers;
 		PROXYTLS.socket = socket;
-		var tls = Tls.connect(0, PROXYTLS);
+		var tls = T.Tls.connect(0, PROXYTLS);
 		callback(tls);
 	});
 }
@@ -895,7 +890,7 @@ function request_call(uri, options) {
 	} else {
 
 		if (options.opt.compress) {
-			Zlib[options.opt.compress](options.body, function(err, buffer) {
+			F.Zlib[options.opt.compress](options.body, function(err, buffer) {
 				req.end(buffer);
 			});
 		} else
@@ -992,7 +987,7 @@ function request_writefile(req, options, file, next) {
 		};
 		exports.request(opt);
 	} else {
-		var stream = Fs.createReadStream(file.path || file.filename);
+		var stream = F.Fs.createReadStream(file.path || file.filename);
 		stream.once('close', next);
 		stream.pipe(req, STREAMPIPE);
 	}
@@ -1067,9 +1062,9 @@ function request_response(res) {
 		var proto = loc.substring(0, 6);
 
 		if (proto !== 'http:/' && proto !== 'https:')
-			loc = uri.protocol + '//' + uri.hostname + (uri.port && !SKIPPORTS[uri.port] ? (':' + uri.port) : '') + loc;
+			loc = uri.protocol + '//' + uri.hostname + (uri.port && !SKI_PPORTS[uri.port] ? (':' + uri.port) : '') + loc;
 
-		var tmp = Url.parse(loc);
+		var tmp = F.Url.parse(loc);
 		tmp.headers = uri.headers;
 
 		// Transfers cookies
@@ -1124,7 +1119,7 @@ function request_response(res) {
 			options.proxy.tls = true;
 			options.uri = tmp;
 			options.uri.agent = new ProxyAgent(options);
-			options.uri.agent.request = Http.request;
+			options.uri.agent.request = F.Http.request;
 			options.uri.agent.createSocket = createSecureSocket;
 			options.uri.agent.defaultPort = 443;
 		}
@@ -1207,7 +1202,7 @@ function request_response(res) {
 		options.callback = null;
 	} else {
 		if (COMPRESS[encoding]) {
-			var zlib = encoding === 'gzip' ? Zlib.createGunzip() : Zlib.createInflate();
+			var zlib = encoding === 'gzip' ? F.Zlib.createGunzip() : F.Zlib.createInflate();
 			zlib._buffer = res.buffer;
 			zlib.headers = res.headers;
 			zlib.statusCode = res.statusCode;
@@ -1360,7 +1355,7 @@ global.NOOP = function() {};
 exports.httpstatus = function(code, addCode) {
 	if (addCode === undefined)
 		addCode = true;
-	return (addCode ? code + ': ' : '') + Http.STATUS_CODES[code];
+	return (addCode ? code + ': ' : '') + F.Http.STATUS_CODES[code];
 };
 
 exports.extend = function(target, source, rewrite) {
@@ -1645,10 +1640,10 @@ exports.isDate = function(obj) {
 
 exports.getContentType = function(ext) {
 	if (!ext)
-		return CT_OCTET;
+		return TYPE_OCTET;
 	if (ext[0] === '.')
 		ext = ext.substring(1);
-	return CONTENTTYPES[ext] || CT_OCTET;
+	return CONTENTTYPES[ext] || TYPE_OCTET;
 };
 
 exports.contentTypes = CONTENTTYPES;
@@ -1768,10 +1763,6 @@ exports.join = function() {
 exports.$normalize = function(path) {
 	return isWindows ? path.replace(regexpPATH, '/') : path;
 };
-
-const RANDOM_STRING = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
-const RANDOM_NUMBER = '0123456789';
-const RANDOM_TEXT = [...RANDOM_NUMBER, ...RANDOM_STRING];
 
 global.UIDR = function() {
 
@@ -2134,12 +2125,6 @@ function ls(path, callback, advanced, filter) {
 	filelist.walk(path);
 }
 
-/**
- * Directory listing
- * @param {String} path Path.
- * @param {Function(files, directories)} callback Callback
- * @param {Function(filename, isDirectory) or String or RegExp} filter Custom filter (optional).
- */
 exports.ls = function(path, callback, filter) {
 	if (callback)
 		ls(path, callback, false, filter);
@@ -2147,12 +2132,6 @@ exports.ls = function(path, callback, filter) {
 		return new Promise(resolve => ls(path, (files, dirs) => resolve({ directories: dirs, files: files }), false, filter));
 };
 
-/**
- * Advanced Directory listing
- * @param {String} path Path.
- * @param {Function(files, directories)} callback Callback
- * @param {Function(filename ,isDirectory) or String or RegExp} filter Custom filter (optional).
- */
 exports.ls2 = function(path, callback, filter) {
 	if (callback)
 		ls(path, callback, true, filter);
@@ -2308,7 +2287,7 @@ DP.add = function(type, value) {
 
 DP.extend = function(date) {
 	var dt = new Date(this);
-	var match = date.match(regexpDATE);
+	var match = date.match(REG_DATE);
 
 	if (!match)
 		return dt;
@@ -2407,7 +2386,7 @@ DP.format = function(format, resource) {
 	var isdd = false;
 	var isww = false;
 
-	format = format.replace(regexpDATEFORMAT, function(key) {
+	format = format.replace(REG_DATEFORMAT, function(key) {
 		switch (key) {
 			case 'yyyy':
 			case 'YYYY':
@@ -2566,7 +2545,7 @@ function $urlmaker(text) {
 
 if (!SP.trim) {
 	SP.trim = function() {
-		return this.replace(regexpTRIM, '');
+		return this.replace(REG_TRIM, '');
 	};
 }
 
@@ -3629,7 +3608,7 @@ SP.parseConfig = function(def, onerr) {
 
 SP.format = function() {
 	var arg = arguments;
-	return this.replace(regexpSTRINGFORMAT, function(text) {
+	return this.replace(REG_STRFORMAT, function(text) {
 		var value = arg[+text.substring(1, text.length - 1)];
 		return value == null ? '' : value;
 	});
@@ -4029,25 +4008,25 @@ SP.fromUnicode = function() {
 };
 
 SP.sha1 = function(salt) {
-	var hash = Crypto.createHash('sha1');
+	var hash = F.Crypto.createHash('sha1');
 	hash.update(this + (salt || ''), ENCODING);
 	return hash.digest('hex');
 };
 
 SP.sha256 = function(salt) {
-	var hash = Crypto.createHash('sha256');
+	var hash = F.Crypto.createHash('sha256');
 	hash.update(this + (salt || ''), ENCODING);
 	return hash.digest('hex');
 };
 
 SP.sha512 = function(salt) {
-	var hash = Crypto.createHash('sha512');
+	var hash = F.Crypto.createHash('sha512');
 	hash.update(this + (salt || ''), ENCODING);
 	return hash.digest('hex');
 };
 
 SP.md5 = function(salt) {
-	var hash = Crypto.createHash('md5');
+	var hash = F.Crypto.createHash('md5');
 	hash.update(this + (salt || ''), ENCODING);
 	return hash.digest('hex');
 };
@@ -4220,7 +4199,7 @@ exports.encrypt_data = function(value, key, encode) {
 
 	for (var i = 0; i < value.length; i++) {
 
-		if (SKIPBODYENCRYPTOR[value[i]]) {
+		if (SKIP_BODYENCRYPTOR[value[i]]) {
 			builder.push(value[i]);
 			continue;
 		}
@@ -4273,7 +4252,7 @@ exports.decrypt_data = function(value, key, encode) {
 
 		var c = value[i];
 
-		if (SKIPBODYENCRYPTOR[c]) {
+		if (SKIP_BODYENCRYPTOR[c]) {
 			builder.push(c);
 			continue;
 		}
@@ -4323,7 +4302,7 @@ exports.decrypt_uid = function(val, key) {
 exports.encrypt_crypto = function(type, key, value) {
 	if (!F.temporary.keys[key])
 		F.temporary.keys[key] = Buffer.from(key);
-	var cipher = Crypto.createCipheriv(type, F.temporary.keys[key], CONF.default_crypto_iv);
+	var cipher = F.Crypto.createCipheriv(type, F.temporary.keys[key], CONF.default_crypto_iv);
 	CONCAT[0] = cipher.update(value);
 	CONCAT[1] = cipher.final();
 	return Buffer.concat(CONCAT);
@@ -4332,7 +4311,7 @@ exports.encrypt_crypto = function(type, key, value) {
 exports.decrypt_crypto = function(type, key, value) {
 	if (!F.temporary.keys[key])
 		F.temporary.keys[key] = Buffer.from(key);
-	var decipher = Crypto.createDecipheriv(type, F.temporary.keys[key], CONF.default_crypto_iv);
+	var decipher = F.Crypto.createDecipheriv(type, F.temporary.keys[key], CONF.default_crypto_iv);
 	try {
 		CONCAT[0] = decipher.update(value);
 		CONCAT[1] = decipher.final();
@@ -4347,7 +4326,7 @@ SP.base64ToFile = function(filename, callback) {
 		index = 0;
 	else
 		index++;
-	Fs.writeFile(filename, self.substring(index), 'base64', callback || NOOP);
+	F.Fs.writeFile(filename, self.substring(index), 'base64', callback || NOOP);
 	return this;
 };
 
@@ -5176,12 +5155,12 @@ FLP.walk = function(directory) {
 		return;
 	}
 
-	Fs.readdir(directory, function(err, arr) {
+	F.Fs.readdir(directory, function(err, arr) {
 		if (err)
 			return self.next();
 		var length = arr.length;
 		for (var i = 0; i < length; i++)
-			self.pending.push(Path.join(directory, arr[i]));
+			self.pending.push(F.Path.join(directory, arr[i]));
 		self.next();
 	});
 };
@@ -5189,7 +5168,7 @@ FLP.walk = function(directory) {
 FLP.stat = function(path) {
 	var self = this;
 
-	Fs.stat(path, function(err, stats) {
+	F.Fs.stat(path, function(err, stats) {
 
 		if (err)
 			return self.next();
@@ -5208,7 +5187,7 @@ FLP.stat = function(path) {
 };
 
 FLP.clean = function(path) {
-	return path[path.length - 1] === Path.sep ? path : path + Path.sep;
+	return path[path.length - 1] === F.Path.sep ? path : path + F.Path.sep;
 };
 
 FLP.next = function() {
@@ -5537,11 +5516,11 @@ CHP.append = CHP.write = function(obj) {
 		var index = (self.index++);
 
 		if (self.compress) {
-			Zlib.deflate(Buffer.from(JSON.stringify(self.stack), ENCODING), function(err, buffer) {
-				Fs.writeFile(self.filename + index + '.chunker', buffer, () => self.flushing--);
+			F.Zlib.deflate(Buffer.from(JSON.stringify(self.stack), ENCODING), function(err, buffer) {
+				F.Fs.writeFile(self.filename + index + '.chunker', buffer, () => self.flushing--);
 			});
 		} else
-			Fs.writeFile(self.filename + index + '.chunker', JSON.stringify(self.stack), () => self.flushing--);
+			F.Fs.writeFile(self.filename + index + '.chunker', JSON.stringify(self.stack), () => self.flushing--);
 
 		self.stack = [];
 	}
@@ -5560,11 +5539,11 @@ CHP.end = function() {
 		var index = (self.index++);
 
 		if (self.compress) {
-			Zlib.deflate(Buffer.from(JSON.stringify(self.stack), ENCODING), function(err, buffer) {
-				Fs.writeFile(self.filename + index + '.chunker', buffer, () => self.flushing--);
+			F.Zlib.deflate(Buffer.from(JSON.stringify(self.stack), ENCODING), function(err, buffer) {
+				F.Fs.writeFile(self.filename + index + '.chunker', buffer, () => self.flushing--);
 			});
 		} else
-			Fs.writeFile(self.filename + index + '.chunker', JSON.stringify(self.stack), () => self.flushing--);
+			F.Fs.writeFile(self.filename + index + '.chunker', JSON.stringify(self.stack), () => self.flushing--);
 
 		self.stack = [];
 	}
@@ -5602,7 +5581,7 @@ CHP.read = function(index, callback) {
 
 	var filename = self.filename + index + '.chunker';
 
-	Fs.readFile(filename, function(err, data) {
+	F.Fs.readFile(filename, function(err, data) {
 
 		if (err) {
 			callback(null, EMPTYARRAY);
@@ -5610,16 +5589,16 @@ CHP.read = function(index, callback) {
 		}
 
 		if (self.compress) {
-			Zlib.inflate(data, function(err, data) {
+			F.Zlib.inflate(data, function(err, data) {
 				if (err) {
 					callback(null, EMPTYARRAY);
 				} else {
-					self.autoremove && Fs.unlink(filename, NOOP);
+					self.autoremove && F.Fs.unlink(filename, NOOP);
 					callback(null, data.toString('utf8').parseJSON(true));
 				}
 			});
 		} else {
-			self.autoremove && Fs.unlink(filename, NOOP);
+			self.autoremove && F.Fs.unlink(filename, NOOP);
 			callback(null, data.toString('utf8').parseJSON(true));
 		}
 	});
@@ -5631,7 +5610,7 @@ CHP.clear = function() {
 	var files = [];
 	for (var i = 0; i < this.index; i++)
 		files.push(this.filename + i + '.chunker');
-	files.wait((filename, next) => Fs.unlink(filename, next));
+	files.wait((filename, next) => F.Fs.unlink(filename, next));
 	return this;
 };
 
@@ -6234,7 +6213,7 @@ MultipartParser.prototype.parse_head = function() {
 		}
 
 		self.current.path = self.tmp + (UPLOADINDEXER++) + '.bin';
-		self.current.stream = Fs.createWriteStream(self.current.path);
+		self.current.stream = F.Fs.createWriteStream(self.current.path);
 		var file = { path: self.current.path, name: self.current.name, filename: self.current.filename, size: 0, type: self.current.type, width: 0, height: 0 };
 		self.current.file = file;
 		self.current.fileheader = Buffer.alloc(0);
@@ -6523,7 +6502,7 @@ exports.connect = function(opt, callback) {
 		if (opt.tls) {
 			if (!meta.socket2) {
 				tls.socket = meta.socket1;
-				meta.socket2 = Tls.connect(tls, done);
+				meta.socket2 = F.Tls.connect(tls, done);
 				meta.socket2.on('error', error);
 				meta.socket2.on('clientError', error);
 				return;
@@ -6538,9 +6517,9 @@ exports.connect = function(opt, callback) {
 	};
 
 	if (opt.secure)
-		meta.socket1 = Tls.connect(opt, done);
+		meta.socket1 = F.Tls.connect(opt, done);
 	else
-		meta.socket1 = Net.createConnection(opt.port, opt.host, done);
+		meta.socket1 = F.Net.createConnection(opt.port, opt.host, done);
 
 	meta.socket1.on('error', error);
 	meta.socket1.on('clientError', error);
@@ -6801,14 +6780,14 @@ exports.set = function(obj, path, value) {
 	var builder = [];
 
 	for (var i = 0; i < arr.length - 1; i++) {
-		var type = arr[i + 1] ? (REGISARR.test(arr[i + 1]) ? '[]' : '{}') : '{}';
+		var type = arr[i + 1] ? (REG_ISARR.test(arr[i + 1]) ? '[]' : '{}') : '{}';
 		var p = 'w' + (arr[i][0] === '[' ? '' : '.') + arr[i];
 		builder.push('if(typeof(' + p + ')!==\'object\'||' + p + '==null)' + p + '=' + type + ';');
 	}
 
 	var v = arr[arr.length - 1];
 	var ispush = v.lastIndexOf('[]') !== -1;
-	var a = builder.join(';') + ';var v=typeof(a)===\'function\'?a(U.get(b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(REGREPLACEARR, '.push(v)') : (v + '=v')) + ';return v';
+	var a = builder.join(';') + ';var v=typeof(a)===\'function\'?a(U.get(b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(REG_REPLACEARR, '.push(v)') : (v + '=v')) + ';return v';
 
 	var fn = new Function('w', 'a', 'b', a);
 	F.temporary.other[cachekey] = fn;
@@ -6918,11 +6897,11 @@ exports.destroystream = function(stream) {
 	if (stream instanceof F.Fs.ReadStream) {
 		stream.destroy();
 		typeof(stream.close) === 'function' && stream.on('open', destroyStreamopen);
-	} else if (stream instanceof Stream)
+	} else if (stream instanceof F.Stream)
 		typeof(stream.destroy) === 'function' && stream.destroy();
 
 	if (stream.$totalfd) {
-		Fs.close(stream.$totalfd, NOOP);
+		F.Fs.close(stream.$totalfd, NOOP);
 		stream.$totalfd = null;
 	}
 
