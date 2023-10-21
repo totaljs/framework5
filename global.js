@@ -24,3 +24,4 @@ global.CORS = function(origin) {
 global.GUID = F.TUtils.guid;
 global.NOOP = F.TUtils.noop;
 global.REQUEST = F.TUtils.request;
+global.HASH = (val, type) => val.hash(type ? type : true);
