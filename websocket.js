@@ -9,14 +9,12 @@ const SOCKET_RESPONSE_COMPRESS = 'HTTP/1.1 101 Switching Protocols\r\nUpgrade: w
 const SOCKET_RESPONSE_PROTOCOL = 'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {0}\r\nSec-WebSocket-Protocol: {1}\r\n\r\n';
 const SOCKET_RESPONSE_PROTOCOL_COMPRESS = 'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {0}\r\nSec-WebSocket-Protocol: {1}\r\nSec-WebSocket-Extensions: permessage-deflate\r\n\r\n';
 const SOCKET_HASH = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
-const SOCKET_ALLOW_VERSION = [13];
-
+const SOCKET_ALLOW_VERSION = ['13'];
 const SOCKET_COMPRESS = Buffer.from([0x00, 0x00, 0xFF, 0xFF]);
 const SOCKET_COMPRESS_OPTIONS = { windowBits: Zlib.Z_DEFAULT_WINDOWBITS };
 
 const CACHE_GML1 = [null, null, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
 const CACHE_GML2 = [null, null, null, null, null, null, null, null];
-
 const CONCAT = [null, null];
 
 const REG_WEBSOCKET = /websocket/i;
@@ -35,10 +33,12 @@ function Controller(req, socket, head) {
 	ctrl.route = null;
 	ctrl.uri = F.TUtils.parseURI2(req.url);
 	ctrl.headers = req.headers;
+	ctrl.query = ctrl.uri.search.parseEncoded();
 	ctrl.split = ctrl.uri.split;
 	ctrl.split2 = [];
 	ctrl.url = ctrl.uri.key;
 	ctrl.released = false;
+	ctrl.params = {};
 	ctrl.current = {};
 	ctrl.masking = false;
 
@@ -48,10 +48,51 @@ function Controller(req, socket, head) {
 	ctrl.datatype = 'json'; // json|text|binary
 }
 
+Controller.prototype = {
+
+	get mobile() {
+		let ua = this.headers['user-agent'];
+		return ua ? REG_MOBILE.test(ua) : false;
+	},
+
+	get robot() {
+		let ua = this.headers['user-agent'];
+		return ua ? REG_ROBOT.test(ua) : false;
+	},
+
+	get ua() {
+		if (this.$ua != null)
+			return this.$ua;
+		let ua = this.headers['user-agent'];
+		this.$ua = ua ? ua.parseUA() : '';
+		return this.$ua;
+	},
+
+	get ip() {
+
+		if (this.$ip != null)
+			return this.$ip;
+
+		// x-forwarded-for: client, proxy1, proxy2, ...
+		let proxy = this.headers['x-forwarded-for'];
+		if (proxy)
+			this.$ip = proxy.split(',', 1)[0] || this.req.connection.remoteAddress;
+		else if (!this.$ip)
+			this.$ip = this.req.connection.remoteAddress;
+
+		return this.$ip;
+	},
+
+	get referrer() {
+		return this.headers.referer;
+	}
+
+};
+
 Controller.prototype.upgrade = function(websocket) {
 	var ctrl = this;
 	F.stats.performance.online++;
-	ctrl.parent = container;
+	ctrl.parent = websocket;
 	ctrl.socket.$controller = this;
 	ctrl.req.on('abort', websocket_onerror);
 	ctrl.req.on('aborted', websocket_onerror);
@@ -230,8 +271,8 @@ Controller.prototype.ondata = function(data) {
 // Optimized by Peter Sirka
 Controller.prototype.parse = function() {
 
-	var self = this;
-	var current = self.current;
+	var ctrl = this;
+	var current = ctrl.current;
 
 	// Fixed a problem with parsing of long messages, the code bellow 0x80 still returns 0 when the message is longer
 	// if (!current.buffer || current.buffer.length <= 2 || ((current.buffer[0] & 0x80) >> 7) !== 1)
@@ -266,8 +307,8 @@ Controller.prototype.parse = function() {
 	// total message length (data + header)
 	var mlength = index + length;
 
-	if (mlength > self.length) {
-		self.close('Frame is too large', 1009);
+	if (mlength > ctrl.route.size) {
+		ctrl.close(1009, 'Frame is too large');
 		return;
 	}
 
@@ -286,7 +327,7 @@ Controller.prototype.parse = function() {
 			current.buffer.copy(current.mask, 0, index - 4, index);
 		}
 
-		if (current.compressed && self.inflate) {
+		if (current.compressed && ctrl.inflate) {
 
 			var buf = Buffer.alloc(length);
 			current.buffer.copy(buf, 0, index, mlength);
@@ -299,7 +340,7 @@ Controller.prototype.parse = function() {
 
 			// Does the buffer continue?
 			buf.$continue = current.final === false;
-			self.inflatepending.push(buf);
+			ctrl.inflatepending.push(buf);
 
 		} else {
 
@@ -374,7 +415,7 @@ Controller.prototype.decode = function() {
 	ctrl.current.body = null;
 };
 
-Controller.prototype.parseinfate = function() {
+Controller.prototype.parseinflate = function() {
 
 	var ctrl = this;
 
@@ -401,7 +442,7 @@ Controller.prototype.parseinfate = function() {
 			ctrl.inflatechunks = null;
 			ctrl.inflatelock = false;
 
-			if (data.length > ctrl.length) {
+			if (data.length > ctrl.route.size) {
 				ctrl.close(1009, 'Frame is too large');
 				return;
 			}
@@ -439,11 +480,11 @@ Controller.prototype.send = function(message, raw, replacer) {
 			data = encodeURIComponent(data);
 
 		if (ctrl.deflate) {
-			buffer = Buffer.from(data, ENCODING);
+			buffer = Buffer.from(data, 'utf8');
 			ctrl.deflatepending.push(buffer);
 			ctrl.senddeflate();
 		} else {
-			buffer = Buffer.from(data, ENCODING);
+			buffer = Buffer.from(data, 'utf8');
 			ctrl.socket.write(getWebSocketFrame(0, buffer, 0x01, false, ctrl.masking));
 		}
 
@@ -476,7 +517,7 @@ Controller.prototype.senddeflate = function() {
 		ctrl.deflate.write(buf);
 		ctrl.deflate.flush(function() {
 			if (ctrl.deflatechunks) {
-				var data = contact(ctrl.deflatechunks, ctrl.deflatechunkslength);
+				var data = concat(ctrl.deflatechunks, ctrl.deflatechunkslength);
 				data = data.slice(0, data.length - 4);
 				ctrl.deflatelock = false;
 				ctrl.deflatechunks = null;
@@ -507,7 +548,7 @@ function websocketclientdestroy(ctrl) {
 	F.TUtils.destroystream(ctrl.req);
 }
 
-function websocketclientsendfin(self) {
+function websocketclientsendfin(ctrl) {
 	ctrl.socket.end(getWebSocketFrame(ctrl.closecode, ctrl.closemessage, 0x08, false, ctrl.masking));
 	setImmediate(websocketclientdestroy, ctrl);
 }
@@ -562,6 +603,7 @@ function WebSocket(url, route, params) {
 	t.connections = {};
 	t.route = route;
 	t.params = params;
+	// t.autocloseid = null;
 	F.TUtils.EventEmitter2.extend(t);
 }
 
@@ -714,9 +756,9 @@ WebSocket.prototype.check = function() {
 
 function wsdestroy_open() {
 	var self = this;
-	if (self.$autocloseid) {
-		clearTimeout(self.$autocloseid);
-		self.$autocloseid = null;
+	if (self.autocloseid) {
+		clearTimeout(self.autocloseid);
+		self.autocloseid = null;
 	}
 }
 
@@ -724,14 +766,14 @@ function wsdestroy_close(self) {
 
 	// Checks again online state
 	if (self.online) {
-		self.$autocloseid = null;
+		self.autocloseid = null;
 		return;
 	}
 
-	if (self.$autodestroy) {
-		for (var fn of self.$autodestroy)
+	if (self.autodestroyitems) {
+		for (var fn of self.autodestroyitems)
 			fn.call(self);
-		self.$autodestroy = null;
+		self.autodestroyitems = null;
 	}
 	self.destroy();
 }
@@ -740,17 +782,17 @@ WebSocket.prototype.autodestroy = function(callback) {
 
 	var self = this;
 
-	if (self.$autodestroy) {
-		self.$autodestroy.push(callback);
+	if (self.autodestroyitems) {
+		self.autodestroyitems.push(callback);
 		return self;
 	}
 
-	self.$autodestroy = [];
-	callback && self.$autodestroy.push(callback);
+	self.autodestroyitems = [];
+	callback && self.autodestroyitems.push(callback);
 	self.on('open', wsdestroy_open);
 	self.on('close', function() {
 		if (!self.online)
-			self.$autocloseid = setTimeout(wsdestroy_close, 5000, self);
+			self.autocloseid = setTimeout(wsdestroy_close, 5000, self);
 	});
 
 	return self;
@@ -796,7 +838,7 @@ function prepare(ctrl) {
 	ctrl.ondata2 = () => websocket.ondata();
 
 	var compress = (F.config.$wscompress && ctrl.headers['sec-websocket-extensions'] || '').indexOf('permessage-deflate') !== -1;
-	var header = ctrl.route.protocols && ctrl.route.protocols.length ? (compress ? SOCKET_RESPONSE_PROTOCOL_COMPRESS : SOCKET_RESPONSE_PROTOCOL).format(self.sign(ctrl), ctrl.route.protocols.join(', ')) : (compress ? SOCKET_RESPONSE_COMPRESS : SOCKET_RESPONSE).format(self.sign(ctrl));
+	var header = ctrl.route.protocols && ctrl.route.protocols.length ? (compress ? SOCKET_RESPONSE_PROTOCOL_COMPRESS : SOCKET_RESPONSE_PROTOCOL).format(ctrl.sign(ctrl), ctrl.route.protocols.join(', ')) : (compress ? SOCKET_RESPONSE_COMPRESS : SOCKET_RESPONSE).format(ctrl.sign(ctrl));
 
 	ctrl.socket.write(Buffer.from(header, 'binary'));
 	ctrl.ready = true;
@@ -816,7 +858,7 @@ function prepare(ctrl) {
 		ctrl.inflate.on('data', inflate);
 		ctrl.deflatepending = [];
 		ctrl.deflatelock = false;
-		ctrl.deflate = Zlib.createDeflateRaw(WEBSOCKET_COMPRESS_OPTIONS);
+		ctrl.deflate = Zlib.createDeflateRaw(SOCKET_COMPRESS_OPTIONS);
 		ctrl.deflate.$controller = ctrl;
 		ctrl.deflate.on('error', function() {
 			if (!ctrl.$uerror) {
@@ -831,7 +873,7 @@ function prepare(ctrl) {
 		WSCLIENTSID = 1;
 
 	ctrl.ID = F.TUtils.random_text(3) + WSCLIENTSID;
-	ctrl.id = self.ID;
+	ctrl.id = ctrl.ID;
 
 	if (F.connections[ctrl.url]) {
 		ctrl.upgrade(F.connections[ctrl.url]);
@@ -839,6 +881,8 @@ function prepare(ctrl) {
 	}
 
 	var websocket = new WebSocket(ctrl.url, ctrl.route, ctrl.params);
+	F.connections[ctrl.url] = websocket;
+
 	websocket.encodedecode = F.config.$wsencodedecode === true;
 
 	if (!ctrl.route.connections)
@@ -852,7 +896,6 @@ function prepare(ctrl) {
 
 function upgradecontinue(ctrl, websocket) {
 	ctrl.upgrade(websocket);
-	websocketpinger();
 }
 
 function inflate(data) {
@@ -1037,9 +1080,9 @@ exports.ping = function() {
 	}
 };
 
-exports.upgrade = function(req, socket, head) {
+exports.listen = function(req, socket, head) {
 
-	if (!req.headers.upgrade || !F.routes.websocket.length || !REG_WEBSOCKET.test(req.headers.upgrade))
+	if (!req.headers.upgrade || !F.routes.websockets.length || !REG_WEBSOCKET.test(req.headers.upgrade))
 		return;
 
 	/*
@@ -1066,7 +1109,7 @@ exports.upgrade = function(req, socket, head) {
 
 	ctrl.route = F.TRouting.lookupwebsocket(ctrl, 0, true);
 
-	if (!ctrl.route || SOCKET_ALLOW_VERSION.indexOf(U.parseInt(ctrl.headers['sec-websocket-version'])) === -1) {
+	if (!ctrl.route || SOCKET_ALLOW_VERSION.indexOf(ctrl.headers['sec-websocket-version'] || '') === -1) {
 		ctrl.destroy();
 		return;
 	}
@@ -1084,4 +1127,5 @@ exports.upgrade = function(req, socket, head) {
 
 	F.$events.websocket && F.emit('websocket', ctrl);
 	F.stats.request.websocket++;
+	authorize(ctrl);
 };
