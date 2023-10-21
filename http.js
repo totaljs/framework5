@@ -14,10 +14,6 @@ exports.listen = function(req, res) {
 	// res.write();
 	// res.end()
 
-	// @TODO: check PAUSE()
-	// @TODO: check blacklist
-	// @TODO: check allow_reqlimit
-
 	// Not supported
 	if (req.method === 'HEAD') {
 		F.stats.request.blocked++;
@@ -26,6 +22,11 @@ exports.listen = function(req, res) {
 	}
 
 	var ctrl = new TController.Controller(req, res);
+
+	if (F.paused.length) {
+		ctrl.fallback(999);
+		return;
+	}
 
 	if (F.config.$blacklist && F.config.$blacklist.indexOf(ctrl.ip) !== -1) {
 		F.stats.request.blocked++;
@@ -44,6 +45,9 @@ exports.listen = function(req, res) {
 		else
 			F.temporary.ddos[ctrl.ip] = 1;
 	}
+
+	if (F.routes.proxies.length && F.TRouting.lookupproxy(ctrl))
+		return;
 
 	if (F.routes.virtual[ctrl.url]) {
 		F.routes.virtual[ctrl.url](ctrl);
