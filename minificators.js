@@ -252,7 +252,7 @@ exports.html = function(html, ischunk) {
 			}
 
 			cache[key] = value;
-			html = html.replacer(value, key);
+			html = replacer(html, value, key);
 			beg = html.indexOf(tagBeg, beg + tagBeg.length);
 		}
 	}
@@ -271,7 +271,7 @@ exports.html = function(html, ischunk) {
 	}).replace(REG_HTML_1, '').replace(REG_HTML_2, '');
 
 	for (var k in cache)
-		html = html.replacer(k, cache[k]);
+		html = replacer(html, k, cache[k]);
 
 	return exports.htmlcss(exports.htmljs(html));
 };
@@ -292,7 +292,7 @@ exports.htmlremovecomments = function(value) {
 		if (comment.indexOf('[if') !== -1 || comment.indexOf('[endif') !== -1) {
 			beg = value.indexOf(tagBeg, end + 3);
 		} else {
-			value = value.replacer(comment, '');
+			value = replacer(value, comment, '');
 			beg = value.indexOf(tagBeg, beg);
 		}
 	}
@@ -815,7 +815,7 @@ exports.htmljs = function(html, index = 0) {
 
 	var val = js.substring(strFrom.length, js.length - strTo.length).trim();
 	var compiled = exports.js(val);
-	html = html.replacer(js, strFrom + compiled.trim() + strTo.trim());
+	html = replacer(html, js, strFrom + compiled.trim() + strTo.trim());
 	return exports.htmljs(html, indexBeg + compiled.length + 9);
 };
 
@@ -843,6 +843,11 @@ exports.htmlcss = function(html, index = 0) {
 	var css = html.substring(indexBeg, indexEnd + strTo.length);
 	var val = css.substring(strFrom.length, css.length - strTo.length).trim();
 	var compiled = exports.css(val);
-	html = html.replacer(css, (strFrom + compiled.trim() + strTo).trim());
+	html = replacer(html, css, (strFrom + compiled.trim() + strTo).trim());
 	return exports.htmlcss(html, indexBeg2 + compiled.length + 8);
 };
+
+function replacer(str, find, text) {
+	var beg = str.indexOf(find);
+	return beg === -1 ? str : (str.substring(0, beg) + text + str.substring(beg + find.length));
+}
