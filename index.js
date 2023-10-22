@@ -43,15 +43,17 @@ global.DEF = {};
 	F.def = DEF;
 	F.errors = [];
 	F.paused = [];
+	F.crons = [];
 
 	F.internal = {
 		ticks: 0,
 		counter: 0,
+		uid: 1,
 		timeouts: null // setInterval identifier
 	};
 
 	F.routes = {
-		internal: {},
+		fallback: {},
 		virtual: {},
 		routes: [],
 		routescache: {},
@@ -70,7 +72,6 @@ global.DEF = {};
 		shortcache: {},
 		notfound: {},
 		processing: {},
-		range: {},
 		views: {},
 		viewscache: [],
 		versions: {},
@@ -80,12 +81,17 @@ global.DEF = {};
 		internal: {}, // controllers/modules names for the routing
 		ready: {},
 		ddos: {},
-		exec: {}, // a temporary cach for EXEC() method
 		service: { redirect: 0, request: 0, file: 0, usage: 0 },
 		pending: [],
 		tmp: {},
 		merged: {},
-		minified: {}
+		minified: {},
+		tmsblocked: {},
+		dnscache: {},
+		blocked: {},
+		calls: {},
+		utils: {},
+		datetime: {} // date time formatters
 	};
 
 	// Internal stats
@@ -270,7 +276,7 @@ global.DEF = {};
 				directory += (i && directory ? '/' : '') + name;
 
 			if (i >= beg && !pathexists(directory))
-				Fs.mkdirSync(directory);
+				F.Fs.mkdirSync(directory);
 		}
 	};
 
@@ -278,7 +284,7 @@ global.DEF = {};
 
 function pathexists(filename, isfile) {
 	try {
-		var val = Fs.statSync(filename);
+		var val = F.Fs.statSync(filename);
 		return val ? (isfile ? val.isFile() : true) : false;
 	} catch (e) {
 		return false;
@@ -297,7 +303,7 @@ function rmdir(arr, callback) {
 
 	var path = arr.shift();
 	if (path) {
-		TUtils.ls(path, function(files, directories) {
+		F.TUtils.ls(path, function(files, directories) {
 			directories.reverse();
 			directories.push(path);
 			files.wait((item, next) => F.Fs.unlink(item, next), function() {
@@ -306,7 +312,7 @@ function rmdir(arr, callback) {
 		});
 	} else if (callback)
 		callback();
-};
+}
 
 function unlink(arr, callback) {
 
@@ -365,9 +371,10 @@ function unlink(arr, callback) {
 	CONF.$cleartemp = true;
 	CONF.$customtitles = false;
 	CONF.$version = '';
+	CONF.$intervalclearcache = 10;
 
-	CONF.$node_modules = require.resolve('./index');
-	CONF.$node_modules = CONF.$node_modules.substring(0, CONF.$node_modules.length - (8 + 7));
+	CONF.$nodemodules = require.resolve('./index');
+	CONF.$nodemodules = CONF.$nodemodules.substring(0, CONF.$nodemodules.length - (8 + 7));
 	CONF.$npmcache = '/var/www/.npm';
 	CONF.$python = 'python3';
 	CONF.$wsmaxsize = 256; // 256 kB
@@ -406,6 +413,14 @@ function unlink(arr, callback) {
 	};
 
 	DEF.helpers = {};
+	DEF.currencies = {};
+
+	DEF.parsers = {};
+	DEF.parsers.json = value => value.parseJSON(true);
+	DEF.parsers.urlencoded = value => value.parseEncoded();
+
+	// Unused
+	DEF.parsers.xml = value => value.parseXML(true);
 
 })(global.DEF);
 
@@ -451,7 +466,7 @@ F.loadconfig = function(value) {
 	// CMD('refresh_tms');
 
 	if (F.config.$performance)
-		Http.globalAgent.maxSockets = 9999;
+		F.Http.globalAgent.maxSockets = 9999;
 
 	if (!F.config.$httpetag)
 		F.config.$httpetag = F.config.version.replace(/\.|\s/g, '');
@@ -612,7 +627,7 @@ F.load = async function(types = [], callback) {
 		}
 	}
 
-	files.sort(function(a, b) {
+	files.sort(function(a) {
 
 		if (a.type === 'middleware')
 			return 1;
@@ -725,7 +740,7 @@ F.download = function(url, filename, callback, timeout) {
 			return;
 		}
 
-		var stream = Fs.createWriteStream(filename);
+		var stream = F.Fs.createWriteStream(filename);
 
 		var done = function(err) {
 			if (callback) {
@@ -759,7 +774,7 @@ F.cleanup = function(stream, callback) {
 
 F.python = function(filename, callback) {
 	if (!callback)
-		return new Promise((resolve, reject) => F.python(filename, data, (err, response) => err ? reject(err) : response));
+		return new Promise((resolve, reject) => F.python(filename, (err, response) => err ? reject(err) : response));
 	F.Child.exec(F.config.$python + ' ' + filename, { cwd: F.Path.dirname(filename) }, callback);
 };
 
@@ -866,7 +881,7 @@ F.console = function() {
 		var hostname = F.config.$unixsocket ? ('Socket: ' + F.config.$unixsocket) : '{2}://{0}:{1}/'.format(F.config.$ip, F.config.$port, F.isHTTPS ? 'https' : 'http');
 
 		if (!F.unixsocket && F.ip === '0.0.0.0') {
-			var ni = Os.networkInterfaces();
+			var ni = F.Os.networkInterfaces();
 			if (ni.en0) {
 				for (var i = 0; i < ni.en0.length; i++) {
 					var nii = ni.en0[i];
@@ -893,6 +908,9 @@ F.loadservices = function() {
 
 		F.internal.ticks++;
 
+		if (F.internal.ticks % 2 === 0)
+			global.NOW = new Date();
+
 		// 1 minute
 		if (F.internal.ticks == 12) {
 			F.internal.ticks = 0;
@@ -901,7 +919,7 @@ F.loadservices = function() {
 		}
 
 		if (F.internal.ticks == 6 || F.internal.ticks == 12)
-			TWebSocket.ping();
+			F.TWebSocket.ping();
 
 		if (!F.temporary.pending.length) {
 			F.stats.request.pending = 0;
@@ -1236,6 +1254,92 @@ F.pause = function(name, enable) {
 	return enable === true;
 };
 
+F.uid = function() {
+	let ts = Date.now() / 100;
+	let h = F.TUtils.convert62(ts);
+	let index = F.internal.uid++;
+	return h + F.TUtils.convert62(index + 99) + F.internal.uidc + h.length + (index % 2 ? 1 : 0) + 'f'; // "f" version
+};
+
+F.cron = function(line, fn) {
+	let obj = {};
+	obj.check = F.TCron.make(line);
+	obj.exec = fn;
+	obj.remove = function() {
+		let index = F.crons.indexOf(this);
+		if (index !== -1)
+			F.crons.splice(index, 0);
+	};
+	F.crons.push(obj);
+	return obj;
+};
+
+// Service
+F.service = function(count) {
+
+	// clears short cahce temporary cache
+	// F.temporary.shortcache = {};
+
+	// clears temporary memory for non-exist files
+	F.temporary.notfound = {};
+	F.internal.uid = 1;
+	F.internal.uidc = F.TUtils.random_text(1);
+
+	if (F.config.$httpreqlimit)
+		F.temporary.ddos = {};
+
+	if (count % F.config.$intervalclearcache === 0) {
+		F.temporary.path = {};
+		F.temporary.views = {};
+		F.temporary.utils = {};
+		F.temporary.calls = {};
+	}
+
+	if (count % 5 === 0) {
+		global.TEMP = {};
+	}
+
+	// Update expires date
+	if (count % 60 === 0) {
+		F.config.$httpexpire = NOW.add('y', 1).toUTCString();
+		F.TImage.clear();
+	}
+
+	if (count % 1440 === 0)
+		F.temporary.tmsblocked = {};
+
+	if (count % 30 === 0) {
+		// @TODO: clear DNS
+	}
+
+	let blocked = F.temporary.blocked;
+	if (blocked.is) {
+		blocked.is = false;
+		for (let key in blocked) {
+			if (key !== 'is') {
+				let tmp = blocked[key];
+				if (tmp.expire < NOW)
+					delete blocked[key];
+				else
+					blocked.is = true;
+			}
+		}
+	}
+
+	// Exec crons
+	for (let cron of F.crons) {
+		if (cron.check(NOW))
+			cron.exec(NOW);
+	}
+
+	if (count % 10 === 0 && global.gc)
+		setTimeout(cleargc, 1000);
+};
+
+function cleargc() {
+	global.gc();
+}
+
 F.clear = function(init = true, callback) {
 
 	if (callback == null)
@@ -1300,6 +1404,12 @@ F.clear = function(init = true, callback) {
 		F.touch();
 };
 
+F.view = function(name, model, prepare) {
+	var view = new F.TViewEngine.View();
+	prepare && prepare(view);
+	return view.render(name, model);
+};
+
 function httptuningperformance(socket) {
 	socket.setNoDelay(true);
 	socket.setKeepAlive(true, 10);
@@ -1351,6 +1461,8 @@ process.on('uncaughtException', function(e) {
 	F.TWebSocket = require('./websocket');
 	F.TQueryBuilder = require('./querybuilder');
 	F.THttp = require('./http');
+	F.TImage = require('./image');
+	F.TCron = require('./cron');
 
 	// Settings
 	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
@@ -1377,6 +1489,7 @@ process.on('uncaughtException', function(e) {
 	// Methods
 	F.route = F.TRouting.route;
 	F.newdb = F.TQueryBuilder.evaluate;
+	F.internal.uidc = F.TUtils.random_text(1);
 
 })(F);
 

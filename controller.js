@@ -129,6 +129,10 @@ Controller.prototype = {
 
 	get referrer() {
 		return this.headers.referer;
+	},
+
+	get host() {
+		return this.headers.host;
 	}
 
 };
@@ -291,15 +295,40 @@ Controller.prototype.flush = function() {
 	ctrl.free();
 };
 
-Controller.prototype.fallback = function(code, error) {
+Controller.prototype.fallback = function(code, err) {
 	var ctrl = this;
 
 	if (ctrl.destroyed)
 		return;
 
-	ctrl.res.writeHead(code);
-	ctrl.res.end();
-	ctrl.free();
+	let key = code + '';
+	var route = F.routes.fallback[key];
+	if (route) {
+		ctrl.route = route;
+		ctrl.route.action(ctrl);
+	} else {
+
+		var view;
+
+		// Paused
+		if (code === 999) {
+			view = F.temporary.views.$pause;
+			if (!view) {
+				F.temporary.views.$pause = view = new F.TViewEngine.View();
+				view.compiled = F.TViewEngine.compile('$pause', F.Fs.readFileSync(F.Path.join(F.config.$nodemodules, 'total5/pause.html'), 'utf8'), false);
+			}
+			view.model = F.paused;
+		} else {
+			view = F.temporary.views.$error;
+			if (!view) {
+				F.temporary.views.$error = view = new F.TViewEngine.View();
+				view.compiled = F.TViewEngine.compile('$error', F.Fs.readFileSync(F.Path.join(F.config.$nodemodules, 'total5/error.html'), 'utf8'), false);
+			}
+			view.model = { code: code, status: F.TUtils.httpstatus(code), error: err ? (DEBUG ? err.toString() : '') : '' };
+		}
+
+		ctrl.html(view.compiled(view));
+	}
 };
 
 Controller.prototype.view = function(name, model) {
@@ -503,6 +532,11 @@ Controller.prototype.free = function() {
 
 };
 
+Controller.prototype.hostname = function(path) {
+	var ctrl = this;
+	return ctrl.headers.host + ctrl.uri.pathname + (path ? path : '');
+};
+
 Controller.prototype.$route = function() {
 
 	var ctrl = this;
@@ -570,10 +604,10 @@ Controller.prototype.$route = function() {
 
 				switch (ctrl.datatype) {
 					case 'json':
-						ctrl.body = ctrl.payload.toString('utf8').parseJSON(true);
+						ctrl.body = F.def.parsers.json(ctrl.payload.toString('utf8'));
 						break;
 					case 'urlencoded':
-						ctrl.body = ctrl.payload.toString('utf8').parseEncoded();
+						ctrl.body = F.def.parsers.urlencoded(ctrl.payload.toString('utf8'));
 						break;
 				}
 
@@ -983,13 +1017,13 @@ function HttpFile(meta) {
 
 HttpFile.prototype = {
 	get isImage() {
-		this.type.indexOf('image/') !== -1;
+		return this.type.indexOf('image/') !== -1;
 	},
 	get isVideo() {
-		this.type.indexOf('video/') !== -1;
+		return this.type.indexOf('video/') !== -1;
 	},
 	get isAudio() {
-		this.type.indexOf('audio/') !== -1;
+		return this.type.indexOf('audio/') !== -1;
 	}
 };
 

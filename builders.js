@@ -118,12 +118,12 @@ SchemaOptionsProto.action = function(schema, data) {
 		c = '';
 
 	var key = 'action_' + schema;
-	var tmp = F.temporary.exec[key];
+	var tmp = F.temporary.calls[key];
 
 	if (!tmp) {
 		if (schema.indexOf('-->') === -1 && this.schema)
 			schema = this.schema.name + ' --> ' + schema;
-		F.temporary.exec[key] = tmp = schema.trim();
+		F.temporary.calls[key] = tmp = schema.trim();
 	}
 
 	return CALL(c + tmp, data);
@@ -2649,7 +2649,7 @@ global.CALL = function(schema, model, controller) {
 	caller.options.model = model;
 	caller.options.controller = controller;
 
-	var meta = F.temporary.exec[key];
+	var meta = F.temporary.calls[key];
 	if (meta) {
 		caller.meta = meta;
 		return caller;
@@ -2752,7 +2752,7 @@ global.CALL = function(schema, model, controller) {
 	if (!meta.action)
 		meta.schema = o;
 
-	F.temporary.exec[key] = meta;
+	F.temporary.calls[key] = meta;
 	caller.meta = meta;
 	return caller;
 };

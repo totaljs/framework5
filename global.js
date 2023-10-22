@@ -16,6 +16,8 @@ global.AUTH = F.auth;
 global.CLEANUP = F.cleanup;
 global.NEWDB = F.newdb;
 global.REQUIRE = F.require;
+global.CRON = F.cron;
+global.UID = F.uid;
 global.DATA = new F.TQueryBuilder.Controller(true);
 global.DB = function() {
 	return new F.TQueryBuilder.Controller();

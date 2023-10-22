@@ -5,8 +5,6 @@ const REG_HTML_2 = /\s{2,}/g;
 const REG_HTML_4 = /\n\s{2,}./g;
 const REG_HTML_5 = />\n\s{1,}</g;
 const REG_HTML_6 = /[<\w"\u0080-\u07ff\u0400-\u04FF]+\s{2,}[\w\u0080-\u07ff\u0400-\u04FF>]+/;
-const REG_HTML_7 = /\\/g;
-const REG_HTML_8 = /'/g;
 const REG_HTML_9 = />\n\s+/g;
 const REG_HTML_10 = /(\w|\W)\n\s+</g;
 const REG_HTML_WIN = /\r/g;
@@ -312,8 +310,6 @@ exports.merge = async function(filename, filenames, minify = true) {
 		writer = [];
 		isbuffer = true;
 	}
-
-	var indexer = 0;
 
 	for (let i = 0; i < filenames.length; i++) {
 

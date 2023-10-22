@@ -621,6 +621,88 @@ View.prototype.keywords = function(value) {
 	return '';
 };
 
+function querystring_encode(value, def, key) {
+
+	if (value instanceof Array) {
+		var tmp = '';
+		for (var i = 1; i < value.length; i++)
+			tmp += (tmp ? '&' : '') + key + '=' + querystring_encode(value[i], def);
+		return querystring_encode(value[0], def) + (tmp ? tmp : '');
+	}
+
+	return value != null ? value instanceof Date ? encodeURIComponent(value.format()) : typeof(value) === 'string' ? encodeURIComponent(value) : (value + '') : def || '';
+}
+
+// @{href({ key1: 1, key2: 2 })}
+// @{href('key', 'value')}
+View.prototype.href = function(key, value) {
+
+	var self = this;
+
+	if (!arguments.length) {
+		let val = F.TUtils.toURLEncode(self.query);
+		return val ? '?' + val : '';
+	}
+
+	var type = typeof(key);
+	var obj;
+
+	if (type === 'string') {
+
+		var cachekey = '$href' + key;
+		var str = self.repository[cachekey] || '';
+
+		if (!str) {
+
+			obj = F.TUtils.copy(self.query);
+
+			for (var i = 2; i < arguments.length; i++)
+				obj[arguments[i]] = undefined;
+
+			obj[key] = '\0';
+
+			for (var m in obj) {
+				var val = obj[m];
+				if (val !== undefined) {
+					if (val instanceof Array) {
+						for (var j = 0; j < val.length; j++)
+							str += (str ? '&' : '') + m + '=' + (key === m ? '\0' : querystring_encode(val[j]));
+					} else
+						str += (str ? '&' : '') + m + '=' + (key === m ? '\0' : querystring_encode(val));
+				}
+			}
+			self.repository[cachekey] = str;
+		}
+
+		str = str.replace('\0', querystring_encode(value, self.query[key], key));
+
+		for (var i = 2; i < arguments.length; i++) {
+			var beg = str.indexOf(arguments[i] + '=');
+			if (beg === -1)
+				continue;
+			var end = str.indexOf('&', beg);
+			str = str.substring(0, beg) + str.substring(end === -1 ? str.length : end + 1);
+		}
+
+		return str ? '?' + str : '';
+	}
+
+	if (value) {
+		obj = F.TUtils.copy(self.query);
+		F.TUtils.extend(obj, value);
+	}
+
+	if (value != null)
+		obj[key] = value;
+
+	obj = F.TUtils.toURLEncode(obj);
+
+	if (value === undefined && type === 'string')
+		obj += (obj ? '&' : '') + key;
+
+	return self.url + (obj ? '?' + obj : '');
+};
+
 function makehtmlmeta(self) {
 
 	var builder = '';
@@ -647,7 +729,7 @@ function makehtmlmeta(self) {
 
 	if (repo.image) {
 		let tmp = repo.image.substring(0, 6);
-		let src = tmp === 'http:/' || tmp === 'https:' || tmp.substring(0, 2) === '//' ? repo.image : ((self?.controller?.hostname || '') + repo.image);
+		let src = tmp === 'http:/' || tmp === 'https:' || tmp.substring(0, 2) === '//' ? repo.image : ((self?.controller.host || '') + repo.image);
 		builder += '<meta property="og:image" content="' + src + '" /><meta name="twitter:image" content="' + src + '" />';
 	}
 
@@ -708,6 +790,32 @@ View.prototype.import = function() {
 	}
 
 	return builder;
+};
+
+View.prototype.section = function(name, value, replace) {
+
+	var key = '$section_' + name;
+	var self = this;
+
+	if (value == null)
+		return self.repository[key];
+
+	if (replace) {
+		self.repository[key] = value;
+		return self;
+	}
+
+	if (self.repository[key])
+		self.repository[key] += value;
+	else
+		self.repository[key] = value;
+
+	return self;
+};
+
+View.prototype.url = function(hostname = false) {
+	var self = this;
+	return hostname ? (self.controller ? self.controller.hostname(self.controller.url) : '') : (self.controller ? self.controller.url : '');
 };
 
 View.prototype.render = function(name, model, ispartial = false) {

@@ -2,7 +2,6 @@
 // The MIT License
 // Copyright 2016-2023 (c) Peter Širka <petersirka@gmail.com> & Jozef Gula <gula.jozef@gmail.com>
 
-const NEWLINE = '\r\n';
 const SOCKET_RESPONSE = 'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {0}\r\n\r\n';
 const SOCKET_RESPONSE_COMPRESS = 'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {0}\r\nSec-WebSocket-Extensions: permessage-deflate\r\n\r\n';
 const SOCKET_RESPONSE_PROTOCOL = 'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {0}\r\nSec-WebSocket-Protocol: {1}\r\n\r\n';
@@ -20,6 +19,8 @@ const REG_WEBSOCKET = /websocket/i;
 const REG_WEBSOCKET_ERROR = /ECONNRESET|EHOSTUNREACH|EPIPE|is closed/i;
 const REG_EMPTYBUFFER = /\0|%00|\\u0000/g;
 const REG_EMPTYBUFFER_TEST = /\0|%00|\\u0000/;
+const REG_ROBOT = /search|agent|bot|crawler|spider/i;
+const REG_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i;
 
 var WSCLIENTSID = 0;
 
@@ -1094,10 +1095,6 @@ exports.listen = function(req, socket, head) {
 		return;
 	}
 
-	// disables timeout
-	socket.setTimeout(0);
-	socket.on('error', NOOP);
-
 	if (SOCKET_ALLOW_VERSION.indexOf(ctrl.headers['sec-websocket-version'] || '') === -1) {
 		ctrl.destroy();
 		return;
@@ -1111,6 +1108,10 @@ exports.listen = function(req, socket, head) {
 
 	if (F.routes.proxies.length && F.TRouting.lookupproxy(ctrl))
 		return;
+
+	// disables timeout
+	socket.setTimeout(0);
+	socket.on('error', NOOP);
 
 	ctrl.route = F.TRouting.lookupwebsocket(ctrl, 0, true);
 
@@ -1158,6 +1159,7 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 	self.url = url;
 	self.origin = origin;
 	self.protocol = protocol;
+	self.secret = Crypto.randomBytes(16).toString('base64');
 
 	delete self.isclosed2;
 	delete self.isclosed;
@@ -1180,7 +1182,7 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 	options.headers = {};
 	options.headers['User-Agent'] = 'Total.js/v' + F.version_header;
 	options.headers['Sec-WebSocket-Version'] = '13';
-	options.headers['Sec-WebSocket-Key'] = F.Crypto.randomBytes(16).toString('base64');
+	options.headers['Sec-WebSocket-Key'] = self.secret;
 	options.headers['Sec-Websocket-Extensions'] = (self.options.compress ? 'permessage-deflate, ' : '') + 'client_max_window_bits';
 
 	if (protocol)
@@ -1218,7 +1220,7 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 	options.headers.Cookie = tmp.join(', ');
 
 	F.stats.performance.online++;
-	self.req = (secured ? Https : Http).get(options);
+	self.req = (secured ? F.Https : F.Http).get(options);
 	self.req.$main = self;
 
 	self.req.on('error', function(e) {
@@ -1247,7 +1249,7 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 		self.socket.$controller = self;
 
 		var compress = self.options.compress && (response.headers['sec-websocket-extensions'] || '').indexOf('-deflate') !== -1;
-		var digest = F.Crypto.createHash('sha1').update(key + SOCKET_HASH, 'binary').digest('base64');
+		var digest = F.Crypto.createHash('sha1').update(self.secret + SOCKET_HASH, 'binary').digest('base64');
 
 		if (response.headers['sec-websocket-accept'] !== digest) {
 			socket.destroy();
@@ -1266,13 +1268,13 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 		if (compress) {
 			self.inflatepending = [];
 			self.inflatelock = false;
-			self.inflate = F.Zlib.createInflateRaw(WEBSOCKET_COMPRESS_OPTIONS);
+			self.inflate = F.Zlib.createInflateRaw(SOCKET_COMPRESS_OPTIONS);
 			self.inflate.$controller = self;
 			self.inflate.on('error', F.error());
 			self.inflate.on('data', inflate);
 			self.deflatepending = [];
 			self.deflatelock = false;
-			self.deflate = F.Zlib.createDeflateRaw(WEBSOCKET_COMPRESS_OPTIONS);
+			self.deflate = F.Zlib.createDeflateRaw(SOCKET_COMPRESS_OPTIONS);
 			self.deflate.$controller = self;
 			self.deflate.on('error', F.error());
 			self.deflate.on('data', deflate);
@@ -1545,7 +1547,7 @@ WebSocketClient.prototype.parseinflate = function() {
 		self.inflatechunkslength = 0;
 		self.inflatelock = true;
 		self.inflate.write(buf);
-		!buf.$continue && self.inflate.write(Buffer.from(WEBSOCKET_COMPRESS));
+		!buf.$continue && self.inflate.write(Buffer.from(SOCKET_COMPRESS));
 		self.inflate.flush(function() {
 
 			if (!self.inflatechunks)
@@ -1759,6 +1761,14 @@ function registerapi(client) {
 			}
 		}
 	});
+}
+
+function timeoutapi(id) {
+	var obj = CALLBACKS[id];
+	if (obj) {
+		obj.callback(408);
+		delete CALLBACKS[id];
+	}
 }
 
 WebSocketClient.prototype.api = function(schema, data, callback, timeout) {

@@ -30,11 +30,11 @@ const REG_TRIM = /^[\s]+|[\s]+$/g;
 const REG_DATE = /(\d{1,2}\.\d{1,2}\.\d{4})|(\d{4}-\d{1,2}-\d{1,2})|(\d{1,2}:\d{1,2}(:\d{1,2})?)/g;
 const REG_DATEFORMAT = /YYYY|yyyy|YY|yy|MMMM|MMM|MM|M|dddd|DDDD|DDD|ddd|DD|dd|D|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
 const REG_STRFORMAT = /\{\d+\}/g;
+const REG_ASCII = /[^\u0000-\u007e]/g;
 
 var regexpSTATIC = /\.\w{2,8}($|\?)+/;
 const regexpPATH = /\\/g;
 const regexpTags = /<\/?[^>]+(>|$)/g;
-const regexpDiacritics = /[^\u0000-\u007e]/g;
 const regexpUA = /[a-z]+/gi;
 const regexpXML = /\w+=".*?"/g;
 const regexpDECODE = /&#?[a-z0-9]+;/g;
@@ -356,9 +356,6 @@ var CONTENTTYPES = {
 	'7zip': 'application/x-7z-compressed'
 };
 
-var dnscache = {};
-var datetimeformat = {};
-
 global.DIFFARR = exports.diffarr = function(prop, db, form) {
 
 	var an = [];
@@ -467,7 +464,7 @@ exports.resolve = function(url, callback, param) {
 		return;
 	}
 
-	var cache = dnscache[uri.host];
+	var cache = F.temporary.dnscache[uri.host];
 
 	if (!callback)
 		return cache;
@@ -482,7 +479,7 @@ exports.resolve = function(url, callback, param) {
 		if (e)
 			setImmediate(dnsresolve_callback, uri, callback, param);
 		else {
-			dnscache[uri.host] = addresses;
+			F.temporary.dnscache[uri.host] = addresses;
 			uri.host = addresses[0];
 			callback(null, uri, param, addresses);
 		}
@@ -492,18 +489,12 @@ exports.resolve = function(url, callback, param) {
 function dnsresolve_callback(uri, callback, param) {
 	F.Dns.resolve4(uri.hostname, function(e, addresses) {
 		if (addresses && addresses.length) {
-			dnscache[uri.host] = addresses;
+			F.temporary.dnscache[uri.host] = addresses;
 			uri.host = addresses[0];
 		}
 		callback(e, uri, param, addresses);
 	});
 }
-
-setImmediate(function() {
-	// global.F && NEWCOMMAND('clear_dnscache', function() {
-	// 	dnscache = {};
-	// });
-});
 
 function keywordscleaner(c) {
 	return c.charCodeAt(0) < 200 ? '' : c;
@@ -511,8 +502,8 @@ function keywordscleaner(c) {
 
 function parseProxy(p) {
 	var key = 'proxy_' + p;
-	if (F.temporary.other[key])
-		return F.temporary.other[key];
+	if (F.temporary.utils[key])
+		return F.temporary.utils[key];
 
 	if (p.indexOf('://') === -1)
 		p = 'http://' + p;
@@ -529,7 +520,7 @@ function parseProxy(p) {
 		obj.requestCert = true;
 	}
 
-	return F.temporary.other[key] = obj;
+	return F.temporary.utils[key] = obj;
 }
 
 function _request(opt, callback) {
@@ -821,7 +812,7 @@ function createSecureSocket(options, callback) {
 		PROXYTLS.servername = self.options.uri.hostname;
 		PROXYTLS.headers = self.options.uri.headers;
 		PROXYTLS.socket = socket;
-		var tls = T.Tls.connect(0, PROXYTLS);
+		var tls = F.Tls.connect(0, PROXYTLS);
 		callback(tls);
 	});
 }
@@ -843,7 +834,7 @@ function request_call(uri, options) {
 	} else
 		opt = uri;
 
-	var connection = uri.protocol === 'https:' ? Https : Http;
+	var connection = uri.protocol === 'https:' ? F.Https : F.Http;
 	var req = opt.method === 'GET' ? connection.get(opt, request_response) : connection.request(opt, request_response);
 
 	req.$options = options;
@@ -1764,30 +1755,6 @@ exports.$normalize = function(path) {
 	return isWindows ? path.replace(regexpPATH, '/') : path;
 };
 
-global.UIDR = function() {
-
-	var builder = '';
-	var sum = 0;
-
-	for (var i = 0; i < 10; i++) {
-		var c;
-
-		if (i === 9) {
-			c = F.uidc;
-		} else {
-			let index = Math.floor(Math.random() * RANDOM_TEXT.length);
-			c = RANDOM_TEXT[index];
-		}
-
-		if (c.charCodeAt(0) < 91)
-			sum++;
-
-		builder += c;
-	}
-
-	return builder + RANDOM_STRING[sum] + 'r'; // "r" version
-};
-
 exports.convert62 = function(number) {
 
 	var rixit; // like 'digit', only in some non-decimal radix
@@ -2357,18 +2324,13 @@ DP.extend = function(date) {
 	return dt;
 };
 
-/**
- * Format datetime
- * @param {String} format
- * @return {String}
- */
 DP.format = function(format, resource) {
 
 	if (!format)
 		return this.getUTCFullYear() + '-' + (this.getUTCMonth() + 1).toString().padLeft(2, '0') + '-' + this.getUTCDate().toString().padLeft(2, '0') + 'T' + this.getUTCHours().toString().padLeft(2, '0') + ':' + this.getUTCMinutes().toString().padLeft(2, '0') + ':' + this.getUTCSeconds().toString().padLeft(2, '0') + '.' + this.getUTCMilliseconds().toString().padLeft(3, '0') + 'Z';
 
-	if (datetimeformat[format])
-		return datetimeformat[format](this, resource);
+	if (F.temporary.datetime[format])
+		return F.temporary.datetime[format](this, resource);
 
 	var key = format;
 	var half = false;
@@ -2396,10 +2358,10 @@ DP.format = function(format, resource) {
 				return beg + 'd.getFullYear().toString().substring(2)' + end;
 			case 'MMM':
 				ismm = true;
-				return beg + '(RESOURCE(resource, mm) || mm).substring(0, 3)' + end;
+				return beg + '(F.resource(resource, mm) || mm).substring(0, 3)' + end;
 			case 'MMMM':
 				ismm = true;
-				return beg + '(RESOURCE(resource, mm) || mm)' + end;
+				return beg + '(F.resource(resource, mm) || mm)' + end;
 			case 'MM':
 				return beg + '(d.getMonth() + 1).toString().padLeft(2, \'0\')' + end;
 			case 'M':
@@ -2407,11 +2369,11 @@ DP.format = function(format, resource) {
 			case 'ddd':
 			case 'DDD':
 				isdd = true;
-				return beg + '(RESOURCE(resource, dd) || dd).substring(0, 2).toUpperCase()' + end;
+				return beg + '(F.resource(resource, dd) || dd).substring(0, 2).toUpperCase()' + end;
 			case 'dddd':
 			case 'DDDD':
 				isdd = true;
-				return beg + '(RESOURCE(resource, dd) || dd)' + end;
+				return beg + '(F.resource(resource, dd) || dd)' + end;
 			case 'dd':
 			case 'DD':
 				return beg + 'd.getDate().toString().padLeft(2, \'0\')' + end;
@@ -2420,10 +2382,10 @@ DP.format = function(format, resource) {
 				return beg + 'd.getDate()' + end;
 			case 'HH':
 			case 'hh':
-				return beg + (half ? 'framework_utils.$pmam(d.getHours()).toString().padLeft(2, \'0\')' : 'd.getHours().toString().padLeft(2, \'0\')') + end;
+				return beg + (half ? 'F.TUtils.pmam(d.getHours()).toString().padLeft(2, \'0\')' : 'd.getHours().toString().padLeft(2, \'0\')') + end;
 			case 'H':
 			case 'h':
-				return beg + (half ? 'framework_utils(d.getHours())' : 'd.getHours()') + end;
+				return beg + (half ? 'F.TUtils.pmam(d.getHours())' : 'd.getHours()') + end;
 			case 'mm':
 				return beg + 'd.getMinutes().toString().padLeft(2, \'0\')' + end;
 			case 'm':
@@ -2442,15 +2404,15 @@ DP.format = function(format, resource) {
 		}
 	});
 
-	ismm && before.push('var mm = framework_utils.MONTHS[d.getMonth()];');
-	isdd && before.push('var dd = framework_utils.DAYS[d.getDay()];');
+	ismm && before.push('var mm = F.TUtils.MONTHS[d.getMonth()];');
+	isdd && before.push('var dd = F.TUtils.DAYS[d.getDay()];');
 	isww && before.push('var ww = new Date(+d);ww.setHours(0,0,0,0);ww.setDate(ww.getDate()+3-(ww.getDay()+6)%7);var ww1=new Date(ww.getFullYear(),0,4);ww=1+Math.round(((ww.getTime()-ww1.getTime())/86400000-3+(ww1.getDay()+6)%7)/7);');
 
-	datetimeformat[key] = new Function('d', 'resource', before.join('\n') + 'return \'' + format + '\';');
-	return datetimeformat[key](this, resource);
+	F.temporary.datetime[key] = new Function('d', 'resource', before.join('\n') + 'return \'' + format + '\';');
+	return F.temporary.datetime[key](this, resource);
 };
 
-exports.$pmam = function(value) {
+exports.pmam = function(value) {
 	return value >= 12 ? value - 12 : value;
 };
 
@@ -4351,7 +4313,7 @@ SP.base64ContentType = function() {
 var toascii = c => DIACRITICSMAP[c] || c;
 
 SP.toASCII = function() {
-	return this.replace(regexpDiacritics, toascii);
+	return this.replace(REG_ASCII, toascii);
 };
 
 SP.indent = function(max, c) {
@@ -4751,7 +4713,7 @@ AP.quicksort = function(sort) {
 exports.sortcomparer = function(sort) {
 
 	var key = 'sort_' + sort;
-	var meta = F.temporary.other[key];
+	var meta = F.temporary.utils[key];
 
 	if (!meta) {
 		meta = [];
@@ -4763,7 +4725,7 @@ exports.sortcomparer = function(sort) {
 				obj.read = new Function('val', 'return val.' + tmp[0].replace(/\./g, '?.'));
 			meta.push(obj);
 		}
-		F.temporary.other[key] = meta;
+		F.temporary.utils[key] = meta;
 	}
 
 	return function(a, b) {
@@ -5357,15 +5319,15 @@ exports.queue = function(name, max, fn, param) {
 };
 
 exports.minify_css = function(val) {
-	return Internal.compile_css(val);
+	return F.TMinificators.css(val);
 };
 
 exports.minify_js = function(val) {
-	return Internal.compile_javascript(val);
+	return F.TMinificators.js(val);
 };
 
 exports.minify_html = function(val) {
-	return Internal.compile_html(val);
+	return F.TMinificators.html(val);
 };
 
 // =============================================
@@ -6770,8 +6732,8 @@ exports.jsonschematransform = function(value, callback, partial) {
 exports.set = function(obj, path, value) {
 	var cachekey = 'uset' + path;
 
-	if (F.temporary.other[cachekey])
-		return F.temporary.other[cachekey](obj, value);
+	if (F.temporary.utils[cachekey])
+		return F.temporary.utils[cachekey](obj, value);
 
 	if ((/__proto__|constructor|prototype|eval|function|\*|\+|;|\s|\(|\)|!/).test(path))
 		return value;
@@ -6790,7 +6752,7 @@ exports.set = function(obj, path, value) {
 	var a = builder.join(';') + ';var v=typeof(a)===\'function\'?a(U.get(b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(REG_REPLACEARR, '.push(v)') : (v + '=v')) + ';return v';
 
 	var fn = new Function('w', 'a', 'b', a);
-	F.temporary.other[cachekey] = fn;
+	F.temporary.utils[cachekey] = fn;
 	return fn(obj, value, path);
 };
 
@@ -6798,8 +6760,8 @@ exports.get = function(obj, path) {
 
 	var cachekey = 'uget' + path;
 
-	if (F.temporary.other[cachekey])
-		return F.temporary.other[cachekey](obj);
+	if (F.temporary.utils[cachekey])
+		return F.temporary.utils[cachekey](obj);
 
 	if ((/__proto__|constructor|prototype|eval|function|\*|\+|;|\s|\(|\)|!/).test(path))
 		return;
@@ -6812,7 +6774,7 @@ exports.get = function(obj, path) {
 
 	var v = arr[arr.length - 1];
 	var fn = (new Function('w', builder.join(';') + ';return w' + (v[0] === '[' ? '' : '.') + v));
-	F.temporary.other[cachekey] = fn;
+	F.temporary.utils[cachekey] = fn;
 	return fn(obj);
 };
 
@@ -6971,6 +6933,30 @@ exports.onfinished = function(stream, fn) {
 			stream.on('finish', callback);
 		}
 	}
+};
+
+exports.uidr = function() {
+
+	var builder = '';
+	var sum = 0;
+
+	for (var i = 0; i < 10; i++) {
+		var c;
+
+		if (i === 9) {
+			c = F.uidc;
+		} else {
+			let index = Math.floor(Math.random() * RANDOM_TEXT.length);
+			c = RANDOM_TEXT[index];
+		}
+
+		if (c.charCodeAt(0) < 91)
+			sum++;
+
+		builder += c;
+	}
+
+	return builder + RANDOM_STRING[sum] + 'r'; // "r" version
 };
 
 function isFinished(stream) {

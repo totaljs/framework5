@@ -2,13 +2,11 @@
 // The MIT License
 // Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
 
-const EMPTYREQSPLIT = ['/'];
 const NEWLINE = '\r\n';
 
 const PROXY_KEEPALIVE = new F.Http.Agent({ keepAlive: true, timeout: 60000 });
 const PROXY_KEEPALIVEHTTPS = new F.Https.Agent({ keepAlive: true, timeout: 60000 });
 const PROXY_OPTIONS = { end: true };
-const PROXY_503HEADERS = { 'cache-control': 'private, no-cache, no-store, max-age=0', 'content-type': 'text/plain; charset=utf-8' };
 
 // Total.js routing
 function Route(url, action, size) {
@@ -24,8 +22,8 @@ function Route(url, action, size) {
 		// internal routing
 		t.url = [url[0].substring(1)];
 		t.action = action;
-		t.internal = true;
-		F.routes.internal[t.url[0]] = t;
+		t.fallback = true;
+		F.routes.fallback[t.url[0]] = t;
 		return;
 	}
 
@@ -258,7 +256,7 @@ exports.sort = function() {
 
 	for (let route of F.routes.files) {
 		tmp = cache;
-		let key = route.url.join('/')
+		let key = route.url.join('/');
 		if (cache[key])
 			cache[key].push(route);
 		else
@@ -661,10 +659,10 @@ function proxycreate(proxy, ctrl) {
 		} else if (proxy.copypath === 'replace')
 			uri.path = ctrl.url.substring(proxy.url.length - 1);
 		else if (proxy.copypath === 'extend') {
-			tmp = ctrl.uri.pathname.substring(proxy.url.length) + (ctrl.uri.search ? ('?' + ctrl.uri.search) : '')
+			tmp = ctrl.uri.pathname.substring(proxy.url.length) + (ctrl.uri.search ? ('?' + ctrl.uri.search) : '');
 			uri.path = proxy.path + (tmp ? ((tmp[0] === '/' ? '' : '/') + tmp) : '') + (proxy.query ? (ctrl.uri.search ? ('&' + proxy.query) : ('?' + proxy.query)) : '');
 		} else {
-			tmp = ctrl.uri.pathname + (ctrl.uri.search ? ('?' + ctrl.uri.search) : '')
+			tmp = ctrl.uri.pathname + (ctrl.uri.search ? ('?' + ctrl.uri.search) : '');
 			uri.path = proxy.path + (tmp ? ((tmp[0] === '/' ? '' : '/') + tmp) : '') + (proxy.query ? (ctrl.uri.search ? ('&' + proxy.query) : ('?' + proxy.query)) : '');
 		}
 
@@ -714,11 +712,11 @@ function proxycreate(proxy, ctrl) {
 
 	if (ctrl.iswebsocket) {
 
-		res.setTimeout(0);
-		res.setNoDelay(true);
-		res.setKeepAlive(true, 0);
+		ctrl.res.setTimeout(0);
+		ctrl.res.setNoDelay(true);
+		ctrl.res.setKeepAlive(true, 0);
 
-		ctrl.iswebsocket && ctrl.head && res.unshift(ctrl.head);
+		ctrl.iswebsocket && ctrl.head && ctrl.res.unshift(ctrl.head);
 
 		request.on('response', function (proxyres) {
 
@@ -726,8 +724,8 @@ function proxycreate(proxy, ctrl) {
 				return;
 
 			if (!proxyres.upgrade) {
-				res.write(proxyheadersws('HTTP/' + proxyres.httpVersion + ' ' + proxyres.statusCode + ' ' + proxyres.statusMessage, proxyres.headers));
-				proxyres.pipe(res);
+				ctrl.res.write(proxyheadersws('HTTP/' + proxyres.httpVersion + ' ' + proxyres.statusCode + ' ' + proxyres.statusMessage, proxyres.headers));
+				proxyres.pipe(ctrl.res);
 			}
 
 		});
@@ -740,8 +738,8 @@ function proxycreate(proxy, ctrl) {
 			if (proxyhead && proxyhead.length)
 				proxysocket.unshift(proxyhead);
 
-			res.write(proxyheadersws('HTTP/1.1 101 Switching Protocols', proxyres.headers));
-			proxysocket.pipe(res).pipe(proxysocket);
+			ctrl.res.write(proxyheadersws('HTTP/1.1 101 Switching Protocols', proxyres.headers));
+			proxysocket.pipe(ctrl.res).pipe(proxysocket);
 		});
 	}
 

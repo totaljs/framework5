@@ -1,8 +1,5 @@
-- internal routes (fallback)
-- uid
 - schemas
 - bundles
-- service
 - tmsclient
 - nosql
 - bundles
@@ -14,10 +11,9 @@
 - mail
 - htmlparser
 - flowstream
-- cron
 - cluster
 - api
-- utils
 - openclient
 - ldap
 - utils
+- missing controller.stream
