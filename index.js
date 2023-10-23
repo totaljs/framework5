@@ -708,6 +708,7 @@ F.load = async function(types = [], callback) {
 		}
 	}
 
+	F.TFlow.init();
 	F.loadservices();
 	F.stats.compilation = Date.now() - beg;
 	F.isloaded = true;
@@ -978,6 +979,7 @@ F.loadservices = function() {
 		}
 
 		F.stats.request.pending = F.temporary.pending.length;
+		F.TFlow.ping();
 
 	}, 5000);
 
@@ -1631,6 +1633,9 @@ process.on('uncaughtException', function(e) {
 	F.newdb = F.TQueryBuilder.evaluate;
 	F.newflowstream = F.TFlowStream.create;
 	F.internal.uidc = F.TUtils.random_text(1);
+	F.ErrorBuilder = F.TBuilders.ErrorBuilder;
+
+	F.TFlow = require('./flow');
 
 })(F);
 

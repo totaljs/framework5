@@ -34,3 +34,4 @@ global.NOOP = F.TUtils.noop;
 global.REQUEST = F.TUtils.request;
 global.HASH = (val, type) => val.hash(type ? type : true);
 global.DIFFARR = F.TUtils.diffarr;
+global.U = F.TUtils;

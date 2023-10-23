@@ -81,9 +81,9 @@ FS.init = function(directory, callback) {
 	}
 
 	if (!directory)
-		directory = PATH.root('flowstreams');
+		directory = F.path.root('flowstreams');
 
-	PATH.fs.readdir(directory, function(err, files) {
+	F.Fs.readdir(directory, function(err, files) {
 
 		var load = [];
 
@@ -94,8 +94,8 @@ FS.init = function(directory, callback) {
 		}
 
 		load.wait(function(filename, next) {
-
-			PATH.fs.readFile(PATH.join(directory, filename), 'utf8', function(err, response) {
+			console.log(filename);
+			F.Fs.readFile(F.path.join(directory, filename), 'utf8', function(err, response) {
 
 				if (response) {
 					response = response.parseJSON();
@@ -122,7 +122,7 @@ FS.load = function(flow, callback) {
 	// flow.proxypath {String}
 
 	var id = flow.id;
-	flow.directory = flow.directory || PATH.root('/flowstream/');
+	flow.directory = flow.directory || F.path.root('/flowstream/');
 	FS.db[id] = flow;
 	flow.worker && initping();
 
@@ -190,24 +190,14 @@ FS.notify = function(controller, id) {
 		$.success();
 };
 
-function initping() {
-
-	if (FS.ping)
-		return;
-
-	FS.ping = true;
-
-	// A simple prevetion for the Flow zombie processes
-	setInterval(function() {
-		// ping all services
-		for (var key in FS.instances) {
-			var fs = FS.instances[key];
-			if (fs.isworkerthread && fs.flow && fs.flow.postMessage2)
-				fs.flow.postMessage2(PING);
-		}
-	}, 5000);
-
-}
+FS.ping = function() {
+	// ping all services
+	for (let key in FS.instances) {
+		let fs = FS.instances[key];
+		if (fs.isworkerthread && fs.flow && fs.flow.postMessage2)
+			fs.flow.postMessage2(PING);
+	}
+};
 
 global.Flow = FS;
 global.FlowStream = exports;

@@ -697,7 +697,7 @@ FP.register = function(name, declaration, config, callback, extend) {
 
 	curr.config = F.TUtils.clone(curr.config || curr.options);
 
-	var errors = new ErrorBuilder();
+	var errors = new F.ErrorBuilder();
 	var done = function() {
 
 		self.inc(-1);
@@ -774,6 +774,11 @@ FP.inc = function(num) {
 FP.cleanforce = function() {
 
 	var self = this;
+
+	if (self.cleantimeout) {
+		clearTimeout(self.cleantimeout);
+		self.cleantimeout = null;
+	}
 
 	if (!self.meta)
 		return self;
@@ -893,8 +898,10 @@ FP.unregister = function(name, callback) {
 
 FP.clean = function() {
 	var self = this;
-	if (!self.loading)
-		setTimeout2(self.name, () => self.cleanforce(), 1000);
+	if (!self.loading) {
+		self.cleantimeout && clearTimeout(self.cleantimeout);
+		self.cleantimeout = setTimeout(() => self.cleanforce(), 1000);
+	}
 	return self;
 };
 
@@ -1217,7 +1224,7 @@ FP.load = function(components, design, callback, asfile) {
 	self.unload(function() {
 
 		var keys = Object.keys(components);
-		var error = new ErrorBuilder();
+		var error = new F.ErrorBuilder();
 
 		keys.wait(function(key, next) {
 			var body = components[key];
@@ -1331,7 +1338,7 @@ FP._use = function(schema, callback, reinit, insert) {
 	// schema.COMPONENT_ID.config = {};
 	// schema.COMPONENT_ID.connections = { '0': [{ id: 'COMPONENT_ID', index: '2' }] }
 
-	var err = new ErrorBuilder();
+	var err = new F.ErrorBuilder();
 
 	if (schema) {
 

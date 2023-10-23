@@ -18,6 +18,7 @@ var TMS = {};
 var RPC = {};
 var CALLBACKID = 1;
 var ASFILES = true;
+var isrunning = false;
 
 /*
 	var instance = MODULE('flowstream').init({ components: {}, design: {}, variables: {}, variables2: {} }, true/false);
@@ -904,6 +905,8 @@ function killprocess() {
 
 function init_current(meta, callback, nested) {
 
+	initrunning();
+
 	if (!meta.directory)
 		meta.directory = PATH.root('flowstream');
 
@@ -1717,7 +1720,7 @@ exports.client = function(flow, socket) {
 
 function MAKEFLOWSTREAM(meta) {
 
-	var flow = FLOWSTREAM(meta.id, function(err, type, instance) {
+	var flow = F.TFlowStream.create(meta.id, function(err, type, instance) {
 		flow.proxy.error(err, type, instance);
 	});
 
@@ -2738,7 +2741,7 @@ TMS.connect = function(fs, sourceid, callback) {
 					var schema = client.publishers[msg.id];
 					if (schema) {
 						// HACK: very fast validation
-						var err = new ErrorBuilder();
+						var err = new F.TBuilders.ErrorBuilder();
 						var data = framework_jsonschema.transform(schema, err, msg.data, true);
 						if (data) {
 							var id = 'pub' + item.id + 'X' + msg.id;
@@ -2811,7 +2814,7 @@ const TEMPLATE_SUBSCRIBE = `<script total>
 				var data = $.data;
 
 				/*
-					var err = new ErrorBuilder();
+					var err = new F.ErrorBuilder();
 					data = framework_jsonschema.transform(schema, err, data, true);
 
 					if (err.is) {
@@ -2864,7 +2867,7 @@ const TEMPLATE_CALL = `<script total>
 				var data = $.data;
 
 				/*
-					var err = new ErrorBuilder();
+					var err = new F.ErrorBuilder();
 					data = framework_jsonschema.transform(schema, err, data, true);
 
 					if (err.is) {
@@ -3114,25 +3117,34 @@ if (process.argv.includes('--fork')) {
 		}
 	});
 
-	ON('error', function(obj) {
+	F.on('error', function(obj) {
 		if (obj.error.indexOf('ERR_IPC_CHANNEL_CLOSED') !== -1)
 			process.exit(1);
 	});
 }
 
-ON('service', function() {
-	if (CALLBACKID > 999999999)
-		CALLBACKID = 1;
-});
+function initrunning() {
 
-ON('exit', function() {
-	for (var key in FLOWS) {
-		var flow = FLOWS[key];
-		if (flow.terminate || flow.kill) {
-			if (flow.terminate)
-				flow.terminate();
-			else
-				flow.kill(9);
+	if (isrunning)
+		return;
+
+	isrunning = true;
+
+	F.on('service', function() {
+		if (CALLBACKID > 999999999)
+			CALLBACKID = 1;
+	});
+
+	F.on('exit', function() {
+		for (var key in FLOWS) {
+			var flow = FLOWS[key];
+			if (flow.terminate || flow.kill) {
+				if (flow.terminate)
+					flow.terminate();
+				else
+					flow.kill(9);
+			}
 		}
-	}
-});
+	});
+
+}
