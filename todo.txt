@@ -1,6 +1,5 @@
 - schemas
 - bundles
-- tmsclient
 - nosql
 - bundles
 - filestorage

@@ -8,38 +8,24 @@ const REG_ARGS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
 var transforms = { error: {}, restbuilder: {} };
 var restbuilderupgrades = [];
 
-function SchemaValue() {}
-
-function SchemaOptions(error, model, options, callback, controller, name, schema) {
-	this.istotal = true;
-	this.error = error;
-	this.model = model;
-	this.options = options || EMPTYOBJECT;
-	this.callback = this.next = callback;
-	this.controller = controller instanceof SchemaOptions ? controller.controller : controller;
-	this.name = name;
-	this.schema = schema;
-	this.responses = {};
-	this.repo = this.controller ? (this.controller.repository || {}) : {};
-	// this.events;
+function Options(ctrl, error) {
+	var t = this;
+	t.controller = ctrl;
+	t.error = error;
 }
 
-SchemaOptions.prototype = {
+Options.prototype = {
 
 	get client() {
 		return this.controller;
 	},
 
+	get websocket() {
+		return this.controller.parent;
+	},
+
 	get value() {
 		return this.model;
-	},
-
-	get test() {
-		return this.controller ? this.controller.test : false;
-	},
-
-	get sessionid() {
-		return this.controller ? this.controller.sessionid : null;
 	},
 
 	get url() {
@@ -51,11 +37,15 @@ SchemaOptions.prototype = {
 	},
 
 	get path() {
-		return (this.controller ? this.controller.path : EMPTYARRAY);
+		return (this.controller ? this.controller.pathname : EMPTYARRAY);
 	},
 
 	get split() {
 		return (this.controller ? this.controller.split : EMPTYARRAY);
+	},
+
+	get split2() {
+		return (this.controller ? this.controller.split2 : EMPTYARRAY);
 	},
 
 	get language() {
@@ -64,18 +54,6 @@ SchemaOptions.prototype = {
 
 	get ip() {
 		return this.controller ? this.controller.ip : null;
-	},
-
-	get id() {
-		return this.controller ? this.controller.id : null;
-	},
-
-	get req() {
-		return this.controller ? this.controller.req : null;
-	},
-
-	get res() {
-		return this.controller ? this.controller.res : null;
 	},
 
 	get files() {
@@ -96,19 +74,10 @@ SchemaOptions.prototype = {
 
 	get ua() {
 		return this.controller ? this.controller.ua : null;
-	},
-
-	get filter() {
-		var ctrl = this.controller;
-		if (ctrl && !ctrl.$filter)
-			ctrl.$filter = ctrl.$filterschema ? CONVERT(ctrl.query, ctrl.$filterschema) : ctrl.query;
-		return ctrl ? ctrl.$filter : EMPTYOBJECT;
 	}
 };
 
-var SchemaOptionsProto = SchemaOptions.prototype;
-
-SchemaOptionsProto.action = function(schema, data) {
+Options.prototype.action = function(schema, data) {
 
 	var c = schema[0];
 
@@ -129,7 +98,7 @@ SchemaOptionsProto.action = function(schema, data) {
 	return CALL(c + tmp, data);
 };
 
-SchemaOptionsProto.publish = function(value) {
+Options.prototype.publish = function(value) {
 	var name = this.ID;
 	if (F.tms.socket && F.tms.publish_cache[name] && F.tms.publishers[name]) {
 
@@ -148,7 +117,7 @@ SchemaOptionsProto.publish = function(value) {
 	return this;
 };
 
-SchemaOptionsProto.on = function(name, fn) {
+Options.prototype.on = function(name, fn) {
 	var self = this;
 	if (!self.events)
 		self.events = {};
@@ -158,7 +127,7 @@ SchemaOptionsProto.on = function(name, fn) {
 	return self;
 };
 
-SchemaOptionsProto.emit = function(name, a, b, c, d) {
+Options.prototype.emit = function(name, a, b, c, d) {
 
 	var self = this;
 
@@ -171,7 +140,8 @@ SchemaOptionsProto.emit = function(name, a, b, c, d) {
 	return true;
 };
 
-SchemaOptionsProto.cancel = function() {
+// @TODO: Missing functionality "Options.cancel()"
+Options.prototype.cancel = function() {
 	var self = this;
 
 	if (self.$async) {
@@ -188,114 +158,51 @@ SchemaOptionsProto.cancel = function() {
 	return self;
 };
 
-SchemaOptionsProto.extend = function(data, callback) {
-
-	var self = this;
-	var ext = self.schema.extensions[self.name];
-	if (ext) {
-
-		if (callback) {
-			ext.wait(function(fn, next) {
-				self.next = next;
-				fn(self, data, next);
-			}, callback);
-		} else {
-			self.next = NOOP;
-			for (var i = 0; i < ext.length; i++)
-				ext[i](self, data, NOOP);
-		}
-
-		return true;
-	} else if (callback)
-		callback();
-};
-
-SchemaOptionsProto.redirect = function(url) {
+// @TODO: Missing functionality "Options.cancel()"
+Options.redirect = function(url) {
 	this.callback(new F.callback_redirect(url));
-	return this;
 };
 
-SchemaOptionsProto.audit = function(message, type) {
+// @TODO: Missing functionality "Options.cancel()"
+Options.audit = function(message, type) {
 	AUDIT(this, message, type);
-	return this;
 };
 
-SchemaOptionsProto.successful = function(callback) {
-	var self = this;
-	return function(err, a, b, c) {
-		if (err)
-			self.invalid(err);
-		else
-			callback.call(self, a, b, c);
-	};
+Options.success = function(value) {
+	this.callback(DEF.onSuccess(value));
 };
 
-SchemaOptionsProto.success = function(a, b) {
-
-	if (a && b === undefined && typeof(a) !== 'boolean') {
-		b = a;
-		a = true;
-	}
-
-	var o = SUCCESS(a === undefined ? true : a, b);
-
-	// Because if the response will contain same SUCCESS() objects then the value will be same due to reference
-	if (this.$multiple) {
-		var obj = {};
-		for (var m in o) {
-			if (o[m] != null)
-				obj[m] = o[m];
-		}
-		o = obj;
-	}
-
-	this.callback(o);
-	return this;
-};
-
-SchemaOptionsProto.done = function(arg) {
+Options.callback = function(value) {
 
 	var self = this;
 
+	if (arguments.length == 0) {
+		return function(err, response) {
+			err && self.error.push(err);
+			self.callback(response);
+		};
+	}
+
+	self.$callback(self.error.items.length ? self.error : null, value);
+};
+
+Options.done = function(arg) {
+	var self = this;
 	return function(err, response) {
-
 		if (err) {
-
-			if (self.error !== err)
-				self.error.push(err);
-
+			err && self.error.push(err);
 			self.callback();
-
-		} else {
-
-			var o;
-
-			if (arg)
-				o = SUCCESS(err == null, arg === true ? response : arg);
-			else
-				o = SUCCESS(err == null);
-
-			// Because if the response will contain same SUCCESS() objects then the value will be same due to reference
-			if (self.$multiple) {
-				var obj = {};
-				for (var m in o) {
-					if (o[m] != null)
-						obj[m] = o[m];
-				}
-				o = obj;
-			}
-
-			self.callback(o);
-		}
+		} else
+			self.callback(DEF.onSuccess(arg === true ? response : arg));
 	};
 };
 
-SchemaOptionsProto.invalid = function(name, error, path, index) {
+Options.invalid = function(error, path, index) {
 
 	var self = this;
 
 	if (arguments.length) {
-		self.error.push(name, error, path, index);
+		self.error.push(error, path, index);
 		self.callback();
 		return self;
 	}
@@ -306,308 +213,53 @@ SchemaOptionsProto.invalid = function(name, error, path, index) {
 	};
 };
 
-SchemaOptionsProto.noop = function() {
-	this.callback(NoOp);
-	return this;
+Options.cookie = function(name, value, expire, options) {
+	var self = this;
+	if (value === undefined)
+		return self.controller.cookie(name);
+	if (value === null)
+		expire = '-1 day';
+	self.controller.cookie(name, value, expire, options);
+	return self;
 };
 
-function parseLength(lower, result) {
-	result.raw = 'string';
-	var beg = lower.indexOf('(');
-	if (beg !== -1) {
-		result.length = lower.substring(beg + 1, lower.length - 1).parseInt();
-		result.raw = lower.substring(0, beg);
-	}
-	return result;
-}
+Options.variables = function(str, data) {
 
-exports.parsetype = function(name, value, required, custom) {
+	if (str.indexOf('{') === -1)
+		return str;
 
-	var type = typeof(value);
-	var result = {};
+	var $ = this;
 
-	result.raw = value;
-	result.type = 0;
-	result.length = 0;
-	result.required = required ? true : false;
-	result.validate = typeof(required) === 'function' ? required : null;
-	result.can = null;
-	result.isArray = false;
-	result.custom = custom || '';
-
-	//  0 = undefined
-	//  1 = integer
-	//  2 = float
-	//  3 = string
-	//  4 = boolean
-	//  5 = date
-	//  6 = object
-	//  7 = custom object
-	//  8 = enum
-	//  9 = keyvalue
-	// 10 = custom object type
-	// 11 = number2
-	// 12 = object as filter
-
-	if (value === null)
-		return result;
-
-	if (value === '[]') {
-		result.isArray = true;
-		return result;
-	}
-
-	if (type === 'function') {
-
-		if (value === UID) {
-			result.type = 3;
-			result.length = 20;
-			result.raw = 'string';
-			result.subtype = 'uid';
-			return result;
+	return str.replace(REG_ARGS, function(text) {
+		var l = text[1] === '{' ? 2 : 1;
+		var key = text.substring(l, text.length - l).trim();
+		var val = null;
+		var five = key.substring(0, 5);
+		if (five === 'user.') {
+			if ($.user) {
+				key = key.substring(5);
+				val = key.indexOf('.') === -1 ? $.user[key] : F.TUtils.get($.user, key);
+			}
+		} else if (five === 'data.') {
+			if (data) {
+				key = key.substring(5);
+				val = key.indexOf('.') === -1 ? data[key] : F.TUtils.get(data, key);
+			}
+		} else {
+			var six = key.substring(0, 6);
+			if (six === 'model.' || six === 'value.') {
+				if ($.model) {
+					key = key.substring(6);
+					val = key.indexOf('.') === -1 ? $.model[key] : F.TUtils.get($.model, key);
+				}
+			} else if (six === 'query.')
+				val = $.query[key.substring(6)];
+			else if (key.substring(0, 7) === 'params.')
+				val = $.params[key.substring(7)];
 		}
+		return val == null ? text : val;
+	});
 
-		if (value === GUID) {
-			result.type = 3;
-			result.length = 36;
-			result.raw = 'string';
-			result.subtype = 'guid';
-			return result;
-		}
-
-		if (value === Number) {
-			result.type = 2;
-			return result;
-		}
-
-		if (value === String) {
-			result.type = 3;
-			return result;
-		}
-
-		if (value === Boolean) {
-			result.type = 4;
-			return result;
-		}
-
-		if (value === Date) {
-			result.type = 5;
-			return result;
-		}
-
-		if (value === Array) {
-			result.isArray = true;
-			return result;
-		}
-
-		if (value === Object) {
-			result.type = 6;
-			return result;
-		}
-
-		if (value instanceof SchemaBuilderEntity)
-			result.type = 7;
-		else {
-			result.type = 10;
-			if (!this.asyncfields)
-				this.asyncfields = [];
-			this.asyncfields.push(name);
-		}
-
-		return result;
-	}
-
-	if (type === 'object') {
-		if (value instanceof Array) {
-			result.type = 8; // enum
-			result.subtype = typeof(value[0]);
-		} else
-			result.type = 9; // keyvalue
-		return result;
-	}
-
-	if (value[0] === '[') {
-		value = value.substring(1, value.length - 1);
-		result.isArray = true;
-		result.raw = value;
-	}
-
-	var lower = value.toLowerCase();
-
-	if (lower === 'object') {
-		result.type = 6;
-		return result;
-	}
-
-	if (lower === 'array') {
-		result.isArray = true;
-		return result;
-	}
-
-	if (value.indexOf(':') !== -1 || value.indexOf(',') !== -1) {
-		// multiple
-		result.type = 12;
-		return result;
-	}
-
-	if ((/^(string|text)+(\(\d+\))?$/).test(lower)) {
-		result.type = 3;
-		return parseLength(lower, result);
-	}
-
-	if ((/^(safestring)+(\(\d+\))?$/).test(lower)) {
-		result.type = 3;
-		result.subtype = 'safestring';
-		return parseLength(lower, result);
-	}
-
-	if ((/^(name)+(\(\d+\))?$/).test(lower)) {
-		result.type = 3;
-		result.subtype = 'name';
-		return parseLength(lower, result);
-	}
-
-	if ((/^(capitalize2)+(\(\d+\))?$/).test(lower)) {
-		result.type = 3;
-		result.subtype = 'capitalize2';
-		return parseLength(lower, result);
-	}
-
-	if ((/^(capitalize|camelcase|camelize)+(\(\d+\))?$/).test(lower)) {
-		result.type = 3;
-		result.subtype = 'capitalize';
-		return parseLength(lower, result);
-	}
-
-	if ((/^(lower|lowercase)+(\(\d+\))?$/).test(lower)) {
-		result.subtype = 'lowercase';
-		result.type = 3;
-		return parseLength(lower, result);
-	}
-
-	if (lower.indexOf('color') !== -1) {
-		result.type = 3;
-		result.raw = 'string';
-		result.subtype = 'color';
-		return result;
-	}
-
-	if (lower.indexOf('icon') !== -1) {
-		result.type = 3;
-		result.raw = 'string';
-		result.subtype = 'icon';
-		return result;
-	}
-
-	if (lower.indexOf('base64') !== -1) {
-		result.type = 3;
-		result.raw = 'string';
-		result.subtype = 'base64';
-		return result;
-	}
-
-	if ((/^(upper|uppercase)+(\(\d+\))?$/).test(lower)) {
-		result.subtype = 'uppercase';
-		result.type = 3;
-		return parseLength(lower, result);
-	}
-
-	if (lower === 'uid') {
-		result.type = 3;
-		result.length = 20;
-		result.raw = 'string';
-		result.subtype = 'uid';
-		return result;
-	}
-
-	if (lower === 'guid') {
-		result.type = 3;
-		result.length = 36;
-		result.raw = 'string';
-		result.subtype = 'guid';
-		return result;
-	}
-
-	if (lower === 'email') {
-		result.type = 3;
-		result.length = 120;
-		result.raw = 'string';
-		result.subtype = 'email';
-		return result;
-	}
-
-	if (lower === 'json') {
-		result.type = 3;
-		result.raw = 'string';
-		result.subtype = 'json';
-		return result;
-	}
-
-	if (lower === 'url') {
-		result.type = 3;
-		result.length = 500;
-		result.raw = 'string';
-		result.subtype = 'url';
-		return result;
-	}
-
-	if (lower === 'zip') {
-		result.type = 3;
-		result.length = 10;
-		result.raw = 'string';
-		result.subtype = 'zip';
-		return result;
-	}
-
-	if (lower === 'phone') {
-		result.type = 3;
-		result.length = 20;
-		result.raw = 'string';
-		result.subtype = 'phone';
-		return result;
-	}
-
-	if (lower === 'number2') {
-		result.type = 11;
-		return result;
-	}
-
-	if (lower === 'byte' || lower === 'tinyint') {
-		result.type = 1;
-		result.min = 0;
-		result.max = 255;
-		return result;
-	}
-
-	if (lower === 'smallint') {
-		result.type = 1;
-		result.min = -32767;
-		result.max = 32767;
-		return result;
-	}
-
-	if (['int', 'integer'].indexOf(lower) !== -1) {
-		result.type = 1;
-		return result;
-	}
-
-	if (['decimal', 'number', 'float', 'double'].indexOf(lower) !== -1) {
-		result.type = 2;
-		return result;
-	}
-
-	if (['bool', 'boolean'].indexOf(lower) !== -1) {
-		result.type = 4;
-		return result;
-	}
-
-	if (['date', 'time', 'datetime'].indexOf(lower) !== -1) {
-		result.type = 5;
-		return result;
-	}
-
-	result.type = 7;
-	return result;
 };
 
 function ErrorBuilder() {
@@ -1212,7 +864,7 @@ RESTP.exec = function(callback) {
 		self.options.method = 'POST';
 
 	if (self.options.body && !self.options.files && typeof(self.options.body) !== 'string' && self.options.type !== 'raw')
-		self.options.body = self.options.type === 'urlencoded' ? U.toURLEncode(self.options.body) : JSON.stringify(self.options.body);
+		self.options.body = self.options.type === 'urlencoded' ? F.TUtils.toURLEncode(self.options.body) : JSON.stringify(self.options.body);
 
 	if (self.options.unixsocket && self.options.url) {
 		if (!self.options.path)
@@ -1470,7 +1122,7 @@ RESTBuilderResponse.prototype.cookie = function(name) {
 
 	var self = this;
 	if (self.cookies)
-		return $decodeURIComponent(self.cookies[name] || '');
+		return F.TUtils.decodeURIComponent(self.cookies[name] || '');
 
 	self.cookies = {};
 
@@ -1488,75 +1140,7 @@ RESTBuilderResponse.prototype.cookie = function(name) {
 			self.cookies[line.substring(0, index)] = line.substring(index + 1);
 	}
 
-	return $decodeURIComponent(self.cookies[name] || '');
-};
-
-// Handle errors of decodeURIComponent
-function $decodeURIComponent(value) {
-	try
-	{
-		return decodeURIComponent(value);
-	} catch (e) {
-		return value;
-	}
-}
-
-global.NEWTRANSFORM = function(name, fn, id) {
-
-	if (!F.transformations[name])
-		F.transformations[name] = [];
-
-	if (typeof(fn) === 'string') {
-		var tmp = id;
-		fn = id;
-		id = tmp;
-	}
-
-	if (!id)
-		id = GUID(10);
-
-	var items = F.transformations[name];
-	var index = items.findIndex('id', id);
-
-	if (fn) {
-		if (index === -1)
-			items.push({ fn: fn, id: id, owner: F.$owner() });
-		else
-			items[index].fn = fn;
-	} else
-		items.splice(index, 1);
-
-	if (!items.length)
-		delete F.transformations[name];
-
-	return id;
-};
-
-function transform_async(name, data, callback, $) {
-	var items = F.transformations[name];
-	if (items) {
-		var options = new TransformOptions(new ErrorBuilder(), data, $);
-		items.wait(function(item, next) {
-			options.next = next;
-			item.fn(options, options.value);
-		}, () => callback(options.error.is ? options.error : null, options.value));
-	} else
-		callback(null, data);
-}
-
-global.TRANSFORM = function(name, data, callback, $) {
-
-	if (callback && typeof(callback) !== 'function') {
-		$ = callback;
-		callback = null;
-	}
-
-	if (callback)
-		transform_async(name, data, callback, $);
-	else
-		return new Promise(resolve => transform_async(name, data, (err, value) => resolve(value), $));
-		// return new Promise((resolve, reject) => transform_async(name, data, (err, value) => err ? reject(err) : resolve(value), $));
-
+	return F.TUtils.decodeURIComponent(self.cookies[name] || '');
 };
 
 function parseactioncache(obj, meta) {
@@ -1725,553 +1309,6 @@ global.NEWACTION = function(name, obj) {
 
 	F.makesourcemap();
 	return obj;
-};
-
-function NoOp() {}
-
-function TransformOptions(error, value, controller) {
-	this.controller = controller;
-	this.model = this.value = value;
-	this.error = error;
-}
-
-TransformOptions.prototype = {
-
-	get client() {
-		return this.controller;
-	},
-
-	get test() {
-		return this.controller ? this.controller.test : false;
-	},
-
-	get user() {
-		return this.controller ? this.controller.user : null;
-	},
-
-	get session() {
-		return this.controller ? this.controller.session : null;
-	},
-
-	get sessionid() {
-		return this.controller ? this.controller.sessionid : null;
-	},
-
-	get url() {
-		return (this.controller ? this.controller.url : '') || '';
-	},
-
-	get uri() {
-		return this.controller ? this.controller.uri : null;
-	},
-
-	get path() {
-		return (this.controller ? this.controller.path : EMPTYARRAY) || EMPTYARRAY;
-	},
-
-	get split() {
-		return (this.controller ? this.controller.path : EMPTYARRAY) || EMPTYARRAY;
-	},
-
-	get language() {
-		return (this.controller ? this.controller.language : '') || '';
-	},
-
-	get ip() {
-		return this.controller ? this.controller.ip : null;
-	},
-
-	get id() {
-		return this.controller ? this.controller.id : null;
-	},
-
-	get req() {
-		return this.controller ? this.controller.req : null;
-	},
-
-	get res() {
-		return this.controller ? this.controller.res : null;
-	},
-
-	get params() {
-		return this.controller ? this.controller.params : null;
-	},
-
-	get files() {
-		return this.controller ? this.controller.files : null;
-	},
-
-	get body() {
-		return this.controller ? this.controller.body : null;
-	},
-
-	get query() {
-		return this.controller ? this.controller.query : null;
-	},
-
-	get mobile() {
-		return this.controller ? this.controller.mobile : null;
-	},
-
-	get headers() {
-		return this.controller ? this.controller.headers : null;
-	},
-
-	get ua() {
-		return this.controller ? this.controller.ua : null;
-	}
-
-};
-
-function AuthOptions(req, res, callback) {
-	this.istotal = true;
-	this.req = req;
-	this.res = res;
-	this.processed = false;
-	this.$callback = callback;
-}
-
-AuthOptions.prototype = {
-
-	get websocket() {
-		return this.req.headers['upgrade'] === 'websocket';
-	},
-
-	get url() {
-		return this.$url ? this.$url : (this.$url = U.path(this.req.uri.pathname).toLowerCase());
-	},
-
-	get uri() {
-		return this.req.uri || EMPTYOBJECT;
-	},
-
-	get path() {
-		return this.req.path;
-	},
-
-	get split() {
-		return this.req.split;
-	},
-
-	get language() {
-		return this.req.language || '';
-	},
-
-	get ip() {
-		return this.req.ip;
-	},
-
-	get params() {
-		return this.req.params;
-	},
-
-	get files() {
-		return this.req.files;
-	},
-
-	get body() {
-		return this.req.body;
-	},
-
-	get query() {
-		return this.req.query;
-	},
-
-	get mobile() {
-		return this.req.mobile;
-	},
-
-	get headers() {
-		return this.req.headers;
-	},
-
-	get ua() {
-		return this.req.ua;
-	}
-};
-
-const AuthOptionsProto = AuthOptions.prototype;
-
-SchemaOptionsProto.cookie = AuthOptionsProto.cookie = function(name, value, expire, options) {
-	var self = this;
-	if (value === undefined)
-		return self.req.cookie(name);
-	if (value === null)
-		expire = '-1 day';
-	self.res.cookie(name, value, expire, options);
-	return self;
-};
-
-AuthOptionsProto.invalid = function(user) {
-	this.next(false, user);
-};
-
-AuthOptionsProto.done = function(response) {
-	var self = this;
-	return function(is, user) {
-		self.next(is, response ? response : user);
-	};
-};
-
-AuthOptionsProto.success = function(user) {
-	this.next(true, user);
-};
-
-AuthOptionsProto.audit = function(message, type) {
-	AUDIT(this, message, type);
-	return this;
-};
-
-AuthOptionsProto.cancel = function() {
-	this.$callback = null;
-	this.req.authorizecallback = null;
-	this.processed = true;
-	return this;
-};
-
-AuthOptionsProto.next = AuthOptionsProto.callback = function(is, user) {
-
-	if (this.processed)
-		return;
-
-	// @is "null" for callbacks(err, user)
-	// @is "true"
-	// @is "object" is as user but "user" must be "undefined"
-
-	if (is instanceof Error || is instanceof ErrorBuilder) {
-		// Error handling
-		is = false;
-	} else if (is == null && user) {
-		// A callback error handling
-		is = true;
-	} else if (user == null && is && is !== true) {
-		user = is;
-		is = true;
-	}
-
-	this.processed = true;
-	this.$callback(is, user, this);
-};
-
-AuthOptions.wrap = function(fn) {
-	return function(req, res, next) {
-		fn(new AuthOptions(req, res, next));
-	};
-};
-
-global.CONVERT = function(value, schema, key) {
-
-	if (!key)
-		key = schema;
-
-	if (key.length > 50)
-		key = key.hash().toString(36);
-
-	var fn = F.convertors[key];
-	return fn ? fn(value) : convertorcompile(schema, value, key);
-};
-
-function convertorcompile(schema, data, key) {
-
-	var arrays = [];
-
-	schema = schema.replace(/\[.*?\]/g, text => '[' + (arrays.push(text.substring(1, text.length - 1)) - 1) + ']');
-
-	var prop = schema.split(/,|;/);
-	var cache = [];
-
-	for (var i = 0; i < prop.length; i++) {
-		var arr = prop[i].split(':').trim();
-		var obj = {};
-
-		var type = arr[1].toLowerCase();
-		var size = 0;
-		var isarr = type[0] === '[';
-		if (isarr)
-			type = type.substring(1, type.length - 1);
-
-		var index = type.indexOf('(');
-		if (index !== -1) {
-			size = +type.substring(index + 1, type.length - 1).trim();
-			type = type.substring(0, index);
-		}
-
-		obj.name = arr[0].trim();
-		obj.size = size;
-		obj.type = type;
-		obj.array = isarr;
-
-		if (isarr) {
-			type = arrays[+type];
-			if ((/,|;/).test(type)) {
-				// nested
-				obj.fn = convertorcompile(type, null, null);
-				obj.type = type = 'custom';
-			}
-		}
-
-		switch (type) {
-			case 'custom':
-				break;
-			case 'string':
-				obj.fn = $convertstring;
-				break;
-			case 'number':
-				obj.fn = $convertnumber;
-				break;
-			case 'number2':
-				obj.fn = $convertnumber2;
-				break;
-			case 'boolean':
-				obj.fn = $convertboolean;
-				break;
-			case 'date':
-				obj.fn = $convertdate;
-				break;
-			case 'uid':
-				obj.fn = $convertuid;
-				break;
-			case 'guid':
-				obj.fn = $convertguid;
-				break;
-			case 'upper':
-				obj.fn = (val, obj) => $convertstring(val, obj).toUpperCase();
-				break;
-			case 'lower':
-				obj.fn = (val, obj) => $convertstring(val, obj).toLowerCase();
-				break;
-			case 'capitalize':
-				obj.fn = (val, obj) => $convertstring(val, obj, true).capitalize();
-				break;
-			case 'capitalize2':
-				obj.fn = (val, obj) => $convertstring(val, obj, true).capitalize(true);
-				break;
-			case 'color':
-				obj.fn = function(val, obj) {
-					var tmp = $convertstring(val, obj);
-					return REGEXP_COLOR.test(tmp) ? tmp : '';
-				};
-				break;
-			case 'icon':
-				obj.fn = function(val, obj) {
-					var tmp = $convertstring(val, obj);
-					return REGEXP_ICON.test(tmp) ? tmp : '';
-				};
-				break;
-			case 'safestring':
-				obj.fn = (val, obj) => $convertstring(val, obj, true);
-				break;
-			case 'name':
-				obj.fn = (val, obj) => $convertstring(val, obj).toName();
-				break;
-			case 'base64':
-				obj.fn = val => typeof(val) === 'string' ? val.isBase64(true) ? val : '' : '';
-				break;
-			case 'email':
-				obj.fn = function(val, obj) {
-					var tmp = $convertstring(val, obj);
-					return tmp.isEmail() ? tmp : '';
-				};
-				break;
-			case 'zip':
-				obj.fn = function(val, obj) {
-					var tmp = $convertstring(val, obj);
-					return tmp.isZIP() ? tmp : '';
-				};
-				break;
-			case 'phone':
-				obj.fn = function(val, obj) {
-					var tmp = $convertstring(val, obj);
-					return tmp.isPhone() ? tmp : '';
-				};
-				break;
-			case 'url':
-				obj.fn = function(val, obj) {
-					var tmp = $convertstring(val, obj);
-					return tmp.isURL() ? tmp : '';
-				};
-				break;
-			case 'json':
-				obj.fn = function(val, obj) {
-					var tmp = $convertstring(val, obj);
-					return tmp.isJSON() ? tmp : '';
-				};
-				break;
-			case 'object':
-				obj.fn = val => val;
-				break;
-			case 'search':
-				obj.fn = (val, obj) => $convertstring(val, obj).toSearch();
-				break;
-			default:
-				obj.fn = val => val;
-				break;
-		}
-
-		if (isarr) {
-			obj.fn2 = obj.fn;
-			obj.fn = function(val, obj) {
-
-				if (!(val instanceof Array))
-					val = val == null || val == '' ? [] : [val];
-
-				var output = [];
-				for (var m of val) {
-
-					if (!m && obj.type === 'custom')
-						continue;
-
-					var o = obj.fn2(m, obj);
-					switch (obj.type) {
-						case 'email':
-						case 'phone':
-						case 'zip':
-						case 'json':
-						case 'url':
-						case 'uid':
-						case 'date':
-							o && output.push(o);
-							break;
-						default:
-							output.push(o);
-							break;
-					}
-				}
-				return output;
-			};
-		}
-
-		cache.push(obj);
-	}
-
-	var fn = function(data) {
-		var output = {};
-		for (var i = 0, length = cache.length; i < length; i++) {
-			var item = cache[i];
-			output[item.name] = item.fn(data[item.name], item);
-		}
-		return output;
-	};
-
-	if (key)
-		F.convertors[key] = fn;
-
-	return key === null ? fn : fn(data);
-}
-
-function $convertstring(value, obj, xss) {
-
-	var tmp = value == null ? '' : typeof(value) !== 'string' ? obj.size ? value.toString() : value.toString() : value;
-
-	if (xss) {
-		if (tmp.isXSS() || tmp.isSQLInjection())
-			tmp = '';
-	}
-
-	if (tmp && obj.size)
-		tmp = tmp.max(obj.size);
-
-	return tmp;
-}
-
-function $convertnumber(value) {
-	if (value == null)
-		return 0;
-	if (typeof(value) === 'number')
-		return value;
-	var num = +value.toString().replace(',', '.');
-	return isNaN(num) ? 0 : num;
-}
-
-function $convertnumber2(value) {
-	if (value == null)
-		return null;
-	if (typeof(value) === 'number')
-		return value;
-	var num = +value.toString().replace(',', '.');
-	return isNaN(num) ? null : num;
-}
-
-function $convertboolean(value) {
-	return value == null ? false : value === true || value == '1' || value === 'true' || value === 'on';
-}
-
-function $convertuid(value) {
-	return value == null ? '' : typeof(value) === 'string' ? value.isUID() ? value : '' : '';
-}
-
-function $convertguid(value) {
-	return value == null ? '' : typeof(value) === 'string' ? value.isGUID() ? value : '' : '';
-}
-
-function $convertdate(value) {
-
-	if (value == null)
-		return null;
-
-	if (value instanceof Date)
-		return value;
-
-	switch (typeof(value)) {
-		case 'string':
-		case 'number':
-			return value.parseDate();
-	}
-
-	return null;
-}
-
-// ======================================================
-// EXPORTS
-// ======================================================
-
-exports.RESTBuilder = RESTBuilder;
-exports.ErrorBuilder = ErrorBuilder;
-exports.SchemaOptions = SchemaOptions;
-exports.RESTBuilderResponse = RESTBuilderResponse;
-exports.AuthOptions = AuthOptions;
-global.RESTBuilder = RESTBuilder;
-global.RESTBuilderResponse = RESTBuilderResponse;
-global.ErrorBuilder = ErrorBuilder;
-exports.SchemaValue = SchemaValue;
-
-SchemaOptionsProto.variables = function(str, data) {
-
-	if (str.indexOf('{') === -1)
-		return str;
-
-	var $ = this;
-
-	return str.replace(REG_ARGS, function(text) {
-		var l = text[1] === '{' ? 2 : 1;
-		var key = text.substring(l, text.length - l).trim();
-		var val = null;
-		var five = key.substring(0, 5);
-		if (five === 'user.') {
-			if ($.user) {
-				key = key.substring(5);
-				val = key.indexOf('.') === -1 ? $.user[key] : U.get($.user, key);
-			}
-		} else if (five === 'data.') {
-			if (data) {
-				key = key.substring(5);
-				val = key.indexOf('.') === -1 ? data[key] : U.get(data, key);
-			}
-		} else {
-			var six = key.substring(0, 6);
-			if (six === 'model.' || six === 'value.') {
-				if ($.model) {
-					key = key.substring(6);
-					val = key.indexOf('.') === -1 ? $.model[key] : U.get($.model, key);
-				}
-			} else if (six === 'query.')
-				val = $.query[key.substring(6)];
-			else if (key.substring(0, 7) === 'params.')
-				val = $.params[key.substring(7)];
-		}
-		return val == null ? text : val;
-	});
-
 };
 
 function SchemaCall() {
@@ -2757,4 +1794,6 @@ global.CALL = function(schema, model, controller) {
 	return caller;
 };
 
+exports.RESTBuilder = RESTBuilder;
 exports.ErrorBuilder = ErrorBuilder;
+exports.Options = Options;

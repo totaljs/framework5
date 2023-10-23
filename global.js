@@ -18,6 +18,7 @@ global.NEWDB = F.newdb;
 global.REQUIRE = F.require;
 global.CRON = F.cron;
 global.UID = F.uid;
+global.MEMORIZE = F.memorize;
 global.DATA = new F.TQueryBuilder.Controller(true);
 global.DB = function() {
 	return new F.TQueryBuilder.Controller();
@@ -32,3 +33,4 @@ global.GUID = F.TUtils.guid;
 global.NOOP = F.TUtils.noop;
 global.REQUEST = F.TUtils.request;
 global.HASH = (val, type) => val.hash(type ? type : true);
+global.DIFFARR = F.TUtils.diffarr;

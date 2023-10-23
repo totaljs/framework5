@@ -32,6 +32,8 @@ global.DEF = {};
 	F.is5 = F.version = 5000;
 	F.version_header = '5';
 	F.version_node = process.version + '';
+	F.EMPTYOBJECT = EMPTYOBJECT;
+	F.EMPTYARRAY = EMPTYARRAY;
 
 	F.resources = {};      // Loaded resources
 	F.connections = {};    // WebSocket connections
@@ -39,6 +41,8 @@ global.DEF = {};
 	F.modules = {};
 	F.plugins = {};
 	F.processing = {};
+	F.transformations = {};
+	F.flowstreams = {};
 	F.config = CONF;
 	F.def = DEF;
 	F.errors = [];
@@ -382,6 +386,9 @@ function unlink(arr, callback) {
 	CONF.$wsencodedecode = false;
 	CONF.$wsmaxlatency = 2000;
 	CONF.$proxytimeout = 5; // 5 seconds
+	CONF.$cookiesamesite = 'Lax';
+	CONF.$cookiesecure = false;
+	CONF.$csrfexpiration = '30 minutes';
 
 	process.env.TZ = CONF.$timezone;
 
@@ -389,7 +396,31 @@ function unlink(arr, callback) {
 
 (function(DEF) {
 
-	DEF.onView = function(name, html) {
+	DEF.onSuccess = function(value) {
+		return { success: true, value: value };
+	};
+
+	DEF.onCSRFcreate = function(ctrl) {
+		var data = [ctrl.ip, (ctrl.headers['user-agent'] || '').hash(true), NOW.add(F.config.$csrfexpiration).getTime()];
+		return F.config.secret_csrf ? JSON.stringify(data).encrypt(F.config.secret_csrf) : '';
+	};
+
+	DEF.onCSRFcheck = function(ctrl) {
+		if (F.config.secret_csrf) {
+			var token = ctrl.headers['x-csrf-token'] || ctrl.query.csrf;
+			var is = false;
+			if (token && token.length > 10) {
+				var data = token.decrypt(F.config.secret_csrf);
+				if (data)
+					data = data.parseJSON();
+				is = data && data[0] === ctrl.ip && data[2] >= NOW.getTime() && data[1] === (ctrl.headers['user-agent'] || '').hash(true) ? true : false;
+			}
+			return is;
+		}
+		return true;
+	};
+
+	DEF.onViewCompile = function(name, html) {
 		return html;
 	};
 
@@ -674,9 +705,7 @@ F.load = async function(types = [], callback) {
 			case 'flowstreams':
 				// @TODO: missing FlowStream implementation
 				break;
-
 		}
-
 	}
 
 	F.loadservices();
@@ -910,6 +939,9 @@ F.loadservices = function() {
 
 		if (F.internal.ticks % 2 === 0)
 			global.NOW = new Date();
+
+		for (let key in F.flowstreams)
+			F.flowstreams[key].service(F.internal.ticks);
 
 		// 1 minute
 		if (F.internal.ticks == 12) {
@@ -1410,6 +1442,110 @@ F.view = function(name, model, prepare) {
 	return view.render(name, model);
 };
 
+F.memorize = function(name, delay, skip) {
+
+	if (!name)
+		name = '';
+
+	if (delay && typeof(delay) !== 'number') {
+		var tmp;
+		tmp = skip;
+		skip = delay;
+		delay = tmp;
+	}
+
+	var data = {};
+	var filename = F.path.databases('memorize' + (name ? ('_' + name) : '') + '.json');
+
+	try {
+		data = F.Fs.readFileSync(filename, 'utf8').parseJSON(true);
+	} catch (e) {}
+
+	var blacklist = {};
+	var timeout;
+	var replacer;
+
+	if (skip) {
+		if (typeof(skip) === 'string')
+			skip = skip.split(',').trim();
+		for (var m of skip)
+			blacklist[m] = 1;
+		replacer = (key, value) => blacklist[key] ? undefined : value;
+	}
+
+	var save = () => F.Fs.writeFile(filename, replacer ? JSON.stringify(data, replacer, '\t') : JSON.stringify(data, null, '\t'), F.error('MEMORIZE(\'' + name + '\').save()'));
+
+	data.save = function() {
+		timeout && clearTimeout(timeout);
+		timeout = setTimeout(save, delay || 10000);
+	};
+
+	return data;
+};
+
+F.newjsonschema = function(name, obj) {
+
+	var type = typeof(name);
+
+	if (type === 'string' && typeof(obj) === 'string') {
+		obj = obj.toJSONSchema();
+		obj.$id = name;
+	} else if (type === 'string') {
+		if (obj == null) {
+			obj = name.toJSONSchema();
+			name = obj.$id;
+		}
+	} else if (type === 'object') {
+		obj = name;
+		name = obj.$id;
+	}
+
+	F.jsonschemas[name] = obj;
+	obj.transform = F.TUtils.jsonschematransform;
+	return obj;
+};
+
+F.newtransform = function(name, action, id) {
+	if (action == null) {
+		let items = F.transformations[name];
+		let index = items.findIndex('id', id);
+		if (index !== -1) {
+			items.splice(index, 1);
+			if (!items.length)
+				delete F.transformations[name];
+		}
+	} else {
+		let obj = {};
+		obj.id = id;
+		obj.action = action;
+
+		if (F.transformations[name])
+			F.transformations[name].push(obj);
+		else
+			F.transformations[name] = [obj];
+	}
+};
+
+function transform(items, opt, index) {
+	var t = items[index];
+	if (t) {
+		t.action(opt, opt.value);
+		t.next = () => transform(items, opt, index + 1);
+	} else
+		opt.$callback(opt.error.items.length ? opt.error : null, opt.value);
+}
+
+F.transform = function(name, value, callback, controller) {
+	var items = F.transformations[name];
+	if (items) {
+		let opt = new F.TBuilders.Options(controller, new F.TBuilders.ErrorBuilder());
+		opt.value = value;
+		opt.$callback = callback;
+		transform(items, opt, 0);
+	} else
+		callback(null, value);
+};
+
 function httptuningperformance(socket) {
 	socket.setNoDelay(true);
 	socket.setKeepAlive(true, 10);
@@ -1461,13 +1597,17 @@ process.on('uncaughtException', function(e) {
 	F.TWebSocket = require('./websocket');
 	F.TQueryBuilder = require('./querybuilder');
 	F.THttp = require('./http');
+	F.TJSONSchema = require('./jsonschema');
+	F.TMS = require('./tms');
 	F.TImage = require('./image');
 	F.TCron = require('./cron');
+	F.TFlowStream = require('./flowstream');
 
 	// Settings
 	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
 	F.isWindows = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
 	F.syshash = (__dirname + '-' + F.Os.hostname() + '-' + F.Os.platform() + '-' + F.Os.arch() + '-' + F.Os.release() + '-' + F.Os.tmpdir() + JSON.stringify(process.versions)).md5();
+	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
 
 	F.path.fs = F.Fs;
 	F.path.join = F.Path.join;
@@ -1489,6 +1629,7 @@ process.on('uncaughtException', function(e) {
 	// Methods
 	F.route = F.TRouting.route;
 	F.newdb = F.TQueryBuilder.evaluate;
+	F.newflowstream = F.TFlowStream.create;
 	F.internal.uidc = F.TUtils.random_text(1);
 
 })(F);

@@ -242,7 +242,7 @@ Controller.prototype.ondata = function(data) {
 			}
 
 			if (ctrl.closemessage && ctrl.parent.encodedecode)
-				ctrl.closemessage = $decodeURIComponent(ctrl.closemessage);
+				ctrl.closemessage = F.TUtils.decodeURIComponent(ctrl.closemessage);
 
 			ctrl.close();
 			current.buffer = null;
@@ -381,7 +381,7 @@ Controller.prototype.decode = function() {
 				data = data.toString('utf8');
 
 			if (ctrl.parent.encodedecode === true)
-				data = $decodeURIComponent(data);
+				data = F.TUtils.decodeURIComponent(data);
 
 			if (ctrl.parent.encryptdecrypt && F.config.secret_encryption)
 				data = F.TUtils.decrypt_data(data, F.config.secret_encryption);
@@ -404,7 +404,7 @@ Controller.prototype.decode = function() {
 				data = data.toString('utf8');
 
 			if (ctrl.parent.encodedecode === true)
-				data = $decodeURIComponent(data);
+				data = F.TUtils.decodeURIComponent(data);
 
 			if (ctrl.parent.encryptdecrypt && F.config.secret_encryption)
 				data = F.TUtils.decrypt_data(data, F.config.secret_encryption);
@@ -1057,16 +1057,6 @@ function getMessageLength(data, isLE) {
 	return length;
 }
 
-// Handle errors of decodeURIComponent
-function $decodeURIComponent(value) {
-	try
-	{
-		return decodeURIComponent(value);
-	} catch (e) {
-		return value;
-	}
-}
-
 // MIT
 // Written by Jozef Gula
 function converBytesToInt64(data, startIndex, isLE) {
@@ -1159,7 +1149,7 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 	self.url = url;
 	self.origin = origin;
 	self.protocol = protocol;
-	self.secret = Crypto.randomBytes(16).toString('base64');
+	self.secret = F.Crypto.randomBytes(16).toString('base64');
 
 	delete self.isclosed2;
 	delete self.isclosed;
@@ -1361,7 +1351,7 @@ WebSocketClient.prototype.ondata = function(data) {
 			self.closemessage = current.data.slice(2).toString('utf8');
 			self.closecode = current.data[0] << 8 | current.data[1];
 			if (self.closemessage && self.options.encodedecode)
-				self.closemessage = $decodeURIComponent(self.closemessage);
+				self.closemessage = F.TUtils.decodeURIComponent(self.closemessage);
 			self.$api && wsclient_closecallbacks(self, self.closecode);
 			wsclient_closeforce(self);
 			break;
@@ -1504,7 +1494,7 @@ WebSocketClient.prototype.decode = function() {
 				data = data.toString('utf8');
 
 			if (self.options.encodedecode === true)
-				data = $decodeURIComponent(data);
+				data = F.TUtils.decodeURIComponent(data);
 
 			if (self.options.encrypt)
 				data = F.TUtils.decrypt_data(data, self.options.encrypt);
@@ -1522,7 +1512,7 @@ WebSocketClient.prototype.decode = function() {
 				data = data.toString('utf8');
 
 			if (self.options.encodedecode === true)
-				data = $decodeURIComponent(data);
+				data = F.TUtils.decodeURIComponent(data);
 
 			if (self.options.encrypt)
 				data = F.TUtils.decrypt_data(data, self.options.encrypt);
@@ -1553,7 +1543,7 @@ WebSocketClient.prototype.parseinflate = function() {
 			if (!self.inflatechunks)
 				return;
 
-			var data = concat(self.inflatechunks, self.inflatechunkslength);
+			let data = concat(self.inflatechunks, self.inflatechunkslength);
 
 			self.inflatechunks = null;
 			self.inflatelock = false;
@@ -1865,3 +1855,5 @@ function wsclient_closecallbacks(client, e) {
 		}
 	}
 }
+
+exports.WebSocketClient = WebSocketClient;

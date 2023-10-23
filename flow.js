@@ -6,6 +6,7 @@ const PING = { TYPE: 'ping' };
 var FS = exports;
 
 FS.version = 1;
+FS.proxies = {};
 FS.db = {};
 FS.worker = false;
 FS.ping = false;
@@ -43,7 +44,7 @@ FS.onerror = function(err, source, id, componentid, stack) {
 
 };
 
-U.EventEmitter2(FS);
+F.TUtils.EventEmitter2(FS);
 
 FS.onsave = function(data) {
 	// @data {Object} flowstream schema
@@ -57,12 +58,16 @@ FS.reload = function(flow, restart) {
 		return;
 
 	if (prev.worker) {
-		if (prev.proxypath !== flow.proxypath)
-			PROXY(prev.proxypath, null);
+		if (prev.proxypath !== flow.proxypath) {
+			if (FS.proxies[prev.proxypath]) {
+				FS.proxies[prev.proxypath].remove();
+				delete FS.proxies[prev.proxypath];
+			}
+		}
 	}
 
 	if (flow.worker && prev.proxypath !== flow.proxypath)
-		PROXY(flow.proxypath, flow.unixsocket, false);
+		FS.proxies[flow.proxypath] = F.proxy(flow.proxypath, flow.unixsocket);
 
 	FS.db[flow.id] = flow;
 	FS.instance[flow.id].restart(flow, restart);
@@ -121,8 +126,6 @@ FS.load = function(flow, callback) {
 	FS.db[id] = flow;
 	flow.worker && initping();
 
-	F.$owner('flowstream_' + id);
-
 	FlowStream.init(flow, flow.worker, function(err, instance) {
 
 		FS.$events.load && FS.emit('load', instance, flow);
@@ -130,10 +133,11 @@ FS.load = function(flow, callback) {
 		if (flow.worker && flow.proxypath) {
 
 			// Removes old
-			PROXY(flow.proxypath, null);
+			if (FS.proxies[flow.proxypath])
+				FS.proxies[flow.proxypath].remove();
 
 			// Registers new
-			PROXY(flow.proxypath, flow.unixsocket, false);
+			FS.proxies[flow.proxypath] = F.proxy(flow.proxypath, flow.unixsocket);
 
 		}
 

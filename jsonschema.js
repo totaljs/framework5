@@ -4,6 +4,8 @@ const REG_NUMBER = /[\d,.]+/;
 const REG_COLOR = /^#([A-F0-9]{3}|[A-F0-9]{6}|[A-F0-9]{8})$/i;
 const REG_ICON = /^(ti|far|fab|fad|fal|fas|fa)?\s(fa|ti)-[a-z0-9-]+$/;
 
+function Value() {}
+
 function check_string(meta, error, value, errplus, path) {
 
 	var type = typeof(value);
@@ -51,6 +53,15 @@ function check_string(meta, error, value, errplus, path) {
 					error.push(errplus + meta.$$ID, undefined, path);
 					return;
 				}
+				break;
+			case 'safestring':
+				if (value && (value.isXSS() || value.isSQLInjection())) {
+					error.push(errplus + meta.$$ID, undefined, path);
+					return;
+				}
+				break;
+			case 'search':
+				value = value.toSearch();
 				break;
 			case 'phone':
 				value = value.replace(/\s/g, '').toLowerCase();
@@ -474,7 +485,7 @@ function check_object(meta, error, value, response, stop, definitions, path) {
 		return value;
 
 	if (!response)
-		response = new framework_builders.SchemaValue();
+		response = new Value();
 
 	var count = 0;
 	var tmp;

@@ -356,7 +356,7 @@ var CONTENTTYPES = {
 	'7zip': 'application/x-7z-compressed'
 };
 
-global.DIFFARR = exports.diffarr = function(prop, db, form) {
+exports.diffarr = function(prop, db, form) {
 
 	var an = [];
 	var au = [];
@@ -6605,6 +6605,8 @@ String.prototype.toJSONSchema = function(name, url) {
 			case 'color':
 			case 'icon':
 			case 'base64':
+			case 'safestring':
+			case 'search':
 				tmp = {};
 				if (isarr) {
 					tmp.type = 'array';
@@ -6694,8 +6696,9 @@ String.prototype.toJSONSchema = function(name, url) {
 	return obj;
 };
 
-exports.jsonschematransform = function(value, callback, partial) {
+exports.jsonschematransform = function(value, partial) {
 
+	var self = this;
 	var error = new ErrorBuilder();
 	var response = null;
 
@@ -6708,23 +6711,23 @@ exports.jsonschematransform = function(value, callback, partial) {
 		schema.required = [];
 
 		for (let key in value) {
-			let prop = this.properties[key];
+			let prop = self.properties[key];
 			if (prop) {
 				tmp[key] = value[key];
 				schema.properties[key] = prop;
-				if (this.required && this.required.includes(key))
+				if (self.required && self.required.includes(key))
 					schema.required.push(key);
 			}
 		}
 
-		schema.$id = this.$id;
-		schema.$schema = this.$schema;
-		schema.type = this.type;
+		schema.$id = self.$id;
+		schema.$schema = self.$schema;
+		schema.type = self.type;
 
-		response = framework_jsonschema.transform(schema, error, tmp);
+		response = T.TJSONSchema.transform(schema, error, tmp);
 
 	} else
-		response = framework_jsonschema.transform(this, error, value);
+		response = T.TJSONSchema.transform(self, error, value);
 
 	return { error: error.is ? error : null, response: response };
 };
@@ -6814,6 +6817,15 @@ function parsepath(path) {
 
 	return builder;
 }
+
+exports.decodeURIComponent = function(value) {
+	try
+	{
+		return decodeURIComponent(value);
+	} catch (e) {
+		return value;
+	}
+};
 
 // Internal for HTTP Web/Files/WebSocket routes
 exports.parseURI2 = function(url) {

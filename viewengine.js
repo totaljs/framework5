@@ -154,7 +154,7 @@ exports.compile = function(name, content, debug = true) {
 			//	builder += '+' + DELIMITER + (new Function('self', 'return self.import(' + cmd[0] + '!' + cmd.substring(1) + ')'))(controller) + DELIMITER;
 		} else if (cmd7 === 'compile' && cmd.lastIndexOf(')') === -1) {
 
-			builderTMP = builder + '+(DEF.onView.call(self,\'' + (cmd8[7] === ' ' ? cmd.substring(8).trim() : '') + '\',';
+			builderTMP = builder + '+(DEF.onViewCompile.call(self,\'' + (cmd8[7] === ' ' ? cmd.substring(8).trim() : '') + '\',';
 			builder = '';
 			sectionName = cmd.substring(8);
 			isCOMPILATION = true;

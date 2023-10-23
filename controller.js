@@ -469,6 +469,95 @@ Controller.prototype.clear = function() {
 
 };
 
+Controller.prototype.cookie = function(name, value, expires, options) {
+
+	var ctrl = this;
+	var arr;
+
+	if (value === undefined) {
+
+		if (ctrl.cookies)
+			return F.TUtils.decodeURIComponent(ctrl.cookies[name] || '');
+
+		var cookie = ctrl.headers.cookie;
+		if (!cookie) {
+			ctrl.cookies = F.EMPTYOBJECT;
+			return '';
+		}
+
+		ctrl.cookies = {};
+
+		arr = cookie.split(';');
+		for (let i = 0; i < arr.length; i++) {
+			let line = arr[i].trim();
+			let index = line.indexOf('=');
+			if (index !== -1)
+				ctrl.cookies[line.substring(0, index)] = line.substring(index + 1);
+		}
+
+		return name ? F.TUtils.decodeURIComponent(ctrl.cookies[name] || '') : '';
+	}
+
+	var cookiename = name + '=';
+	var builder = [cookiename + value];
+	var type = typeof(expires);
+
+	if (expires && type === 'object') {
+		options = expires;
+		expires = options.expires || options.expire || null;
+	}
+
+	if (type === 'string')
+		expires = expires.parseDateExpiration();
+
+	if (!options)
+		options = {};
+
+	if (!options.path)
+		options.path = '/';
+
+	expires && builder.push('Expires=' + expires.toUTCString());
+	options.domain && builder.push('Domain=' + options.domain);
+	options.path && builder.push('Path=' + options.path);
+
+	if (options.secure == true || (options.secure == null && F.config.$cookiesecure))
+		builder.push('Secure');
+
+	if (options.httpOnly || options.httponly || options.HttpOnly)
+		builder.push('HttpOnly');
+
+	var same = options.security || options.samesite || F.config.$cookiesamesite;
+
+	switch (same) {
+		case 1:
+			same = 'Lax';
+			break;
+		case 2:
+			same = 'Strict';
+			break;
+	}
+
+	builder.push('SameSite=' + same);
+
+	arr = ctrl.getHeader('set-cookie') || [];
+
+	// Cookie, already, can be in array, resulting in duplicate 'set-cookie' header
+	if (arr.length) {
+		var l = cookiename.length;
+		for (let i = 0; i < arr.length; i++) {
+			if (arr[i].substring(0, l) === cookiename) {
+				arr.splice(i, 1);
+				break;
+			}
+		}
+	}
+
+	arr.push(builder.join('; '));
+	ctrl.setHeader('Set-Cookie', arr);
+
+	return ctrl;
+};
+
 Controller.prototype.autoclear = function(value) {
 	this.preventclearfiles = value === false;
 };
@@ -721,7 +810,7 @@ function multipart(ctrl) {
 function authorize(ctrl) {
 	if (DEF.onAuthorize) {
 		var opt = new F.TBuilders.AuthOptions(ctrl);
-		opt.$callback = function(user) {
+		opt.next = opt.callback = function(user) {
 			let auth = user ? 1 : 2;
 			ctrl.user = user;
 			if (ctrl.route.auth !== auth) {
@@ -932,7 +1021,7 @@ function send_file(ctrl, path, ext) {
 			cache = { date: stats.mtime.toUTCString(), size: stats.size };
 
 		ctrl.response.headers['last-modified'] = cache.date;
-		ctrl.response.headers.etag = '858' + CONF.$httpetag;
+		ctrl.response.headers.etag = '858' + F.config.$httpetag;
 
 		var type = F.TUtils.contentTypes[ext] || F.TUtils.contentTypes.bin;
 

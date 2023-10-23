@@ -1,6 +1,3 @@
-if (!global.framework_utils)
-	global.framework_utils = require('./utils');
-
 const BLACKLISTID = { paused: 1, groups: 1, tabs: 1 };
 const REG_ARGS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
 const D = '__';
@@ -163,27 +160,23 @@ MP.once = function(name, fn) {
 	return this.on(name, fn, true);
 };
 
-MP.off = MP.removeListener = function(name, fn) {
+MP.off = function(name, fn) {
 	var self = this;
+
+	if (!name) {
+		delete self.$events;
+		return;
+	}
+
 	if (self.$events) {
 		var evt = self.$events[name];
 		if (evt) {
-			evt = evt.remove(n => n.fn === fn);
-			self.$events[name] = evt.length ? evt : undefined;
+			if (fn) {
+				evt = evt.remove(n => n.fn === fn);
+				self.$events[name] = evt.length ? evt : undefined;
+			} else
+				delete self.$events[name];
 		}
-	}
-	return self;
-};
-
-MP.removeAllListeners = function(name) {
-	var self = this;
-	if (self.$events) {
-		if (name === true)
-			self.$events = {};
-		else if (name)
-			self.$events[name] = undefined;
-		else
-			self.$events = {};
 	}
 	return self;
 };
@@ -308,7 +301,7 @@ function variables(str, data, encoding) {
 
 		if (!val && data != null && typeof(data) === 'object') {
 			var nested = key.indexOf('.') !== -1;
-			val = nested ? U.get(data, key) : data[key];
+			val = nested ? F.TUtils.get(data, key) : data[key];
 		}
 
 		if (customencoding) {
@@ -445,7 +438,7 @@ MP.send = function(outputindex, data, clonedata) {
 						buf.copy(message.data);
 						message.data = buf;
 					} else
-						message.data = CLONE(message.data);
+						message.data = F.TUtils.clone(message.data);
 				}
 
 				message.used++;
@@ -588,8 +581,7 @@ MP.end = MP.destroy = function() {
 	self.$events = null;
 };
 
-function Flow(name, errorhandler) {
-
+function FlowStream(name, errorhandler) {
 	var t = this;
 	t.strict = true;
 	t.loading = 0;
@@ -604,59 +596,47 @@ function Flow(name, errorhandler) {
 	t.logger = [];
 	t.middleware = [];
 	t.stats = { messages: 0, pending: 0, traffic: { priority: [] }, mm: 0, minutes: 0 };
-	t.mm = 0;
 	t.paused = false;
-	t.$events = {};
-
-	var counter = 1;
-
-	setImmediate(function(t) {
-		if (t.interval !== 0) {
-			t.$interval = setInterval(function(t) {
-
-				var is = t.mm;
-
-				if (counter % 20 === 0) {
-
-					t.stats.minutes++;
-					t.stats.mm = t.mm;
-					t.mm = 0;
-					counter = 1;
-
-					for (var key in t.meta.flow) {
-						var com = t.meta.flow[key];
-						com.service && com.service(t.stats.minutes);
-					}
-
-					if (t.stats.traffic.priority.length)
-						is = 1;
-
-				} else
-					counter++;
-
-				if (counter % 10 === 0)
-					global.NOW = new Date();
-
-				t.onstats && t.onstats(t.stats);
-				t.$events.stats && t.emit('stats', t.stats);
-
-				if (is)
-					t.stats.traffic = { priority: [] };
-
-			}, t.interval || 3000, t);
-		}
-	}, t);
-
-	new framework_utils.EventEmitter2(t);
+	t.mm = 0;
+	new F.TUtils.EventEmitter2(t);
 }
 
-var FP = Flow.prototype;
+var FP = FlowStream.prototype;
+
+FP.service = function(counter) {
+
+	var t = this;
+	var is = t.mm;
+
+	if (counter % 12 === 0) {
+
+		t.stats.minutes++;
+		t.stats.mm = t.mm;
+		t.mm = 0;
+
+		for (let key in t.meta.flow) {
+			let com = t.meta.flow[key];
+			com.service && com.service(t.stats.minutes);
+		}
+
+		if (t.stats.traffic.priority.length)
+			is = 1;
+
+	}
+
+	t.onstats && t.onstats(t.stats);
+	t.$events.stats && t.emit('stats', t.stats);
+
+	if (is)
+		t.stats.traffic = { priority: [] };
+
+};
 
 FP.pause = function(is) {
 	var self = this;
 	self.paused = is;
-	for (var m in self.meta.flow) {
-		var instance = self.meta.flow[m];
+	for (let m in self.meta.flow) {
+		let instance = self.meta.flow[m];
 		if (instance && instance.pause)
 			instance.pause(is);
 	}
@@ -671,7 +651,7 @@ FP.register = function(name, declaration, config, callback, extend) {
 	if (type === 'string') {
 
 		if (!declaration) {
-			var e = new Error('Invalid component declaration');
+			let e = new Error('Invalid component declaration');
 			callback && callback(e);
 			self.error(e, 'register', name);
 			return;
@@ -702,7 +682,7 @@ FP.register = function(name, declaration, config, callback, extend) {
 		try {
 			var cacheid = name;
 			if (type === 'object') {
-				for (var key in declaration)
+				for (let key in declaration)
 					curr[key] = declaration[key];
 			} else
 				declaration(curr, F.require);
@@ -715,7 +695,7 @@ FP.register = function(name, declaration, config, callback, extend) {
 	} else
 		curr.make = type === 'object' ? declaration.make : declaration;
 
-	curr.config = CLONE(curr.config || curr.options);
+	curr.config = F.TUtils.clone(curr.config || curr.options);
 
 	var errors = new ErrorBuilder();
 	var done = function() {
@@ -1125,7 +1105,7 @@ FP.ontrigger = function(outputindex, data, controller, events) {
 							buf.copy(message.data);
 							message.data = buf;
 						} else
-							message.data = CLONE(message.data);
+							message.data = F.TUtils.clone(message.data);
 					}
 
 					message.main = self;
@@ -1192,7 +1172,7 @@ FP.reconfigure = function(id, config, rewrite) {
 		if (rewrite)
 			instance.config = config;
 		else
-			U.extend(instance.config, config);
+			F.TUtils.extend(instance.config, config);
 
 		instance.configure && instance.configure(instance.config);
 		self.onreconfigure && self.onreconfigure(instance);
@@ -1339,7 +1319,7 @@ FP._use = function(schema, callback, reinit, insert) {
 	if (typeof(schema) === 'string')
 		schema = schema.parseJSON(true);
 	else
-		schema = CLONE(schema);
+		schema = F.TUtils.clone(schema);
 
 	if (typeof(callback) === 'boolean') {
 		var tmp = reinit;
@@ -1420,7 +1400,7 @@ FP._use = function(schema, callback, reinit, insert) {
 				fi.tab = instance.tab;
 				fi.ts = ts;
 				if (JSON.stringify(fi.config) !== JSON.stringify(instance.config)) {
-					U.extend(fi.config, instance.config);
+					F.TUtils.extend(fi.config, instance.config);
 					fi.configure && fi.configure(fi.config);
 					self.onreconfigure && self.onreconfigure(fi, true);
 					self.$events.configure && self.emit('configure', fi);
@@ -1523,7 +1503,7 @@ FP.initcomponent = function(key, component) {
 
 	var tmp = component.config;
 	if (tmp)
-		instance.config = instance.config ? U.extend(CLONE(tmp), instance.config) : CLONE(tmp);
+		instance.config = instance.config ? F.TUtils.extend(F.TUtils.clone(tmp), instance.config) : F.TUtils.clone(tmp);
 
 	if (!instance.config)
 		instance.config = {};
@@ -1904,17 +1884,17 @@ FP.export_instance = function(id) {
 	if (instance) {
 
 		if (BLACKLISTID[id])
-			return CLONE(instance);
+			return F.TUtils.clone(instance);
 
 		var tmp = {};
 		tmp.x = instance.x;
 		tmp.y = instance.y;
 		tmp.size = instance.size;
 		tmp.offset = instance.offset;
-		tmp.stats = CLONE(instance.stats);
-		tmp.connections = CLONE(instance.connections);
+		tmp.stats = F.TUtils.clone(instance.stats);
+		tmp.connections = F.TUtils.clone(instance.connections);
 		tmp.id = instance.id;
-		tmp.config = CLONE(instance.config);
+		tmp.config = F.TUtils.clone(instance.config);
 		tmp.component = instance.component;
 		tmp.connected = true;
 		tmp.note = instance.note;
@@ -1991,13 +1971,8 @@ FP.components = function(prepare_export) {
 	return arr;
 };
 
-exports.make = function(name, errorhandler) {
-	return new Flow(name, errorhandler);
-};
-
-exports.prototypes = function() {
-	var obj = {};
-	obj.Message = Message.prototype;
-	obj.FlowStream = Flow.prototype;
-	return obj;
+exports.create = function(name, errorhandler) {
+	let flowstream = new FlowStream(name, errorhandler);
+	F.flowstreams[name] =flowstream;
+	return flowstream;
 };
