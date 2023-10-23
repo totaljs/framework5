@@ -1,8 +1,5 @@
 'use strict';
 
-const REGEXP_COLOR = /^#([A-F0-9]{3}|[A-F0-9]{6}|[A-F0-9]{8})$/i;
-const REGEXP_ICON = /^(ti|tic|far|fab|fad|fal|fas|fa)?\s(fa|ti)-[a-z0-9-]+$/;
-const REGEXP_JSONSCHEMA = /(,|:|\*)/;
 const REG_ARGS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
 
 var transforms = { error: {}, restbuilder: {} };
@@ -165,7 +162,7 @@ Options.redirect = function(url) {
 
 // @TODO: Missing functionality "Options.cancel()"
 Options.audit = function(message, type) {
-	AUDIT(this, message, type);
+	F.audit(this, message, type);
 };
 
 Options.success = function(value) {
@@ -310,7 +307,7 @@ ErrorBuilder.prototype.replace = function(search, value) {
 	return self;
 };
 
-ErrorBuilder.prototype.output = function(language) {
+ErrorBuilder.prototype.output = function(language = 'default') {
 
 	var self = this;
 	var output = [];
@@ -1225,7 +1222,7 @@ function parseactioncache(obj, meta) {
 
 }
 
-global.NEWACTION = function(name, obj) {
+exports.newaction = function(name, obj) {
 
 	if (typeof(name) === 'object') {
 		obj = name;
@@ -1248,15 +1245,14 @@ global.NEWACTION = function(name, obj) {
 	F.actions[name] = obj;
 	obj.id = name;
 	obj.isaction = true;
-	obj.jsonschemainput = obj.input ? REGEXP_JSONSCHEMA.test(obj.input) ? obj.input.toJSONSchema(name + '_input') : F.jsonschemas[preparejsonschema(obj.input)] : null;
-	obj.jsonschemaoutput = obj.output ? REGEXP_JSONSCHEMA.test(obj.output) ? obj.output.toJSONSchema(name + '_output') : F.jsonschemas[preparejsonschema(obj.output)] : null;
-	obj.jsonschemaparams = obj.params ? REGEXP_JSONSCHEMA.test(obj.params) ? obj.params.toJSONSchema(name + '_params') : F.jsonschemas[preparejsonschema(obj.params)] : null;
-	obj.jsonschemaquery = obj.query ? REGEXP_JSONSCHEMA.test(obj.query) ? obj.query.toJSONSchema(name + '_query') : F.jsonschemas[preparejsonschema(obj.query)] : null;
-	obj.$owner = F.$owner();
+	obj.jsonschemainput = obj.input ? F.TUtils.jsonschema(obj.input) : null;
+	obj.jsonschemaoutput = obj.output ? F.TUtils.jsonschema(obj.output) : null;
+	obj.jsonschemaparams = obj.params ? F.TUtils.jsonschema(obj.params) : null;
+	obj.jsonschemaquery = obj.query ? F.TUtils.jsonschema(obj.query) : null;
 	obj.schema = {};
 	obj.schema.$csrf = obj.csrf;
-	obj.schema.$bodyencrypt = obj.encrypt;
-	obj.schema.$bodycompress = obj.compress;
+	obj.schema.$encrypt = obj.encrypt;
+	obj.schema.$compress = obj.compress;
 
 	if (obj.cache)
 		obj.cache = parseactioncache(obj, obj.cache);
@@ -1265,7 +1261,7 @@ global.NEWACTION = function(name, obj) {
 		obj.middleware = obj.middleware.replace(/,/g, ' ').replace(/\s{2,}/, ' ');
 
 	obj.remove = function() {
-		obj.$route && obj.$route.remove();
+		obj.route && obj.route.remove();
 		delete F.actions[obj.id];
 		obj = null;
 		F.makesourcemap();
@@ -1277,7 +1273,7 @@ global.NEWACTION = function(name, obj) {
 		var flags = null;
 		if (obj.encrypt)
 			flags = ['encrypt'];
-		obj.$route = ROUTE(obj.route, flags || []);
+		obj.route = ROUTE(obj.route, flags || []);
 	}
 
 	if (obj.permissions && typeof(obj.permissions) === 'string')
@@ -1299,7 +1295,7 @@ global.NEWACTION = function(name, obj) {
 			}
 		}
 
-		NEWPUBLISH(name, tmsschema);
+		F.TMS.newpublish(name, tmsschema);
 	}
 
 	obj.validate = function(type, value, partial) {
@@ -1414,7 +1410,7 @@ function evalaction($, name, caller, skipmiddleware) {
 	if (action.permissions) {
 		var permissions = action.permissions.slice(0);
 		permissions.unshift($);
-		if (UNAUTHORIZED.apply(global, permissions))
+		if (F.unauthorized.apply(global, permissions))
 			return;
 	}
 
@@ -1493,7 +1489,7 @@ function evalaction($, name, caller, skipmiddleware) {
 function callnewaction(caller, meta) {
 
 	var error = new ErrorBuilder();
-	var $ = new SchemaOptions(error, caller.options.model, null, function(a, b) {
+	var $ = new Options(error, caller.options.model, null, function(a, b) {
 
 		var response = null;
 
@@ -1578,11 +1574,11 @@ function performsschemaaction(caller) {
 	var meta = caller.meta;
 	var controller = caller.options.controller;
 
-	if (meta.schema.$bodyencrypt && controller && controller.req)
-		controller.req.$bodyencrypt = true;
+	if (meta.schema.$encrypt && controller)
+		controller.response.encrypt = true;
 
-	if (meta.schema.$bodycompress && controller && controller.req)
-		controller.req.$bodycompress = true;
+	if (meta.schema.$compress && controller)
+		controller.response.minifyjson = true;
 
 	var callback = caller.options.callback;
 
@@ -1617,7 +1613,7 @@ SCP.query = function(value) {
 
 SCP.user = function(value) {
 
-	if (value instanceof SchemaOptions)
+	if (value instanceof Options)
 		value = value.user;
 
 	this.options.user = value;
@@ -1667,7 +1663,7 @@ SCP.promise = function($) {
 
 SCP.controller = function(ctrl) {
 
-	if (ctrl instanceof SchemaOptions)
+	if (ctrl instanceof Options)
 		ctrl = ctrl.controller;
 
 	this.options.controller = ctrl;
@@ -1676,8 +1672,8 @@ SCP.controller = function(ctrl) {
 
 global.CALL = function(schema, model, controller) {
 
-	// Because "controller" can be SchemaOptions/OperationOptions/TaskOptions
-	if (controller && !(controller instanceof WebSocketClient) && controller.controller)
+	// Because "controller" should be "Options"
+	if (controller && !(controller instanceof F.TWebSocket.WebSocketClient) && controller.controller)
 		controller = controller.controller;
 
 	var caller = new SchemaCall();
@@ -1742,7 +1738,7 @@ global.CALL = function(schema, model, controller) {
 	if (meta.schema) {
 		var o = GETSCHEMA(meta.schema);
 		if (!o) {
-			caller.$error = new ErrorBuilder().push('', 'Schema "{0}" not found'.format(meta.schema));
+			caller.$error = new ErrorBuilder().push('Schema "{0}" not found'.format(meta.schema));
 			return caller;
 		}
 	}
@@ -1776,7 +1772,7 @@ global.CALL = function(schema, model, controller) {
 		}
 
 		if (!o.meta[item]) {
-			caller.$error = new ErrorBuilder().push('', 'Schema "{0}" doesn\'t contain "{1}" operation'.format(meta.schema, item));
+			caller.$error = new ErrorBuilder().push(Schema "{0}" doesn\'t contain "{1}" operation'.format(meta.schema, item));
 			return caller;
 		}
 

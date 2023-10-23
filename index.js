@@ -343,10 +343,10 @@ function unlink(arr, callback) {
 	CONF.version = '1.0.0';
 	CONF.author = '';
 	CONF.secret = F.syshash;
-	CONF.secret_encryption = null,
-	CONF.secret_csrf = null,
-	CONF.secret_tms = null,
-	CONF.node_modules = 'node_modules',
+	CONF.secret_encryption = null;
+	CONF.secret_csrf = null;
+	CONF.secret_tms = null;
+	CONF.node_modules = 'node_modules';
 
 	// New internal configuration
 	CONF.$cors = '';
@@ -389,6 +389,10 @@ function unlink(arr, callback) {
 	CONF.$cookiesamesite = 'Lax';
 	CONF.$cookiesecure = false;
 	CONF.$csrfexpiration = '30 minutes';
+
+	CONF.$tms = false;
+	CONF.$tmsmaxsize = 256;
+	CONF.$tmsurl = '/$tms/';
 
 	process.env.TZ = CONF.$timezone;
 
@@ -491,10 +495,8 @@ F.loadconfig = function(value) {
 		F.config[key] = cfg[key];
 	}
 
-	if (!F.config.$secret_uid)
-		F.config.$secret_uid = (F.config.name).crc32(true) + '';
-
-	// CMD('refresh_tms');
+	if (!F.config.secret_uid)
+		F.config.secret_uid = (F.config.name).crc32(true) + '';
 
 	if (F.config.$performance)
 		F.Http.globalAgent.maxSockets = 9999;
@@ -504,6 +506,7 @@ F.loadconfig = function(value) {
 
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = F.config.$insecure ? '0' : '1';
 	F.logger(F.config.$logger == true);
+	F.emit('@tms');
 };
 
 F.loadresource = function(name, value) {
@@ -626,7 +629,7 @@ F.load = async function(types = [], callback) {
 			F.loadresource(F.TUtils.getName(resource).replace(/\.resource$/i, ''), await read(resource));
 	}
 
-	let loader = ['modules', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware'];
+	let loader = ['modules', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'middleware', 'flowstreams'];
 	var files = [];
 	var tmp;
 
@@ -1548,6 +1551,14 @@ F.transform = function(name, value, callback, controller) {
 		callback(null, value);
 };
 
+F.makesourcemap = function() {
+	// @TODO: Not implemented: F.makesourcemap()
+};
+
+F.audit = function() {
+	// @TODO: Not implemented: F.audit()
+};
+
 function httptuningperformance(socket) {
 	socket.setNoDelay(true);
 	socket.setKeepAlive(true, 10);
@@ -1600,7 +1611,6 @@ process.on('uncaughtException', function(e) {
 	F.TQueryBuilder = require('./querybuilder');
 	F.THttp = require('./http');
 	F.TJSONSchema = require('./jsonschema');
-	F.TMS = require('./tms');
 	F.TImage = require('./image');
 	F.TCron = require('./cron');
 	F.TFlowStream = require('./flowstream');
@@ -1635,7 +1645,9 @@ process.on('uncaughtException', function(e) {
 	F.internal.uidc = F.TUtils.random_text(1);
 	F.ErrorBuilder = F.TBuilders.ErrorBuilder;
 
+	// Needed "F"
 	F.TFlow = require('./flow');
+	F.TMS = require('./tms');
 
 })(F);
 

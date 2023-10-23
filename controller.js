@@ -49,6 +49,8 @@ function Controller(req, res) {
 		status: 200,
 		cache: DEBUG,
 		minify: true,
+		// minifyjson: false
+		// encrypt: false
 		headers: {}
 	};
 

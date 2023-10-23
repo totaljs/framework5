@@ -8,8 +8,6 @@
 - stats
 - debug / release mode
 - mail
-- htmlparser
-- flowstream
 - cluster
 - api
 - openclient

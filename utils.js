@@ -32,6 +32,8 @@ const REG_DATEFORMAT = /YYYY|yyyy|YY|yy|MMMM|MMM|MM|M|dddd|DDDD|DDD|ddd|DD|dd|D|
 const REG_STRFORMAT = /\{\d+\}/g;
 const REG_ASCII = /[^\u0000-\u007e]/g;
 
+const QUERIFYMETHODS = { GET: 1, POST: 1, DELETE: 1, PUT: 1, PATCH: 1, API: 1 };
+
 var regexpSTATIC = /\.\w{2,8}($|\?)+/;
 const regexpPATH = /\\/g;
 const regexpTags = /<\/?[^>]+(>|$)/g;
@@ -4248,7 +4250,7 @@ exports.encrypt_uid = function(val, key) {
 	for (var i = 0; i < key.length; i++)
 		sum += key.charCodeAt(i);
 
-	return (num ? 'n' : 'x') + (CONF.secret_uid + val + sum + key).crc32(true).toString(32) + 'x' + val;
+	return (num ? 'n' : 'x') + (F.config.secret_uid + val + sum + key).crc32(true).toString(32) + 'x' + val;
 };
 
 exports.decrypt_uid = function(val, key) {
@@ -6358,9 +6360,18 @@ exports.multipartparser = function(multipart, stream, callback) {
 	return new MultipartParser(multipart, stream, callback);
 };
 
-var QUERIFYMETHODS = { GET: 1, POST: 1, DELETE: 1, PUT: 1, PATCH: 1, API: 1 };
+exports.jsonschema = function(value) {
+	let type = typeof(value);
+	if (type === 'string') {
+		if ((/(:,\*;)/).test(value))
+			return value.toJSONSchema();
+		else
+			return F.jsonschemas[value];
+	}
+	return value;
+};
 
-global.QUERIFY = function(url, obj) {
+exports.querify = function(url, obj) {
 
 	if (typeof(url) !== 'string') {
 		obj = url;
@@ -6373,10 +6384,10 @@ global.QUERIFY = function(url, obj) {
 	var arg = [];
 	var keys = Object.keys(obj);
 
-	for (var i = 0; i < keys.length; i++) {
+	for (let i = 0; i < keys.length; i++) {
 
-		var key = keys[i];
-		var val = obj[key];
+		let key = keys[i];
+		let val = obj[key];
 		if (val != null) {
 
 			if (val instanceof Date)
@@ -6390,8 +6401,8 @@ global.QUERIFY = function(url, obj) {
 	}
 
 	if (url) {
-		var arr = url.split(' ');
-		var index = QUERIFYMETHODS[arr[0]] ? 1 : 0;
+		let arr = url.split(' ');
+		let index = QUERIFYMETHODS[arr[0]] ? 1 : 0;
 		arr[index] += (arr[index].indexOf('?') === -1 ? '?' : '&') + arg.join('&');
 		return arr.join(' ');
 	}

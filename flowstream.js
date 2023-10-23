@@ -324,7 +324,7 @@ function variables(str, data, encoding) {
 					val = JSON.stringify(val);
 					break;
 				case 'querify':
-					val = QUERIFY(val).substring(1);
+					val = F.TUtils.querify(val).substring(1);
 					break;
 			}
 		}
@@ -377,7 +377,7 @@ MP.send = function(outputindex, data, clonedata) {
 	var meta = self.main.meta;
 	var now = Date.now();
 
-	outputs = self.instance.connections ? (self.instance.connections[outputindex] || EMPTYARRAY) : EMPTYARRAY;
+	outputs = self.instance.connections ? (self.instance.connections[outputindex] || F.EMPTYARRAY) : F.EMPTYARRAY;
 
 	if (self.processed === 0) {
 		self.processed = 1;

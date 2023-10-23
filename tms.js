@@ -8,7 +8,8 @@ var Cache = {
 	pcache: {},       // cache for publishers
 	calls: {},
 	socket: null,
-	timeout: null
+	timeout: null,
+	url: ''
 };
 
 exports.cache = Cache;
@@ -74,9 +75,8 @@ function tmscontroller($) {
 				if (tmp) {
 					F.stats.performance.call++;
 					response = tmp.schema.transform(msg.data);
-
 					if (response.error) {
-						msg.data = err instanceof ErrorBuilder ? err._prepare().items : err.toString();
+						msg.data = response.error instanceof ErrorBuilder ? response.error.output() : response.response.toString();
 						msg.error = true;
 						client.send(msg);
 					} else {
@@ -84,7 +84,7 @@ function tmscontroller($) {
 							if (err) {
 								msg.error = true;
 								if (err instanceof ErrorBuilder)
-									msg.data = err._prepare().items;
+									msg.data = err.output();
 								else
 									msg.data = [{ error: err + '' }];
 							} else {
@@ -98,7 +98,7 @@ function tmscontroller($) {
 				}
 			} else {
 				msg.error = true;
-				msg.data = new ErrorBuilder.push(404)._prepare().items;
+				msg.data = new ErrorBuilder.push(404).output();
 				client.send(msg);
 			}
 		}
@@ -271,7 +271,7 @@ exports.newpublish = function(name, schema) {
 		return;
 	}
 
-	Cache.pcache[name] = typeof(schema) === 'string' ? schema.toJSONSchema() : schema;
+	Cache.pcache[name] = F.TUtils.jsonschema(schema);
 	exports.refresh();
 };
 
@@ -289,7 +289,7 @@ exports.newcall = function(name, schema, callback) {
 	}
 
 	let obj = {};
-	obj.schema = typeof(schema) === 'string' ? schema.toJSONSchema() : schema;
+	obj.schema = F.TUtils.jsonschema(schema);
 	obj.callback = callback;
 	Cache.calls[name] = obj;
 	exports.refresh();
@@ -297,11 +297,19 @@ exports.newcall = function(name, schema, callback) {
 
 exports.newsubscribe = function(name, schema, callback) {
 
-	if (schema == null) {
-		delete Cache.scache[name];
-		exports.refresh();
-		return;
+	if (typeof(schema) === 'function') {
+		callback = schema;
+		schema = null;
 	}
+
+	if (schema)
+		Cache.scache[name] = F.TUilts.jsonschema(schema);
+	else
+		delete Cache.scache[name];
+
+	exports.subscribe(name, callback);
+	exports.refresh();
+
 };
 
 exports.publish = function(name, value) {
@@ -350,3 +358,25 @@ exports.unsubscribe = function(name, callback) {
 	}
 	return false;
 };
+
+F.on('@tms', function() {
+
+	var endpoint = F.config.$tmsurl;
+	var is = Cache.url !== endpoint;
+
+	if (is && Cache.route) {
+		Cache.route.remove();
+		Cache.route = null;
+	}
+
+	if ((is && endpoint && F.config.$tms) || (endpoint && F.config.$tms && !Cache.route))
+		Cache.route = F.route('SOCKET ' + endpoint, tmscontroller, F.config.$tmsmaxsize);
+
+	Cache.url = endpoint;
+
+	if (endpoint && Cache.token !== F.config.secret_tms) {
+		Cache.token = F.config.secret_tms;
+		Cache.socket && Cache.socket.close(1000, 'Changed TMS secret');
+	}
+
+});

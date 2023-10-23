@@ -2608,7 +2608,7 @@ TMS.connect = function(fs, sourceid, callback) {
 			var cb = client.callbacks[callbackid];
 			if (cb) {
 				delete client.callbacks[callbackid];
-				cb(new ErrorBuilder().push(408)._prepare().items);
+				cb(new ErrorBuilder().push(408).output());
 			}
 		};
 

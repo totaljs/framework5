@@ -19,6 +19,7 @@ global.REQUIRE = F.require;
 global.CRON = F.cron;
 global.UID = F.uid;
 global.MEMORIZE = F.memorize;
+global.AUDIT = F.audit;
 global.DATA = new F.TQueryBuilder.Controller(true);
 global.DB = function() {
 	return new F.TQueryBuilder.Controller();
@@ -35,3 +36,12 @@ global.REQUEST = F.TUtils.request;
 global.HASH = (val, type) => val.hash(type ? type : true);
 global.DIFFARR = F.TUtils.diffarr;
 global.U = F.TUtils;
+
+// TMS
+global.SUBSCRIBE = F.TMS.subscribe;
+global.UNSUBSCRIBE = F.TMS.unsubscribe;
+global.PUBLISH = F.TMS.publish;
+global.NEWPUBLISH = F.TMS.newpublish;
+global.NEWSUBSCRIBE = F.TMS.newsubscribe;
+global.NEWCALL = F.TMS.newcall;
+global.TMSCLIENT = F.TMS.client;
