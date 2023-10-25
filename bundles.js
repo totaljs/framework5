@@ -397,7 +397,7 @@ exports.extract = function(callback, skip) {
 
 		if (F.Fs.readFileSync('bundles.debug')) {
 			F.isbundle = true;
-			F.directory = PATH.root('/.src/');
+			F.directory = F.path.root('/.src/');
 			callback();
 			return;
 		}

@@ -104,9 +104,9 @@ function runwatching() {
 		F.directory = directory;
 
 		try {
-			if (Fs.readFileSync(PATH.join(directory, 'bundles.debug'))) {
+			if (Fs.readFileSync(F.path.join(directory, 'bundles.debug'))) {
 				skipbundle = true;
-				F.directory = directory = PATH.join(directory, '.src');
+				F.directory = directory = F.path.join(directory, '.src');
 			}
 
 		} catch(e) {}

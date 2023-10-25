@@ -1,7 +1,7 @@
-global.TEMPLATE = function(body, model, $) {
+exports.render = function(body, model, $) {
 	return new Promise(function(resolve, reject) {
 
-		var cache = TEMP;
+		var cache = F.temporary.templates;
 		var id = 'Ttemplate' + HASH(body);
 		var data = cache[id];
 
@@ -60,7 +60,7 @@ global.TEMPLATE = function(body, model, $) {
 				if (body[0] === '~') {
 					body = body.substring(1);
 				} else {
-					body = PATH.templates(body);
+					body = F.path.templates(body);
 					if (body.indexOf('.html') === -1)
 						body += '.html';
 				}

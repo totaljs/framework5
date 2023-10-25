@@ -910,11 +910,11 @@ function init_current(meta, callback, nested) {
 	initrunning();
 
 	if (!meta.directory)
-		meta.directory = PATH.root('flowstream');
+		meta.directory = F.path.root('flowstream');
 
 	// Due to C/C++ modules
 	if (W.workerData || meta.sandbox)
-		CONF.node_modules = '~' + PATH.join(meta.directory, meta.id, 'node_modules');
+		CONF.node_modules = '~' + F.path.join(meta.directory, meta.id, 'node_modules');
 
 	ASFILES = meta.asfiles === true;
 
@@ -930,7 +930,7 @@ function init_current(meta, callback, nested) {
 	if (meta.import) {
 		var tmp = meta.import.split(/,|;/).trim();
 		for (var m of tmp) {
-			var mod = require(PATH.root(m));
+			var mod = require(F.path.root(m));
 			mod.install && mod.install(flow);
 			mod.init && mod.init(flow);
 		}
@@ -3103,7 +3103,7 @@ isFLOWSTREAMWORKER = W.workerData || process.argv.indexOf('--fork') !== -1;
 
 // Runs the worker
 if (W.workerData) {
-	F.dir(PATH.join(__dirname, '../'));
+	F.dir(F.path.join(__dirname, '../'));
 	exports.init(W.workerData);
 }
 

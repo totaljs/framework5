@@ -4,8 +4,6 @@
 
 const REG_FIELDS_CLEANER = /"|`|\||'|\s/g;
 
-var CACHE = {};
-var EVALUATOR = {};
 var LANGUAGE_SKIP = '_';
 var LANGUAGE_PREFIX = '';
 
@@ -38,7 +36,7 @@ function DB(conn) {
 }
 
 function execdb(db) {
-	var conn = EVALUATOR[db.conn] || EVALUATOR['*'];
+	var conn = F.querybuilders[db.conn] || F.querybuilders['*'];
 	if (conn) {
 		if (db.options.checksum)
 			db.options.checksum = HASH(db.options.checksum).toString(36);
@@ -225,7 +223,7 @@ CTP.load = function(conn, opt) {
 };
 
 CTP.find = CTP.all = function(table) {
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var t = this;
 	var db = new DB(meta.db);
 
@@ -240,7 +238,7 @@ CTP.debug = function() {
 };
 
 CTP.list = function(table) {
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var db = new DB(meta.db);
 	var t = this;
 	db.controller = t;
@@ -249,7 +247,7 @@ CTP.list = function(table) {
 };
 
 CTP.check = function(table) {
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var t = this;
 	var db = new DB(meta.db);
 	db.controller = t;
@@ -260,7 +258,7 @@ CTP.check = function(table) {
 };
 
 CTP.read = CTP.one = function(table) {
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var t = this;
 	var db = new DB(meta.db);
 	db.controller = t;
@@ -269,7 +267,7 @@ CTP.read = CTP.one = function(table) {
 };
 
 CTP.count = function(table) {
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var t = this;
 	var db = new DB(meta.db);
 	db.controller = t;
@@ -279,7 +277,7 @@ CTP.count = function(table) {
 
 CTP.scalar = function(table, type, key, key2) {
 
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var t = this;
 
 	if (key == null)
@@ -301,7 +299,7 @@ CTP.scalar = function(table, type, key, key2) {
 };
 
 CTP.insert = CTP.ins = function(table, data) {
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var t = this;
 	var db = new DB(meta.db);
 
@@ -314,7 +312,7 @@ CTP.insert = CTP.ins = function(table, data) {
 
 CTP.update = CTP.modify = CTP.mod = CTP.upd = function(table, data, upsert) {
 
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var t = this;
 	var db = new DB(meta.db);
 
@@ -327,7 +325,7 @@ CTP.update = CTP.modify = CTP.mod = CTP.upd = function(table, data, upsert) {
 };
 
 CTP.remove = CTP.rem = function(table) {
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var t = this;
 	var db = new DB(meta.db);
 	db.controller = t;
@@ -343,7 +341,7 @@ CTP.query = function(table, query, params) {
 	} else
 		table += '/';
 
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var t = this;
 	var db = new DB(meta.db);
 	db.controller = t;
@@ -354,7 +352,7 @@ CTP.query = function(table, query, params) {
 };
 
 CTP.drop = function(table) {
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var t = this;
 	var db = new DB(meta.db);
 	db.controller = t;
@@ -363,7 +361,7 @@ CTP.drop = function(table) {
 };
 
 CTP.truncate = CTP.clear = function(table) {
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var db = new DB(meta.db);
 	var t = this;
 	db.controller = t;
@@ -372,7 +370,7 @@ CTP.truncate = CTP.clear = function(table) {
 };
 
 CTP.command = function(table, name) {
-	var meta = CACHE[table] || (CACHE[table] = parsedb(table));
+	var meta = F.temporary.querybuilders[table] || (F.temporary.querybuilders[table] = parsedb(table));
 	var db = new DB(meta.db);
 	var t = this;
 	db.controller = t;
@@ -511,17 +509,17 @@ QBP.returning = function(fields) {
 
 	var key = '_' + fields;
 
-	if (!CACHE[key]) {
+	if (!F.temporary.querybuilders[key]) {
 		var arr = [];
 		fields = fields.split(',');
 		for (var field of fields) {
 			field = field.trim();
 			arr.push(field);
 		}
-		CACHE[key] = arr;
+		F.temporary.querybuilders[key] = arr;
 	}
 
-	this.options.returning = CACHE[key];
+	this.options.returning = F.temporary.querybuilders[key];
 	return this;
 };
 
@@ -749,17 +747,17 @@ QBP.fields = function(fields) {
 	var t = this;
 	var key = '_' + fields;
 
-	if (!CACHE[key]) {
+	if (!F.temporary.querybuilders[key]) {
 		var arr = [];
 		fields = fields.split(',');
 		for (var field of fields) {
 			field = field.trim();
 			arr.push(field);
 		}
-		CACHE[key] = arr;
+		F.temporary.querybuilders[key] = arr;
 	}
 
-	t.options.fields = CACHE[key];
+	t.options.fields = F.temporary.querybuilders[key];
 	return t;
 };
 
@@ -1112,19 +1110,19 @@ QBP.autofill = function($, allowedfields, skipfilter, defsort, maxlimit) {
 
 	if (skipfilter) {
 		key = 'NDB_' + skipfilter;
-		skipped = CACHE[key];
+		skipped = F.temporary.querybuilders[key];
 		if (!skipped) {
 			tmp = skipfilter.split(',').trim();
 			var obj = {};
 			for (var i = 0; i < tmp.length; i++)
 				obj[tmp[i]] = 1;
-			skipped = CACHE[key] = obj;
+			skipped = F.temporary.querybuilders[key] = obj;
 		}
 	}
 
 	if (allowedfields) {
 		key = 'NDB_' + allowedfields;
-		allowed = CACHE[key];
+		allowed = F.temporary.querybuilders[key];
 		if (!allowed) {
 			var obj = {};
 			var arr = [];
@@ -1136,7 +1134,7 @@ QBP.autofill = function($, allowedfields, skipfilter, defsort, maxlimit) {
 				arr.push(k[0]);
 				k[1] && filter.push({ name: k[0], type: (k[1] || '').toLowerCase() });
 			}
-			allowed = CACHE[key] = { keys: arr, meta: obj, filter: filter };
+			allowed = F.temporary.querybuilders[key] = { keys: arr, meta: obj, filter: filter };
 		}
 	}
 
@@ -1240,7 +1238,7 @@ QBP.autoquery = function(query, schema, defsort, maxlimit) {
 	var t = this;
 	var skipped;
 	var key = 'QBF' + schema;
-	var allowed = CACHE[key];
+	var allowed = F.temporary.querybuilders[key];
 	var tmp;
 
 	if (!allowed) {
@@ -1259,7 +1257,7 @@ QBP.autoquery = function(query, schema, defsort, maxlimit) {
 			filter.push({ name: cleaned, type: (k[1] || 'string').toLowerCase() });
 		}
 
-		allowed = CACHE[key] = { keys: arr, meta: obj, filter: filter, fields: localized };
+		allowed = F.temporary.querybuilders[key] = { keys: arr, meta: obj, filter: filter, fields: localized };
 	}
 
 	var fields = query.fields;
@@ -1345,14 +1343,7 @@ QBP.permit = function(name, type, value, userid, required) {
 	return t;
 };
 
-setImmediate(function() {
-	ON('service', function(counter) {
-		if (counter % 10 === 0)
-			CACHE = {};
-	});
-});
-
-exports.evaluate = function(type, callback) {
+exports.create = function(type, callback) {
 
 	if (typeof(type) === 'function') {
 		callback = type;
@@ -1360,9 +1351,9 @@ exports.evaluate = function(type, callback) {
 	}
 
 	if (callback)
-		EVALUATOR[type] = callback;
+		F.querybuilders[type] = callback;
 	else
-		delete EVALUATOR[type];
+		delete F.querybuilders[type];
 
 };
 

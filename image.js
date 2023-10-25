@@ -1,24 +1,15 @@
 'use strict';
 
+const D = F.iswindows ? '"' : '\'';
 const SOF = { 0xc0: true, 0xc1: true, 0xc2: true, 0xc3: true, 0xc5: true, 0xc6: true, 0xc7: true, 0xc9: true, 0xca: true, 0xcb: true, 0xcd: true, 0xce: true, 0xcf: true };
-const Child = require('child_process');
-const Exec = Child.exec;
-const Spawn = Child.spawn;
-const Fs = require('fs');
-const REGEXP_SVG = /(width="\d+")+|(height="\d+")+/g;
-const REGEXP_PATH = /\//g;
-const REGEXP_ESCAPE = /'/g;
 const SPAWN_OPT = { shell: true };
-const D = require('os').platform().substring(0, 3).toLowerCase() === 'win' ? '"' : '\'';
 const CMD_CONVERT = { gm: 'gm', im: 'convert', magick: 'magick' };
 const CMD_CONVERT2 = { gm: 'gm convert', im: 'convert', magick: 'magick' };
-const SUPPORTEDIMAGES = { jpg: 1, png: 1, gif: 1, apng: 1, jpeg: 1, heif: 1, heic: 1, webp: 1, ico: 1 };
+const SUPPORTED = { jpg: 1, png: 1, gif: 1, apng: 1, jpeg: 1, heif: 1, heic: 1, webp: 1, ico: 1 };
 
-var CACHE = {};
-var middlewares = {};
-
-if (!global.framework_utils)
-	global.framework_utils = require('./utils');
+const REG_SVG = /(width="\d+")+|(height="\d+")+/g;
+const REG_PATH = /\//g;
+const REG_ESCAPE = /'/g;
 
 function u16(buf, o) {
 	return buf[o] << 8 | buf[o + 1];
@@ -66,7 +57,7 @@ exports.measurePNG = function(buffer) {
 
 exports.measureSVG = function(buffer) {
 
-	var match = buffer.toString('utf8').match(REGEXP_SVG);
+	var match = buffer.toString('utf8').match(REG_SVG);
 	if (!match)
 		return;
 
@@ -164,15 +155,16 @@ exports.measure = function(type, buffer) {
 };
 
 function Image(filename, cmd, width, height) {
+	var t = this;
 	var type = typeof(filename);
-	this.width = width;
-	this.height = height;
-	this.builder = [];
-	this.filename = type === 'string' ? filename : null;
-	this.currentStream = type === 'object' ? filename : null;
-	this.outputType = type === 'string' ? framework_utils.getExtension(filename) : 'jpg';
-	this.islimit = false;
-	this.cmdarg = cmd || CONF.default_image_converter;
+	t.width = width;
+	t.height = height;
+	t.builder = [];
+	t.filename = type === 'string' ? filename : null;
+	t.stream = type === 'object' ? filename : null;
+	t.type = type === 'string' ? F.TUtils.getExtension(filename) : 'jpg';
+	t.islimit = false;
+	t.cmdarg = cmd || F.config.$imageconverter;
 }
 
 var ImageProto = Image.prototype;
@@ -255,9 +247,9 @@ ImageProto.save = function(filename, callback, writer) {
 	var command = self.cmd(self.filename ? self.filename : '-', filename);
 
 	if (F.isWindows)
-		command = command.replace(REGEXP_PATH, '\\');
+		command = command.replace(REG_PATH, '\\');
 
-	var cmd = Exec(command, function(err) {
+	var cmd = F.Child.exec(command, function(err) {
 
 		// clean up
 		cmd.kill();
@@ -273,23 +265,23 @@ ImageProto.save = function(filename, callback, writer) {
 			return;
 		}
 
-		var middleware = middlewares[self.outputType];
+		var middleware = F.routes.imagemiddleware[self.type];
 		if (!middleware)
 			return callback(null, true);
 
 		F.stats.performance.open++;
-		var reader = Fs.createReadStream(filename);
-		var writer = Fs.createWriteStream(filename + '_');
+		var reader = F.Fs.createReadStream(filename);
+		var writer = F.Fs.createWriteStream(filename + '_');
 
 		reader.pipe(middleware()).pipe(writer);
-		writer.on('finish', () => Fs.rename(filename + '_', filename, () => callback(null, true)));
+		writer.on('finish', () => F.Fs.rename(filename + '_', filename, () => callback(null, true)));
 	});
 
-	if (self.currentStream) {
-		if (self.currentStream instanceof Buffer)
-			cmd.stdin.end(self.currentStream);
+	if (self.stream) {
+		if (self.stream instanceof Buffer)
+			cmd.stdin.end(self.stream);
 		else
-			self.currentStream.pipe(cmd.stdin);
+			self.stream.pipe(cmd.stdin);
 	}
 
 	F.cleanup(cmd.stdin);
@@ -315,26 +307,26 @@ ImageProto.pipe = function(stream, type, options) {
 
 	!self.builder.length && self.minify();
 
-	if (!type || !SUPPORTEDIMAGES[type])
-		type = self.outputType;
+	if (!type || !SUPPORTED[type])
+		type = self.type;
 
-	var cmd = Spawn(CMD_CONVERT[self.cmdarg], self.arg(self.filename ? wrap(self.filename) : '-', (type ? type + ':' : '') + '-'), SPAWN_OPT);
+	var cmd = F.Child.spawn(CMD_CONVERT[self.cmdarg], self.arg(self.filename ? wrap(self.filename) : '-', (type ? type + ':' : '') + '-'), SPAWN_OPT);
 	cmd.stderr.on('data', stream.emit.bind(stream, 'error'));
 	cmd.stdout.on('data', stream.emit.bind(stream, 'data'));
 	cmd.stdout.on('end', stream.emit.bind(stream, 'end'));
 	cmd.on('error', stream.emit.bind(stream, 'error'));
 
-	var middleware = middlewares[type];
+	var middleware = F.routes.imagemiddleware[type];
 	if (middleware)
 		cmd.stdout.pipe(middleware()).pipe(stream, options);
 	else
 		cmd.stdout.pipe(stream, options);
 
-	if (self.currentStream) {
-		if (self.currentStream instanceof Buffer)
-			cmd.stdin.end(self.currentStream);
+	if (self.stream) {
+		if (self.stream instanceof Buffer)
+			cmd.stdin.end(self.stream);
 		else
-			self.currentStream.pipe(cmd.stdin);
+			self.stream.pipe(cmd.stdin);
 	}
 
 	return self;
@@ -352,20 +344,20 @@ ImageProto.stream = function(type, writer) {
 
 	!self.builder.length && self.minify();
 
-	if (!type || !SUPPORTEDIMAGES[type])
-		type = self.outputType;
+	if (!type || !SUPPORTED[type])
+		type = self.type;
 
 	F.stats.performance.open++;
-	var cmd = Spawn(CMD_CONVERT[self.cmdarg], self.arg(self.filename ? wrap(self.filename) : '-', (type ? type + ':' : '') + '-'), SPAWN_OPT);
-	if (self.currentStream) {
-		if (self.currentStream instanceof Buffer)
-			cmd.stdin.end(self.currentStream);
+	var cmd = F.Child.spawn(CMD_CONVERT[self.cmdarg], self.arg(self.filename ? wrap(self.filename) : '-', (type ? type + ':' : '') + '-'), SPAWN_OPT);
+	if (self.stream) {
+		if (self.stream instanceof Buffer)
+			cmd.stdin.end(self.stream);
 		else
-			self.currentStream.pipe(cmd.stdin);
+			self.stream.pipe(cmd.stdin);
 	}
 
 	writer && writer(cmd.stdin);
-	var middleware = middlewares[type];
+	var middleware = F.routes.imagemiddleware[type];
 	return middleware ? cmd.stdout.pipe(middleware()) : cmd.stdout;
 };
 
@@ -375,7 +367,7 @@ ImageProto.cmd = function(filenameFrom, filenameTo) {
 	var cmd = '';
 
 	if (!self.islimit) {
-		var tmp = CONF.default_image_consumption;
+		var tmp = F.config.$imagememory;
 		if (tmp) {
 			self.limit('memory', (1500 / 100) * tmp);
 			self.limit('map', (3000 / 100) * tmp);
@@ -406,7 +398,7 @@ ImageProto.arg = function(first, last) {
 	first && arr.push(first);
 
 	if (!self.islimit) {
-		var tmp = CONF.default_image_consumption;
+		let tmp = F.config.$imagememory;
 		if (tmp) {
 			self.limit('memory', (1500 / 100) * tmp);
 			self.limit('map', (3000 / 100) * tmp);
@@ -415,14 +407,11 @@ ImageProto.arg = function(first, last) {
 
 	self.builder.sort(sort);
 
-	var length = self.builder.length;
-
-	for (var i = 0; i < length; i++) {
-		var o = self.builder[i];
-		var index = o.cmd.indexOf(' ');
-		if (index === -1)
+	for (let o of self.builder) {
+		let index = o.cmd.indexOf(' ');
+		if (index === -1) {
 			arr.push(o.cmd);
-		else {
+		} else {
 			arr.push(o.cmd.substring(0, index));
 			arr.push(o.cmd.substring(index + 1).replace(/"/g, ''));
 		}
@@ -434,7 +423,7 @@ ImageProto.arg = function(first, last) {
 
 ImageProto.identify = function(callback) {
 	var self = this;
-	Exec((self.cmdarg === 'gm' ? 'gm ' : '') + 'identify' + wrap(self.filename, true), function(err, stdout) {
+	F.Child.exec((self.cmdarg === 'gm' ? 'gm ' : '') + 'identify' + wrap(self.filename, true), function(err, stdout) {
 
 		if (err) {
 			callback(err, null);
@@ -443,7 +432,7 @@ ImageProto.identify = function(callback) {
 
 		var arr = stdout.split(' ');
 		var size = arr[2].split('x');
-		var obj = { type: arr[1], width: framework_utils.parseInt(size[0]), height: framework_utils.parseInt(size[1]) };
+		var obj = { type: arr[1], width: F.TUtils.parseInt(size[0]), height: F.TUtils.parseInt(size[1]) };
 		callback(null, obj);
 	});
 
@@ -463,18 +452,18 @@ ImageProto.push = function(key, value, priority, encode) {
 
 	if (value != null) {
 		if (encode && typeof(value) === 'string')
-			cmd += ' ' + D + value.replace(REGEXP_ESCAPE, '') + D;
+			cmd += ' ' + D + value.replace(REG_ESCAPE, '') + D;
 		else
 			cmd += ' ' + value;
 	}
 
-	var obj = CACHE[cmd];
+	var obj = F.temporary.images[cmd];
 	if (obj) {
 		obj.priority = priority;
 		self.builder.push(obj);
 	} else {
-		CACHE[cmd] = { cmd: cmd, priority: priority };
-		self.builder.push(CACHE[cmd]);
+		F.temporary.images[cmd] = { cmd: cmd, priority: priority };
+		self.builder.push(F.temporary.images[cmd]);
 	}
 
 	return self;
@@ -484,7 +473,7 @@ ImageProto.output = function(type) {
 	var self = this;
 	if (type[0] === '.')
 		type = type.substring(1);
-	self.outputType = type;
+	self.type = type;
 	return self;
 };
 
@@ -761,7 +750,7 @@ ImageProto.command = function(key, value, priority, esc) {
 };
 
 function wrap(command, empty) {
-	return (empty ? ' ' : '') + (command === '-' ? command : (D + command.replace(REGEXP_ESCAPE, '') + D));
+	return (empty ? ' ' : '') + (command === '-' ? command : (D + command.replace(REG_ESCAPE, '') + D));
 }
 
 exports.Image = Image;
@@ -778,12 +767,7 @@ exports.load = function(filename, cmd, width, height) {
 exports.middleware = function(type, fn) {
 	if (type[0] === '.')
 		type = type.substring(1);
-	middlewares[type] = fn;
-};
-
-// Clears cache with commands
-exports.clear = function() {
-	CACHE = {};
+	F.routes.imagemiddleware[type] = fn;
 };
 
 global.Image = exports;

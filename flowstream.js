@@ -1817,7 +1817,7 @@ FP.add = function(name, body, callback, asfile) {
 
 		if (asfile) {
 
-			var filename = PATH.temp(self.id + '_' + meta.id) + '.js';
+			var filename = F.path.tmp(self.id + '_' + meta.id) + '.js';
 
 			F.Fs.writeFile(filename, node, function(err) {
 

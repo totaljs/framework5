@@ -5439,7 +5439,7 @@ function Chunker(name, max) {
 	this.percentage = 0;
 	this.autoremove = true;
 	this.compress = true;
-	this.filename = PATH.temp(this.filename);
+	this.filename = F.path.tmp(this.filename);
 }
 
 const CHP = Chunker.prototype;
@@ -5891,7 +5891,7 @@ function MultipartParser(multipart, stream, callback) {
 	self.buffer = null;
 	self.header = Buffer.from(multipart, 'ascii');
 	self.length = self.header.length;
-	self.tmp = PATH.temp((F.clusterid || '') + 'upload_');
+	self.tmp = F.path.tmp((F.clusterid || '') + 'upload_');
 
 	// 0: nothing
 	// 1: head

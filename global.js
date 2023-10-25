@@ -31,6 +31,7 @@ global.DB = () => new F.TQueryBuilder.Controller();
 global.CACHE = F.cache;
 global.NEWACTION = F.TBuilders.newaction;
 global.ACTION = F.TBuilders.action;
+global.TEMPLATE = F.template;
 
 global.CORS = function(origin) {
 	CONF.$cors = origin || '*';
@@ -57,3 +58,6 @@ global.TMSCLIENT = F.TMS.client;
 // API
 global.API = (name, schema, data, $) => F.TApi.exec(name, schema, data, $);
 global.NEWAPI = (name, callback) => F.TApi.newapi(name, callback);
+
+// NoSQL
+global.NOSQL = F.TNoSQL.nosql;

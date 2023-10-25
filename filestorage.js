@@ -1,29 +1,35 @@
+// FileStorage
+// The MIT License
+// Copyright 2016-2023 (c) Peter Širka <petersirka@gmail.com>
+
 'use strict';
 
-const Readable = require('stream').Readable;
-const Path = require('path');
-const Fs = require('fs');
 const IMAGES = { jpg: 1, png: 1, gif: 1, svg: 1, jpeg: 1, heic: 1, heif: 1, webp: 1, tiff: 1, bmp: 1 };
 const HEADERSIZE = 2000;
 const MKDIR = { recursive: true };
-const REGCLEAN = /^[\s]+|[\s]+$/g;
 const GZIPFILE = { memLevel: 9 };
-const ENCODING = 'utf8';
-const CONCAT = [null, null];
+
 const REG_RANGE = /bytes=/;
+const REG_CLEAN = /^[\s]+|[\s]+$/g;
+
+var CONCAT = [null, null];
 
 function FileDB(name, directory) {
+
 	var t = this;
+
 	t.name = name;
+
 	// t.directory = directory;
 	// t.logger = directory + '/files.log';
+
 	t.cache = {};
 	t.total = 0;
 	t.size = 0;
 	t.ext = '.file';
 	t.pause = false;
 
-	ON('service', function(counter) {
+	F.on('service', function(counter) {
 		if (counter % 10)
 			t.cache = {};
 	});
@@ -45,7 +51,7 @@ FP.storage = function(value) {
 	var self = this;
 	self.cache = {};
 	self.directory = value;
-	self.logger = Path.join(value, 'files.log');
+	self.logger = F.Path.join(value, 'files.log');
 	return self;
 };
 
@@ -62,13 +68,13 @@ FP.count = function(callback) {
 };
 
 FP.makedirectory = function(id) {
-	return Path.join(this.directory, U.groupify(id));
+	return F.Path.join(this.directory, F.TUtils.groupify(id));
 };
 
 FP.readfilename = function(id) {
 	var self = this;
 	var directory = self.makedirectory(id);
-	return Path.join(directory, id + '.file');
+	return F.Path.join(directory, id + '.file');
 };
 
 FP.savejson = function(id, value, callback, custom, expire) {
@@ -119,7 +125,7 @@ FP._save = function(id, name, filename, callback, custom, expire, headers) {
 	}
 
 	var directory = self.makedirectory(id);
-	var filenameto = Path.join(directory, id + '.file');
+	var filenameto = F.Path.join(directory, id + '.file');
 
 	var index = name.lastIndexOf('/');
 	if (index !== -1)
@@ -142,13 +148,13 @@ FP._save = function(id, name, filename, callback, custom, expire, headers) {
 				if (response.status < 400)
 					self.saveforce(id, name, response.stream, filenameto, callback, custom, expire);
 				else
-					callback(U.httpstatus(response.status));
+					callback(F.TUtils.httpstatus(response.status));
 			};
 			REQUEST(opt);
 		} else
 			self.saveforce(id, name, filename, filenameto, callback, custom, expire);
 	} else {
-		Fs.mkdir(directory, MKDIR, function(err) {
+		F.Fs.mkdir(directory, MKDIR, function(err) {
 			if (err)
 				callback(err);
 			else {
@@ -169,7 +175,7 @@ FP._save = function(id, name, filename, callback, custom, expire, headers) {
 						if (response.status < 400)
 							self.saveforce(id, name, response.stream, filenameto, callback, custom, expire);
 						else
-							callback(U.httpstatus(response.status));
+							callback(F.TUtils.httpstatus(response.status));
 					};
 					REQUEST(opt);
 				} else
@@ -191,10 +197,10 @@ FP.saveforce = function(id, name, filename, filenameto, callback, custom, expire
 	var isbuffer = filename instanceof Buffer;
 	var self = this;
 	var header = Buffer.alloc(HEADERSIZE, ' ');
-	var reader = isbuffer ? null : filename instanceof Readable ? filename : Fs.createReadStream(filename);
-	var writer = Fs.createWriteStream(filenameto);
-	var ext = framework_utils.getExtension(name);
-	var meta = { name: name, size: 0, ext: ext, custom: custom, type: U.getContentType(ext) };
+	var reader = isbuffer ? null : filename instanceof F.Stream.Readable ? filename : F.Fs.createReadStream(filename);
+	var writer = F.Fs.createWriteStream(filenameto);
+	var ext = F.TUtils.getExtension(name);
+	var meta = { name: name, size: 0, ext: ext, custom: custom, type: F.TUtils.contentTypes[ext] };
 	var tmp;
 
 	writer.write(header, 'binary');
@@ -203,34 +209,34 @@ FP.saveforce = function(id, name, filename, filenameto, callback, custom, expire
 		if (isbuffer) {
 			switch (meta.ext) {
 				case 'gif':
-					tmp = framework_image.measureGIF(filename);
+					tmp = F.TImage.measureGIF(filename);
 					break;
 				case 'png':
-					tmp = framework_image.measurePNG(filename);
+					tmp = F.TImage.measurePNG(filename);
 					break;
 				case 'jpg':
 				case 'jpeg':
-					tmp = framework_image.measureJPG(filename);
+					tmp = F.TImage.measureJPG(filename);
 					break;
 				case 'svg':
-					tmp = framework_image.measureSVG(filename);
+					tmp = F.TImage.measureSVG(filename);
 					break;
 			}
 		} else {
 			reader.once('data', function(buffer) {
 				switch (meta.ext) {
 					case 'gif':
-						tmp = framework_image.measureGIF(buffer);
+						tmp = F.TImage.measureGIF(buffer);
 						break;
 					case 'png':
-						tmp = framework_image.measurePNG(buffer);
+						tmp = F.TImage.measurePNG(buffer);
 						break;
 					case 'jpg':
 					case 'jpeg':
-						tmp = framework_image.measureJPG(buffer);
+						tmp = F.TImage.measureJPG(buffer);
 						break;
 					case 'svg':
-						tmp = framework_image.measureSVG(buffer);
+						tmp = F.TImage.measureSVG(buffer);
 						break;
 				}
 			});
@@ -245,9 +251,9 @@ FP.saveforce = function(id, name, filename, filenameto, callback, custom, expire
 			reader.resume();
 	}
 
-	CLEANUP(writer, function() {
+	F.cleanup(writer, function() {
 
-		Fs.open(filenameto, 'r+', function(err, fd) {
+		F.Fs.open(filenameto, 'r+', function(err, fd) {
 
 			if (err) {
 				// Unhandled error
@@ -275,14 +281,14 @@ FP.saveforce = function(id, name, filename, filenameto, callback, custom, expire
 			header.write(JSON.stringify(meta));
 
 			// Update header
-			Fs.write(fd, header, 0, header.length, 0, function(err) {
+			F.Fs.write(fd, header, 0, header.length, 0, function(err) {
 				if (err) {
 					callback(err);
-					Fs.close(fd, NOOP);
+					F.Fs.close(fd, NOOP);
 				} else {
 					meta.id = id;
-					Fs.appendFile(self.logger, JSON.stringify(meta) + '\n', NOOP);
-					Fs.close(fd, () => callback(null, meta));
+					F.Fs.appendFile(self.logger, JSON.stringify(meta) + '\n', NOOP);
+					F.Fs.close(fd, () => callback(null, meta));
 				}
 			});
 		});
@@ -306,9 +312,9 @@ FP._read = function(id, callback, nostream) {
 		return self;
 	}
 
-	var filename = Path.join(self.makedirectory(id), id + '.file');
+	var filename = F.Path.join(self.makedirectory(id), id + '.file');
 	F.stats.performance.open++;
-	Fs.open(filename, 'r', function(err, fd) {
+	F.Fs.open(filename, 'r', function(err, fd) {
 
 		if (err) {
 			callback(err);
@@ -316,20 +322,20 @@ FP._read = function(id, callback, nostream) {
 		}
 
 		var buffer = Buffer.alloc(HEADERSIZE);
-		Fs.read(fd, buffer, 0, HEADERSIZE, 0, function(err) {
+		F.Fs.read(fd, buffer, 0, HEADERSIZE, 0, function(err) {
 
 			if (err) {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback(err);
 				return;
 			}
 
-			var str = buffer.toString('utf8').replace(REGCLEAN, '');
+			var str = buffer.toString('utf8').replace(REG_CLEAN, '');
 			if (!str) {
 				// Invalid file
-				Fs.close(fd, function() {
+				F.Fs.close(fd, function() {
 					if (buffer.length === HEADERSIZE)
-						Fs.unlink(filename, NOOP);
+						F.Fs.unlink(filename, NOOP);
 				});
 				callback('File not found');
 				return;
@@ -337,7 +343,7 @@ FP._read = function(id, callback, nostream) {
 
 			var meta = str.parseJSON(true);
 			if (!meta) {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback('Invalid file');
 				return;
 			}
@@ -345,17 +351,17 @@ FP._read = function(id, callback, nostream) {
 			meta.id = id;
 
 			if (meta.expire && meta.expire < NOW) {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback('File is expired');
 				return;
 			}
 
 			if (!nostream) {
 				F.stats.performance.open++;
-				meta.stream = Fs.createReadStream(filename, { fd: fd, start: HEADERSIZE });
-				F.cleanup(meta.stream, () => Fs.close(fd, NOOP));
+				meta.stream = F.Fs.createReadStream(filename, { fd: fd, start: HEADERSIZE });
+				F.cleanup(meta.stream, () => F.Fs.close(fd, NOOP));
 			} else
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 
 			callback(err, meta);
 		});
@@ -381,9 +387,9 @@ FP._readbuffer = function(id, callback) {
 		return self;
 	}
 
-	var filename = Path.join(self.makedirectory(id), id + '.file');
+	var filename = F.Path.join(self.makedirectory(id), id + '.file');
 	F.stats.performance.open++;
-	Fs.open(filename, 'r', function(err, fd) {
+	F.Fs.open(filename, 'r', function(err, fd) {
 
 		if (err) {
 			callback(err);
@@ -391,19 +397,19 @@ FP._readbuffer = function(id, callback) {
 		}
 
 		var buffer = Buffer.alloc(HEADERSIZE);
-		Fs.read(fd, buffer, 0, HEADERSIZE, 0, function(err) {
+		F.Fs.read(fd, buffer, 0, HEADERSIZE, 0, function(err) {
 
 			if (err) {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback(err);
 				return;
 			}
 
-			var meta = buffer.toString('utf8').replace(REGCLEAN, '').parseJSON(true);
+			var meta = buffer.toString('utf8').replace(REG_CLEAN, '').parseJSON(true);
 			meta.id = id;
 
 			if (meta.expire && meta.expire < NOW) {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback('File is expired');
 				return;
 			}
@@ -411,11 +417,11 @@ FP._readbuffer = function(id, callback) {
 			buffer = [];
 			F.stats.performance.open++;
 
-			var stream = Fs.createReadStream(filename, { fd: fd, start: HEADERSIZE });
+			var stream = F.Fs.createReadStream(filename, { fd: fd, start: HEADERSIZE });
 			stream.on('data', chunk => buffer.push(chunk));
 
 			F.cleanup(stream, function() {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback(err, Buffer.concat(buffer), meta);
 			});
 		});
@@ -442,11 +448,11 @@ FP.move = function(id, newid, callback) {
 FP._move = function(id, newid, callback) {
 
 	var self = this;
-	var filename = Path.join(self.makedirectory(id), id + '.file');
+	var filename = F.Path.join(self.makedirectory(id), id + '.file');
 
 	F.stats.performance.open++;
 
-	Fs.lstat(filename, function(err) {
+	F.Fs.lstat(filename, function(err) {
 
 		if (err) {
 			callback(err);
@@ -454,12 +460,12 @@ FP._move = function(id, newid, callback) {
 		}
 
 		var directory = self.makedirectory(newid);
-		var filenamenew = Path.join(directory, newid + '.file');
+		var filenamenew = F.Path.join(directory, newid + '.file');
 
 		if (self.cache[directory]) {
-			Fs.rename(filename, filenamenew, err => callback && callback(err));
+			F.Fs.rename(filename, filenamenew, err => callback && callback(err));
 		} else {
-			Fs.mkdir(directory, MKDIR, function(err) {
+			F.Fs.mkdir(directory, MKDIR, function(err) {
 
 				if (err) {
 					callback(err);
@@ -467,7 +473,7 @@ FP._move = function(id, newid, callback) {
 				}
 
 				self.cache[directory] = 1;
-				Fs.rename(filename, filenamenew, err => callback && callback(err));
+				F.Fs.rename(filename, filenamenew, err => callback && callback(err));
 			});
 		}
 
@@ -487,10 +493,10 @@ FP.rename = function(id, newname, callback) {
 FP._rename = function(id, newname, callback) {
 
 	var self = this;
-	var filename = Path.join(self.makedirectory(id), id + '.file');
+	var filename = F.Path.join(self.makedirectory(id), id + '.file');
 	F.stats.performance.open++;
 
-	Fs.open(filename, 0o666, function(err, fd) {
+	F.Fs.open(filename, 0o666, function(err, fd) {
 
 		if (err) {
 			callback(err);
@@ -498,15 +504,15 @@ FP._rename = function(id, newname, callback) {
 		}
 
 		var buffer = Buffer.alloc(HEADERSIZE);
-		Fs.read(fd, buffer, 0, HEADERSIZE, 0, function(err) {
+		F.Fs.read(fd, buffer, 0, HEADERSIZE, 0, function(err) {
 
 			if (err) {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback(err);
 				return;
 			}
 
-			var meta = buffer.toString('utf8').replace(REGCLEAN, '').parseJSON(true);
+			var meta = buffer.toString('utf8').replace(REG_CLEAN, '').parseJSON(true);
 			meta.name = newname;
 
 			if (meta.name.length > 250)
@@ -516,15 +522,15 @@ FP._rename = function(id, newname, callback) {
 			buffer.write(JSON.stringify(meta));
 
 			// Update header
-			Fs.write(fd, buffer, 0, buffer.length, 0, function(err) {
+			F.Fs.write(fd, buffer, 0, buffer.length, 0, function(err) {
 				if (err) {
 					callback(err);
-					Fs.close(fd, NOOP);
+					F.Fs.close(fd, NOOP);
 				} else {
 					meta.id = id;
 					NOSQL('~' + self.logger).modify(meta).id(id);
 					// Fs.appendFile(self.logger, JSON.stringify(meta) + '\n', NOOP);
-					Fs.close(fd, () => callback(null, meta));
+					F.Fs.close(fd, () => callback(null, meta));
 				}
 			});
 		});
@@ -543,8 +549,8 @@ FP.remove = function(id, callback) {
 
 FP._remove = function(id, callback) {
 	var self = this;
-	var filename = Path.join(self.makedirectory(id), id + '.file');
-	Fs.unlink(filename, function(err) {
+	var filename = F.Path.join(self.makedirectory(id), id + '.file');
+	F.Fs.unlink(filename, function(err) {
 		NOSQL('~' + self.logger).remove().id(id);
 		// Fs.appendFile(self.logger, JSON.stringify({ id: id, removed: true, date: NOW = new Date() }) + '\n', NOOP);
 		callback && callback(err);
@@ -573,16 +579,16 @@ FP._clean = function(callback) {
 		}
 
 		var id = [];
-		for (var i = 0; i < files.length; i++)
-			id.push(files[i].id);
+		for (let file in files)
+			id.push(file.id);
 
 		db.remove().in('id', id);
 
 		files.wait(function(item, next) {
-			var filename = Path.join(self.makedirectory(item.id), item.id + '.file');
-			Fs.unlink(filename, next);
+			var filename = F.Path.join(self.makedirectory(item.id), item.id + '.file');
+			F.Fs.unlink(filename, next);
 		}, function() {
-			FP.count();
+			self.count();
 			db.clean();
 			callback && callback(err, files.length);
 		});
@@ -602,25 +608,23 @@ FP.backup = function(filename, callback) {
 FP._backup = function(filename, callback) {
 
 	var self = this;
-	var writer = typeof(filename) === 'string' ? Fs.createWriteStream(filename) : filename;
+	var writer = typeof(filename) === 'string' ? F.Fs.createWriteStream(filename) : filename;
 	var totalsize = 0;
 	var counter = 0;
 	var padding = 50;
 
-	writer.on('finish', function() {
-		callback && callback(null, { filename: filename, files: counter, size: totalsize });
-	});
+	writer.on('finish', () => callback && callback(null, { filename: filename, files: counter, size: totalsize }));
 
-	Fs.readdir(self.directory, function(err, response) {
+	F.Fs.readdir(self.directory, function(err, response) {
 
 		if (err) {
 			callback(err);
 			return;
 		}
 
-		for (var dir of response) {
+		for (let dir of response) {
 			if (dir.length === 4) {
-				var tmp = Buffer.from(('/' + dir + '/').padRight(padding) + ': #\n', ENCODING);
+				let tmp = Buffer.from(('/' + dir + '/').padRight(padding) + ': #\n', 'utf8');
 				writer.write(tmp);
 				totalsize += tmp.length;
 			}
@@ -633,18 +637,18 @@ FP._backup = function(filename, callback) {
 				return;
 			}
 
-			var dir = Path.join(self.directory, item);
-			Fs.readdir(dir, function(err, response) {
+			var dir = F.Path.join(self.directory, item);
+			F.Fs.readdir(dir, function(err, response) {
 				response.wait(function(name, next) {
 
-					var filename = Path.join(dir, name);
+					var filename = F.Path.join(dir, name);
 					var data = Buffer.alloc(0);
-					var tmp = Buffer.from(('/' + Path.join(item, name)).padRight(padding) + ': ');
+					var tmp = Buffer.from(('/' + F.Path.join(item, name)).padRight(padding) + ': ');
 
 					totalsize += tmp.length;
 					writer.write(tmp);
 
-					Fs.createReadStream(filename).pipe(F.Zlib.createGzip(GZIPFILE)).on('data', function(chunk) {
+					F.Fs.createReadStream(filename).pipe(F.Zlib.createGzip(GZIPFILE)).on('data', function(chunk) {
 
 						CONCAT[0] = data;
 						CONCAT[1] = chunk;
@@ -652,22 +656,20 @@ FP._backup = function(filename, callback) {
 
 						var remaining = data.length % 3;
 						if (remaining) {
-							var tmp = data.slice(0, data.length - remaining).toString('base64');
-							writer.write(tmp, ENCODING);
+							let tmp = data.slice(0, data.length - remaining).toString('base64');
+							writer.write(tmp, 'utf8');
 							data = data.slice(data.length - remaining);
 							totalsize += tmp.length;
 						}
 
 					}).on('end', function() {
-						var tmp = data.length ? data.toString('base64') : '';
+						let tmp = data.length ? data.toString('base64') : '';
 						data.length && writer.write(tmp);
-						writer.write('\n', ENCODING);
+						writer.write('\n', 'utf8');
 						totalsize += tmp.length + 1;
 						counter++;
 						setImmediate(next);
-					}).on('error', function() {
-						setImmediate(next);
-					});
+					}).on('error', () => setImmediate(next));
 
 				}, next);
 			});
@@ -689,7 +691,7 @@ FP._restore = function(filename, callback) {
 	self.pause = true;
 	self.clear(function() {
 		self.pause = true;
-		RESTORE(filename, self.directory, function(err, meta) {
+		F.restore(filename, self.directory, function(err, meta) {
 			self.cache = {};
 			self.pause = false;
 			callback && callback(err, meta);
@@ -712,25 +714,25 @@ FP._clear = function(callback) {
 
 	self.pause = true;
 
-	Fs.readdir(self.directory, function(err, response) {
+	F.Fs.readdir(self.directory, function(err, response) {
 
 		if (err) {
-			callback(err);
+			callback && callback(err);
 			return;
 		}
 
-		Fs.unlink(self.logger, NOOP);
+		F.Fs.unlink(self.logger, NOOP);
 		response.wait(function(item, next) {
-			var dir = Path.join(self.directory, item);
-			Fs.readdir(dir, function(err, response) {
+			var dir = F.Path.join(self.directory, item);
+			F.Fs.readdir(dir, function(err, response) {
 				if (response instanceof Array) {
 					count += response.length;
-					response.wait((file, next) => Fs.unlink(Path.join(self.directory, item, file), next), () => Fs.rmdir(dir, next));
+					response.wait((file, next) => F.Fs.unlink(F.Path.join(self.directory, item, file), next), () => F.Fs.rmdir(dir, next));
 				} else
 					next();
 			});
 		}, function() {
-			Fs.unlink(self.logger, NOOP);
+			F.Fs.unlink(self.logger, NOOP);
 			self.pause = false;
 			self.cache = {};
 			callback && callback(null, count);
@@ -745,7 +747,7 @@ FP.stream = function(onfile, callback, workers) {
 
 	var self = this;
 
-	Fs.readdir(self.directory, function(err, response) {
+	F.Fs.readdir(self.directory, function(err, response) {
 
 		if (err) {
 			callback();
@@ -761,7 +763,7 @@ FP.stream = function(onfile, callback, workers) {
 				return;
 			}
 
-			Fs.readdir(Path.join(self.directory, item), function(err, files) {
+			F.Fs.readdir(F.Path.join(self.directory, item), function(err, files) {
 				if (files instanceof Array) {
 					files.wait(function(item, next) {
 						var id = item.substring(0, item.lastIndexOf('.'));
@@ -817,7 +819,7 @@ FP._rebuild = function(callback) {
 
 		self.pause = true;
 
-		Fs.unlink(self.logger, NOOP);
+		F.Fs.unlink(self.logger, NOOP);
 
 		var builder = [];
 		self.size = 0;
@@ -830,8 +832,8 @@ FP._rebuild = function(callback) {
 			builder.push(JSON.stringify(item));
 		}
 
-		builder.limit(500, (items, next) => Fs.appendFile(self.logger, items.join('\n'), next), function() {
-			Fs.appendFile(self.logger, '\n', NOOP);
+		builder.limit(500, (items, next) => F.Fs.appendFile(self.logger, items.join('\n'), next), function() {
+			F.Fs.appendFile(self.logger, '\n', NOOP);
 			self.pause = false;
 			callback && callback();
 		});
@@ -851,9 +853,9 @@ FP.count2 = function(callback) {
 FP._count2 = function(callback) {
 	var self = this;
 	var count = 0;
-	Fs.readdir(self.directory, function(err, response) {
+	F.Fs.readdir(self.directory, function(err, response) {
 		response.wait(function(item, next) {
-			Fs.readdir(Path.join(self.directory, item), function(err, response) {
+			F.Fs.readdir(F.Path.join(self.directory, item), function(err, response) {
 				if (response instanceof Array)
 					count += response.length;
 				next();
@@ -878,11 +880,11 @@ FP.readmeta = function(id, callback, keepfd) {
 FP._readmeta = function(id, callback, keepfd) {
 
 	var self = this;
-	var filename = Path.join(self.makedirectory(id), id + self.ext);
+	var filename = F.Path.join(self.makedirectory(id), id + self.ext);
 
 	F.stats.performance.open++;
 
-	Fs.open(filename, function(err, fd) {
+	F.Fs.open(filename, function(err, fd) {
 
 		if (err) {
 			callback(err);
@@ -891,26 +893,26 @@ FP._readmeta = function(id, callback, keepfd) {
 
 		var buffer = Buffer.alloc(HEADERSIZE);
 
-		Fs.read(fd, buffer, 0, buffer.length, 0, function(err, bytes, buffer) {
+		F.Fs.read(fd, buffer, 0, buffer.length, 0, function(err, bytes, buffer) {
 
 			if (err) {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback(err);
 				return;
 			}
 
-			var json = buffer.toString('utf8').replace(REGCLEAN, '');
+			var json = buffer.toString('utf8').replace(REG_CLEAN, '');
 
 			try {
 				json = JSON.parse(json, jsonparser);
 			} catch (e) {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback(e, null, filename);
 				return;
 			}
 
 			if (!keepfd)
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 
 			callback(null, json, filename, fd);
 		});
@@ -937,11 +939,12 @@ FP._image = function(id, callback) {
 			return;
 		}
 
-		var stream = Fs.createReadStream(filename, { fd: fd, start: HEADERSIZE });
+		var stream = F.Fs.createReadStream(filename, { fd: fd, start: HEADERSIZE });
 		var image = Image.load(stream);
 		stream.$totalfd = fd;
 		callback(err, image, obj);
 		F.cleanup(stream);
+
 	}, true);
 
 	return self;
@@ -952,7 +955,7 @@ FP.res = function(res, options, checkcustom) {
 	var self = this;
 	var req = res.req;
 
-	if (RELEASE && req.$key && F.temporary.notfound[req.$key] !== undefined) {
+	if (!DEBUG && req.$key && F.temporary.notfound[req.$key] !== undefined) {
 		res.throw404();
 		return res;
 	}
@@ -962,9 +965,9 @@ FP.res = function(res, options, checkcustom) {
 	self.readmeta(id, function(err, obj, filename, fd) {
 
 		if (err || (obj.expire && obj.expire < NOW) || (checkcustom && checkcustom(obj) == false)) {
-			if (RELEASE)
+			if (!DEBUG)
 				F.temporary.notfound[F.createTemporaryKey(req)] = true;
-			fd && Fs.close(fd, NOOP);
+			fd && F.Fs.close(fd, NOOP);
 			res.throw404();
 			return;
 		}
@@ -974,13 +977,13 @@ FP.res = function(res, options, checkcustom) {
 		var utc = obj.date ? obj.date.toUTCString() : '';
 
 		if (!options.download && req.headers['if-modified-since'] === utc) {
-			Fs.close(fd, NOOP);
-			res.extension = obj.ext || framework_utils.getExtension(obj.name);
+			F.Fs.close(fd, NOOP);
+			res.extension = obj.ext || F.TUtils.getExtension(obj.name);
 			F.$file_notmodified(res, utc);
 		} else {
 
-			if (RELEASE && req.$key && F.temporary.path[req.$key]) {
-				Fs.close(fd, NOOP);
+			if (!DEBUG && req.$key && F.temporary.path[req.$key]) {
+				F.Fs.close(fd, NOOP);
 				res.$file();
 				return res;
 			}
@@ -994,18 +997,18 @@ FP.res = function(res, options, checkcustom) {
 			if (options.download) {
 				res.options.download = options.download === true ? obj.name : typeof(options.download) === 'function' ? options.download(obj.name, obj.type) : options.download;
 			} else
-				options.headers['Last-Modified'] = utc;
+				options.headers['last-modified'] = utc;
 
 			if (obj.width && obj.height) {
-				options.headers['X-Width'] = obj.width;
-				options.headers['X-Height'] = obj.height;
+				options.headers['x-width'] = obj.width;
+				options.headers['x-height'] = obj.height;
 			}
 
-			options.headers['X-Size'] = obj.size;
+			options.headers['x-Size'] = obj.size;
 			res.options.headers = options.headers;
 			res.options.done = options.done;
 
-			Fs.close(fd, NOOP);
+			F.Fs.close(fd, NOOP);
 
 			if (options.image) {
 				res.options.stream = { filename: filename, start: HEADERSIZE, custom: true };
@@ -1046,14 +1049,14 @@ FP.res = function(res, options, checkcustom) {
 					var length = (end - beg) + 1;
 					res.options.code = 206;
 					res.options.headers = {};
-					res.options.headers['Cache-Control'] = DEBUG ? 'private, no-cache, no-store, max-age=0' : 'public, max-age=11111111';
-					res.options.headers['Accept-Ranges'] = 'bytes';
-					res.options.headers['Content-Length'] = length;
-					res.options.headers['Content-Range'] = 'bytes ' + beg + '-' + end + '/' + obj.size;
-					res.options.stream = Fs.createReadStream(filename, { flags: 'r', mode: '0666', autoClose: true, start: HEADERSIZE + beg, end: end + HEADERSIZE });
+					res.options.headers['cache-control'] = DEBUG ? 'private, no-cache, no-store, max-age=0' : 'public, max-age=11111111';
+					res.options.headers['accept-ranges'] = 'bytes';
+					res.options.headers['content-length'] = length;
+					res.options.headers['content-range'] = 'bytes ' + beg + '-' + end + '/' + obj.size;
+					res.options.stream = F.Fs.createReadStream(filename, { flags: 'r', mode: '0666', autoClose: true, start: HEADERSIZE + beg, end: end + HEADERSIZE });
 
 				} else
-					res.options.stream = Fs.createReadStream(filename, { start: HEADERSIZE });
+					res.options.stream = F.Fs.createReadStream(filename, { start: HEADERSIZE });
 
 				res.options.compress = options.nocompress ? false : true;
 				res.$stream();
@@ -1077,6 +1080,6 @@ FP._readbase64 = function(id, callback) {
 	return self;
 };
 
-exports.FileDB = function(name, directory) {
+exports.open = function(name, directory) {
 	return new FileDB(name, directory);
 };

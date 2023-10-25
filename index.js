@@ -32,6 +32,7 @@ global.DEF = {};
 (function(F) {
 
 	F.id = '';
+	F.clusterid = '';
 	F.is5 = F.version = 5000;
 	F.version_header = '5';
 	F.version_node = process.version + '';
@@ -49,6 +50,7 @@ global.DEF = {};
 	F.transformations = {};
 	F.flowstreams = {};
 	F.jsonschemas = {};
+	F.querybuilders = {};
 	F.config = CONF;
 	F.def = DEF;
 	F.errors = [];
@@ -74,6 +76,7 @@ global.DEF = {};
 		filescache: {},
 		timeout: null,
 		middleware: {},
+		imagemiddleware: {},
 		proxies: []
 	};
 
@@ -103,6 +106,9 @@ global.DEF = {};
 		blocked: {},
 		calls: {},
 		utils: {},
+		images: {},
+		querybuilders: {},
+		templates: {},
 		datetime: {} // date time formatters
 	};
 
@@ -197,12 +203,13 @@ global.DEF = {};
 
 	F.path = {};
 	F.path.root = path => F.Path.join(F.directory, path || '');
-	F.path.public = path => F.Path.join(F.directory, 'public', path || '');
-	F.path.databases = path => F.Path.join(F.directory, 'databases', path || '');
 	F.path.views = path => F.Path.join(F.directory, 'views', path || '');
-	F.path.flowstreams = path => F.Path.join(F.directory, 'flowstreams', path || '');
+	F.path.public = path => F.Path.join(F.directory, 'public', path || '');
 	F.path.plugins = path => F.Path.join(F.directory, 'plugins', path || '');
 	F.path.private = path => F.Path.join(F.directory, 'private', path || '');
+	F.path.templates = path => F.Path.join(F.directory, 'templates', path || '');
+	F.path.databases = path => F.Path.join(F.directory, 'databases', path || '');
+	F.path.flowstreams = path => F.Path.join(F.directory, 'flowstreams', path || '');
 
 	F.path.route = function(path, directory = 'root') {
 
@@ -385,6 +392,8 @@ function unlink(arr, callback) {
 	CONF.$customtitles = false;
 	CONF.$version = '';
 	CONF.$clearcache = 10;
+	CONF.$imageconverter = 'gm';
+	CONF.$imagememory = 0; // disabled because e.g. GM v1.3.32 throws some error about the memory
 
 	CONF.$nodemodules = require.resolve('./index');
 	CONF.$nodemodules = CONF.$nodemodules.substring(0, CONF.$nodemodules.length - (8 + 7));
@@ -1364,6 +1373,9 @@ F.service = function(count) {
 		F.temporary.views = {};
 		F.temporary.utils = {};
 		F.temporary.calls = {};
+		F.temporary.images = {};
+		F.temporary.templates = {};
+		F.temporary.querybuilders = {};
 	}
 
 	if (count % 5 === 0) {
@@ -2071,11 +2083,12 @@ process.on('message', function(msg, h) {
 	F.TQueryBuilder = require('./querybuilder');
 	F.THttp = require('./http');
 	F.TJSONSchema = require('./jsonschema');
-	F.TImage = require('./image');
 	F.TCron = require('./cron');
 	F.TApi = require('./api');
 	F.TFlowStream = require('./flowstream');
 	F.TBundles = require('./bundles');
+	F.TFileStorage = require('./filestorage');
+	F.TTemplates = require('./templates');
 
 	// Settings
 	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
@@ -2084,6 +2097,7 @@ process.on('message', function(msg, h) {
 	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
 
 	F.cache = require('./cache');
+	F.TImage = require('./image');
 	F.path.fs = F.Fs;
 	F.path.join = F.Path.join;
 
@@ -2103,7 +2117,7 @@ process.on('message', function(msg, h) {
 
 	// Methods
 	F.route = F.TRouting.route;
-	F.newdb = F.TQueryBuilder.evaluate;
+	F.newdb = F.TQueryBuilder.create;
 	F.newflowstream = F.TFlowStream.create;
 	F.internal.uidc = F.TUtils.random_text(1);
 	F.ErrorBuilder = F.TBuilders.ErrorBuilder;
@@ -2111,10 +2125,12 @@ process.on('message', function(msg, h) {
 	F.action = F.TBuilders.action;
 	F.api = F.TApi.exec;
 	F.newapi = F.TApi.newapi;
+	F.template = F.TTemplates.render;
 
 	// Needed "F"
 	F.TFlow = require('./flow');
 	F.TMS = require('./tms');
+	F.TNoSQL = require('./nosql');
 
 })(F);
 
