@@ -25,7 +25,7 @@ function check_string(meta, error, value, errplus, path) {
 	}
 
 	if (meta.$$REQUIRED && !value) {
-		error.push(errplus + meta.$$ID, undefined, path);
+		error.push2(errplus + meta.$$ID, path);
 		return;
 	}
 
@@ -35,111 +35,133 @@ function check_string(meta, error, value, errplus, path) {
 	var len = value.length;
 
 	if (meta.maxLength && len > meta.maxLength) {
-		error.push(errplus + meta.$$ID, undefined, path);
+		error.push2(errplus + meta.$$ID, path);
 		return;
 	}
 
 	if (meta.minLength && len < meta.minLength) {
-		error.push(errplus + meta.$$ID, undefined, path);
+		error.push2(errplus + meta.$$ID, path);
 		return;
 	}
 
 	if (value) {
-		switch (meta.subtype) {
-
+		switch (meta.subtype) { 
+			case 'text':
+				break;
 			case 'email':
 				value = value.replace(/\s/g, '').toLowerCase();
 				if (value && !value.isEmail()) {
-					error.push(errplus + meta.$$ID, undefined, path);
+					error.push2(errplus + meta.$$ID, path);
 					return;
 				}
 				break;
 			case 'safestring':
+				value = value.trim();
 				if (value && (value.isXSS() || value.isSQLInjection())) {
-					error.push(errplus + meta.$$ID, undefined, path);
+					error.push2(errplus + meta.$$ID, path);
 					return;
 				}
 				break;
 			case 'search':
-				value = value.toSearch();
+				value = value.trim().toSearch();
 				break;
 			case 'phone':
 				value = value.replace(/\s/g, '').toLowerCase();
 				if (value && !value.isPhone()) {
-					error.push(errplus + meta.$$ID, undefined, path);
+					error.push2(errplus + meta.$$ID, path);
 					return;
 				}
 				break;
 			case 'url':
+				value = value.trim();
 				if (value && !value.isURL()) {
-					error.push(errplus + meta.$$ID, undefined, path);
+					error.push2(errplus + meta.$$ID, path);
 					return;
 				}
 				break;
 			case 'zip':
+				value = value.trim();
 				if (value && !value.isZIP()) {
-					error.push(errplus + meta.$$ID, undefined, path);
+					error.push2(errplus + meta.$$ID, path);
 					return;
 				}
 				break;
 			case 'guid':
+				value = value.trim();
 				if (value && !value.isGUID()) {
-					error.push(errplus + meta.$$ID, undefined, path);
+					error.push2(errplus + meta.$$ID, path);
 					return;
 				} else if (!value)
 					value = null;
 				break;
 			case 'uid':
+				value = value.trim();
 				if (value && !value.isUID()) {
-					error.push(errplus + meta.$$ID, undefined, path);
+					error.push2(errplus + meta.$$ID, path);
+					return;
+				} else if (!value)
+					value = null;
+				break;
+			case 'ipaddress':
+			case 'ip':
+				value = value.trim();
+				if (value && !F.Net.isIP(value)) {
+					error.push2(errplus + meta.$$ID, path);
 					return;
 				} else if (!value)
 					value = null;
 				break;
 			case 'json':
+				value = value.trim();
 				if (value && !value.isJSON()) {
-					error.push(errplus + meta.$$ID, undefined, path);
+					error.push2(errplus + meta.$$ID, path);
 					return;
 				}
 				break;
 			case 'base64':
+				value = value.trim();
 				if (value && !value.isBase64()) {
-					error.push(errplus + meta.$$ID, undefined, path);
+					error.push2(errplus + meta.$$ID, path);
 					return;
 				}
 				break;
 			case 'color':
+				value = value.trim();
 				if (value && !REG_COLOR.test(value)) {
-					error.push(errplus + meta.$$ID, undefined, path);
+					error.push2(errplus + meta.$$ID, path);
 					return;
 				}
 				break;
 			case 'icon':
+				value = value.trim();
 				if (value && !REG_ICON.test(value)) {
-					error.push(errplus + meta.$$ID, undefined, path);
+					error.push2(errplus + meta.$$ID, path);
 					return;
 				}
 				break;
 			case 'lower':
 			case 'lowercase':
-				value = value.toLowerCase();
+				value = value.trim().toLowerCase();
 				break;
 			case 'upper':
 			case 'uppercase':
-				value = value.toUpperCase();
+				value = value.trim().toUpperCase();
 				break;
 			case 'capitalize':
-				value = value.capitalize();
+				value = value.trim().capitalize();
 				break;
 			case 'capitalize2':
-				value = value.capitalize(true);
+				value = value.trim().capitalize(true);
+				break;
+			default:
+				value = value.trim();
 				break;
 		}
 	}
 
 	if ((value || meta.$$REQUIRED) && meta.enum instanceof Array) {
 		if (!meta.enum.includes(value)) {
-			error.push(errplus + meta.$$ID, undefined, path);
+			error.push2(errplus + meta.$$ID, path);
 			return;
 		}
 	}
@@ -165,7 +187,7 @@ function check_number(meta, error, value, errplus, path) {
 
 	if (meta.$$REQUIRED) {
 		if (value == null) {
-			error.push(errplus + meta.$$ID, undefined, path);
+			error.push2(errplus + meta.$$ID, path);
 			return;
 		}
 	}
@@ -175,28 +197,28 @@ function check_number(meta, error, value, errplus, path) {
 
 	if (meta.multipleOf) {
 		if (value % meta.multipleOf !== 0) {
-			error.push(errplus + meta.$$ID, undefined, path);
+			error.push2(errplus + meta.$$ID, path);
 			return;
 		}
 	}
 
 	if (meta.maximum) {
 		if (value > meta.maximum) {
-			error.push(errplus + meta.$$ID, undefined, path);
+			error.push2(errplus + meta.$$ID, path);
 			return;
 		}
 	}
 
 	if (meta.exclusiveMaximum) {
 		if (value >= meta.exclusiveMaximum) {
-			error.push(errplus + meta.$$ID, undefined, path);
+			error.push2(errplus + meta.$$ID, path);
 			return;
 		}
 	}
 
 	if (meta.minimum) {
 		if (value < meta.minimum) {
-			error.push(errplus + meta.$$ID, undefined, path);
+			error.push2(errplus + meta.$$ID, path);
 			return;
 		}
 	}
@@ -204,13 +226,13 @@ function check_number(meta, error, value, errplus, path) {
 	switch (meta.subtype) {
 		case 'smallint':
 			if (value < -32767 || value > 32767) {
-				error.push(errplus + meta.$$ID, undefined, path);
+				error.push2(errplus + meta.$$ID, path);
 				return;
 			}
 			break;
 		case 'tinyint':
 			if (value < 0 || value > 255) {
-				error.push(errplus + meta.$$ID, undefined, path);
+				error.push2(errplus + meta.$$ID, path);
 				return;
 			}
 			break;
@@ -218,7 +240,7 @@ function check_number(meta, error, value, errplus, path) {
 
 	if (meta.exclusiveMinimum) {
 		if (value <= meta.exclusiveMinimum) {
-			error.push(errplus + meta.$$ID, undefined, path);
+			error.push2(errplus + meta.$$ID, path);
 			return;
 		}
 	}
@@ -238,7 +260,7 @@ function check_boolean(meta, error, value, errplus, path) {
 			errplus = '';
 
 		if (value == null) {
-			error.push(errplus + meta.$$ID, undefined, path);
+			error.push2(errplus + meta.$$ID, path);
 			return;
 		}
 	}
@@ -261,7 +283,7 @@ function check_date(meta, error, value, errplus, path) {
 			errplus = '';
 
 		if (value == null) {
-			error.push(errplus + meta.$$ID, undefined, path);
+			error.push2(errplus + meta.$$ID, path);
 			return;
 		}
 	}
@@ -289,14 +311,14 @@ function check_array(meta, error, value, stop, definitions, path) {
 
 	if (!(value instanceof Array)) {
 		if (meta.$$REQUIRED) {
-			error.push(meta.$$ID, undefined, path);
+			error.push2(meta.$$ID, path);
 		}
 		return;
 	}
 
 	if (!value.length) {
 		if (meta.$$REQUIRED) {
-			error.push(meta.$$ID, undefined, path);
+			error.push2(meta.$$ID, path);
 			return;
 		}
 		return value;
@@ -324,7 +346,7 @@ function check_array(meta, error, value, stop, definitions, path) {
 							response.push(tmp);
 							break;
 						} else {
-							error.push(meta.$$ID, undefined, currentpath);
+							error.push2(meta.$$ID, currentpath);
 							return;
 						}
 					case 'boolean':
@@ -334,7 +356,7 @@ function check_array(meta, error, value, stop, definitions, path) {
 							response.push(tmp);
 							break;
 						} else {
-							error.push(meta.$$ID, undefined, currentpath);
+							error.push2(meta.$$ID, currentpath);
 							return;
 						}
 					case 'date':
@@ -343,7 +365,7 @@ function check_array(meta, error, value, stop, definitions, path) {
 							response.push(tmp);
 							break;
 						} else {
-							error.push(meta.$$ID, undefined, currentpath);
+							error.push2(meta.$$ID, currentpath);
 							return;
 						}
 					case 'object':
@@ -352,7 +374,7 @@ function check_array(meta, error, value, stop, definitions, path) {
 							response.push(tmp);
 							break;
 						} else {
-							error.push(meta.$$ID, undefined, currentpath);
+							error.push2(meta.$$ID, currentpath);
 							return;
 						}
 					case 'array':
@@ -361,7 +383,7 @@ function check_array(meta, error, value, stop, definitions, path) {
 							response.push(tmp);
 							break;
 						} else {
-							error.push(meta.$$ID, undefined, currentpath);
+							error.push2(meta.$$ID, currentpath);
 							return;
 						}
 					case 'string':
@@ -373,12 +395,12 @@ function check_array(meta, error, value, stop, definitions, path) {
 							response.push(tmp);
 							break;
 						} else {
-							error.push(meta.$$ID, undefined, currentpath);
+							error.push2(meta.$$ID, currentpath);
 							return;
 						}
 				}
 			} else if (!type && !meta.additionalItems) {
-				error.push(meta.$$ID, undefined, currentpath);
+				error.push2(meta.$$ID, currentpath, i);
 				return;
 			}
 		}
@@ -396,7 +418,7 @@ function check_array(meta, error, value, stop, definitions, path) {
 					tmp = transform(ref, newerror, val);
 					if (newerror.length) {
 						for (var err of newerror)
-							error.push(ref.$$ID + '.' + err, '@', path, i);
+							error.push2(ref.$$ID + '.' + err, path, i);
 					} else if (tmp != null && (!meta.uniqueItems || response.indexOf(tmp) === -1))
 						response.push(tmp);
 					continue;
@@ -428,7 +450,7 @@ function check_array(meta, error, value, stop, definitions, path) {
 					tmp = check_object(meta.items, newerror, val, stop, definitions, currentpath);
 					if (newerror.length) {
 						for (var err of newerror.items)
-							error.push(meta.$$ID + '.' + err.name, err.error, currentpath, i);
+							error.push2(meta.$$ID + '.' + err.name, err.error, currentpath, i);
 					} else if (tmp != null && (!meta.uniqueItems || response.indexOf(tmp) === -1))
 						response.push(tmp);
 					break;
@@ -452,17 +474,17 @@ function check_array(meta, error, value, stop, definitions, path) {
 		response = meta.uniqueItems ? [...new Set(value)] : value;
 
 	if (!response.length && meta.$$REQUIRED) {
-		error.push(meta.$$ID, undefined, currentpath);
+		error.push2(meta.$$ID, currentpath);
 		return;
 	}
 
 	if (meta.minItems && response.length < meta.minItems) {
-		error.push(meta.$$ID, undefined, currentpath);
+		error.push2(meta.$$ID, currentpath);
 		return;
 	}
 
 	if (meta.maxItems && response.length < meta.maxItems) {
-		error.push(meta.$$ID, undefined, currentpath);
+		error.push2(meta.$$ID, currentpath);
 		return;
 	}
 
@@ -473,7 +495,7 @@ function check_object(meta, error, value, response, stop, definitions, path) {
 
 	if (!value || typeof(value) !== 'object') {
 		if (meta.$$REQUIRED) {
-			error.push(meta.$$ID, undefined, path);
+			error.push(meta.$$ID, path);
 		}
 		return;
 	}
@@ -503,7 +525,7 @@ function check_object(meta, error, value, response, stop, definitions, path) {
 			return;
 
 		if (meta.maxProperties && count > meta.maxProperties) {
-			error.push(meta.$$ID, undefined, path);
+			error.push(meta.$$ID, path);
 			return;
 		}
 
@@ -588,9 +610,9 @@ function check_object(meta, error, value, response, stop, definitions, path) {
 							response[key] = tmp;
 							count++;
 						} else if (prop.$$REQUIRED)
-							error.push(prop.ID, undefined, currentpath);
+							error.push2(prop.ID, currentpath);
 					} else
-						error.push(prop.ID, undefined, currentpath);
+						error.push2(prop.ID, currentpath);
 				} else {
 					// String
 					tmp = check_string(prop, error, val, null, currentpath);
@@ -606,7 +628,7 @@ function check_object(meta, error, value, response, stop, definitions, path) {
 	}
 
 	if (meta.minProperties && count < meta.minProperties) {
-		error.push(meta.$$ID, undefined, path);
+		error.push2(meta.$$ID, path);
 		return;
 	}
 
@@ -642,7 +664,7 @@ function transform(meta, error, value, stop, path) {
 			output = check_array(meta, error, value, stop, meta, path);
 			break;
 		default:
-			error.push('.type', undefined, path);
+			error.push2('.type', path);
 			return;
 	}
 

@@ -303,7 +303,7 @@ exports.newsubscribe = function(name, schema, callback) {
 	}
 
 	if (schema)
-		Cache.scache[name] = F.TUilts.jsonschema(schema);
+		Cache.scache[name] = F.TUtils.jsonschema(schema);
 	else
 		delete Cache.scache[name];
 

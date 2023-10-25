@@ -238,8 +238,15 @@ Controller.prototype.invalid = function(value) {
 		return;
 
 	var response = ctrl.response;
-	var err = new F.TBuilders.ErrorBuilder();
-	err.push(value);
+	var err;
+
+	if (value instanceof F.TBuilders.ErrorBuilder) {
+		err = value;
+	} else {
+		err = new F.TBuilders.ErrorBuilder();
+		err.push(value);
+	}
+
 	response.headers['content-type'] = 'application/json';
 	response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
 	response.headers.vary = 'Accept-Encoding, Last-Modified, User-Agent';
@@ -615,6 +622,12 @@ Controller.prototype.free = function() {
 
 	ctrl.released = true;
 	ctrl.destroyed = true;
+	ctrl.payload = null;
+
+	// Potential problem
+	ctrl.body = null;
+	ctrl.params = null;
+	ctrl.query = null;
 
 	if (ctrl.preventclearfiles != true)
 		ctrl.clear();
@@ -681,7 +694,7 @@ Controller.prototype.$route = function() {
 					ctrl.payload.push(chunk);
 			});
 
-			ctrl.req.on('close', () => ctrl.free());
+			ctrl.req.on('abort', () => ctrl.free());
 			ctrl.req.on('end', function() {
 
 				ctrl.downloaded = true;
@@ -840,11 +853,30 @@ function execute(ctrl) {
 	if (ctrl.route.middleware.length) {
 		middleware(ctrl);
 	} else {
-		if (ctrl.route.action) {
-			ctrl.route.action(ctrl);
+		if (ctrl.route.api) {
+			let body = ctrl.body;
+			if (body && typeof(body) === 'object' && body.schema && typeof(body.schema) === 'string') {
+				let schema = body.schema.split('/');
+				let endpoint = ctrl.route.api[schema[0]];
+				let params = {};
+				if (endpoint) {
+					if (endpoint.params) {
+						for (let m of endpoint.params)
+							params[m.name] = schema[m.index] || '';
+					}
+					body = body.data;
+					if (!body || typeof(body) === 'object') {
+						F.action(endpoint.actions, body || EMPTYOBJECT, ctrl).params(params).autorespond();
+						return;
+					}
+				}
+				ctrl.fallback(400, 'Invalid data');
+			}
 		} else {
-			// schema/actions?
-			// ctrl.route.action(ctrl);
+			if (ctrl.route.action) {
+				ctrl.route.action(ctrl);
+			} else
+				F.action(ctrl.route.actions, ctrl.body, ctrl).autorespond();
 		}
 	}
 }

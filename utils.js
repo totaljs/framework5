@@ -19,8 +19,6 @@ const REG_ISARR = /\[\d+\]|\[\]$/;
 const REG_REPLACEARR = /\[\]/g;
 const REG_EMPTYBUFFER = /\0|%00|\\u0000/g;
 const REG_EMPTYBUFFER_TEST = /\0|%00|\\u0000/;
-const REG_XSS = /<.*>/;
-const REG_SQLINJECTION = /'(''|[^'])*'|\b(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE|UNION( +ALL){0,1})\b/;
 const REG_GUID = (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
 const REG_JPG = /jfif|exif/;
 const REG_WEBP = /jfif|webp|exif/;
@@ -3687,11 +3685,11 @@ SP.isZIP = function() {
 };
 
 SP.isXSS = function() {
-	return REG_XSS.test(this);
+	return DEF.validators.xss.test(this);
 };
 
 SP.isSQLInjection = function() {
-	return REG_SQLINJECTION.test(this);
+	return DEF.validators.sqlinjection.test(this);
 };
 
 SP.isEmail = function() {
@@ -6360,13 +6358,17 @@ exports.multipartparser = function(multipart, stream, callback) {
 	return new MultipartParser(multipart, stream, callback);
 };
 
-exports.jsonschema = function(value) {
+exports.jsonschema = function(value, throwerr) {
 	let type = typeof(value);
 	if (type === 'string') {
-		if ((/(:,\*;)/).test(value))
+		if (value[0] === '@') {
+			let name = value.substring(1);
+			let schema = F.jsonschemas[name];
+			if (!schema && throwerr)
+				throw new Error('JSON Schema "{0}" not found'.format(name));
+			return schema;
+		} else
 			return value.toJSONSchema();
-		else
-			return F.jsonschemas[value];
 	}
 	return value;
 };
@@ -6618,6 +6620,7 @@ String.prototype.toJSONSchema = function(name, url) {
 			case 'base64':
 			case 'safestring':
 			case 'search':
+			case 'text':
 				tmp = {};
 				if (isarr) {
 					tmp.type = 'array';
@@ -6707,10 +6710,13 @@ String.prototype.toJSONSchema = function(name, url) {
 	return obj;
 };
 
-exports.jsonschematransform = function(value, partial) {
+exports.jsonschematransform = function(value, partial, error, path) {
 
 	var self = this;
-	var error = new ErrorBuilder();
+
+	if (!error)
+		error = new ErrorBuilder();
+
 	var response = null;
 
 	if (partial) {
@@ -6735,12 +6741,12 @@ exports.jsonschematransform = function(value, partial) {
 		schema.$schema = self.$schema;
 		schema.type = self.type;
 
-		response = T.TJSONSchema.transform(schema, error, tmp);
+		response = F.TJSONSchema.transform(schema, error, tmp, false, path);
 
 	} else
-		response = T.TJSONSchema.transform(self, error, value);
+		response = F.TJSONSchema.transform(self, error, value, false, path);
 
-	return { error: error.is ? error : null, response: response };
+	return { error: error.items.length ? error : null, response: response };
 };
 
 exports.set = function(obj, path, value) {

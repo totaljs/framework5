@@ -40,9 +40,11 @@ global.DEF = {};
 	F.schedules = {};      // Registered schedulers
 	F.modules = {};
 	F.plugins = {};
+	F.actions = {};
 	F.processing = {};
 	F.transformations = {};
 	F.flowstreams = {};
+	F.jsonschemas = {};
 	F.config = CONF;
 	F.def = DEF;
 	F.errors = [];
@@ -59,6 +61,7 @@ global.DEF = {};
 	F.routes = {
 		fallback: {},
 		virtual: {},
+		api: {},
 		routes: [],
 		routescache: {},
 		websockets: [],
@@ -73,7 +76,8 @@ global.DEF = {};
 	// Internal cache
 	F.temporary = {
 		path: {},
-		shortcache: {},
+		actions: {},
+		cache: {},
 		notfound: {},
 		processing: {},
 		views: {},
@@ -375,7 +379,7 @@ function unlink(arr, callback) {
 	CONF.$cleartemp = true;
 	CONF.$customtitles = false;
 	CONF.$version = '';
-	CONF.$intervalclearcache = 10;
+	CONF.$clearcache = 10;
 
 	CONF.$nodemodules = require.resolve('./index');
 	CONF.$nodemodules = CONF.$nodemodules.substring(0, CONF.$nodemodules.length - (8 + 7));
@@ -393,6 +397,7 @@ function unlink(arr, callback) {
 	CONF.$tms = false;
 	CONF.$tmsmaxsize = 256;
 	CONF.$tmsurl = '/$tms/';
+	CONF.$tmsclearblocked = 60; // in minutes
 
 	process.env.TZ = CONF.$timezone;
 
@@ -456,6 +461,17 @@ function unlink(arr, callback) {
 
 	// Unused
 	DEF.parsers.xml = value => value.parseXML(true);
+
+	// Validators
+	DEF.validators = {
+		email: new RegExp('^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'),
+		url: /^http(s)?:\/\/[^,{}\\]*$/i,
+		phone: /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,8}$/im,
+		zip: /^[0-9a-z\-\s]{3,20}$/i,
+		uid: /^\d{14,}[a-z]{3}[01]{1}|^\d{9,14}[a-z]{2}[01]{1}a|^\d{4,18}[a-z]{2}\d{1}[01]{1}b|^[0-9a-f]{4,18}[a-z]{2}\d{1}[01]{1}c|^[0-9a-z]{4,18}[a-z]{2}\d{1}[01]{1}d|^[0-9a-zA-Z]{5,10}\d{1}[01]{1}f|^[0-9a-zA-Z]{10}[A-J]{1}r$/,
+		xss: /<.*>/,
+		sqlinjection: /'(''|[^'])*'|\b(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE|UNION( +ALL){0,1})\b/
+	};
 
 })(global.DEF);
 
@@ -757,7 +773,7 @@ F.download = function(url, filename, callback, timeout) {
 	if (typeof(url) === 'object')
 		opt.unixsocket = url;
 	else
-		opt.url = framework_internal.preparepath(url);
+		opt.url = url;
 
 	opt.custom = true;
 	opt.resolve = true;
@@ -898,7 +914,7 @@ F.console = function() {
 	print('Name          : ' + F.config.name);
 	print('Version       : ' + F.config.version);
 	F.config.author && print('Author        : ' + F.config.author);
-	print('Date (UTC)    : ' + NOW.format('yyyy-MM-dd HH:mm:ss'));
+	print('Date ({0})    : '.format(process.env.TZ) + NOW.format('yyyy-MM-dd HH:mm:ss'));
 	print('Mode          : ' + (DEBUG ? 'debug' : 'release'));
 	print('Compilation   : ' + F.stats.compilation + ' ms');
 	// F.threads && print('Threads       : ' + Object.keys(F.threads).join(', '));
@@ -906,7 +922,7 @@ F.console = function() {
 	print('====================================================');
 	F.config.$root && print('Root          : ' + F.config.$root);
 	print('Directory     : ' + process.cwd());
-	print('node_modules  : ' + F.config.$node_modules);
+	print('node_modules  : ' + F.config.$nodemodules);
 	print('====================================================\n');
 
 	if (!F.isWorker) {
@@ -1314,18 +1330,21 @@ F.cron = function(line, fn) {
 // Service
 F.service = function(count) {
 
-	// clears short cahce temporary cache
-	// F.temporary.shortcache = {};
+	// Clears expired cache
+	F.cache.refresh();
 
-	// clears temporary memory for non-exist files
+	// Clears temporary memory for non-exist files
 	F.temporary.notfound = {};
+
+	// UID state
 	F.internal.uid = 1;
 	F.internal.uidc = F.TUtils.random_text(1);
 
 	if (F.config.$httpreqlimit)
 		F.temporary.ddos = {};
 
-	if (count % F.config.$intervalclearcache === 0) {
+	if (count % F.config.$clearcache === 0) {
+		F.temporary.actions = {};
 		F.temporary.path = {};
 		F.temporary.views = {};
 		F.temporary.utils = {};
@@ -1342,7 +1361,7 @@ F.service = function(count) {
 		F.TImage.clear();
 	}
 
-	if (count % 1440 === 0)
+	if (count % F.config.$tmsclearblocked === 0)
 		F.temporary.tmsblocked = {};
 
 	if (count % 30 === 0) {
@@ -1489,7 +1508,6 @@ F.memorize = function(name, delay, skip) {
 };
 
 F.newjsonschema = function(name, obj) {
-
 	var type = typeof(name);
 
 	if (type === 'string' && typeof(obj) === 'string') {
@@ -1505,7 +1523,7 @@ F.newjsonschema = function(name, obj) {
 		name = obj.$id;
 	}
 
-	F.jsonschemas[name] = obj;
+	F.jsonschemas[name] = F.jsonschemas[obj.$id] = obj;
 	obj.transform = F.TUtils.jsonschematransform;
 	return obj;
 };
@@ -1621,6 +1639,7 @@ process.on('uncaughtException', function(e) {
 	F.syshash = (__dirname + '-' + F.Os.hostname() + '-' + F.Os.platform() + '-' + F.Os.arch() + '-' + F.Os.release() + '-' + F.Os.tmpdir() + JSON.stringify(process.versions)).md5();
 	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
 
+	F.cache = require('./cache');
 	F.path.fs = F.Fs;
 	F.path.join = F.Path.join;
 
@@ -1644,6 +1663,8 @@ process.on('uncaughtException', function(e) {
 	F.newflowstream = F.TFlowStream.create;
 	F.internal.uidc = F.TUtils.random_text(1);
 	F.ErrorBuilder = F.TBuilders.ErrorBuilder;
+	F.newaction = F.TBuilders.newaction;
+	F.action = F.TBuilders.action;
 
 	// Needed "F"
 	F.TFlow = require('./flow');

@@ -21,9 +21,10 @@ global.UID = F.uid;
 global.MEMORIZE = F.memorize;
 global.AUDIT = F.audit;
 global.DATA = new F.TQueryBuilder.Controller(true);
-global.DB = function() {
-	return new F.TQueryBuilder.Controller();
-};
+global.DB = () => new F.TQueryBuilder.Controller();
+global.CACHE = F.cache;
+global.NEWACTION = F.TBuilders.newaction;
+global.ACTION = F.TBuilders.action;
 
 global.CORS = function(origin) {
 	CONF.$cors = origin || '*';

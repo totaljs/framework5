@@ -9,6 +9,7 @@ function Options(ctrl, error) {
 	var t = this;
 	t.controller = ctrl;
 	t.error = error;
+	t.response = {};
 }
 
 Options.prototype = {
@@ -22,7 +23,19 @@ Options.prototype = {
 	},
 
 	get value() {
-		return this.model;
+		return this.payload;
+	},
+
+	get model() {
+		return this.payload;
+	},
+
+	set value(value) {
+		this.payload = value;
+	},
+
+	set model(value) {
+		this.payload = value;
 	},
 
 	get url() {
@@ -74,44 +87,28 @@ Options.prototype = {
 	}
 };
 
-Options.prototype.action = function(schema, data) {
-
-	var c = schema[0];
-
-	if (c === '-' || c === '#' || c === '+')
-		schema = schema.substring(1);
-	else
-		c = '';
-
-	var key = 'action_' + schema;
-	var tmp = F.temporary.calls[key];
-
-	if (!tmp) {
-		if (schema.indexOf('-->') === -1 && this.schema)
-			schema = this.schema.name + ' --> ' + schema;
-		F.temporary.calls[key] = tmp = schema.trim();
-	}
-
-	return CALL(c + tmp, data);
+Options.prototype.action = function(schema, payload) {
+	return F.action(schema, payload, this.controller);
 };
 
+// @TODO: Missing functionality "Options.publish()"
 Options.prototype.publish = function(value) {
-	var name = this.ID;
-	if (F.tms.socket && F.tms.publish_cache[name] && F.tms.publishers[name]) {
+	var self = this;
+	var name = self.id;
+	if (F.TMS.cache.socket && F.TMS.cache.pcache[name] && F.TMS.cache.publishers[name]) {
 
 		var tmp = {};
 		if (tmp) {
 			for (var key in value) {
-				if (!this.$publish || this.$publish[key])
+				if (!self.$publish || self.$publish[key])
 					tmp[key] = value[key];
 			}
 		}
 
 		F.stats.performance.publish++;
-		F.tms.socket.send({ type: 'publish', id: name, data: tmp }, client => client.tmsready);
-
+		F.TMS.cache.socket.send({ type: 'publish', id: name, data: tmp }, client => client.tmsready);
 	}
-	return this;
+	return self;
 };
 
 Options.prototype.on = function(name, fn) {
@@ -140,13 +137,6 @@ Options.prototype.emit = function(name, a, b, c, d) {
 // @TODO: Missing functionality "Options.cancel()"
 Options.prototype.cancel = function() {
 	var self = this;
-
-	if (self.$async) {
-		self.$async.tasks = null;
-		self.$async.op = null;
-		self.$async = null;
-	}
-
 	self.callback = self.next = null;
 	self.error = null;
 	self.controller = null;
@@ -156,20 +146,20 @@ Options.prototype.cancel = function() {
 };
 
 // @TODO: Missing functionality "Options.cancel()"
-Options.redirect = function(url) {
+Options.prototype.redirect = function(url) {
 	this.callback(new F.callback_redirect(url));
 };
 
-// @TODO: Missing functionality "Options.cancel()"
-Options.audit = function(message, type) {
+// @TODO: Missing functionality "Options.audit()"
+Options.prototype.audit = function(message, type) {
 	F.audit(this, message, type);
 };
 
-Options.success = function(value) {
+Options.prototype.success = function(value) {
 	this.callback(DEF.onSuccess(value));
 };
 
-Options.callback = function(value) {
+Options.prototype.callback = function(value) {
 
 	var self = this;
 
@@ -183,7 +173,7 @@ Options.callback = function(value) {
 	self.$callback(self.error.items.length ? self.error : null, value);
 };
 
-Options.done = function(arg) {
+Options.prototype.done = function(arg) {
 	var self = this;
 	return function(err, response) {
 		if (err) {
@@ -194,7 +184,7 @@ Options.done = function(arg) {
 	};
 };
 
-Options.invalid = function(error, path, index) {
+Options.prototype.invalid = function(error, path, index) {
 
 	var self = this;
 
@@ -210,7 +200,7 @@ Options.invalid = function(error, path, index) {
 	};
 };
 
-Options.cookie = function(name, value, expire, options) {
+Options.prototype.cookie = function(name, value, expire, options) {
 	var self = this;
 	if (value === undefined)
 		return self.controller.cookie(name);
@@ -220,7 +210,7 @@ Options.cookie = function(name, value, expire, options) {
 	return self;
 };
 
-Options.variables = function(str, data) {
+Options.prototype.variables = function(str, data) {
 
 	if (str.indexOf('{') === -1)
 		return str;
@@ -260,10 +250,11 @@ Options.variables = function(str, data) {
 };
 
 function ErrorBuilder() {
-	this.items = [];
-	this.count = 0;
-	// this.replacer = null;
-	this.status = 400;
+	var t = this;
+	t.items = [];
+	// t.replacer = null;
+	t.status = 400;
+	t.prefix = '';
 }
 
 ErrorBuilder.prototype = {
@@ -279,6 +270,12 @@ ErrorBuilder.prototype.push = function(err, path, index) {
 		self.items.push({ error: F.TUtils.httpstatus(err) });
 	} else
 		self.items.push({ error: err.toString(), path: path, index: index });
+	return self;
+};
+
+ErrorBuilder.prototype.push2 = function(name, path, index) {
+	var self = this;
+	self.items.push({ name: self.prefix + name, error: '@', path: path, index: index });
 	return self;
 };
 
@@ -317,20 +314,29 @@ ErrorBuilder.prototype.output = function(language = 'default') {
 		let err = m.error;
 
 		if (err[0] == '@')
-			err = F.translate(language, err);
+			err = F.resource(language, 'T' + (err === '@' ? m.name : err.substring(1)).hash(true).toString(36)) || 'The field "' + m.name + '" is invalid';
 
 		if (self.replacer) {
 			for (let key in self.replacer)
 				err = err.replaceAll(key, self.replacer[key]);
 		}
 
-		output.push({ error: err, path: m.path, index: m.index });
+		output.push({ name: m.name, error: err, path: m.path, index: m.index });
 	}
 
 	if (ErrorBuilder.$transform)
 		output = ErrorBuilder.$transform(output, language);
 
 	return output;
+};
+
+ErrorBuilder.prototype.toString = function(language = 'default') {
+	var self = this;
+	var output = self.output(language);
+	var str = '';
+	for (let err of output)
+		str += (str ? '\n' : '') + err.error;
+	return str;
 };
 
 ErrorBuilder.transform = function(callback) {
@@ -1158,9 +1164,9 @@ function parseactioncache(obj, meta) {
 	if (typeof(params) === 'string')
 		params = params.split(',').trim();
 	else if (params === true) {
-		if (obj.jsonschemaparams) {
+		if (obj.jsparams) {
 			params = [];
-			for (var key in obj.jsonschemaparams.properties)
+			for (var key in obj.jsparams.properties)
 				params.push(key);
 		} else
 			params = null;
@@ -1170,9 +1176,9 @@ function parseactioncache(obj, meta) {
 	if (typeof(query) === 'string')
 		query = query.split(',').trim();
 	else if (query === true) {
-		if (obj.jsonschemaquery) {
+		if (obj.jsquery) {
 			query = [];
-			for (var key in obj.jsonschemaquery.properties)
+			for (var key in obj.jsquery.properties)
 				query.push(key);
 		} else
 			query = null;
@@ -1234,25 +1240,19 @@ exports.newaction = function(name, obj) {
 	if (tmp.length)
 		obj.$url = url.replace(/\//g, '_').toLowerCase();
 
-	name = tmp[0].trim();
-
-	// Helper for auto-routing due to older operations
-	F.$newoperations = true;
-
 	if (F.actions[name])
 		F.actions[name].remove();
 
 	F.actions[name] = obj;
 	obj.id = name;
-	obj.isaction = true;
-	obj.jsonschemainput = obj.input ? F.TUtils.jsonschema(obj.input) : null;
-	obj.jsonschemaoutput = obj.output ? F.TUtils.jsonschema(obj.output) : null;
-	obj.jsonschemaparams = obj.params ? F.TUtils.jsonschema(obj.params) : null;
-	obj.jsonschemaquery = obj.query ? F.TUtils.jsonschema(obj.query) : null;
-	obj.schema = {};
-	obj.schema.$csrf = obj.csrf;
-	obj.schema.$encrypt = obj.encrypt;
-	obj.schema.$compress = obj.compress;
+	obj.jsinput = obj.input ? F.TUtils.jsonschema(obj.input, true) : null;
+	obj.jsoutput = obj.output ? F.TUtils.jsonschema(obj.output, true) : null;
+	obj.jsparams = obj.params ? F.TUtils.jsonschema(obj.params, true) : null;
+	obj.jsquery = obj.query ? F.TUtils.jsonschema(obj.query, true) : null;
+	obj.options = {};
+	obj.options.csrf = obj.csrf;
+	obj.options.encrypt = obj.encrypt;
+	obj.options.compress = obj.compress;
 
 	if (obj.cache)
 		obj.cache = parseactioncache(obj, obj.cache);
@@ -1272,8 +1272,8 @@ exports.newaction = function(name, obj) {
 			obj.route = obj.route + '  ' + (obj.input ? '+' : '-') + obj.$url + '  *  -->  ' + name;
 		var flags = null;
 		if (obj.encrypt)
-			flags = ['encrypt'];
-		obj.route = ROUTE(obj.route, flags || []);
+			flags = '@encrypt';
+		obj.route = F.route(obj.route, flags || []);
 	}
 
 	if (obj.permissions && typeof(obj.permissions) === 'string')
@@ -1298,102 +1298,90 @@ exports.newaction = function(name, obj) {
 		F.TMS.newpublish(name, tmsschema);
 	}
 
-	obj.validate = function(type, value, partial) {
-		var jsonschema = this['jsonschema' + type];
-		return jsonschema ? jsonschema.transform(value, null, partial) : { error: null, response: value };
-	};
-
 	F.makesourcemap();
 	return obj;
 };
 
-function SchemaCall() {
-	this.options = {};
-	setImmediate(t => t.exec(), this);
+function ActionCaller() {
+	var self = this;
+	self.$ = new Options();
+	self.error = new ErrorBuilder();
+	self.options = {};
+	self.actions = [];
+	setImmediate(self => self.exec(), self);
 }
 
-var SCP = SchemaCall.prototype;
-
-SCP.debug = function() {
+ActionCaller.prototype.debug = function() {
 	this.options.debug = true;
 	return this;
 };
 
-SCP.params = function(value) {
+ActionCaller.prototype.params = function(value) {
 	this.options.params = value;
 	return this;
 };
 
-SCP.exec = function() {
+ActionCaller.prototype.exec = function() {
 
 	var self = this;
-	var controller = self.options.controller;
-	var meta = self.meta;
+	var id = self.actions.shift();
 
-	self.options.callback = function(err, response) {
+	if (!id) {
+		self.finish && self.finish();
+		self.error = null;
+		self.options = null;
+		self.$ = null;
+		return;
+	}
 
-		if (!self.options.$callback)
-			self.options.$callback = NOOP;
+	var meta = F.temporary.actions[id];
+	if (!meta) {
 
+		let arr = id.split(' ');
+
+		meta = {};
+		meta.response = arr[1] ? true : false;
+		meta.id = arr[0];
+		meta.payload = null;
+
+		let c = meta.id[0];
+		if (c === '+' || c === '-' || c === '%') {
+			// + payload
+			// - without payload
+			// % partial payload
+			meta.payload = c;
+			meta.id = meta.id.substring(1);
+		}
+
+		F.temporary.actions[id] = meta;
+	}
+
+	var action = F.actions[meta.id];
+
+	if (!action) {
+		self.error.push('The action "{0}" not found'.format(meta.id));
+		self.cancel();
+		return;
+	}
+
+	var type = meta.payload || (action.input ? '+' : '-');
+	var $ = self.$;
+
+	$.id = id;
+	$.error = self.error;
+	$.controller = self.controller;
+
+	$.$callback = function(err, response) {
 		if (err) {
-			self.options.error && self.options.error(err);
-			self.options.$callback(err);
+			// close
+			self.cancel();
 		} else {
-			self.action && self.action.cache && self.action.cache(self.$, response);
-			self.options.$callback(null, response);
+			$.response[$.id] = response;
+			meta.response && self.finish && self.finish(response);
+			self.exec();
 		}
 	};
 
-	if (self.$error) {
-		self.options.callback(self.$error);
-		return;
-	}
-
-	if (controller && controller.$checkcsrf === 1) {
-		if (controller.route.flags2.csrf || meta.schema.$csrf) {
-			controller.$checkcsrf = 2;
-			if (!DEF.onCSRFcheck(controller.req)) {
-				self.options.callback(new ErrorBuilder().push('csrf', 'Invalid CSRF token'));
-				return;
-			}
-		} else
-			controller.$checkcsrf = 2;
-	}
-
-	if (!meta.action && meta.symbol !== '-' && self.options.model) {
-		meta.schema.make(self.options.model, function(err, response) {
-			if (err) {
-				self.options.callback(err);
-			} else {
-				self.options.model = response;
-				performsschemaaction(self);
-			}
-		}, null, null, null, meta.operations);
-	} else {
-
-		if (meta.symbol === '-')
-			self.options.model = EMPTYOBJECT;
-
-		performsschemaaction(self);
-	}
-
-};
-
-function evalaction($, name, caller, skipmiddleware) {
-
-	var action = F.actions[name];
-
-	if (!action) {
-		$.invalid('Action "{0}" not found'.format(name));
-		return;
-	}
-
-	$.ID = name;
-	$.name = name;
-	$.query = $.cache.query;
-	$.params = $.cache.params;
-
-	// Check a user session
 	if (action.user && !$.user) {
 		$.invalid(401);
 		return;
@@ -1406,212 +1394,81 @@ function evalaction($, name, caller, skipmiddleware) {
 		}
 	}
 
-	// Check permissions
 	if (action.permissions) {
-		var permissions = action.permissions.slice(0);
+		let permissions = action.permissions.slice(0);
 		permissions.unshift($);
-		if (F.unauthorized.apply(global, permissions))
-			return;
-	}
-
-	var meta = caller.meta;
-
-	if (!skipmiddleware && action.middleware) {
-		CALL(meta.symbol + action.middleware, $.model, $.controller).callback(function(err, response) {
-
-			if (err) {
-				$.invalid(err);
-				return;
-			}
-
-			for (var key in response)
-				$.responses[key] = response[key];
-
-			evalaction($, name, caller, true);
-		});
-		return;
-	}
-
-	var res;
-
-	if (action.jsonschemainput) {
-
-		var ispatch = meta.method === 'PATCH' || ($.controller && $.controller.req && $.controller.req.keys);
-
-		res = action.validate('input', $.model || EMPTYOBJECT, $.ispatch);
-
-		if (res.error) {
-			$.invalid(res.error);
+		if (F.unauthorized.apply(global, permissions)) {
+			self.cancel();
 			return;
 		}
-
-		$.model = res.response;
-
-		if (ispatch)
-			$.keys = Object.keys($.model);
 	}
 
-	if (action.jsonschemaquery) {
-		res = action.validate('query', $.query || EMPTYOBJECT);
-		if (res.error) {
-			for (var item of res.error.items)
-				item.name = 'query.' + item.name;
-			$.invalid(res.error);
+	var params = self.options.params || EMPTYOBJECT;
+	var query = self.options.query || EMPTYOBJECT;
+	var payload = self.options.payload || EMPTYOBJECT;
+	var response = null;
+
+	if (action.jsquery) {
+		self.error.prefix = 'query.';
+		response = action.jsquery.transform(query, false, self.error);
+		self.error.prefix = '';
+		if (response.error) {
+			self.options.callback(self.error);
+			self.cancel();
 			return;
 		}
-		$.query = res.response;
+		$.query = response.response;
 	}
 
-	if (action.jsonschemaparams) {
-		res = action.validate('params', $.params || EMPTYOBJECT);
-		if (res.error) {
-			for (var item of res.error.items)
-				item.name = 'params.' + item.name;
-			$.invalid(res.error);
+	if (action.jsparams) {
+		self.error.prefix = 'params.';
+		response = action.jsparams.transform(params, false, self.error);
+		self.error.prefix = '';
+		if (response.error) {
+			self.options.callback(self.error);
+			self.cancel();
 			return;
 		}
-		$.params = res.response;
+		$.params = response.response;
 	}
 
-	$.$action = action;
-	$.caller.$ = $;
-	$.caller.action = action;
-
-	var value = action.cache ? action.cache($) : null;
-	if (value != null) {
-		$.cachekey = null;
-		$.callback(null, value);
-	} else {
-		action.action.call($, $, $.model);
-	}
-}
-
-function callnewaction(caller, meta) {
-
-	var error = new ErrorBuilder();
-	var $ = new Options(error, caller.options.model, null, function(a, b) {
-
-		var response = null;
-
-		if (a) {
-			if (a instanceof Error || a instanceof ErrorBuilder)
-				error.push(a);
-			else
-				response = a;
-		} else
-			response = b;
-
-		if (error.items.length) {
-			caller.options.callback(error.items.length ? error : null);
+	if (action.jsinput && type !== '-') {
+		response = action.jsinput.transform(payload, type === '%', self.error);
+		if (response.error) {
+			self.options.callback(self.error);
+			self.cancel();
 			return;
 		}
-
-		if (response && $.$action && $.$action.jsonschemaoutput)
-			response = $.$action.jsonschemaoutput.transform(response).response;
-
-		if (meta.multiple) {
-
-			if ($.$action && $.$action.cache) {
-				$.$action.cache($, response);
-				$.cachekey = null;
-			}
-
-			$.responses[$.current] = response;
-			$.index++;
-
-			var next = meta.op[$.index];
-			if (next) {
-				$.current = next.name;
-				evalaction($, $.current, caller);
-				return;
-			} else
-				response = meta.opcallback ? $.responses[meta.opcallback] : $.responses;
-		}
-
-		caller.options.callback(error.items.length ? error : null, response);
-
-	}, caller.options.controller, '');
-
-	var additional = caller.options;
-	var controller = caller.options.controller;
-
-	$.cache = {};
-
-	if (additional && additional.params)
-		$.cache.params = additional.params;
-	else
-		$.cache.params = controller ? controller.params : {};
-
-	if (additional && additional.query)
-		$.cache.query = additional.query;
-	else
-		$.cache.query = controller ? controller.query : {};
-
-	if (additional && additional.user)
-		$.user = additional.user;
-	else
-		$.user = controller ? controller.user : null;
-
-	if (additional && additional.session)
-		$.session = additional.session;
-	else
-		$.session = controller ? controller.session : {};
-
-	$.multiple = meta.multiple;
-
-	if ($.multiple)
-		$.index = 0;
-
-	$.current = meta.op[0].name;
-	$.caller = caller;
-	$.caller.$ = $;
-
-	evalaction($, $.current, caller);
-}
-
-function performsschemaaction(caller) {
-
-	var meta = caller.meta;
-	var controller = caller.options.controller;
-
-	if (meta.schema.$encrypt && controller)
-		controller.response.encrypt = true;
-
-	if (meta.schema.$compress && controller)
-		controller.response.minifyjson = true;
-
-	var callback = caller.options.callback;
-
-	if (caller.options.debug) {
-		callback = function(err, response) {
-			console.log('--DEBUG-- CALL:', 'Query:', caller.options.query, '|', 'Params:', caller.options.params, '|', 'Model:', caller.options.model, '|', 'Error:', err, '|', 'Response:', response);
-			caller.options.callback(err, response);
-		};
+		$.payload = response.response;
 	}
 
-	if (meta.action) {
-		callnewaction(caller, meta);
-	} else if (meta.multiple) {
-		var add = meta.schema.async(caller.options.model, callback, meta.opcallbackindex, controller, caller, true);
-		for (var i = 0; i < meta.op.length; i++)
-			add(meta.op[i].name);
-	} else {
-		var op = meta.op[0];
-		// meta.schema.exec(op.type, op.name, caller.options.model, caller.options.config || EMPTYOBJECT, controller, callback, true, caller.options, caller.meta.symbol, caller);
-		// meta.schema.exec(op.name, null, caller.options.model, caller.options.config, controller, callback, true, caller.options, caller.meta.symbol, caller);
-		if (op.type)
-			meta.schema.exec(op.type, op.name, caller.options.model, caller.options.config || EMPTYOBJECT, controller, callback, true, caller);
-		else
-			meta.schema.exec(op.name, null, caller.options.model, caller.options.config, controller, callback, true, caller);
-	}
-}
+	action.action($, $.payload);
+};
 
-SCP.query = function(value) {
+ActionCaller.prototype.finish = function(value) {
+	var self = this;
+	self.finish = null;
+	self.options.callback(self.error.length ? self.error : null, value === undefined ? self.$.response : value);
+	self.options.callback = null;
+};
+
+ActionCaller.prototype.cancel = function() {
+	var self = this;
+	self.actions.length = 0;
+	self.exec();
+};
+
+ActionCaller.prototype.payload = function(value) {
+	this.options.payload = value;
+	return this;
+};
+
+ActionCaller.prototype.query = function(value) {
 	this.options.query = value;
 	return this;
 };
 
-SCP.user = function(value) {
+ActionCaller.prototype.user = function(value) {
 
 	if (value instanceof Options)
 		value = value.user;
@@ -1620,18 +1477,18 @@ SCP.user = function(value) {
 	return this;
 };
 
-SCP.language = function(value) {
+ActionCaller.prototype.language = function(value) {
 	this.options.language = value;
 	return this;
 };
 
-SCP.error = function(value) {
+ActionCaller.prototype.error = function(value) {
 	this.options.error = value;
 	return this;
 };
 
-SCP.done = function($, fn) {
-	this.options.$callback = function(err, response) {
+ActionCaller.prototype.done = function($, fn) {
+	this.options.callback = function(err, response) {
 		if (err)
 			$.invalid(err);
 		else
@@ -1640,17 +1497,17 @@ SCP.done = function($, fn) {
 	return this;
 };
 
-SCP.callback = function(value) {
-	this.options.$callback = value;
+ActionCaller.prototype.callback = function(value) {
+	this.options.callback = value;
 	return this;
 };
 
-SCP.promise = function($) {
-	var t = this;
+ActionCaller.prototype.promise = function($) {
+	var self = this;
 	return new Promise(function(resolve, reject) {
-		t.options.$callback = function(err, response) {
+		self.options.callback = function(err, response) {
 			if (err) {
-				t.options.error && t.options.error(err);
+				self.options.error && self.options.error(err);
 				if ($ && $.invalid)
 					$.invalid(err);
 				else
@@ -1661,7 +1518,18 @@ SCP.promise = function($) {
 	});
 };
 
-SCP.controller = function(ctrl) {
+ActionCaller.prototype.autorespond = function() {
+	var self = this;
+	self.options.callback = function(err, response) {
+		if (err)
+			self.controller.invalid(err);
+		else
+			self.controller.json(response);
+	};
+	return self;
+};
+
+ActionCaller.prototype.controller = function(ctrl) {
 
 	if (ctrl instanceof Options)
 		ctrl = ctrl.controller;
@@ -1670,124 +1538,33 @@ SCP.controller = function(ctrl) {
 	return this;
 };
 
-global.CALL = function(schema, model, controller) {
+exports.action = function(name, payload, controller) {
 
-	// Because "controller" should be "Options"
-	if (controller && !(controller instanceof F.TWebSocket.WebSocketClient) && controller.controller)
-		controller = controller.controller;
+	var key = '$' + name;
+	var actions = F.temporary.actions[key];
 
-	var caller = new SchemaCall();
-	var key = schema;
-
-	caller.options.model = model;
-	caller.options.controller = controller;
-
-	var meta = F.temporary.calls[key];
-	if (meta) {
-		caller.meta = meta;
-		return caller;
-	}
-
-	var method;
-
-	meta = {};
-	meta.symbol = schema[0];
-
-	switch (schema[0]) {
-		case '+':
-			method = 'POST';
-			break;
-		case '#':
-			method = 'PATCH';
-			break;
-		case '-':
-			method = 'GET';
-			break;
-		default:
-			meta.symbol = model ? '+' : '-';
-			break;
-	}
-
-	if (method)
-		schema = schema.substring(1);
-
-	var tmp, index, op;
-
-	index = schema.indexOf('-->');
-
-	if (index === -1) {
-		// operation
-		op = schema.split(/\s/).trim();
-		tmp = '*';
-	} else {
-		op = (schema.substring(index + 3).trim().trim().replace(/@/g, '') + ' ').split(/\s/).trim();
-		tmp = schema.substring(0, index).split(/\s|\t/).trim();
-	}
-
-	meta.method = method;
-	meta.schema = tmp[0];
-
-	if (meta.schema[0] === '*')
-		meta.schema = meta.schema.substring(1).trim();
-
-	meta.action = !meta.schema;
-	meta.op = [];
-
-	var o;
-
-	if (meta.schema) {
-		var o = GETSCHEMA(meta.schema);
-		if (!o) {
-			caller.$error = new ErrorBuilder().push('Schema "{0}" not found'.format(meta.schema));
-			return caller;
-		}
-	}
-
-	meta.operations = {};
-
-	for (var i = 0; i < op.length; i++) {
-
-		tmp = {};
-
-		var item = op[i];
-		if (item[0] === '@')
-			item = item.substring(1);
-
-		index = item.indexOf('(');
-
-		if (index !== -1) {
-			meta.opcallbackindex = i - 1;
-			tmp.response = true;
-			item = item.substring(0, index).trim();
-			meta.opcallback = meta.op[meta.opcallbackindex].name;
-			continue;
+	if (!actions) {
+		actions = name.replace(/(\s)?\(response\)/i, '\0').split(/\s|\,|\n/);
+		let isresponse = false;
+		for (let i = 0; i < actions.length; i++) {
+			actions[i] = actions[i].replaceAll('\0', ' (response)');
+			if (actions[i].indexOf('(') !== -1)
+				isresponse = true;
 		}
 
-		tmp.name = item;
-
-		if (meta.action) {
-			meta.operations[item] = 1;
-			meta.op.push(tmp);
-			continue;
-		}
-
-		if (!o.meta[item]) {
-			caller.$error = new ErrorBuilder().push(Schema "{0}" doesn\'t contain "{1}" operation'.format(meta.schema, item));
-			return caller;
-		}
-
-		meta.operations[tmp.name] = 1;
-		meta.op.push(tmp);
+		if (actions.length === 1 && !isresponse)
+			actions[0] += ' (response)';
+		F.temporary.actions[key] = actions;
 	}
 
-	meta.multiple = meta.op.length > 1;
-
-	if (!meta.action)
-		meta.schema = o;
-
-	F.temporary.calls[key] = meta;
-	caller.meta = meta;
-	return caller;
+	var action = new ActionCaller();
+	action.controller = controller;
+	action.payload = payload;
+	action.actions = actions.slice(0);
+	action.options.payload = payload;
+	action.options.query = controller?.query;
+	action.options.params = controller?.params;
+	return action;
 };
 
 exports.RESTBuilder = RESTBuilder;

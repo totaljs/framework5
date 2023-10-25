@@ -39,6 +39,7 @@ function Route(url, action, size) {
 
 	t.url = exports.split(url.substring(0, index), true);
 	url = url.substring(index + 1);
+	t.id = t.method + '/' + t.url.join('/');
 
 	t.auth = 0;
 	t.action = action;
@@ -96,6 +97,16 @@ function Route(url, action, size) {
 	t.priority = 100;
 	t.type = t.method === 'WEBSOCKET' || t.method === 'SOCKET' ? 'websocket' : t.method === 'FILE' ? 'file' : 'route';
 
+	var endpoint = '';
+
+	if (t.method === 'API') {
+		t.method = 'POST';
+		url = url.replace(/\*[a-z0-9-_/{}]+/i, function(text) {
+			endpoint = text.trim().substring(1);
+			return text;
+		});
+	}
+
 	// Parse flags
 	url = url.replace(/(@|#)+[a-z0-9]+/gi, function(text) {
 		let tmp = text.trim();
@@ -107,6 +118,43 @@ function Route(url, action, size) {
 		}
 		return '';
 	}).trim();
+
+	// Parse actions
+	index = url.indexOf('-->');
+
+	if (index !== -1) {
+		t.actions = [];
+		url = url.substring(index + 3).replace(/(\+|-|%)?[a-z0-9-_/]+(\s\(response\))?/gi, function(text) {
+			t.actions.push(text.trim());
+			return '';
+		}).trim();
+	} else
+		t.actions = url.substring(0, index + 3).replace(/\s{2,}/g, ' ').split(' ');
+
+	if (endpoint) {
+
+		let params = [];
+		let arr = endpoint.split('/');
+
+		for (let i = 1; i < arr.length; i++) {
+			let param = arr[i].replace(/\{|\}/g, '').trim();
+			params.push({ index: i, name: param });
+		}
+
+		var route = F.routes.routes.findItem('id', t.id);
+		var apiroute = { auth: t.auth, params: params, actions: t.actions.join(',') };
+
+		if (route) {
+			route.api[arr[0]] = apiroute;
+			t.skip = true;
+		} else {
+			if (!t.api)
+				t.api = {};
+			t.api[arr[0]] = apiroute;
+		}
+
+		delete t.actions;
+	}
 
 	// Max. payload size
 	if (!t.size) {
@@ -121,13 +169,8 @@ function Route(url, action, size) {
 		}
 	}
 
-	index = url.indexOf('-->');
-
 	if (t.wildcard)
 		t.priority -= 50;
-
-	if (index !== -1)
-		t.action = url.replace(/\s{2,}/g, ' ');
 }
 
 Route.prototype.compare = function(ctrl) {
@@ -162,6 +205,7 @@ Route.prototype.remove = function() {
 			index = F.routes.routes.indexOf(self);
 			if (index !== -1)
 				F.routes.routes.splice(index);
+			delete F.routes.api[self.url.join('/')];
 			break;
 	}
 
@@ -170,6 +214,10 @@ Route.prototype.remove = function() {
 exports.route = function(url, action, size) {
 	var route = new Route(url, action, size);
 	if (route) {
+
+		if (route.skip)
+			return;
+
 		switch (route.type) {
 			case 'websocket':
 				F.routes.websockets.push(route);

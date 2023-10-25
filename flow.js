@@ -2,6 +2,7 @@
 
 const FlowStream = require('./flow-flowstream');
 const PING = { TYPE: 'ping' };
+const REG_BK = /-bk|_bk/i;
 
 var FS = exports;
 
@@ -89,7 +90,7 @@ FS.init = function(directory, callback) {
 
 		for (var m of files) {
 			var index = m.lastIndexOf('.');
-			if (index !== -1 && m.substring(index).toLowerCase() === '.flow')
+			if (index !== -1 && m.substring(index).toLowerCase() === '.flow' && !REG_BK.test(m))
 				load.push(m);
 		}
 
