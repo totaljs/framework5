@@ -1,3 +1,7 @@
+// Total.js Utils
+// The MIT License
+// Copyright 2012-2024 (c) Peter Širka <petersirka@gmail.com>
+
 'use strict';
 
 const KeepAlive = new F.Http.Agent({ keepAlive: true, timeout: 60000 });
@@ -528,8 +532,7 @@ function _request(opt, callback) {
 	var options = { length: 0, timeout: opt.timeout || CONF.default_restbuilder_timeout, encoding: opt.encoding || ENCODING, callback: callback || opt.callback || NOOP, post: true, redirect: 0 };
 	var proxy;
 
-	if (global.F)
-		global.F.stats.performance.external++;
+	F.stats.performance.external++;
 
 	if (opt.headers)
 		opt.headers = exports.extend({}, opt.headers);
@@ -1341,30 +1344,16 @@ exports.trim = function(obj, clean) {
 	return obj;
 };
 
-global.NOOP = function() {};
-
-exports.httpstatus = function(code, addCode) {
-	if (addCode === undefined)
-		addCode = true;
-	return (addCode ? code + ': ' : '') + F.Http.STATUS_CODES[code];
+exports.httpstatus = function(code, addcode = true) {
+	return (addcode ? code + ': ' : '') + F.Http.STATUS_CODES[code];
 };
 
-exports.extend = function(target, source, rewrite) {
+exports.extend = function(target, source, rewrite = true) {
 
 	if (!target || !source)
 		return target;
 
-	if (typeof(target) !== 'object' || typeof(source) !== 'object')
-		return target;
-
-	if (rewrite === undefined)
-		rewrite = true;
-
-	var keys = Object.keys(source);
-	var i = keys.length;
-
-	while (i--) {
-		var key = keys[i];
+	for (let key in source) {
 		if (rewrite || target[key] === undefined)
 			target[key] = exports.clone(source[key]);
 	}
@@ -1372,7 +1361,7 @@ exports.extend = function(target, source, rewrite) {
 	return target;
 };
 
-global.CLONE = exports.clone = function(obj, skip, skipFunctions) {
+exports.clone = function(obj, skip, nofunctions) {
 
 	if (!obj)
 		return obj;
@@ -1389,15 +1378,15 @@ global.CLONE = exports.clone = function(obj, skip, skipFunctions) {
 		length = obj.length;
 		o = new Array(length);
 
-		for (var i = 0; i < length; i++) {
+		for (let i = 0; i < length; i++) {
 			type = typeof(obj[i]);
 			if (type !== 'object' || obj[i] instanceof Date || obj[i] instanceof Error) {
-				if (skipFunctions && type === 'function')
+				if (nofunctions && type === 'function')
 					continue;
 				o[i] = obj[i];
 				continue;
 			}
-			o[i] = exports.clone(obj[i], skip, skipFunctions);
+			o[i] = exports.clone(obj[i], skip, nofunctions);
 		}
 
 		return o;
@@ -1405,31 +1394,28 @@ global.CLONE = exports.clone = function(obj, skip, skipFunctions) {
 
 	o = {};
 
-	var keys = Object.keys(obj);
-
-	for (var m of keys) {
+	for (let m in obj) {
 
 		if (skip && skip[m])
 			continue;
 
-		var val = obj[m];
-
+		let val = obj[m];
 		if (val instanceof Buffer) {
-			var copy = Buffer.alloc(val.length);
+			let copy = Buffer.alloc(val.length);
 			val.copy(copy);
 			o[m] = copy;
 			continue;
 		}
 
-		var type = typeof(val);
+		type = typeof(val);
 		if (type !== 'object' || val instanceof Date || val instanceof Error) {
-			if (skipFunctions && type === 'function')
+			if (nofunctions && type === 'function')
 				continue;
 			o[m] = val;
 			continue;
 		}
 
-		o[m] = exports.clone(obj[m], skip, skipFunctions);
+		o[m] = exports.clone(obj[m], skip, nofunctions);
 	}
 
 	return o;
@@ -1437,10 +1423,10 @@ global.CLONE = exports.clone = function(obj, skip, skipFunctions) {
 
 exports.copy = function(source, target, all = true) {
 
-	if (target === undefined)
+	if (!target)
 		return exports.extend({}, source, true);
 
-	if (!target || !source || typeof(target) !== 'object' || typeof(source) !== 'object')
+	if (!target || !source)
 		return target;
 
 	for (var key in source) {
@@ -1499,7 +1485,7 @@ exports.streamer = function(beg, end, callback, skip, stream, raw) {
 			CONCAT[0] = buffer;
 			CONCAT[1] = chunk;
 
-			var f = 0;
+			let f = 0;
 
 			if (buffer.length) {
 				f = buffer.length - beg.length;
@@ -1509,7 +1495,7 @@ exports.streamer = function(beg, end, callback, skip, stream, raw) {
 
 			buffer = Buffer.concat(CONCAT);
 
-			var index = buffer.indexOf(beg, f);
+			let index = buffer.indexOf(beg, f);
 			if (index === -1)
 				return;
 
@@ -1552,7 +1538,7 @@ exports.streamer = function(beg, end, callback, skip, stream, raw) {
 		buffer = Buffer.concat(CONCAT);
 
 		if (!is) {
-			var f = CONCAT[0].length - beg.length;
+			let f = CONCAT[0].length - beg.length;
 			if (f < 0)
 				f = 0;
 			bi = buffer.indexOf(beg, f);
@@ -1600,14 +1586,14 @@ exports.streamer2 = function(beg, end, callback, skip, stream) {
 };
 
 exports.filestreamer = function(filename) {
-	var Fs = require('./textdb-stream');
+	let Fs = require('./textdb-stream');
 	return new Fs(filename);
 };
 
 exports.parseInt = function(obj, def) {
 	if (obj == null || obj === '')
 		return def === undefined ? 0 : def;
-	var type = typeof(obj);
+	let type = typeof(obj);
 	return type === 'number' ? obj : (type !== 'string' ? obj.toString() : obj).parseInt(def);
 };
 
@@ -1646,7 +1632,7 @@ exports.getExtensionFromContentType = function(value) {
 	}
 };
 
-exports.getExtension = function(filename, raw) {
+exports.getExtension = function(filename, raw = false) {
 	var end = filename.length;
 	for (var i = filename.length - 1; i > 0; i--) {
 		var c = filename[i];
@@ -2534,10 +2520,6 @@ SP.hash = function(type, salt) {
 			var val = string_hash(str);
 			return type === true ? val >>> 0 : val;
 	}
-};
-
-global.HASH = function(value, type) {
-	return value.hash(type ? type : true);
 };
 
 SP.sign = function(key) {
@@ -5871,26 +5853,30 @@ exports.reader = function(items) {
 	return instance;
 };
 
-global.WAIT = function(fnValid, fnCallback, timeout, interval) {
+exports.wait = function(validator, callback, timeout = 5000, interval = 500) {
 
-	if (fnValid() === true)
-		return fnCallback(null, true);
+	if (!callback)
+		return new Promise((resolve, reject) => exports.wait(validator, err => err ? reject(err) : resolve(), timeout, interval));
+
+	if (validator() === true)
+		return callback(null, true);
 
 	var id_timeout = null;
 	var id_interval = setInterval(function() {
 
-		if (fnValid() === true) {
+		if (validator() === true) {
 			clearInterval(id_interval);
 			clearTimeout(id_timeout);
-			fnCallback && fnCallback(null, true);
+			callback && callback(null, true);
 		}
 
 	}, interval || 500);
 
 	id_timeout = setTimeout(function() {
 		clearInterval(id_interval);
-		fnCallback && fnCallback(new Error('Timeout'), false);
+		callback && callback(new Error('Timeout'), false);
 	}, timeout || 5000);
+
 };
 
 // Author: Peter Širka

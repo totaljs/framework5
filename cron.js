@@ -1,6 +1,8 @@
-// Cron utility
+// Total.js Cron utility
 // The MIT License
 // Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+
+'use strict';
 
 const Days = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa'];
 

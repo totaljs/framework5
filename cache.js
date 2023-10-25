@@ -1,3 +1,9 @@
+// Total.js Cache (in-memory)
+// The MIT License
+// Copyright 2012-2023 (c) Peter Širka <petersirka@gmail.com>
+
+'use strict';
+
 exports.set = function(key, value, expire = '5 minutes') {
 	global.NOW = new Date();
 	F.temporary.cache[key] = { value: value, expire: global.NOW.add(expire) };

@@ -1,4 +1,8 @@
-require('./utils');
+// Total.js HTML Parser
+// The MIT License
+// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+
+'use strict';
 
 function HTMLElement() {
 	this.children = [];

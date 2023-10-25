@@ -1,3 +1,7 @@
+// Total.js HTML/JS/CSS minificators
+// The MIT License
+// Copyright 2016-2023 (c) Peter Širka <petersirka@gmail.com>
+
 'use strict';
 
 const REG_HTML_1 = /[\n\r\t]+/g;

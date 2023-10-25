@@ -1,3 +1,9 @@
+// Total.js Globals
+// The MIT License
+// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+
+'use strict';
+
 global.ON = (name, fn) => F.on(name, fn);
 global.EMIT = (name, a, b, c, d, e, f, g) => F.emit(name, a, b, c, d, e, f, g);
 global.OFF = (name, fn) => F.off(name, fn);
@@ -37,6 +43,7 @@ global.REQUEST = F.TUtils.request;
 global.HASH = (val, type) => val.hash(type ? type : true);
 global.DIFFARR = F.TUtils.diffarr;
 global.U = F.TUtils;
+global.CLONE = F.TUtils.clone;
 
 // TMS
 global.SUBSCRIBE = F.TMS.subscribe;
@@ -46,3 +53,7 @@ global.NEWPUBLISH = F.TMS.newpublish;
 global.NEWSUBSCRIBE = F.TMS.newsubscribe;
 global.NEWCALL = F.TMS.newcall;
 global.TMSCLIENT = F.TMS.client;
+
+// API
+global.API = (name, schema, data, $) => F.TApi.exec(name, schema, data, $);
+global.NEWAPI = (name, callback) => F.TApi.newapi(name, callback);

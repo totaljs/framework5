@@ -1,3 +1,7 @@
+// Total.js TMS
+// The MIT License
+// Copyright 2022-2023 (c) Peter Širka <petersirka@gmail.com>
+
 const ErrorBuilder = F.TBuilders.ErrorBuilder;
 
 var Cache = {

@@ -1,3 +1,7 @@
+// Total.js Builders
+// The MIT License
+// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+
 'use strict';
 
 const REG_ARGS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;

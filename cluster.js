@@ -1,3 +1,5 @@
+'use strict';
+
 const Fs = require('fs');
 const Cluster = require('cluster');
 const CLUSTER_REQ = { TYPE: 'req' };

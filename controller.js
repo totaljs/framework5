@@ -2,6 +2,8 @@
 // The MIT License
 // Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
 
+'use strict';
+
 const REG_FILETMP = /\//g;
 const REG_RANGE = /bytes=/;
 const REG_ROBOT = /search|agent|bot|crawler|spider/i;

@@ -1,3 +1,5 @@
+'use strict';
+
 const Readable = require('stream').Readable;
 const Path = require('path');
 const Fs = require('fs');

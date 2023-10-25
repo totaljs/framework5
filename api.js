@@ -1,8 +1,13 @@
-var EVALUATOR = {};
+// API caller
+// The MIT License
+// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+
+'use strict';
+
 var cache = {};
 
 // Registers a new API type
-exports.evaluate = function(type, callback) {
+exports.newapi = function(type, callback) {
 
 	if (typeof(type) === 'function') {
 		callback = type;
@@ -12,7 +17,7 @@ exports.evaluate = function(type, callback) {
 	if (type.indexOf(',') !== -1) {
 		var arr = type.split(',').trim();
 		for (var m of arr)
-			exports.evaluate(m, callback);
+			exports.newapi(m, callback);
 		return;
 	}
 
@@ -22,9 +27,9 @@ exports.evaluate = function(type, callback) {
 	cache[lower] = lower;
 
 	if (callback)
-		EVALUATOR[lower] = callback;
+		F.apiservices[lower] = callback;
 	else
-		delete EVALUATOR[lower];
+		delete F.apiservices[lower];
 
 };
 
@@ -161,15 +166,15 @@ APICallProto.evaluate = function(err, response) {
 };
 
 function execapi(api) {
-	var conn = EVALUATOR[cache[api.options.name]] || EVALUATOR['*'];
+	var conn = F.apiservices[cache[api.options.name]] || F.apiservices['*'];
 	if (conn)
 		conn.call(api, api.options, (err, response) => api.evaluate(err, response));
 	else
 		api.evaluate('API is not initialized');
 }
 
-// Makes a new instances of API call
-exports.make = function(name, schema, data, $) {
+// Executes API
+exports.exec = function(name, schema, data, $) {
 	var api = new APICall();
 	api.options.name = cache[name] || name;
 	api.options.schema = schema;
@@ -178,3 +183,107 @@ exports.make = function(name, schema, data, $) {
 	setImmediate(execapi, api);
 	return api;
 };
+
+exports.newapi('TotalAPI,TAPI', function(opt, next) {
+
+	if (!F.config.$tapi && opt.schema !== 'check') {
+		next('totalapi_inactive');
+		return;
+	}
+
+	if (opt.data && typeof(opt.data) !== 'object')
+		opt.data = { value: opt.data };
+
+	var req = {};
+
+	req.method = 'POST';
+	req.url = 'https://' + F.config.$tapiurl + '.api.totaljs.com/' + opt.schema + '/';
+
+	if (opt.files) {
+		req.body = opt.data;
+		req.files = opt.files;
+	} else
+		req.body = JSON.stringify(opt.data);
+
+	req.type = 'json';
+	req.timeout = 60000;
+	req.keepalive = true;
+	req.headers = { 'x-token': opt.token || F.config.secret_totalapi || F.config.$tapisecret || '-', 'x-app': encodeURIComponent(F.config.name) };
+	req.custom = true;
+
+	req.callback = function(err, response) {
+
+		if (err) {
+			next(err.toString());
+			return;
+		}
+
+		var buffer = [];
+
+		// Error
+		if (response.status > 200) {
+			response.stream.on('data', chunk => buffer.push(chunk));
+			F.cleanup(response.stream, function() {
+				let output = Buffer.concat(buffer).toString('utf8');
+				let response = output.parseJSON();
+				next((response && response[0] && response[0].error) || output);
+			});
+			return;
+		}
+
+		if (!opt.output || opt.output === 'json' || opt.output === 'html' || opt.output === 'plain' || opt.output === 'text' || opt.output === 'base64' || opt.output === 'buffer' || opt.output === 'binary') {
+			response.stream.on('data', chunk => buffer.push(chunk));
+			F.cleanup(response.stream, function() {
+				let output = Buffer.concat(buffer);
+				if (opt.output === 'base64') {
+					output = output.toString('base64');
+				} else if (opt.output !== 'binary' && opt.output !== 'buffer') {
+					output = output.toString('utf8');
+					if (!opt.output || opt.output === 'json')
+						output = output.parseJSON(true);
+				}
+				next(null, output);
+			});
+			return;
+		}
+
+		if (opt.output === 'stream') {
+			next(null, response.stream);
+			return;
+		}
+
+		// FileStorage in the form: "#name id filename"
+		if (opt.output[0] === '#') {
+
+			var fsdata = null;
+			var fs = null;
+
+			if (opt.output[0] === '#') {
+				fsdata = opt.output.substring(1).split(' ');
+				fs = F.filestorage(fsdata[0]);
+			}
+
+			var type = (response.headers['content-type'] || '').toLowerCase();
+			var index = type.lastIndexOf(';');
+			if (index !== -1)
+				type = type.substring(0, index);
+
+			var ext = type ? F.TUtils.getExtensionFromContentType(type) : 'bin';
+			var id = fsdata[1] || UID();
+			var filename = fsdata[2] || id + '.' + ext;
+
+			response.stream.pause();
+			fs.save(id, filename, response.stream, next);
+			return;
+		}
+
+		var writer = F.Fs.createWriteStream(opt.output);
+		response.stream.pipe(writer);
+		F.cleanup(writer, function() {
+			opt.next(null, opt.output);
+		});
+
+	};
+
+	F.TUtils.request(req);
+});

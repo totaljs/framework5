@@ -1,5 +1,7 @@
 require('./index');
 
+'use strict';
+
 const Fs = require('fs');
 const Path = require('path');
 const CONSOLE = process.argv.indexOf('--restart') === -1;

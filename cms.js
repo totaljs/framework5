@@ -1,6 +1,8 @@
-// CMS module v1
+// Total.js CMS module
 // The MIT License
 // Copyright 2021 (c) Peter Širka <petersirka@gmail.com>
+
+'use strict';
 
 const SKIP_CLASSES = { CMS_hidden: 1, CMS_mv: 1, CMS_mh: 1, CMS_expression: 1, CMS_multiple: 1 };
 const VERSION = 1;

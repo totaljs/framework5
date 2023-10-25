@@ -1,8 +1,5 @@
 require('./index');
 
-// Constants
-const Fs = require('fs');
-
 // Variables
 var WATCHER = process.connected === true;
 var options;
@@ -46,17 +43,14 @@ function makestamp() {
 
 function restart() {
 	restarting && clearTimeout(restarting);
-	restarting = setTimeout(runapp, 100);
+	restarting = setTimeout(run, 100);
 }
 
-function runapp() {
+function run() {
 
 	restarting = null;
 
-	var Fork = require('child_process').fork;
-	var Fs = require('fs');
-	var Path = require('path');
-	var arr = CLONE(process.argv).slice(2);
+	var arr = F.TUtils.clone(process.argv).slice(2);
 	var port = arr.pop();
 	var directory = process.cwd();
 
@@ -64,10 +58,10 @@ function runapp() {
 		arr.push('--restart');
 
 	port && arr.push(port);
-	var filename = U.getName(process.argv[1] || 'index.js');
+	var filename = F.TUtils.getName(process.argv[1] || 'index.js');
 
-	pidname = Path.join(directory, filename.replace(/\.js$/, '.pid'));
-	app = Fork(Path.join(process.cwd(), filename), arr);
+	pidname = F.Path.join(directory, filename.replace(/\.js$/, '.pid'));
+	app = F.Fork(F.Path.join(process.cwd(), filename), arr);
 	app.on('message', function(msg) {
 		switch (msg) {
 			case 'total:eaddrinuse':
@@ -89,7 +83,7 @@ function runapp() {
 		}
 	});
 
-	Fs.writeFileSync(pidname, process.pid + '');
+	F.Fs.writeFileSync(pidname, process.pid + '');
 
 	app.on('exit', function() {
 
@@ -119,22 +113,15 @@ function init() {
 		delete options.watcher;
 
 		if (options.servicemode) {
-
-			LOAD(options.servicemode === true || options.servicemode === 1 ? '' : options.servicemode);
-
-			ON('ready', function() {
-				F.cache.init_timer();  // internal hack
-				F.$snapshot();
-			});
-
+			var types = options.servicemode === true || options.servicemode === 1 ? '' : options.servicemode.split(',').trim();
+			global.DEBUG = true;
+			F.load(types);
 			if (!process.connected)
 				F.console();
-
-		} else if (options.https)
-			HTTPS('release', options);
-		else
-			HTTP('release', options);
-
+		} else {
+			global.DEBUG = false;
+			F.http(options);
+		}
 		return;
 	}
 
@@ -144,7 +131,7 @@ function init() {
 			return;
 
 		process.isending = true;
-		Fs.unlink(pidname, NOOP);
+		F.Fs.unlink(pidname, NOOP);
 
 		if (app) {
 			unexpectedexit = true;
@@ -164,7 +151,7 @@ function init() {
 	process.on('exit', end);
 
 	setInterval(function() {
-		Fs.stat(pidname, function(err) {
+		F.Fs.stat(pidname, function(err) {
 			if (err) {
 				unexpectedexit = true;
 				process.kill(app.pid);
@@ -174,11 +161,10 @@ function init() {
 	}, 4000);
 
 	if (!process.connected && options.edit) {
-		require('./index');
 		require('./edit').init(options.edit.replace(/^http/, 'ws'));
-		setTimeout(runapp, 1000);
+		setTimeout(run, 1000);
 	} else
-		setImmediate(runapp);
+		setImmediate(run);
 }
 
 setTimeout(init, 50);

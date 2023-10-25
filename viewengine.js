@@ -1,3 +1,7 @@
+// Total.js ViewEngine
+// The MIT License
+// Copyright 20124-2023 (c) Peter Širka <petersirka@gmail.com>
+
 const REG_NOCOMPRESS = /@\{nocompress\s\w+}/gi;
 const REG_TAGREMOVE = /[^>](\r)\n\s{1,}$/;
 const REG_HELPERS = /helpers\.[a-z0-9A-Z_$]+\(.*?\)+/g;

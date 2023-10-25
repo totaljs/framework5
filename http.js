@@ -1,3 +1,9 @@
+// Total.js HTTP Server handler
+// The MIT License
+// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+
+'use strict';
+
 const TController = require('./controller');
 
 exports.listen = function(req, res) {

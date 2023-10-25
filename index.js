@@ -1,3 +1,7 @@
+// Total.js core
+// The MIT License
+// Copyright 2012-2023 (c) Peter Širka <petersirka@gmail.com>
+
 'use strict';
 
 const NODE_MODULES = { buffer: 1, child_process: 1, process: 1, fs: 1, events: 1, http: 1, https: 1, http2: 1, util: 1, net: 1, os: 1, path: 1, punycode: 1, readline: 1, repl: 1, stream: 1, string_decoder: 1, tls: 1, trace_events: 1, tty: 1, dgram: 1, url: 1, v8: 1, vm: 1, wasi: 1, worker_threads: 1, zlib: 1, crypto: 1, dns: 1 };
@@ -41,6 +45,7 @@ global.DEF = {};
 	F.modules = {};
 	F.plugins = {};
 	F.actions = {};
+	F.apiservices = {};
 	F.processing = {};
 	F.transformations = {};
 	F.flowstreams = {};
@@ -347,9 +352,10 @@ function unlink(arr, callback) {
 	CONF.version = '1.0.0';
 	CONF.author = '';
 	CONF.secret = F.syshash;
-	CONF.secret_encryption = null;
-	CONF.secret_csrf = null;
-	CONF.secret_tms = null;
+	CONF.secret_encryption = '';
+	CONF.secret_csrf = '';
+	CONF.secret_tapi = '';
+	CONF.secret_tms = '';
 	CONF.node_modules = 'node_modules';
 
 	// New internal configuration
@@ -393,6 +399,9 @@ function unlink(arr, callback) {
 	CONF.$cookiesamesite = 'Lax';
 	CONF.$cookiesecure = false;
 	CONF.$csrfexpiration = '30 minutes';
+
+	CONF.$tapi = true;
+	CONF.$tapiurl = 'eu';
 
 	CONF.$tms = false;
 	CONF.$tmsmaxsize = 256;
@@ -616,6 +625,9 @@ F.load = async function(types = [], callback) {
 	if (typeof(types) === 'string')
 		types = types.split(',').trim();
 
+	if (types.includes('release'))
+		global.DEBUG = false;
+
 	var list = async (path, extension) => new Promise(resolve => F.TUtils.ls(path, files => resolve(files), (isdir, path) => isdir ? true : path.indexOf('-bk') === -1 && path.indexOf('_bk') === -1 && F.TUtils.getExtension(path) === (extension || 'js')));
 	var read = async (path) => new Promise(resolve => F.Fs.readFile(path, 'utf8', (err, response) => resolve(response ? response : '')));
 
@@ -645,7 +657,7 @@ F.load = async function(types = [], callback) {
 			F.loadresource(F.TUtils.getName(resource).replace(/\.resource$/i, ''), await read(resource));
 	}
 
-	let loader = ['modules', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'middleware', 'flowstreams'];
+	let loader = ['modules', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'middleware'];
 	var files = [];
 	var tmp;
 
@@ -720,19 +732,18 @@ F.load = async function(types = [], callback) {
 				tmp = require(file.filename);
 				tmp.install && tmp.install();
 				break;
-
-			case 'flowstreams':
-				// @TODO: missing FlowStream implementation
-				break;
 		}
 	}
 
-	F.TFlow.init();
+	if (!types.length || types.includes('flowstreams'))
+		F.TFlow.init();
+
 	F.loadservices();
 	F.stats.compilation = Date.now() - beg;
 	F.isloaded = true;
-	callback && callback();
+	process.send && process.send('total:ready');
 
+	callback && callback();
 };
 
 F.require = function(name) {
@@ -1013,7 +1024,13 @@ F.http = function(opt) {
 
 		F.server = F.Http.createServer(F.THttp.listen);
 		F.server.on('upgrade', F.TWebSocket.listen);
-		F.server.listen(opt.port || F.config.$port, opt.ip || F.config.$ip);
+
+		if (opt.port)
+			F.config.$port = opt.port;
+		if (opt.ip)
+			F.config.$ip = opt.ip;
+
+		F.server.listen(F.config.$port, F.config.$ip);
 
 		CONF.$performance && F.server.on('connection', httptuningperformance);
 
@@ -1559,6 +1576,10 @@ function transform(items, opt, index) {
 }
 
 F.transform = function(name, value, callback, controller) {
+
+	if (typeof(callback) !== 'function')
+		return new Promise((resolve, reject) => F.transform(name, value, (err, response) => err ? reject(err) : resolve(response), controller));
+
 	var items = F.transformations[name];
 	if (items) {
 		let opt = new F.TBuilders.Options(controller, new F.TBuilders.ErrorBuilder());
@@ -1575,6 +1596,45 @@ F.makesourcemap = function() {
 
 F.audit = function() {
 	// @TODO: Not implemented: F.audit()
+};
+
+
+F.exit = function(signal) {
+
+	if (F.isexited)
+		return;
+
+	F.isexited = true;
+
+	if (!signal)
+		signal = 'SIGTERM';
+
+	for (let m in F.workers) {
+		let worker = F.workers[m];
+		try {
+			worker && worker.kill && worker.kill(signal);
+		} catch (e) {}
+	}
+
+	let key = '@exit';
+
+	F.$events[key] && F.emit(key, signal);
+
+	if (!F.isworker && process.send && process.connected) {
+		try {
+			process.send('total:stop');
+		} catch (e) {}
+	}
+
+	F.internal.timeouts && clearInterval(F.internal.timeouts);
+	F.internal.timeouts = null;
+
+	if (F.server) {
+		F.server.setTimeout(1);
+		F.server.close();
+	}
+
+	setTimeout(() => process.exit(1), 300);
 };
 
 function httptuningperformance(socket) {
@@ -1600,6 +1660,28 @@ process.on('uncaughtException', function(e) {
 	F.error(e, '');
 });
 */
+
+function ping() {
+	process.connected && process.send('total:ping');
+}
+
+process.on('message', function(msg, h) {
+
+	let key;
+
+	if (msg === 'total:debug')
+		F.TUtils.wait(() => F.isloaded, F.console, 10000, 500);
+	else if (msg === 'total:ping')
+		setImmediate(ping);
+	else if (msg === 'total:update') {
+		key = '@update';
+		F.$events[key] && F.emit(key);
+	} else if (msg === 'stop' || msg === 'exit' || msg === 'kill')
+		F.exit();
+
+	key = '@message';
+	F.$events[key] && F.emit(key, msg, h);
+});
 
 (function(F) {
 
@@ -1631,6 +1713,7 @@ process.on('uncaughtException', function(e) {
 	F.TJSONSchema = require('./jsonschema');
 	F.TImage = require('./image');
 	F.TCron = require('./cron');
+	F.TApi = require('./api');
 	F.TFlowStream = require('./flowstream');
 
 	// Settings
@@ -1665,6 +1748,8 @@ process.on('uncaughtException', function(e) {
 	F.ErrorBuilder = F.TBuilders.ErrorBuilder;
 	F.newaction = F.TBuilders.newaction;
 	F.action = F.TBuilders.action;
+	F.api = F.TApi.exec;
+	F.newapi = F.TApi.newapi;
 
 	// Needed "F"
 	F.TFlow = require('./flow');

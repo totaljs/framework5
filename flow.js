@@ -1,5 +1,7 @@
 // Internal module
 
+'use strict';
+
 const FlowStream = require('./flow-flowstream');
 const PING = { TYPE: 'ping' };
 const REG_BK = /-bk|_bk/i;

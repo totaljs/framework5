@@ -1,3 +1,9 @@
+// Total.js JSONSchemas
+// The MIT License
+// Copyright 2021-2023 (c) Peter Širka <petersirka@gmail.com>
+
+'use strict';
+
 require('./index');
 
 const REG_NUMBER = /[\d,.]+/;

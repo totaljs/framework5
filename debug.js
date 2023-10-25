@@ -1,44 +1,26 @@
-// Copyright 2012-2021 (c) Peter Širka <petersirka@gmail.com>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
+// Debug module (Watcher)
+// The MIT License
+// Copyright 2012-2023 (c) Peter Širka <petersirka@gmail.com>
 
-/**
- * @module FrameworkDebug
- * @version 4.0.0
- */
+'use strict';
 
 const Path = require('path');
 const Fs = require('fs');
-// const debugging = process.argv.indexOf('--watcher') !== -1;
-const debugging = process.connected === true;
 const Os = require('os');
-const isWindows = Os.platform().substring(0, 3).toLowerCase() === 'win';
+
+var Meta = {
+	iswatcher: process.connected !== true,
+	iswindows: Os.platform().substring(0, 3).toLowerCase() === 'win',
+	callback: null, // watcher callback
+	delay: null
+};
 
 var first = process.argv.indexOf('--restart') === -1;
 var options = null;
-var initdelay;
-var watchercallback;
 
 module.exports = function(opt) {
 
-	options = opt;
+	options = opt || {};
 
 	// options.ip = '127.0.0.1';
 	// options.port = parseInt(process.argv[2]);
@@ -61,66 +43,45 @@ module.exports = function(opt) {
 };
 
 module.exports.watcher = function(callback) {
-	initdelay && clearTimeout(initdelay);
-	initdelay = null;
-	watchercallback = callback;
+	Meta.delay && clearTimeout(Meta.delay);
+	Meta.delay = null;
+	Meta.callback = callback;
 	runwatching();
 };
 
 function runapp() {
-
 	!options && (options = {});
 	require('./index');
-
 	if (options.servicemode) {
-
-		var types = options.servicemode === true || options.servicemode === 1 ? '' : options.servicemode;
-		if (types instanceof Array)
-			types.push('debug');
-		else
-			types += (types ? ',' : '') + 'debug';
-
-		LOAD(types);
-
-		ON('ready', function() {
-			F.cache.init_timer(); // internal hack
-			F.$snapshot();
-		});
-
-	} else if (options.https)
-		HTTPS('debug', options);
-	else
-		HTTP('debug', options);
-
-	if (first)
-		EMIT('debug_start');
-	else
-		EMIT('debug_restart');
+		var types = options.servicemode === true || options.servicemode === 1 ? '' : options.servicemode.split(',').trim();
+		global.DEBUG = true;
+		F.load(types);
+	} else
+		F.http(options);
 }
 
 function runwatching() {
 
-	!options && (options = {});
+	if (!options)
+		options = {};
+
 	require('./index');
 
 	var directory = process.cwd();
-	var directory_root = directory;
+	var root = directory;
+
 	var LIVERELOADCHANGE = '';
-	const FILENAME = U.getName(process.argv[1] || 'index.js');
+
+	const FILENAME = F.TUtils.getName(process.argv[1] || 'index.js');
 	const VERSION = F.version_header;
-	const REG_CONFIGS = /configs\//g;
-	const REG_FILES = /config-debug|config-release|config|bundles\.debug|versions|sitemap|\.js$|\.ts$|\.flow|\.resource$|\.build$/i;
-	const REG_THEMES = /\/themes\//i;
+	const REG_FILES = /(config|bundles\.debug|\.js|\.ts|\.flow|\.resource)+$/i;
 	const REG_PUBLIC = /\/public\//i;
 	const REG_INDEX = new RegExp(FILENAME.replace(/\.js$/, '') + '_.*?\\.js$');
-	const REG_COMPONENTS = /(components|plugins|extensions)\/[a-z0-9-_]\.html|\.package\/.*?$/i;
-	const REG_JSONSCHEMAS = /jsonschemas\/.*?\.json$/i;
-	const REG_THEMES_INDEX = /themes(\/|\\)?[a-z0-9_.-]+(\/|\\)?index\.js$/i;
 	const REG_EXTENSION = /\.(js|ts|resource|package|bundle|build|flow|url)$/i;
 	const REG_RELOAD = /\.(js|ts|css|html|htm|jpg|png|gif|ico|svg|resource)$/i;
 	const isRELOAD = !!options.livereload;
 	const SPEED = isRELOAD ? 1000 : 1500;
-	const ARGV = CLONE(process.argv);
+	const ARGV = F.TUtils.clone(process.argv);
 	const PIDNAME = FILENAME.replace(/\.(js|ts)$/, '.pid');
 
 	if (isRELOAD && typeof(options.livereload) === 'string')
@@ -134,7 +95,7 @@ function runwatching() {
 
 	function app() {
 
-		if (!watchercallback) {
+		if (!Meta.callback) {
 			global.OBSOLETE = NOOP;
 			process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
 		}
@@ -152,92 +113,76 @@ function runwatching() {
 
 		const fork = require('child_process').fork;
 		const directories = [
-			Path.join(directory, CONF.directory_components),
-			Path.join(directory, CONF.directory_controllers),
-			Path.join(directory, CONF.directory_definitions),
-			Path.join(directory, CONF.directory_operations),
-			Path.join(directory, CONF.directory_extensions),
-			Path.join(directory, CONF.directory_modules),
-			Path.join(directory, CONF.directory_models),
-			Path.join(directory, CONF.directory_builds),
-			Path.join(directory, CONF.directory_jsonschemas),
-			Path.join(directory, CONF.directory_schemas),
-			Path.join(directory, CONF.directory_actions),
-			Path.join(directory, CONF.directory_tasks),
-			Path.join(directory, CONF.directory_resources),
-			Path.join(directory, CONF.directory_source),
-			Path.join(directory, CONF.directory_workers),
-			Path.join(directory, CONF.directory_packages),
-			Path.join(directory, CONF.directory_themes),
-			Path.join(directory, CONF.directory_middleware),
-			Path.join(directory, CONF.directory_configs),
-			Path.join(directory, CONF.directory_bundles),
-			Path.join(directory, CONF.directory_flowstreams),
+			Path.join(directory, 'controllers'),
+			Path.join(directory, 'definitions'),
+			Path.join(directory, 'extensions'),
+			Path.join(directory, 'modules'),
+			Path.join(directory, 'models'),
+			Path.join(directory, 'schemas'),
+			Path.join(directory, 'actions'),
+			Path.join(directory, 'resources'),
+			Path.join(directory, 'source'),
+			Path.join(directory, 'workers'),
+			Path.join(directory, 'middleware'),
+			Path.join(directory, 'bundles'),
+			Path.join(directory, 'flowstreams'),
 			Path.join(directory, '/startup/'),
-			Path.join(directory, '/threads/'),
 			Path.join(directory, '/plugins/')
 		];
 
-		if (global.THREAD)
-			directories.push(Path.join(directory, '/threads/' + global.THREAD + '/'));
-
-		const SRC = Path.join(directory, CONF.directory_src);
+		const SRC = Path.join(directory, '.src');
 		const prefix = '--------> ';
 
-		options.watch && options.watch.forEach(function(item) {
-			if (item[0] === '/')
-				item = item.substring(1);
-			if (item[item.length - 1] === '/')
-				item = item.substring(0, item.length - 1);
-			directories.push(Path.join(directory, item));
-		});
+		if (options.watch) {
+			for (let item of options.watch) {
+				if (item[0] === '/')
+					item = item.substring(1);
+				if (item[item.length - 1] === '/')
+					item = item.substring(0, item.length - 1);
+				directories.push(Path.join(directory, item));
+			}
+		}
 
+		var WS = null;
 		var files = {};
 		var force = false;
 		var changes = [];
 		var app = null;
-		var status = watchercallback ? 1 : 0;
+		var status = Meta.callback ? 1 : 0;
 		var pid = '';
-		var isLoaded = false;
-		var isSkip = false;
-		var isBUNDLE = false;
-		var blacklist = {};
+		var isloaded = false;
+		var skiprestart = false;
+		var isbundle = false;
+		var ignore = {};
 		var counter = 0;
-		var WS = null;
 		var speed = isRELOAD ? 1000 : 4000;
 
-		blacklist['/' + PIDNAME] = 1;
-		blacklist['/debug.pid'] = 1;
-		blacklist['/debug.js'] = 1;
-		blacklist['/bundle.json'] = 1;
-		blacklist['/package.json'] = 1;
-		blacklist['/readme.md'] = 1;
+		ignore['/' + PIDNAME] = 1;
+		ignore['/debug.pid'] = 1;
+		ignore['/debug.js'] = 1;
+		ignore['/bundle.json'] = 1;
+		ignore['/package.json'] = 1;
+		ignore['/readme.md'] = 1;
 
-		if (isRELOAD && !watchercallback) {
+		if (isRELOAD && !Meta.callback) {
 			if (typeof(options.livereload) === 'string') {
 				WEBSOCKETCLIENT(function(client) {
 					client.options.type = 'text';
-					client.on('open', function() {
-						WS = client;
-					});
-					client.on('close', function() {
-						WS = null;
-					});
+					client.on('open', () => WS = client);
+					client.on('close', () => WS = null);
 					client.connect('wss://livereload.totaljs.com/?hostname=' + encodeURIComponent(options.livereload));
 				});
 			} else {
-				var tmppath = Path.join(Os.tmpdir(), 'total4livereload');
+				var tmppath = Path.join(Os.tmpdir(), 'total5livereload');
 				Fs.mkdir(tmppath, function() {
 					F.console = NOOP;
-					WEBSOCKET('/', function() {
-						var self = this;
-						self.autodestroy(function() {
-							WS = null;
-						});
+					F.route('SOCKET / @text', function($) {
+						$.autodestroy(() => WS = null);
 						WS = self;
-					}, ['text']);
+					});
 					var port = typeof(options.livereload) === 'number' ? options.livereload : 35729;
-					HTTP('release', { port: port, directory: tmppath });
+					F.directory = tmppath;
+					F.http({ port: port });
 					console.log('> Live reload: ws://127.0.0.1:' + port);
 				});
 			}
@@ -245,23 +190,27 @@ function runwatching() {
 
 		if (skipbundle) {
 			try {
-				Fs.statSync(PATH.root(CONF.directory_bundles));
-				isBUNDLE = true;
+				Fs.statSync(F.path.root('bundles'));
+				isbundle = true;
 			} catch(e) {}
 		}
 
-		if (isBUNDLE || isRELOAD) {
-			directories.push(Path.join(directory, CONF.directory_public));
-			directories.push(Path.join(directory, CONF.directory_views));
+		if (isbundle || isRELOAD) {
+			directories.push(Path.join(directory, 'public'));
+			directories.push(Path.join(directory, 'views'));
 		}
 
-		function onFilter(path, isDirectory) {
+		function onFilter(path, isdir) {
 			var p = path.substring(directory.length);
-			if (isBUNDLE)
-				return isDirectory ? SRC !== path : !blacklist[p];
+			if (isbundle)
+				return isdir ? SRC !== path : !ignore[p];
 			if (isRELOAD)
-				return isDirectory ? true : REG_RELOAD.test(path);
-			return isDirectory && REG_THEMES.test(path) ? true : isDirectory ? true : !REG_PUBLIC.test(path) && (REG_EXTENSION.test(path) || REG_COMPONENTS.test(path) || REG_JSONSCHEMAS.test(path) || REG_CONFIGS.test(path) || REG_THEMES_INDEX.test(path));
+				return isdir ? true : REG_RELOAD.test(path);
+			if (isdir)
+				return true;
+			if (!REG_PUBLIC.test(path) && REG_EXTENSION.test(path))
+				return true;
+			return false;
 		}
 
 		function skiproot(filename) {
@@ -290,7 +239,7 @@ function runwatching() {
 				for (var i = 0; i < length; i++) {
 					var name = f[i];
 					if (files[name] === undefined)
-						files[name] = isLoaded ? 0 : null;
+						files[name] = isloaded ? 0 : null;
 				}
 
 				refresh();
@@ -303,7 +252,7 @@ function runwatching() {
 
 		function isViewPublic(filename) {
 
-			if (!isBUNDLE && !isRELOAD)
+			if (!isbundle && !isRELOAD)
 				return false;
 
 			var fn = filename.substring(directory.length);
@@ -337,7 +286,7 @@ function runwatching() {
 						LIVERELOADCHANGE = normalize(filename.replace(directory, ''));
 						var log = stamp.replace('#', 'REM') + prefix + LIVERELOADCHANGE;
 						if (tmp) {
-							if (isBUNDLE) {
+							if (isbundle) {
 								Fs.unlinkSync(Path.join(SRC, tmp));
 								console.log(log);
 							}
@@ -372,7 +321,7 @@ function runwatching() {
 								var tmp = isViewPublic(filename);
 								if (tmp) {
 									var skip = true;
-									if (isBUNDLE) {
+									if (isbundle) {
 										if (filename.lastIndexOf('--') === -1)
 											copyFile(filename, Path.join(SRC, tmp));
 										else
@@ -397,7 +346,7 @@ function runwatching() {
 				});
 			}, function() {
 
-				isLoaded = true;
+				isloaded = true;
 
 				if (status !== 1 || !force) {
 
@@ -431,23 +380,23 @@ function runwatching() {
 
 		function refresh_directory() {
 			counter++;
-			U.ls(directories, onComplete, onFilter);
+			F.TUtils.ls(directories, onComplete, onFilter);
 		}
 
 		function restart() {
 
-			if (watchercallback) {
+			if (Meta.callback) {
 				if (first)
 					first = false;
 				else
-					watchercallback(changes);
+					Meta.callback(changes);
 				return;
 			}
 
 			if (app !== null) {
 				try
 				{
-					isSkip = true;
+					skiprestart = true;
 					process.kill(app.pid);
 					if (options.inspector) {
 						setTimeout(restart, 1000);
@@ -476,7 +425,7 @@ function runwatching() {
 				arr.push('--restart');
 
 			port && arr.push(port);
-			app = fork(Path.join(directory_root, FILENAME), arr);
+			app = fork(Path.join(root, FILENAME), arr);
 
 			app.on('message', function(msg) {
 				switch (msg) {
@@ -499,13 +448,13 @@ function runwatching() {
 			app.on('exit', function() {
 
 				// checks unexpected exit
-				if (isSkip === false) {
+				if (skiprestart === false) {
 					app = null;
 					process.exit(1);
 					return;
 				}
 
-				isSkip = false;
+				skiprestart = false;
 				if (status === 255)
 					app = null;
 			});
@@ -530,7 +479,7 @@ function runwatching() {
 				return;
 			}
 
-			isSkip = true;
+			skiprestart = true;
 			process.kill(app.pid);
 			app = null;
 			process.exit(0);
@@ -540,7 +489,7 @@ function runwatching() {
 
 		if (process.pid > 0) {
 
-			!watchercallback && console.log(prefix.substring(8) + 'DEBUG PID: ' + process.pid + ' (v' + VERSION + ')');
+			!Meta.callback && console.log(prefix.substring(8) + 'DEBUG PID: ' + process.pid + ' (v' + VERSION + ')');
 
 			pid = Path.join(directory, PIDNAME);
 			Fs.writeFileSync(pid, process.pid + '');
@@ -550,7 +499,7 @@ function runwatching() {
 					if (err) {
 						Fs.unlink(pid, noop);
 						if (app !== null) {
-							isSkip = true;
+							skiprestart = true;
 							process.kill(app.pid);
 						}
 						process.exit(0);
@@ -572,7 +521,7 @@ function runwatching() {
 }
 
 function normalize(path) {
-	return isWindows ? path.replace(/\\/g, '/') : path;
+	return Meta.iswindows ? path.replace(/\\/g, '/') : path;
 }
 
 function init() {
@@ -580,23 +529,22 @@ function init() {
 	if (options.cluster && !options.threads) {
 		var cluster = options.cluster;
 		delete options.cluster;
-		require('total4').cluster.http(cluster, 'debug', options);
+		require('total5').cluster.http(cluster, 'debug', options);
 		return;
 	}
 
 	process.on('uncaughtException', e => e.toString().indexOf('ESRCH') == -1 && console.log(e));
 	process.title = 'total: debug';
 
-	if (debugging)
-		setImmediate(runapp);
-	else {
+	if (Meta.iswatcher) {
 		if (options.edit) {
 			require('./index');
 			require('./edit').init(options.edit.replace(/^http/, 'ws'));
 			setTimeout(runwatching, 1000);
 		} else
 			setImmediate(runwatching);
-	}
+	} else
+		setImmediate(runapp);
 }
 
-initdelay = setTimeout(init, 100);
+Meta.delay = setTimeout(init, 100);

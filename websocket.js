@@ -1,4 +1,4 @@
-// Total.js Controller
+// Total.js WebSocket
 // The MIT License
 // Copyright 2016-2023 (c) Peter Širka <petersirka@gmail.com> & Jozef Gula <gula.jozef@gmail.com>
 

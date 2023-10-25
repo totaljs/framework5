@@ -1,3 +1,9 @@
+// Total.js FlowStream
+// The MIT License
+// Copyright 2021-2023 (c) Peter Širka <petersirka@gmail.com>
+
+'use strict';
+
 const BLACKLISTID = { paused: 1, groups: 1, tabs: 1 };
 const REG_ARGS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
 const D = '__';
@@ -993,8 +999,8 @@ function newmessage(data) {
 	msg.instance = self;
 	msg.duration = msg.ts = Date.now();
 	msg.used = 1;
-	msg.main = self instanceof Flow ? self : self.main;
-	msg.processed = 1;
+	msg.main = self instanceof FlowStream ? self : self.main;
+	msg.processed = 0;
 	return msg;
 }
 
