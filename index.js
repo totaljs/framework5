@@ -32,7 +32,6 @@ global.DEF = {};
 (function(F) {
 
 	F.id = '';
-	F.bundling = true;
 	F.is5 = F.version = 5000;
 	F.version_header = '5';
 	F.version_node = process.version + '';
@@ -252,7 +251,7 @@ global.DEF = {};
 
 		F.temporary.path[key] = true;
 
-		var is = F.isWindows;
+		var is = F.iswindows;
 		var s = '';
 
 		if (p[0] === '/') {
@@ -618,8 +617,7 @@ F.load = async function(types = [], callback) {
 
 	var beg = Date.now();
 
-	F.bundling = true;
-
+	await F.TBundles.extract();
 	await F.clear(true);
 
 	if (typeof(types) === 'string')
@@ -1073,7 +1071,7 @@ F.logger = function(enable) {
 	else
 		path = F.Path.join(path, 'logs/');
 
-	PATH.mkdir(path);
+	F.path.mkdir(path);
 
 	var output = F.Fs.createWriteStream(F.Path.join(path, 'debug.log'), { flags: 'a' });
 	var logger = new Console({ stdout: output, stderr: output });
@@ -1424,28 +1422,26 @@ F.clear = function(init = true, callback) {
 	if (dir[dir.length - 1] !== '/')
 		dir += '/';
 
-	if (F.isWindows)
+	if (F.iswindows)
 		dir = dir.replaceAll('/', '\\');
 
 	if (init) {
 
 		if (!F.config.$cleartemp) {
-			if (F.bundling) {
-				// clears only JS and CSS files
-				F.TUtils.ls(dir, function(files) {
-					F.path.unlink(files, callback);
-				}, function(filename, folder) {
-					if (folder || (plus && !filename.substring(dir.length).startsWith(plus)))
-						return false;
-					var ext = F.TUtils.getExtension(filename);
-					return ext === 'js' || ext === 'css' || ext === 'tmp' || ext === 'upload' || ext === 'html' || ext === 'htm';
-				});
-			}
+			// clears only JS and CSS files
+			F.TUtils.ls(dir, function(files) {
+				F.path.unlink(files, callback);
+			}, function(filename, folder) {
+				if (folder || (plus && !filename.substring(dir.length).startsWith(plus)))
+					return false;
+				var ext = F.TUtils.getExtension(filename);
+				return ext === 'js' || ext === 'css' || ext === 'tmp' || ext === 'upload' || ext === 'html' || ext === 'htm';
+			});
 			return;
 		}
 	}
 
-	if (!pathexists(dir) || !F.bundling) {
+	if (!pathexists(dir)) {
 		callback && callback();
 		return;
 	}
@@ -1598,6 +1594,370 @@ F.audit = function() {
 	// @TODO: Not implemented: F.audit()
 };
 
+F.restore = function(filename, target, callback, filter) {
+
+	if (!callback)
+		return new Promise((resolve, reject) => F.restore(filename, target, (err, response) => err ? reject(err) : resolve(response), filter));
+
+	var buffer_key = Buffer.from(':');
+	var buffer_new = Buffer.from('\n');
+	var buffer_dir = Buffer.from('#');
+	var cache = {};
+	var data = null;
+	var type = 0;
+	var item = null;
+	var stream = typeof(filename) === 'string' ? F.Fs.createReadStream(filename) : filename;
+	var index = 0;
+	var parser = {};
+	var open = {};
+	var pending = 0;
+	var end = false;
+	var output = {};
+	var concat = [];
+
+	output.files = 0;
+	output.size = 0;
+	output.path = target;
+
+	parser.parse_key = function() {
+		index = data.indexOf(buffer_key);
+		if (index !== -1) {
+			index++;
+			item = data.slice(0, index - 1).toString('utf8').trim();
+			data = data.slice(index + (data[index] === 32 ? 1 : 0));
+			type = 1;
+			parser.next();
+		}
+	};
+
+	parser.parse_meta = function() {
+
+		var path = F.Path.join(target, item);
+
+		// Is directory?
+		if (data[0] === buffer_dir[0]) {
+			if (!cache[path]) {
+				cache[path] = true;
+				if (!filter || filter(item, true) !== false)
+					F.path.mkdir(path);
+			}
+			type = 3;
+			parser.next();
+			return;
+		}
+
+		let filename = null;
+
+		if (!cache[path]) {
+
+			cache[path] = true;
+
+			var npath = path.substring(0, path.lastIndexOf(F.iswindows ? '\\' : '/'));
+			filename = filter && filter(item, false);
+
+			if (!filter || filename || filename == null) {
+				F.path.mkdir(npath);
+			} else {
+				type = 5; // skip
+				parser.next();
+				return;
+			}
+		}
+
+		if (typeof(filename) === 'string')
+			path = F.Path.join(target, filename);
+
+		// File
+		type = 2;
+		var tmp = open[item] = {};
+		tmp.path = path;
+		tmp.name = item;
+		tmp.writer = F.Fs.createWriteStream(path);
+		tmp.zlib = F.Zlib.createGunzip();
+		tmp.zlib.$self = tmp;
+		pending++;
+		output.files++;
+
+		tmp.zlib.on('error', function(e) {
+			pending--;
+			let tmp = this.$self;
+			tmp.writer.end();
+			tmp.writer = null;
+			tmp.zlib = null;
+			delete open[tmp.name];
+			F.error(e, 'bundling', path);
+		});
+
+		tmp.zlib.on('data', function(chunk) {
+			output.size += chunk.length;
+			this.$self.writer.write(chunk);
+		});
+
+		tmp.zlib.on('end', function() {
+			pending--;
+			let tmp = this.$self;
+			tmp.writer.end();
+			tmp.writer = null;
+			tmp.zlib = null;
+			delete open[tmp.name];
+		});
+
+		parser.next();
+	};
+
+	parser.parse_dir = function() {
+		index = data.indexOf(buffer_new);
+		if (index !== -1) {
+			data = data.slice(index + 1);
+			type = 0;
+		}
+		parser.next();
+	};
+
+	parser.parse_data = function() {
+
+		index = data.indexOf(buffer_new);
+
+		var skip = false;
+
+		if (index !== -1)
+			type = 0;
+
+		if (type) {
+			var remaining = data.length % 4;
+			if (remaining) {
+				open[item].zlib.write(Buffer.from(data.slice(0, data.length - remaining).toString('ascii'), 'base64'));
+				data = data.slice(data.length - remaining);
+				skip = true;
+			} else {
+				open[item].zlib.write(Buffer.from(data.toString('ascii'), 'base64'));
+				data = null;
+			}
+		} else {
+			open[item].zlib.end(Buffer.from(data.slice(0, index).toString('ascii'), 'base64'));
+			data = data.slice(index + 1);
+		}
+
+		!skip && data && data.length && parser.next();
+	};
+
+	parser.next = function() {
+		switch (type) {
+			case 0:
+				parser.parse_key();
+				break;
+			case 1:
+				parser.parse_meta();
+				break;
+			case 2:
+				parser.parse_data();
+				break;
+			case 3:
+				parser.parse_dir();
+				break;
+			case 5:
+				index = data.indexOf(buffer_new);
+				if (index === -1)
+					data = null;
+				else {
+					data = data.slice(index + 1);
+					type = 0;
+					parser.next();
+				}
+				break;
+		}
+
+		end && !data.length && callback && callback(null, output);
+	};
+
+	parser.end = function() {
+		if (callback) {
+			if (pending)
+				setTimeout(parser.end, 100);
+			else if (end && !data.length)
+				callback(null, output);
+		}
+	};
+
+	stream.on('data', function(chunk) {
+
+		if (data) {
+			concat[0] = data;
+			concat[1] = chunk;
+			data = Buffer.concat(concat);
+		} else
+			data = chunk;
+
+		parser.next();
+	});
+
+	CLEANUP(stream, function() {
+		end = true;
+		parser.end();
+	});
+
+	stream.resume();
+
+};
+
+F.backup = function(filename, files, callback, filter) {
+
+	if (!callback)
+		return new Promise((resolve, reject) => F.backup(filename, files, (err, response) => err ? reject(err) : resolve(response), filter));
+
+	var padding = 100;
+	var path = files instanceof Array ? F.path.root() : files;
+
+	if (!(files instanceof Array))
+		files = [''];
+
+	var counter = 0;
+	var totalsize = 0;
+	var unlink = typeof(filename) === 'string' ? F.Fs.unlink : (filename, callback) => callback();
+	var concat = [];
+	var gzipoptions = { memLevel: 9 };
+
+	unlink(filename, function() {
+
+		files.sort(function(a, b) {
+			let ac = a.split('/');
+			let bc = b.split('/');
+			if (ac.length < bc.length)
+				return -1;
+			else if (ac.length > bc.length)
+				return 1;
+			return a.localeCompare(b);
+		});
+
+		var clean = function(path, files) {
+			let index = 0;
+			while (true) {
+				let filename = files[index];
+				if (!filename)
+					break;
+				if (filename.substring(0, path.length) === path)
+					files.splice(index, 1);
+				else
+					index++;
+			}
+		};
+
+		var writer = typeof(filename) === 'string' ? F.Fs.createWriteStream(filename) : filename;
+
+		writer.on('finish', function() {
+			callback && callback(null, { filename: filename, files: counter, size: totalsize });
+		});
+
+		var lastchar = path[path.length - 1];
+		var cleanpath = lastchar === '/' || lastchar === '\\' ? path.substring(0, path.length - 1) : path;
+
+		files.wait(function(item, next) {
+
+			var file = F.Path.join(path, item);
+
+			if (F.iswindows)
+				item = item.replace(/\\/g, '/');
+
+			if (item[0] !== '/')
+				item = '/' + item;
+
+			F.Fs.stat(file, function(err, stats) {
+
+				if (err) {
+					F.error(err, 'BACKUP()', filename);
+					next();
+					return;
+				}
+
+				if (stats.isSocket()) {
+					next();
+					return;
+				}
+
+				if (stats.isDirectory()) {
+
+					var dir = item.replace(/\\/g, '/');
+					if (dir[dir.length - 1] !== '/')
+						dir += '/';
+
+					if (filter && !filter(dir, true))
+						return next();
+
+					F.TUtils.ls(file, function(f, d) {
+
+						var length = path.length;
+						if (path[path.length - 1] === '/')
+							length--;
+
+						var processdir = function() {
+
+							var dir = d.shift();
+							if (dir == null) {
+								for (var i = 0; i < f.length; i++)
+									files.push(f[i].substring(length));
+								next();
+								return;
+							}
+
+							if (filter && !filter(dir.substring(length), true)) {
+								clean(dir, f, true);
+								clean(dir, d, true);
+							} else {
+								var tmp = Buffer.from(dir.substring(length).padRight(padding) + ': #\n', 'utf8');
+								writer.write(tmp);
+								totalsize += tmp.length;
+							}
+
+							processdir();
+						};
+
+						processdir();
+
+					});
+					return;
+				}
+
+				if (filter && !filter(file.substring(cleanpath.length), false)) {
+					next();
+					return;
+				}
+
+				var data = Buffer.alloc(0);
+				var tmp = Buffer.from(item.padRight(padding) + ': ');
+
+				totalsize += tmp.length;
+				writer.write(tmp);
+
+				F.Fs.createReadStream(file).pipe(F.Zlib.createGzip(gzipoptions)).on('data', function(chunk) {
+
+					concat[0] = data;
+					concat[1] = chunk;
+					data = Buffer.concat(concat);
+
+					let remaining = data.length % 3;
+					if (remaining) {
+						let tmp = data.slice(0, data.length - remaining).toString('base64');
+						writer.write(tmp, 'utf8');
+						data = data.slice(data.length - remaining);
+						totalsize += tmp.length;
+					}
+
+				}).on('end', function() {
+					let tmp = data.length ? data.toString('base64') : '';
+					data.length && writer.write(tmp);
+					writer.write('\n', 'utf8');
+					totalsize += tmp.length + 1;
+					counter++;
+					setImmediate(next);
+				}).on('error', function(err) {
+					F.error(err, 'F.backup', file);
+					setImmediate(next);
+				});
+
+			});
+		}, () => writer.end());
+	});
+};
 
 F.exit = function(signal) {
 
@@ -1715,10 +2075,11 @@ process.on('message', function(msg, h) {
 	F.TCron = require('./cron');
 	F.TApi = require('./api');
 	F.TFlowStream = require('./flowstream');
+	F.TBundles = require('./bundles');
 
 	// Settings
 	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
-	F.isWindows = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
+	F.iswindows = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
 	F.syshash = (__dirname + '-' + F.Os.hostname() + '-' + F.Os.platform() + '-' + F.Os.arch() + '-' + F.Os.release() + '-' + F.Os.tmpdir() + JSON.stringify(process.versions)).md5();
 	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
 

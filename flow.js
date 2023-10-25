@@ -88,6 +88,11 @@ FS.init = function(directory, callback) {
 
 	F.Fs.readdir(directory, function(err, files) {
 
+		if (err) {
+			callback();
+			return;
+		}
+
 		var load = [];
 
 		for (var m of files) {
