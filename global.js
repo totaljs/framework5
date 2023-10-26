@@ -32,6 +32,7 @@ global.CACHE = F.cache;
 global.NEWACTION = F.TBuilders.newaction;
 global.ACTION = F.TBuilders.action;
 global.TEMPLATE = F.template;
+global.FILESTORAGE = F.filestorage;
 
 global.CORS = function(origin) {
 	CONF.$cors = origin || '*';

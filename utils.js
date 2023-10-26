@@ -33,6 +33,7 @@ const REG_DATE = /(\d{1,2}\.\d{1,2}\.\d{4})|(\d{4}-\d{1,2}-\d{1,2})|(\d{1,2}:\d{
 const REG_DATEFORMAT = /YYYY|yyyy|YY|yy|MMMM|MMM|MM|M|dddd|DDDD|DDD|ddd|DD|dd|D|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
 const REG_STRFORMAT = /\{\d+\}/g;
 const REG_ASCII = /[^\u0000-\u007e]/g;
+const REG_TRAVELSE = /\.\/|%/; // ./ | % in the URL address
 
 const QUERIFYMETHODS = { GET: 1, POST: 1, DELETE: 1, PUT: 1, PATCH: 1, API: 1 };
 
@@ -6857,6 +6858,10 @@ exports.parseURI2 = function(url) {
 		else
 			split = url.split('/').slice(1);
 	}
+
+	// Stops path travelsation outside of "public" directory
+	if (index != -1)
+		url = url.replace(REG_TRAVELSE, '');
 
 	return { key: url.toLowerCase(), pathname: url, search: search, file: index != -1, ext: index == -1 ? '' : url.substring(index + 1), split: split };
 };

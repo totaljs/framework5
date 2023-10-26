@@ -80,8 +80,8 @@ APICallProto.done = function($, callback) {
 	t.$callback = function(err, response) {
 		if (err)
 			$.invalid(err);
-		else
-			callback && callback(response);
+		else if (callback)
+			callback(response);
 		t.free();
 	};
 	return t;

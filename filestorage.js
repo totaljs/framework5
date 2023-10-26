@@ -7,14 +7,14 @@
 const IMAGES = { jpg: 1, png: 1, gif: 1, svg: 1, jpeg: 1, heic: 1, heif: 1, webp: 1, tiff: 1, bmp: 1 };
 const HEADERSIZE = 2000;
 const MKDIR = { recursive: true };
-const GZIPFILE = { memLevel: 9 };
+const GZIP_FILE = { memLevel: 9 };
 
 const REG_RANGE = /bytes=/;
 const REG_CLEAN = /^[\s]+|[\s]+$/g;
 
 var CONCAT = [null, null];
 
-function FileDB(name, directory) {
+function FileStorage(name, directory) {
 
 	var t = this;
 
@@ -29,11 +29,6 @@ function FileDB(name, directory) {
 	t.ext = '.file';
 	t.pause = false;
 
-	F.on('service', function(counter) {
-		if (counter % 10)
-			t.cache = {};
-	});
-
 	t.retrysave = function(id, name, filename, callback, custom, expire, headers) {
 		t._save(id, name, filename, callback, custom, expire, headers);
 	};
@@ -45,7 +40,7 @@ function FileDB(name, directory) {
 	t.storage(directory);
 }
 
-const FP = FileDB.prototype;
+const FP = FileStorage.prototype;
 
 FP.storage = function(value) {
 	var self = this;
@@ -57,7 +52,7 @@ FP.storage = function(value) {
 
 FP.count = function(callback) {
 	var self = this;
-	NOSQL('~' + self.logger).scalar('sum', 'size').callback(function(err, response) {
+	NOSQL(self.logger).scalar('sum', 'size').callback(function(err, response) {
 		response.size = response.sum;
 		self.size = response.size;
 		self.total = response.count;
@@ -124,6 +119,11 @@ FP._save = function(id, name, filename, callback, custom, expire, headers) {
 		return self;
 	}
 
+	if (!filename) {
+		filename = name;
+		name = F.TUtils.getName(name);
+	}
+
 	var directory = self.makedirectory(id);
 	var filenameto = F.Path.join(directory, id + '.file');
 
@@ -150,9 +150,11 @@ FP._save = function(id, name, filename, callback, custom, expire, headers) {
 				else
 					callback(F.TUtils.httpstatus(response.status));
 			};
-			REQUEST(opt);
+
+			F.TUtils.request(opt);
 		} else
 			self.saveforce(id, name, filename, filenameto, callback, custom, expire);
+
 	} else {
 		F.Fs.mkdir(directory, MKDIR, function(err) {
 			if (err)
@@ -177,7 +179,7 @@ FP._save = function(id, name, filename, callback, custom, expire, headers) {
 						else
 							callback(F.TUtils.httpstatus(response.status));
 					};
-					REQUEST(opt);
+					F.TUtils.request(opt);
 				} else
 					self.saveforce(id, name, filename, filenameto, callback, custom, expire);
 			}
@@ -431,7 +433,7 @@ FP._readbuffer = function(id, callback) {
 };
 
 FP.browse = function(callback) {
-	var db = NOSQL('~' + this.logger).find();
+	var db = NOSQL(this.logger).find();
 	if (callback)
 		db.$callback = callback;
 	return db;
@@ -528,8 +530,7 @@ FP._rename = function(id, newname, callback) {
 					F.Fs.close(fd, NOOP);
 				} else {
 					meta.id = id;
-					NOSQL('~' + self.logger).modify(meta).id(id);
-					// Fs.appendFile(self.logger, JSON.stringify(meta) + '\n', NOOP);
+					NOSQL(self.logger).modify(meta).id(id);
 					F.Fs.close(fd, () => callback(null, meta));
 				}
 			});
@@ -551,8 +552,7 @@ FP._remove = function(id, callback) {
 	var self = this;
 	var filename = F.Path.join(self.makedirectory(id), id + '.file');
 	F.Fs.unlink(filename, function(err) {
-		NOSQL('~' + self.logger).remove().id(id);
-		// Fs.appendFile(self.logger, JSON.stringify({ id: id, removed: true, date: NOW = new Date() }) + '\n', NOOP);
+		NOSQL(self.logger).remove().id(id);
 		callback && callback(err);
 	});
 	return self;
@@ -569,7 +569,7 @@ FP.clean = function(callback) {
 FP._clean = function(callback) {
 
 	var self = this;
-	var db = NOSQL('~' + self.logger);
+	var db = NOSQL(self.logger);
 
 	db.find().where('expire', '<', NOW).callback(function(err, files) {
 
@@ -648,7 +648,7 @@ FP._backup = function(filename, callback) {
 					totalsize += tmp.length;
 					writer.write(tmp);
 
-					F.Fs.createReadStream(filename).pipe(F.Zlib.createGzip(GZIPFILE)).on('data', function(chunk) {
+					F.Fs.createReadStream(filename).pipe(F.Zlib.createGzip(GZIP_FILE)).on('data', function(chunk) {
 
 						CONCAT[0] = data;
 						CONCAT[1] = chunk;
@@ -950,116 +950,117 @@ FP._image = function(id, callback) {
 	return self;
 };
 
-FP.res = function(res, options, checkcustom) {
+FP.http = function(ctrl, opt) {
 
 	var self = this;
-	var req = res.req;
 
-	if (!DEBUG && req.$key && F.temporary.notfound[req.$key] !== undefined) {
-		res.throw404();
-		return res;
+	if (F.temporary.notfound[ctrl.uri.key]) {
+		ctrl.fallback(404);
+		return;
 	}
 
-	var id = options.id || '';
+	var id = opt.id || '';
 
 	self.readmeta(id, function(err, obj, filename, fd) {
 
-		if (err || (obj.expire && obj.expire < NOW) || (checkcustom && checkcustom(obj) == false)) {
-			if (!DEBUG)
-				F.temporary.notfound[F.createTemporaryKey(req)] = true;
-			fd && F.Fs.close(fd, NOOP);
-			res.throw404();
+		fd && F.Fs.close(fd, NOOP);
+
+		if (err || (obj.expire && obj.expire < NOW) || (opt.check && opt.check(obj) == false)) {
+			F.temporary.notfound[ctrl.uri.key] = true;
+			ctrl.fallback(404);
 			return;
 		}
 
 		F.stats.performance.open++;
 
-		var utc = obj.date ? obj.date.toUTCString() : '';
+		var date = obj.date ? obj.date.toUTCString() : '';
+		var response = ctrl.response;
 
-		if (!options.download && req.headers['if-modified-since'] === utc) {
-			F.Fs.close(fd, NOOP);
-			res.extension = obj.ext || F.TUtils.getExtension(obj.name);
-			F.$file_notmodified(res, utc);
+		if (!opt.download && ctrl.headers['if-modified-since'] === date) {
+			response.status = 304;
+			response.headers['cache-control'] = 'public, max-age=11111111';
+			response.headers['last-modified'] = date;
+			ctrl.flush();
+			F.stats.response.notmodified++;
+			return;
+		}
+
+		// Resized image?
+		if (!DEBUG && F.temporary.path[ctrl.uri.key]) {
+			ctrl.resume();
+			return;
+		}
+
+		F.stats.performance.open++;
+
+		if (opt.download) {
+			response.headers['content-disposition'] = 'attachment; filename*=utf-8\'\'' + encodeURIComponent(opt.download === true ? obj.name : typeof(opt.download) === 'function' ? opt.download(obj.name, obj.type) : opt.download);
+		} else
+			response.headers['last-modified'] = date;
+
+		if (obj.width && obj.height) {
+			response.headers['x-width'] = obj.width;
+			response.headers['x-height'] = obj.height;
+		}
+
+		response.headers['x-size'] = obj.size;
+
+		if (opt.image) {
+			/*
+			res.opt.stream = { filename: filename, start: HEADERSIZE, custom: true };
+			res.opt.make = opt.make;
+			res.opt.cache = opt.cache !== false;
+			res.opt.persistent = false;
+			res.$image();
+			*/
 		} else {
 
-			if (!DEBUG && req.$key && F.temporary.path[req.$key]) {
-				F.Fs.close(fd, NOOP);
-				res.$file();
-				return res;
-			}
+			var range = ctrl.headers.range;
+			if (range) {
 
-			F.stats.performance.open++;
-			res.options.type = obj.type;
-			res.options.lastmodified = true;
+				var arr = range.replace(REG_RANGE, '').split('-');
+				var beg = (arr[0] ? +arr[0] : 0);
+				var end = (arr[1] ? +arr[1] : 0);
 
-			!options.headers && (options.headers = {});
+				if (isNaN(beg) || isNaN(end)) {
+					ctrl.fallback(404);
+					return;
+				}
 
-			if (options.download) {
-				res.options.download = options.download === true ? obj.name : typeof(options.download) === 'function' ? options.download(obj.name, obj.type) : options.download;
-			} else
-				options.headers['last-modified'] = utc;
+				if (end <= 0)
+					end = beg + ((1024 * 1024) * 5); // 5 MB
 
-			if (obj.width && obj.height) {
-				options.headers['x-width'] = obj.width;
-				options.headers['x-height'] = obj.height;
-			}
+				if (beg > end) {
+					beg = 0;
+					end = obj.size - 1;
+				}
 
-			options.headers['x-Size'] = obj.size;
-			res.options.headers = options.headers;
-			res.options.done = options.done;
+				if (end > obj.size)
+					end = obj.size - 1;
 
-			F.Fs.close(fd, NOOP);
+				if (beg >= end || beg < 0) {
+					ctrl.fallback(404);
+					return;
+				}
 
-			if (options.image) {
-				res.options.stream = { filename: filename, start: HEADERSIZE, custom: true };
-				res.options.make = options.make;
-				res.options.cache = options.cache !== false;
-				res.options.persistent = false;
-				res.$image();
+				var length = (end - beg) + 1;
+
+				response.status = 206;
+				response.headers['accept-ranges'] = 'bytes';
+				response.headers['cache-control'] = DEBUG ? 'private, no-cache, no-store, max-age=0' : 'public, max-age=11111111';
+				response.headers['content-length'] = length;
+				response.headers['content-range'] = 'bytes ' + beg + '-' + end + '/' + obj.size;
+				response.headers['content-type'] = obj.type;
+
+				if (F.config.$xpoweredby)
+					response.headers['x-powered-by'] = F.config.$xpoweredby;
+
+				ctrl.res.writeHead(response.status, response.headers);
+				F.Fs.createReadStream(filename, { flags: 'r', mode: '0666', autoClose: true, start: HEADERSIZE + beg, end: end + HEADERSIZE }).pipe(ctrl.res);
+
 			} else {
-
-				var range = req.headers.range;
-				if (range) {
-
-					var arr = range.replace(REG_RANGE, '').split('-');
-					var beg = (arr[0] ? +arr[0] : 0);
-					var end = (arr[1] ? +arr[1] : 0);
-
-					if (isNaN(beg) || isNaN(end)) {
-						res.throw404();
-						return;
-					}
-
-					if (end <= 0)
-						end = beg + ((1024 * 1024) * 5); // 5 MB
-
-					if (beg > end) {
-						beg = 0;
-						end = obj.size - 1;
-					}
-
-					if (end > obj.size)
-						end = obj.size - 1;
-
-					if (beg >= end || beg < 0) {
-						res.throw404();
-						return;
-					}
-
-					var length = (end - beg) + 1;
-					res.options.code = 206;
-					res.options.headers = {};
-					res.options.headers['cache-control'] = DEBUG ? 'private, no-cache, no-store, max-age=0' : 'public, max-age=11111111';
-					res.options.headers['accept-ranges'] = 'bytes';
-					res.options.headers['content-length'] = length;
-					res.options.headers['content-range'] = 'bytes ' + beg + '-' + end + '/' + obj.size;
-					res.options.stream = F.Fs.createReadStream(filename, { flags: 'r', mode: '0666', autoClose: true, start: HEADERSIZE + beg, end: end + HEADERSIZE });
-
-				} else
-					res.options.stream = F.Fs.createReadStream(filename, { start: HEADERSIZE });
-
-				res.options.compress = options.nocompress ? false : true;
-				res.$stream();
+				var stream = F.Fs.createReadStream(filename, { start: HEADERSIZE });
+				ctrl.stream(obj.type, stream);
 			}
 		}
 
@@ -1080,6 +1081,8 @@ FP._readbase64 = function(id, callback) {
 	return self;
 };
 
-exports.open = function(name, directory) {
-	return new FileDB(name, directory);
+exports.create = function(name, directory) {
+	if (!directory)
+		directory = F.path.databases('fs-' + name + '/');
+	return new FileStorage(name, directory);
 };

@@ -274,7 +274,8 @@ Controller.prototype.flush = function() {
 	let buffer = response.value ? response.value instanceof Buffer ? response.value : Buffer.from(response.value, 'utf8') : null;
 	let type = response.headers['content-type'];
 
-	response.headers['x-powered-by'] = F.config.$xpoweredby;
+	if (F.config.$xpoweredby)
+		response.headers['x-powered-by'] = F.config.$xpoweredby;
 
 	// GZIP compression
 	if (F.config.$httpcompress && buffer && accept && buffer.length > 256 && accept.indexOf('gzip') !== -1) {
@@ -415,18 +416,46 @@ Controller.prototype.stream = function(type, stream, download) {
 	if (download && typeof(download) === 'string')
 		response.headers['content-disposition'] = 'attachment; filename*=utf-8\'\'' + encodeURIComponent(download);
 
+	var accept = ctrl.headers['accept-encoding'];
+	var compress = F.config.$httpcompress && accept && CHECK_COMPRESSION[type] && accept.indexOf('gzip') !== -1;
+
+	if (response.headers.expires)
+		delete response.headers.expires;
+
+	response.headers.etag = '858' + F.config.$httpetag;
+
+	if (CHECK_CHARSET[type])
+		type += '; charset=utf-8';
+
+	response.headers['content-type'] = type;
+
+	if (compress)
+		response.headers['content-encoding'] = 'gzip';
+
 	ctrl.res.writeHead(response.status, response.headers);
-	ctrl.res.end();
+
+	if (compress)
+		stream.pipe(F.Zlib.createGzip(GZIP_STREAM)).pipe(ctrl.res);
+	else
+		stream.pipe(ctrl.res);
+
 	F.stats.response.stream++;
 };
 
-Controller.prototype.filefs = function(id) {
+Controller.prototype.filefs = function(name, id, download, checkmeta) {
 
 	var ctrl = this;
 
 	if (ctrl.destroyed)
 		return;
 
+	var opt = {};
+
+	opt.id = id;
+	opt.download = download;
+	opt.check = checkmeta;
+
+	F.filestorage(name).http(ctrl, opt);
 };
 
 Controller.prototype.binary = function(buffer, type, download) {

@@ -185,7 +185,7 @@ function makefilter(db, opt, callback) {
 	switch (exec) {
 		case 'find':
 			isread = true;
-			db.find().assign(builder).$callback = callback;
+			db.find2().assign(builder).$callback = callback;
 			break;
 		case 'count':
 			isread = true;

@@ -49,6 +49,7 @@ global.DEF = {};
 	F.processing = {};
 	F.transformations = {};
 	F.flowstreams = {};
+	F.filestorages = {};
 	F.jsonschemas = {};
 	F.querybuilders = {};
 	F.config = CONF;
@@ -1368,6 +1369,7 @@ F.service = function(count) {
 		F.temporary.ddos = {};
 
 	if (count % F.config.$clearcache === 0) {
+
 		F.temporary.actions = {};
 		F.temporary.path = {};
 		F.temporary.views = {};
@@ -1376,6 +1378,10 @@ F.service = function(count) {
 		F.temporary.images = {};
 		F.temporary.templates = {};
 		F.temporary.querybuilders = {};
+
+		for (let key in F.filestorages)
+			F.filestorages[key].cache = {};
+
 	}
 
 	if (count % 5 === 0) {
@@ -2007,6 +2013,14 @@ F.exit = function(signal) {
 	}
 
 	setTimeout(() => process.exit(1), 300);
+};
+
+F.filestorage = function(name) {
+	if (F.filestorages[name])
+		return F.filestorages[name];
+	var fs = F.TFileStorage.create(name);
+	F.filestorages[name] = fs;
+	return fs;
 };
 
 function httptuningperformance(socket) {
