@@ -9,6 +9,7 @@ require('./index');
 const REG_NUMBER = /[\d,.]+/;
 const REG_COLOR = /^#([A-F0-9]{3}|[A-F0-9]{6}|[A-F0-9]{8})$/i;
 const REG_ICON = /^(ti|far|fab|fad|fal|fas|fa)?\s(fa|ti)-[a-z0-9-]+$/;
+const REG_WSPACE = /\u00A0/g;
 
 function Value() {}
 
@@ -51,6 +52,7 @@ function check_string(meta, error, value, errplus, path) {
 	}
 
 	if (value) {
+		value = value.replace(REG_WSPACE, ' ');
 		switch (meta.subtype) { 
 			case 'text':
 				break;

@@ -211,34 +211,34 @@ FP.saveforce = function(id, name, filename, filenameto, callback, custom, expire
 		if (isbuffer) {
 			switch (meta.ext) {
 				case 'gif':
-					tmp = F.TImage.measureGIF(filename);
+					tmp = F.TImages.measureGIF(filename);
 					break;
 				case 'png':
-					tmp = F.TImage.measurePNG(filename);
+					tmp = F.TImages.measurePNG(filename);
 					break;
 				case 'jpg':
 				case 'jpeg':
-					tmp = F.TImage.measureJPG(filename);
+					tmp = F.TImages.measureJPG(filename);
 					break;
 				case 'svg':
-					tmp = F.TImage.measureSVG(filename);
+					tmp = F.TImages.measureSVG(filename);
 					break;
 			}
 		} else {
 			reader.once('data', function(buffer) {
 				switch (meta.ext) {
 					case 'gif':
-						tmp = F.TImage.measureGIF(buffer);
+						tmp = F.TImages.measureGIF(buffer);
 						break;
 					case 'png':
-						tmp = F.TImage.measurePNG(buffer);
+						tmp = F.TImages.measurePNG(buffer);
 						break;
 					case 'jpg':
 					case 'jpeg':
-						tmp = F.TImage.measureJPG(buffer);
+						tmp = F.TImages.measureJPG(buffer);
 						break;
 					case 'svg':
-						tmp = F.TImage.measureSVG(buffer);
+						tmp = F.TImages.measureSVG(buffer);
 						break;
 				}
 			});

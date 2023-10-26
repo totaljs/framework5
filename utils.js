@@ -4,8 +4,8 @@
 
 'use strict';
 
-const KeepAlive = new F.Http.Agent({ keepAlive: true, timeout: 60000 });
-const KeepAliveHttps = new F.Https.Agent({ keepAlive: true, timeout: 60000 });
+const KeepAlive = new F.Http.Agent({ keepAlive: true, timeout: 120000 });
+const KeepAliveHttps = new F.Https.Agent({ keepAlive: true, timeout: 120000 });
 
 // Flags
 const COMPRESS = { gzip: 1, deflate: 1 };
@@ -17,6 +17,7 @@ const RANDOM_STRING = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.spl
 const RANDOM_NUMBER = '0123456789';
 const RANDOM_TEXT = [...RANDOM_NUMBER, ...RANDOM_STRING];
 const CRC32TABLE = '00000000,77073096,EE0E612C,990951BA,076DC419,706AF48F,E963A535,9E6495A3,0EDB8832,79DCB8A4,E0D5E91E,97D2D988,09B64C2B,7EB17CBD,E7B82D07,90BF1D91,1DB71064,6AB020F2,F3B97148,84BE41DE,1ADAD47D,6DDDE4EB,F4D4B551,83D385C7,136C9856,646BA8C0,FD62F97A,8A65C9EC,14015C4F,63066CD9,FA0F3D63,8D080DF5,3B6E20C8,4C69105E,D56041E4,A2677172,3C03E4D1,4B04D447,D20D85FD,A50AB56B,35B5A8FA,42B2986C,DBBBC9D6,ACBCF940,32D86CE3,45DF5C75,DCD60DCF,ABD13D59,26D930AC,51DE003A,C8D75180,BFD06116,21B4F4B5,56B3C423,CFBA9599,B8BDA50F,2802B89E,5F058808,C60CD9B2,B10BE924,2F6F7C87,58684C11,C1611DAB,B6662D3D,76DC4190,01DB7106,98D220BC,EFD5102A,71B18589,06B6B51F,9FBFE4A5,E8B8D433,7807C9A2,0F00F934,9609A88E,E10E9818,7F6A0DBB,086D3D2D,91646C97,E6635C01,6B6B51F4,1C6C6162,856530D8,F262004E,6C0695ED,1B01A57B,8208F4C1,F50FC457,65B0D9C6,12B7E950,8BBEB8EA,FCB9887C,62DD1DDF,15DA2D49,8CD37CF3,FBD44C65,4DB26158,3AB551CE,A3BC0074,D4BB30E2,4ADFA541,3DD895D7,A4D1C46D,D3D6F4FB,4369E96A,346ED9FC,AD678846,DA60B8D0,44042D73,33031DE5,AA0A4C5F,DD0D7CC9,5005713C,270241AA,BE0B1010,C90C2086,5768B525,206F85B3,B966D409,CE61E49F,5EDEF90E,29D9C998,B0D09822,C7D7A8B4,59B33D17,2EB40D81,B7BD5C3B,C0BA6CAD,EDB88320,9ABFB3B6,03B6E20C,74B1D29A,EAD54739,9DD277AF,04DB2615,73DC1683,E3630B12,94643B84,0D6D6A3E,7A6A5AA8,E40ECF0B,9309FF9D,0A00AE27,7D079EB1,F00F9344,8708A3D2,1E01F268,6906C2FE,F762575D,806567CB,196C3671,6E6B06E7,FED41B76,89D32BE0,10DA7A5A,67DD4ACC,F9B9DF6F,8EBEEFF9,17B7BE43,60B08ED5,D6D6A3E8,A1D1937E,38D8C2C4,4FDFF252,D1BB67F1,A6BC5767,3FB506DD,48B2364B,D80D2BDA,AF0A1B4C,36034AF6,41047A60,DF60EFC3,A867DF55,316E8EEF,4669BE79,CB61B38C,BC66831A,256FD2A0,5268E236,CC0C7795,BB0B4703,220216B9,5505262F,C5BA3BBE,B2BD0B28,2BB45A92,5CB36A04,C2D7FFA7,B5D0CF31,2CD99E8B,5BDEAE1D,9B64C2B0,EC63F226,756AA39C,026D930A,9C0906A9,EB0E363F,72076785,05005713,95BF4A82,E2B87A14,7BB12BAE,0CB61B38,92D28E9B,E5D5BE0D,7CDCEFB7,0BDBDF21,86D3D2D4,F1D4E242,68DDB3F8,1FDA836E,81BE16CD,F6B9265B,6FB077E1,18B74777,88085AE6,FF0F6A70,66063BCA,11010B5C,8F659EFF,F862AE69,616BFFD3,166CCF45,A00AE278,D70DD2EE,4E048354,3903B3C2,A7672661,D06016F7,4969474D,3E6E77DB,AED16A4A,D9D65ADC,40DF0B66,37D83BF0,A9BCAE53,DEBB9EC5,47B2CF7F,30B5FFE9,BDBDF21C,CABAC28A,53B39330,24B4A3A6,BAD03605,CDD70693,54DE5729,23D967BF,B3667A2E,C4614AB8,5D681B02,2A6F2B94,B40BBE37,C30C8EA1,5A05DF1B,2D02EF8D'.split(',').map(s => parseInt(s, 16));
+const QUERIFYMETHODS = { GET: 1, POST: 1, DELETE: 1, PUT: 1, PATCH: 1, API: 1 };
 
 // Regullar expressions
 const REG_ISARR = /\[\d+\]|\[\]$/;
@@ -34,29 +35,23 @@ const REG_DATEFORMAT = /YYYY|yyyy|YY|yy|MMMM|MMM|MM|M|dddd|DDDD|DDD|ddd|DD|dd|D|
 const REG_STRFORMAT = /\{\d+\}/g;
 const REG_ASCII = /[^\u0000-\u007e]/g;
 const REG_TRAVELSE = /\.\/|%/; // ./ | % in the URL address
+const REG_PATH = /\\/g;
+const REG_TAGS = /<\/?[^>]+(>|$)/g;
+const REG_UA = /[a-z]+/gi;
+const REG_XML = /\w+=".*?"/g;
+const REG_DECODE = /&#?[a-z0-9]+;/g;
+const REG_ARGS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
+const REG_INTEGER = /(^-|\s-)?[0-9]+/g;
+const REG_FLOAT = /(^-|\s-)?[0-9.,]+/g;
+const REG_TERMINAL = /[\w\S]+/g;
+const REG_CONFIGURE = /\[\w+\]/g;
+const REG_KEYWORD1 = /y/g;
+const REG_KEYWORD2 = /\n/g;
+const REG_KEYWORD3 = /\W|_/g;
+const REG_BASE = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/;
+const REG_BASE2 = /^|,([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/;
 
-const QUERIFYMETHODS = { GET: 1, POST: 1, DELETE: 1, PUT: 1, PATCH: 1, API: 1 };
-
-var regexpSTATIC = /\.\w{2,8}($|\?)+/;
-const regexpPATH = /\\/g;
-const regexpTags = /<\/?[^>]+(>|$)/g;
-const regexpUA = /[a-z]+/gi;
-const regexpXML = /\w+=".*?"/g;
-const regexpDECODE = /&#?[a-z0-9]+;/g;
-const regexpARG = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
-const regexpINTEGER = /(^-|\s-)?[0-9]+/g;
-const regexpFLOAT = /(^-|\s-)?[0-9.,]+/g;
-const regexpTERMINAL = /[\w\S]+/g;
-const regexpCONFIGURE = /\[\w+\]/g;
-const regexpY = /y/g;
-const regexpN = /\n/g;
-const regexpCHARS = /\W|_/g;
-
-const regexpBASE64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/;
-const regexpBASE64_2 = /^|,([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/;
-const ENCODING = 'utf8';
 const NEWLINE = '\r\n';
-const isWindows = require('os').platform().substring(0, 3).toLowerCase() === 'win';
 const DIACRITICSMAP = {};
 const ALPHA_INDEX = { '&lt': '<', '&gt': '>', '&quot': '"', '&apos': '\'', '&amp': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': '\'', '&amp;': '&' };
 const STREAMPIPE = { end: false };
@@ -220,19 +215,6 @@ exports.parseconfig = function(value) {
 	return cfg;
 };
 
-exports.validate = function(value, type) {
-
-	switch (type) {
-		case 'number':
-			return 0;
-		case 'date':
-			return new Date();
-		default:
-			return value == null ? '' : value.toString();
-	}
-
-};
-
 const COMPARER = function(a, b) {
 	if (!a && b)
 		return -1;
@@ -258,9 +240,9 @@ const COMPARER_DESC = function(a, b) {
 	return val ? val * -1 : 0;
 };
 
-for (var i=0; i <DIACRITICS.length; i+=1)
-	for (var chars=DIACRITICS[i].c,j=0;j<chars.length;j+=1)
-		DIACRITICSMAP[chars[j]]=DIACRITICS[i].b;
+for (let i = 0; i < DIACRITICS.length; i += 1)
+	for (let chars = DIACRITICS[i].c, j = 0; j < chars.length; j += 1)
+		DIACRITICSMAP[chars[j]] = DIACRITICS[i].b;
 
 const DP = Date.prototype;
 const SP = String.prototype;
@@ -481,9 +463,9 @@ exports.resolve = function(url, callback, param) {
 	}
 
 	F.Dns.resolve4(uri.hostname, function(e, addresses) {
-		if (e)
+		if (e) {
 			setImmediate(dnsresolve_callback, uri, callback, param);
-		else {
+		} else {
 			F.temporary.dnscache[uri.host] = addresses;
 			uri.host = addresses[0];
 			callback(null, uri, param, addresses);
@@ -506,7 +488,9 @@ function keywordscleaner(c) {
 }
 
 function parseProxy(p) {
+
 	var key = 'proxy_' + p;
+
 	if (F.temporary.utils[key])
 		return F.temporary.utils[key];
 
@@ -530,7 +514,7 @@ function parseProxy(p) {
 
 function _request(opt, callback) {
 
-	var options = { length: 0, timeout: opt.timeout || CONF.default_restbuilder_timeout, encoding: opt.encoding || ENCODING, callback: callback || opt.callback || NOOP, post: true, redirect: 0 };
+	var options = { length: 0, timeout: opt.timeout == false || opt.timeout == 0 ? 0 : (opt.timeout || 8000), encoding: opt.encoding || 'utf8', callback: callback || opt.callback || NOOP, post: true, redirect: 0 };
 	var proxy;
 
 	F.stats.performance.external++;
@@ -623,7 +607,7 @@ function _request(opt, callback) {
 					opt.body = exports.encrypt_data(opt.body, opt.encrypt);
 					opt.headers['X-Encryption'] = 'a';
 				}
-				opt.body = Buffer.from(opt.body, ENCODING);
+				opt.body = Buffer.from(opt.body, 'utf8');
 			}
 
 			if (!opt.compress || !COMPRESS[opt.compress])
@@ -850,8 +834,14 @@ function request_call(uri, options) {
 	}
 
 	req.on('error', request_process_error);
-	options.timeoutid && clearTimeout(options.timeoutid);
-	options.timeoutid = setTimeout(request_process_timeout, options.timeout, req);
+
+	if (options.timeoutid) {
+		clearTimeout(options.timeoutid);
+		options.timeoutid = null;
+	}
+
+	if (options.timeout)
+		options.timeoutid = setTimeout(request_process_timeout, options.timeout, req);
 
 	req.on('response', request_assign_res);
 
@@ -883,11 +873,8 @@ function request_call(uri, options) {
 			req.end(NEWLINE + '--' + options.boundary + '--');
 		});
 	} else {
-
 		if (options.opt.compress) {
-			F.Zlib[options.opt.compress](options.body, function(err, buffer) {
-				req.end(buffer);
-			});
+			F.Zlib[options.opt.compress](options.body, (err, buffer) => req.end(buffer));
 		} else
 			req.end(options.body);
 	}
@@ -1288,63 +1275,6 @@ exports.atob = function(str) {
 	return Buffer.from(str, 'base64').toString('utf8');
 };
 
-/**
- * Trim string properties
- * @param {Object} obj
- * @return {Object}
- */
-exports.trim = function(obj, clean) {
-
-	if (!obj)
-		return obj;
-
-	var type = typeof(obj);
-	if (type === 'string') {
-		obj = obj.trim();
-		return clean && !obj ? undefined : obj;
-	}
-
-	if (obj instanceof Array) {
-		for (var i = 0, length = obj.length; i < length; i++) {
-
-			var item = obj[i];
-			type = typeof(item);
-
-			if (type === 'object') {
-				exports.trim(item, clean);
-				continue;
-			}
-
-			if (type !== 'string')
-				continue;
-
-			obj[i] = item.trim();
-			if (clean && !obj[i])
-				obj[i] = undefined;
-		}
-
-		return obj;
-	}
-
-	if (type !== 'object')
-		return obj;
-
-	for (var key in obj) {
-		var val = obj[key];
-		var type = typeof(val);
-		if (type === 'object') {
-			exports.trim(val, clean);
-			continue;
-		} else if (type !== 'string')
-			continue;
-		obj[key] = val.trim();
-		if (clean && !obj[key])
-			obj[key] = undefined;
-	}
-
-	return obj;
-};
-
 exports.httpstatus = function(code, addcode = true) {
 	return (addcode ? code + ': ' : '') + F.Http.STATUS_CODES[code];
 };
@@ -1436,10 +1366,6 @@ exports.copy = function(source, target, all = true) {
 	}
 
 	return target;
-};
-
-exports.isrelative = function(url) {
-	return !(url.substring(0, 2) === '//' || url.indexOf('http://') !== -1 || url.indexOf('https://') !== -1);
 };
 
 /**
@@ -1586,11 +1512,6 @@ exports.streamer2 = function(beg, end, callback, skip, stream) {
 	return exports.streamer(beg, end, callback, skip, stream, true);
 };
 
-exports.filestreamer = function(filename) {
-	let Fs = require('./textdb-stream');
-	return new Fs(filename);
-};
-
 exports.parseInt = function(obj, def) {
 	if (obj == null || obj === '')
 		return def === undefined ? 0 : def;
@@ -1627,7 +1548,7 @@ exports.getContentType = function(ext) {
 exports.contentTypes = CONTENTTYPES;
 
 exports.getExtensionFromContentType = function(value) {
-	for (var key in CONTENTTYPES) {
+	for (let key in CONTENTTYPES) {
 		if (CONTENTTYPES[key] === value)
 			return key;
 	}
@@ -1659,19 +1580,6 @@ exports.getName = function(path) {
 		return path.substring(index + 1);
 	index = path.lastIndexOf('\\');
 	return index === -1 ? path : path.substring(index + 1);
-};
-
-exports.setContentType = function(ext, type) {
-	if (ext[0] === '.')
-		ext = ext.substring(1);
-
-	if (ext.length > 8) {
-		var tmp = regexpSTATIC.toString().replace(/,\d+\}/, ',' + ext.length + '}').substring(1);
-		regexpSTATIC = new RegExp(tmp.substring(0, tmp.length - 1));
-	}
-
-	CONTENTTYPES[ext] = type;
-	return true;
 };
 
 exports.normalize = function(path) {
@@ -1706,40 +1614,8 @@ exports.link = function() {
 	return builder;
 };
 
-exports.path = function(path, delimiter) {
-	if (!path)
-		path = '';
-	delimiter = delimiter || '/';
-	return path[path.length - 1] === delimiter ? path : path + delimiter;
-};
-
-exports.join = function() {
-	var path = [''];
-
-	for (var i = 0; i < arguments.length; i++) {
-		var current = arguments[i];
-		if (current) {
-			if (current[0] === '/')
-				current = current.substring(1);
-			var l = current.length - 1;
-			if (current[l] === '/')
-				current = current.substring(0, l);
-			path.push(current);
-		}
-	}
-
-	path = path.join('/');
-	return !isWindows ? path : path.indexOf(':') > -1 ? path.substring(1) : path;
-};
-
-/**
- * Prepares Windows path to UNIX like format
- * @internal
- * @param {String} path
- * @return {String}
- */
 exports.$normalize = function(path) {
-	return isWindows ? path.replace(regexpPATH, '/') : path;
+	return F.iswindows ? path.replace(REG_PATH, '/') : path;
 };
 
 exports.convert62 = function(number) {
@@ -1832,204 +1708,6 @@ exports.guid = function(max) {
 	return str.substring(0, max);
 };
 
-function validate_builder_default(name, value, entity) {
-
-	var type = typeof(value);
-
-	if (entity.type === 12)
-		return value != null && type === 'object' && !(value instanceof Array);
-
-	if (entity.type === 11)
-		return type === 'number';
-
-	// A custom type
-	if (entity.type === 10)
-		return value != null;
-
-	// Enum + KeyValue + Custom (8+9+10)
-	if (entity.type > 7)
-		return value !== undefined;
-
-	switch (entity.subtype) {
-		case 'uid':
-			return value.isUID();
-		case 'zip':
-			return value.isZIP();
-		case 'email':
-			return value.isEmail();
-		case 'json':
-			return value.isJSON();
-		case 'url':
-			return value.isURL();
-		case 'phone':
-			return value.isPhone();
-		case 'guid':
-			return value.isGUID();
-		case 'base64':
-			return value.isBase64(true);
-	}
-
-	if (type === 'number')
-		return value > 0;
-
-	if (type === 'string' || value instanceof Array)
-		return value.length > 0;
-
-	if (type === 'boolean')
-		return value === true;
-
-	if (value == null)
-		return false;
-
-	if (value instanceof Date)
-		return value.toString()[0] !== 'I'; // Invalid Date
-
-	return true;
-}
-
-exports.validate_builder = function(model, error, schema, path, index, $, pluspath, operations) {
-
-	var current = path ? path + '.' : '';
-	var properties = $ ? ($.keys || schema.properties) : schema.properties;
-	var result;
-
-	if (!pluspath)
-		pluspath = '';
-
-	if (model == null)
-		model = {};
-
-	for (var name of properties) {
-
-		var TYPE = schema.schema[name];
-		if (!TYPE)
-			continue;
-
-		if (TYPE.can && !TYPE.can(model, operations))
-			continue;
-
-		var value = model[name];
-		var type = typeof(value);
-		var prefix = schema.resourcePrefix ? (schema.resourcePrefix + name) : name;
-
-		if (TYPE.required && value === undefined) {
-			error.push(pluspath + name, '@', current + name, index, prefix);
-			continue;
-		} else if (type === 'function')
-			value = model[name]();
-
-		if (TYPE.isArray) {
-			if (TYPE.type === 7 && value instanceof Array && value.length) {
-				var nestedschema = GETSCHEMA(TYPE.raw);
-				if (nestedschema) {
-					for (var j = 0, jl = value.length; j < jl; j++)
-						exports.validate_builder(value[j], error, nestedschema, current + name + '[' + j + ']', j, $, pluspath, operations);
-				} else
-					throw new Error('Nested schema "{0}" not found in "{1}".'.format(TYPE.raw, schema.parent.name));
-			} else {
-
-				if (!TYPE.required)
-					continue;
-
-				result = TYPE.validate ? TYPE.validate(value, model) : null;
-				if (result == null) {
-					result = value instanceof Array ? value.length > 0 : false;
-					if (result == null || result === true)
-						continue;
-				}
-
-				type = typeof(result);
-				if (type === 'string') {
-					if (result[0] === '@')
-						error.push(pluspath + name, TYPE.invalid, current + name, index, schema.resourcePrefix + result.substring(1));
-					else
-						error.push(pluspath + name, result, current + name, index, prefix);
-				} else if (type === 'boolean')
-					!result && error.push(pluspath + name, TYPE.invalid, current + name, index, prefix);
-			}
-			continue;
-		}
-
-		if (TYPE.type === 7) {
-
-			if (!value && !TYPE.required)
-				continue;
-
-			// Another schema
-			result = TYPE.validate ? TYPE.validate(value, model) : null;
-
-			if (result == null) {
-				var nestedschema = GETSCHEMA(TYPE.raw);
-				if (nestedschema)
-					exports.validate_builder(value, error, nestedschema, current + name, index, $, pluspath, operations);
-				else {
-					throw new Error(schema.parent ? 'Nested schema "{0}" not found in "{1}".'.format(TYPE.raw, schema.parent.name) : 'Bad type "{0} -> {1}" in the "{2}" schema'.format(name, TYPE.raw, schema.name));
-				}
-			} else {
-				type = typeof(result);
-				if (type === 'string') {
-					if (result[0] === '@')
-						error.push(pluspath + name, TYPE.invalid, current + name, index, schema.resourcePrefix + result.substring(1));
-					else
-						error.push(pluspath + name, result, current + name, index, prefix);
-				} else if (type === 'boolean')
-					!result && error.push(pluspath + name, TYPE.invalid, current + name, index, prefix);
-			}
-			continue;
-		}
-
-		if (!TYPE.required)
-			continue;
-
-		result = TYPE.validate ? TYPE.validate(value, model) : null;
-		if (result == null) {
-			result = validate_builder_default(name, value, TYPE);
-			if (result == null || result === true)
-				continue;
-		}
-
-		type = typeof(result);
-
-		if (type === 'string') {
-			if (result[0] === '@')
-				error.push(pluspath + name, TYPE.invalid, current + name, index, schema.resourcePrefix + result.substring(1));
-			else
-				error.push(pluspath + name, result, current + name, index, prefix);
-		} else if (type === 'boolean')
-			!result && error.push(pluspath + name, TYPE.invalid, current + name, index, prefix);
-	}
-
-	return error;
-};
-
-/**
- * Combine paths
- * @return {String}
- */
-exports.combine = function() {
-
-	var p = F.directory;
-
-	for (var i = 0, length = arguments.length; i < length; i++) {
-		var v = arguments[i];
-		if (!v)
-			continue;
-		if (v[0] === '/')
-			v = v.substring(1);
-
-		if (v[0] === '~')
-			p = v.substring(1);
-		else
-			p += (p[p.length - 1] !== '/' ? '/' : '') + v;
-	}
-	return exports.$normalize(p);
-};
-
-/**
- * Simple XML parser
- * @param {String} xml
- * @return {Object}
- */
 exports.parseXML = function(xml, replace) {
 	return xml.parseXML(replace);
 };
@@ -2038,14 +1716,6 @@ function jsonparser(key, value) {
 	return typeof(value) === 'string' && value.isJSONDate() ? new Date(value) : value;
 }
 
-/**
- * GPS distance in KM
- * @param  {Number} lat1
- * @param  {Number} lon1
- * @param  {Number} lat2
- * @param  {Number} lon2
- * @return {Number}
- */
 exports.distance = function(lat1, lon1, lat2, lon2) {
 	var R = 6371;
 	var dLat = (lat2 - lat1).toRad();
@@ -2096,7 +1766,6 @@ exports.ls2 = function(path, callback, filter) {
 DP.setTimeZone = function(timezone) {
 
 	var dt = new Date(this.toLocaleString('en-US', { timeZone: timezone }));
-
 	var offset = dt + '';
 	var index = offset.indexOf('GMT');
 	var op = offset.substring(index + 3, index + 4);
@@ -2115,12 +1784,6 @@ DP.setTimeZone = function(timezone) {
 	return dt;
 };
 
-/**
- * Date difference
- * @param  {Date/Number/String} date Optional.
- * @param  {String} type Date type: minutes, seconds, hours, days, months, years
- * @return {Number}
- */
 DP.diff = function(date, type) {
 
 	if (arguments.length === 1) {
@@ -2503,7 +2166,7 @@ SP.parseHTML = function(trim) {
 };
 
 SP.hash = function(type, salt) {
-	var str = salt ? this + salt : this;
+	let str = salt ? (this + salt) : this;
 	switch (type) {
 		case 'md5':
 			return str.md5();
@@ -2795,7 +2458,7 @@ SP.parseXML = function(replace) {
 		if (!hasAttributes)
 			continue;
 
-		var match = el.match(regexpXML);
+		var match = el.match(REG_XML);
 		if (!match)
 			continue;
 
@@ -2937,7 +2600,7 @@ SP.parseUA = function(structured) {
 	if (!ua)
 		return '';
 
-	var arr = ua.match(regexpUA);
+	var arr = ua.match(REG_UA);
 	var uid = '';
 
 	if (arr) {
@@ -3258,16 +2921,16 @@ SP.parseTerminal = function(fields, fn, skip, take) {
 function parseTerminal2(lines, fn, skip, take) {
 	var indexer = 0;
 
-	if (skip === undefined)
+	if (skip == null)
 		skip = 0;
-	if (take === undefined)
+	if (take == null)
 		take = lines.length;
 
 	for (var i = skip, length = skip + take; i < length; i++) {
 		var line = lines[i];
 		if (!line)
 			continue;
-		var m = line.match(regexpTERMINAL);
+		var m = line.match(REG_TERMINAL);
 		m && fn(m, indexer++, length, i);
 	}
 }
@@ -3457,7 +3120,7 @@ var configurereplace = function(text) {
 };
 
 SP.env = function() {
-	return this.replace(regexpCONFIGURE, configurereplace);
+	return this.replace(REG_CONFIGURE, configurereplace);
 };
 
 SP.parseConfig = function(def, onerr) {
@@ -3596,7 +3259,7 @@ SP.safehtml = function() {
 };
 
 SP.decode = function() {
-	return this.replace(regexpDECODE, function(s) {
+	return this.replace(REG_DECODE, function(s) {
 		if (s.charAt(1) !== '#')
 			return ALPHA_INDEX[s] || s;
 		var code = s[2].toLowerCase() === 'x' ? parseInt(s.substr(3), 16) : parseInt(s.substr(2));
@@ -3608,7 +3271,7 @@ SP.arg = SP.args = function(obj, encode, def) {
 	if (typeof(encode) === 'string')
 		def = encode;
 	var isfn = typeof(encode) === 'function';
-	return this.replace(regexpARG, function(text) {
+	return this.replace(REG_ARGS, function(text) {
 		// Is double bracket?
 		var l = text[1] === '{' ? 2 : 1;
 		var key = text.substring(l, text.length - l).trim();
@@ -3694,7 +3357,7 @@ SP.isBase64 = function(isdata) {
 			count -= (index + 8);
 	}
 
-	return count % 4 === 0 && (isdata ? regexpBASE64_2.test(str) : regexpBASE64.test(str));
+	return count % 4 === 0 && (isdata ? REG_BASE2.test(str) : REG_BASE.test(str));
 };
 
 SP.isGUID = function() {
@@ -3884,12 +3547,12 @@ SP.parseInt = function(def) {
 };
 
 SP.parseInt2 = function(def) {
-	var num = this.match(regexpINTEGER);
+	var num = this.match(REG_INTEGER);
 	return num ? +num[0] : (def === undefined ? 0 : def);
 };
 
 SP.parseFloat2 = function(def) {
-	var num = this.match(regexpFLOAT);
+	var num = this.match(REG_FLOAT);
 	return num ? +num[0].toString().replace(/,/g, '.') : (def === undefined ? 0 : def);
 };
 
@@ -3954,25 +3617,25 @@ SP.fromUnicode = function() {
 
 SP.sha1 = function(salt) {
 	var hash = F.Crypto.createHash('sha1');
-	hash.update(this + (salt || ''), ENCODING);
+	hash.update(this + (salt || ''), 'utf8');
 	return hash.digest('hex');
 };
 
 SP.sha256 = function(salt) {
 	var hash = F.Crypto.createHash('sha256');
-	hash.update(this + (salt || ''), ENCODING);
+	hash.update(this + (salt || ''), 'utf8');
 	return hash.digest('hex');
 };
 
 SP.sha512 = function(salt) {
 	var hash = F.Crypto.createHash('sha512');
-	hash.update(this + (salt || ''), ENCODING);
+	hash.update(this + (salt || ''), 'utf8');
 	return hash.digest('hex');
 };
 
 SP.md5 = function(salt) {
 	var hash = F.Crypto.createHash('md5');
-	hash.update(this + (salt || ''), ENCODING);
+	hash.update(this + (salt || ''), 'utf8');
 	return hash.digest('hex');
 };
 
@@ -3995,14 +3658,14 @@ SP.toSearch = function() {
 SP.toKeywords = function(forsearch = true, alternative = false, max_count = 200, max_length = 20, min_length = 2) {
 
 	var content = this;
-	var words = (forsearch ? content.toASCII().toLowerCase().replace(regexpY, 'i') : content.toLowerCase()).replace(regexpN, ' ').split(' ');
+	var words = (forsearch ? content.toASCII().toLowerCase().replace(REG_KEYWORD1, 'i') : content.toLowerCase()).replace(REG_KEYWORD2, ' ').split(' ');
 
 	var dic = {};
 	var counter = 0;
 
 	for (let w of words) {
 
-		var word = w.trim().replace(regexpCHARS, keywordscleaner);
+		var word = w.trim().replace(REG_KEYWORD3, keywordscleaner);
 
 		if (REG_UTF8.test(word)) {
 
@@ -4083,7 +3746,7 @@ SP.encrypt = function(key, isUnique, secret) {
 		values[i] = String.fromCharCode(index ^ (key.charCodeAt(i % key_count) ^ random));
 	}
 
-	str = Buffer.from(counter + '=' + values.join(''), ENCODING).toString('hex');
+	str = Buffer.from(counter + '=' + values.join(''), 'utf8').toString('hex');
 	var sum = 0;
 
 	for (var i = 0; i < str.length; i++)
@@ -4110,7 +3773,7 @@ SP.decrypt = function(key, secret) {
 	if (sum !== cs)
 		return null;
 
-	var values = Buffer.from(hash, 'hex').toString(ENCODING);
+	var values = Buffer.from(hash, 'hex').toString('utf8');
 	var index = values.indexOf('=');
 	if (index === -1)
 		return null;
@@ -4409,7 +4072,7 @@ SP.pluralize = function(zero, one, few, other) {
 };
 
 SP.removeTags = function() {
-	return this.replace(regexpTags, '');
+	return this.replace(REG_TAGS, '');
 };
 
 NP.between = function(condition, otherwise) {
@@ -5062,7 +4725,7 @@ AP.limit = function(max, fn, callback, index) {
 };
 
 ArrayBuffer.prototype.toBuffer = function() {
-	var buf = new Buffer(this.byteLength);
+	var buf = Buffer.alloc(this.byteLength);
 	var view = new Uint8Array(this);
 	for (var i = 0; i < buf.length; ++i)
 		buf[i] = view[i];
@@ -5151,96 +4814,6 @@ FLP.next = function() {
 	}
 
 	self.onComplete(self.file, self.directory);
-};
-
-exports.async = function(fn, isApply) {
-	var context = this;
-	return function(complete) {
-
-		var self = this;
-		var argv;
-
-		if (arguments.length) {
-
-			if (isApply) {
-				// index.js/Subscribe.prototype.doExecute
-				argv = arguments[1];
-			} else {
-				argv = [];
-				for (var i = 1; i < arguments.length; i++)
-					argv.push(arguments[i]);
-			}
-		} else
-			argv = new Array(0);
-
-		var generator = fn.apply(context, argv);
-		next(null);
-
-		function next(err, result) {
-
-			var g, type;
-
-			try
-			{
-				var can = err ? false : true;
-				switch (can) {
-					case true:
-						g = generator.next(result);
-						break;
-					case false:
-						g = generator.throw(err);
-						break;
-				}
-
-			} catch (e) {
-
-				if (!complete)
-					return;
-
-				type = typeof(complete);
-
-				if (type === 'object' && complete.isController) {
-					if (e instanceof ErrorBuilder)
-						complete.content(e);
-					else
-						complete.view500(e);
-					return;
-				}
-
-				type === 'function' && setImmediate(() => complete(e));
-				return;
-			}
-
-			if (g.done) {
-				typeof(complete) === 'function' && complete(null, g.value);
-				return;
-			}
-
-			var promise = g.value instanceof Promise;
-
-			if (typeof(g.value) !== 'function' && !promise) {
-				next.call(self, null, g.value);
-				return;
-			}
-
-			try
-			{
-				if (promise) {
-					g.value.then((value) => next.call(self, null, value));
-					return;
-				}
-
-				g.value.call(self, function() {
-					next.apply(self, arguments);
-				});
-
-			} catch (e) {
-				setImmediate(() => next.call(self, e));
-			}
-		}
-
-		return generator.value;
-	};
 };
 
 exports.queuecache = {};
@@ -5446,12 +5019,11 @@ function Chunker(name, max) {
 const CHP = Chunker.prototype;
 
 CHP.append = CHP.write = function(obj) {
-	var self = this;
 
+	var self = this;
 	self.stack.push(obj);
 
 	var tmp = self.stack.length;
-
 	if (tmp >= self.max) {
 
 		self.flushing++;
@@ -5461,7 +5033,7 @@ CHP.append = CHP.write = function(obj) {
 		var index = (self.index++);
 
 		if (self.compress) {
-			F.Zlib.deflate(Buffer.from(JSON.stringify(self.stack), ENCODING), function(err, buffer) {
+			F.Zlib.deflate(Buffer.from(JSON.stringify(self.stack), 'utf8'), function(err, buffer) {
 				F.Fs.writeFile(self.filename + index + '.chunker', buffer, () => self.flushing--);
 			});
 		} else
@@ -5484,7 +5056,7 @@ CHP.end = function() {
 		var index = (self.index++);
 
 		if (self.compress) {
-			F.Zlib.deflate(Buffer.from(JSON.stringify(self.stack), ENCODING), function(err, buffer) {
+			F.Zlib.deflate(Buffer.from(JSON.stringify(self.stack), 'utf8'), function(err, buffer) {
 				F.Fs.writeFile(self.filename + index + '.chunker', buffer, () => self.flushing--);
 			});
 		} else
@@ -5573,286 +5145,6 @@ exports.chunker = function(name, max) {
 };
 
 exports.Chunker = Chunker;
-exports.createBufferSize = (size) => Buffer.alloc(size || 0);
-exports.createBuffer = (val, type) => Buffer.from(val || '', type);
-
-function Reader() {
-	var t = this;
-	// t.tmp;
-
-	t.$add = function(builder) {
-		var b = require('./textdb-builder').make();
-		builder.options.filter = builder.options.filter && builder.options.filter.length ? builder.options.filter.join('&&') : 'true';
-		b.assign(builder.options);
-
-		if (builder.$)
-			b.$resolve = builder.$resolve;
-		else
-			b.$callback = builder.$callback;
-
-		if (t.reader)
-			t.reader.add(b);
-		else {
-			t.reader = require('./textdb-reader').make();
-			t.reader.add(b);
-			t.reader.prepare();
-		}
-	};
-
-	t.push = function(data) {
-		if (t.reader) {
-			if (data)
-				t.reader.compare(data instanceof Array ? data : [data]);
-			else
-				t.reader.done();
-		} else
-			setImmediate(t.push, data);
-	};
-
-}
-
-const RP = Reader.prototype;
-
-function assign_querybuilder(filter, item) {
-	switch (item.type) {
-		case 'between':
-			filter.between(item.name, item.a, item.b);
-			break;
-		case 'where':
-			filter.where(item.name, item.comparer, item.value);
-			break;
-		case 'in':
-			filter.in(item.name, item.value);
-			break;
-		case 'notin':
-			filter.notin(item.name, item.value);
-			break;
-		case 'search':
-			filter.search(item.name, item.value, item.comparer);
-			break;
-		case 'contains':
-			filter.contains(item.name);
-			break;
-		case 'empty':
-			filter.empty(item.name);
-			break;
-		case 'year':
-			filter.year(item.name, item.comparer, item.value);
-			break;
-		case 'month':
-			filter.month(item.name, item.comparer, item.value);
-			break;
-		case 'day':
-			filter.day(item.name, item.comparer, item.value);
-			break;
-		case 'hour':
-			filter.hour(item.name, item.comparer, item.value);
-			break;
-		case 'minute':
-			filter.minute(item.name, item.comparer, item.value);
-			break;
-		case 'or':
-			filter.or(function() {
-				for (var condition of item.value)
-					assign_querybuilder(filter, condition);
-			});
-			break;
-	}
-}
-
-RP.stream = function(stream) {
-
-	var self = this;
-	var REGDATE = /"\d{4}-\d{2}-\d{2}T[0-9.:]+Z"/g;
-	var FileStreamer = require('./textdb-stream');
-	var fs = new FileStreamer();
-	var destroyed = false;
-
-	fs.ondocuments = function() {
-
-		if (destroyed)
-			return;
-
-		try {
-			var docs = (new Function('return [' + fs.docs.replace(REGDATE, 'new Date($&)') + ']'))();
-			self.push(docs);
-		} catch (e) {
-			F.error('Reader.stream()', e);
-			return false;
-		}
-
-		if (self.reader.canceled === self.reader.builders.length) {
-			destroyed = true;
-			stream.destroy();
-			self.push(null);
-		}
-
-	};
-
-	fs.$callback = function() {
-		self.push(null);
-		// self.filesize = fs.stats.size;
-		fs = null;
-	};
-
-	fs.openstream(stream);
-	return self;
-};
-
-RP.assign = function(data) {
-
-	var self = this;
-	var fn = self[data.exec];
-
-	if (fn) {
-
-		var filter;
-
-		switch (data.exec) {
-			case 'scalar':
-				filter = self[data.exec](data.scalar.type, data.scalar.key, data.scalar.key2);
-				break;
-			default:
-				filter = self[data.exec]();
-				break;
-		}
-
-		if (data.take)
-			filter.options.take = data.take;
-
-		if (data.skip)
-			filter.options.skip = data.skip;
-
-		if (data.first)
-			filter.options.first = data.first;
-
-		if (data.fields)
-			filter.options.fields = data.fields.join(',');
-
-		if (data.sort)
-			filter.options.sort = data.sort.join(',');
-
-		for (var i = 0; i < data.filter.length; i++)
-			assign_querybuilder(filter, data.filter[i]);
-
-		return filter;
-	}
-
-};
-
-RP.done = function() {
-	var self = this;
-	self.reader.done();
-	return self;
-};
-
-RP.reset = function() {
-	var self = this;
-	self.reader.reset();
-	return self;
-};
-
-RP.find = function() {
-	var self = this;
-	var builder = require('./textdb-wrapper').makebuilder();
-	builder.command = 'find';
-	setImmediate(self.$add, builder);
-	return builder;
-};
-
-function listing(builder, items, response) {
-	var skip = builder.options.skip || 0;
-	var take = builder.options.take || 0;
-	return { page: skip && take ? ((skip / take) + 1) : 1, pages: response.count && take ? Math.ceil(response.count / take) : response.count ? 1 : 0, limit: take, count: response.count, items: items || [] };
-}
-
-RP.list = function() {
-	var self = this;
-	var builder = require('./textdb-wrapper').makebuilder();
-	builder.command = 'find';
-	builder.parent = {};
-	builder.$callback = function(err, response, meta) {
-		if (builder.parent.$) {
-			if (err)
-				builder.parent.$.invalid(err);
-			else
-				builder.parent.$resolve(response);
-		} else if (builder.parent.$callback)
-			builder.parent.$callback(err, listing(builder, response, meta), meta);
-	};
-	setImmediate(self.$add, builder);
-	return builder;
-};
-
-RP.read = function() {
-	var self = this;
-	var builder = require('./textdb-wrapper').makebuilder();
-	builder.command = 'find';
-	builder.options.take = 1;
-	builder.options.first = 1;
-	setImmediate(self.$add, builder);
-	return builder;
-};
-
-RP.count = function() {
-	var builder = this.find();
-	builder.options.scalar = 'arg.count++';
-	builder.options.scalararg = { count: 0 };
-	return builder;
-};
-
-RP.scalar = function(type, key, key2) {
-	var builder = this.find();
-
-	if (key == null) {
-		key = type;
-		type = '*';
-	}
-
-	switch (type) {
-		case 'group':
-			builder.options.scalar = key2 ? 'if (doc.{0}!=null){tmp.val=doc.{0};arg[tmp.val]=(arg[tmp.val]||0)+(doc.{1}||0)}'.format(key, key2) : 'if (doc.{0}!=null){tmp.val=doc.{0};arg[tmp.val]=(arg[tmp.val]||0)+1}'.format(key);
-			builder.options.scalararg = {};
-			break;
-		default:
-			// min, max, sum, count
-			if (key2) {
-				builder.options.scalar = 'var k=doc.' + key + '+\'\';if (arg[k]){tmp.bk=doc.' + key2 + '||0;' + (type === 'max' ? 'if(tmp.bk>arg[k])arg[k]=tmp.bk' : type === 'min' ? 'if(tmp.bk<arg[k])arg[k]=tmp.bk' : 'arg[k]+=tmp.bk') + '}else{arg[k]=doc.' + key2 + '||0}';
-			} else {
-				builder.options.scalar = 'if (doc.{0}!=null){tmp.val=doc.{0};arg.count+=1;arg.min=arg.min==null?tmp.val:arg.min>tmp.val?tmp.val:arg.min;arg.max=arg.max==null?tmp.val:arg.max<tmp.val?tmp.val:arg.max;if(!(tmp.val instanceof Date))arg.sum+=tmp.val}'.format(key);
-				builder.options.scalararg = { count: 0, sum: 0 };
-			}
-			break;
-	}
-	return builder;
-};
-
-RP.stats = function(groupfield, datefield, key, type) {
-	var builder = this.find();
-	builder.options.scalar = 'if (doc.{0}!=null&&doc.{2}!=null&&doc.{1} instanceof Date){tmp.val=doc.{2};tmp.group=doc.{0};tmp.date=doc.{1}.format(\'{3}\');if(!arg[tmp.group])arg[tmp.group]={};if(!arg[tmp.group][tmp.date])arg[tmp.group][tmp.date]={min:null,max:null,count:0};tmp.cur=arg[tmp.group][tmp.date];tmp.cur.count++;if(tmp.cur.max==null){tmp.cur.max=tmp.val}else if(tmp.cur.max<tmp.val){tmp.cur.max=tmp.val}if(tmp.cur.min==null){tmp.cur.min=tmp.val}else if(tmp.cur.min>tmp.val){tmp.cur.min=tmp.val}}'.format(groupfield, datefield, key, type === 'hourly' ? 'yyyyMMddHH' : type === 'monthly' ? 'yyyyMM' : type === 'yearly' ? 'yyyy' : 'yyyyMMdd');
-	builder.options.scalararg = {};
-	return builder;
-};
-
-exports.reader = function(items) {
-	var instance = new Reader();
-	if (items) {
-		if (typeof(items) === 'string') {
-			setTimeout(function() {
-				exports.request({ url: items, custom: true }, function(err, response) {
-					if (response.stream)
-						instance.stream(response.stream);
-					else
-						instance.push(null);
-				});
-			}, 2);
-		} else {
-			instance.push(items);
-			instance.push(null);
-		}
-	}
-	return instance;
-};
 
 exports.wait = function(validator, callback, timeout = 5000, interval = 500) {
 
@@ -5901,6 +5193,7 @@ function MultipartParser(multipart, stream, callback) {
 	self.step = 0;
 
 	// Meta data
+	self.prevsize = 0;
 	self.sizes = { total: 0, files: 0, data: 0, parts: 0 };
 	self.limits = { total: 0, files: 0, data: 0, parts: 0 };
 	self.current = {};
@@ -5909,6 +5202,9 @@ function MultipartParser(multipart, stream, callback) {
 	self.size = 0;
 
 	self.ondata = function(chunk) {
+
+		if (!self.size)
+			chunk = chunk.slice(4);
 
 		self.size += chunk.length;
 
@@ -5937,6 +5233,11 @@ function MultipartParser(multipart, stream, callback) {
 	self.stream.on('abort', self.onclose);
 	self.stream.on('aborted', self.onclose);
 }
+
+MultipartParser.prototype.custom = function(check, callback) {
+	this.custom = { check: check, data: callback };
+	return this;
+};
 
 MultipartParser.prototype.free = function(err) {
 
@@ -5971,6 +5272,12 @@ MultipartParser.prototype.parse = function(type) {
 				break;
 			case 3: // part file
 				self.parse_file();
+				break;
+			case 4: // custom
+				self.parse_custom();
+				break;
+			case 9: // skip
+				self.parse_skip();
 				break;
 		}
 	}
@@ -6046,6 +5353,18 @@ MultipartParser.prototype.parse_head = function() {
 
 	if (!m) {
 		self.kill('7:');
+		return;
+	}
+
+	if (self.custom) {
+		self.current.file = null;
+		self.buffer = self.buffer.slice(index + HEADEREND.length);
+		self.current.size = 0;
+		if (self.custom.check(header, m))
+			self.step = 4;
+		else
+			self.step = 9; // skip
+		self.parse();
 		return;
 	}
 
@@ -6161,14 +5480,18 @@ MultipartParser.prototype.parse_head = function() {
 			self.current.stream = null;
 		}
 
-		self.current.path = self.tmp + (UPLOADINDEXER++) + '.bin';
-		self.current.stream = F.Fs.createWriteStream(self.current.path);
-		var file = { path: self.current.path, name: self.current.name, filename: self.current.filename, size: 0, type: self.current.type, width: 0, height: 0 };
-		self.current.file = file;
-		self.current.fileheader = Buffer.alloc(0);
-		self.current.stream.$mpfile = file;
-		self.current.stream.$mpinstance = self;
-		self.current.stream.on('close', multipartfileready);
+		if (self.skipfiles) {
+			self.current.file = null;
+		} else {
+			self.current.path = self.tmp + (UPLOADINDEXER++) + '.bin';
+			self.current.stream = F.Fs.createWriteStream(self.current.path);
+			var file = { path: self.current.path, name: self.current.name, filename: self.current.filename, size: 0, type: self.current.type, width: 0, height: 0 };
+			self.current.file = file;
+			self.current.fileheader = Buffer.alloc(0);
+			self.current.stream.$mpfile = file;
+			self.current.stream.$mpinstance = self;
+			self.current.stream.on('close', multipartfileready);
+		}
 
 	} else
 		self.current.file = null;
@@ -6267,13 +5590,13 @@ MultipartParser.prototype.parse_file = function() {
 		self.files.push(self.current.file);
 		self.buffer = self.buffer.slice(index);
 		self.current.file = null;
+		self.prevsize = 0;
 		self.step = 0;
 		self.parse(2);
 
 	} else {
 
-		var length = self.buffer.length;
-
+		let length = self.buffer.length;
 		self.current.size += length;
 		self.current.file.size += length;
 		self.sizes.total += length;
@@ -6297,7 +5620,8 @@ MultipartParser.prototype.parse_file = function() {
 MultipartParser.prototype.parse_data = function() {
 
 	var self = this;
-	var index = self.buffer.indexOf(self.header);
+	let beg = (self.prevsize - ((self.header.length * 1.3) >> 0)) < 0 ? 0 : (self.prevsize - self.header.length);
+	let index = self.buffer.indexOf(self.header, beg);
 
 	if (index !== -1) {
 
@@ -6321,12 +5645,15 @@ MultipartParser.prototype.parse_data = function() {
 
 		self.body[self.current.name] = val;
 		self.buffer = self.buffer.slice(index);
+		self.prevsize = 0;
 		self.step = 0;
 		self.parse(true);
 
 	} else {
 
-		self.current.size += self.buffer.length;
+		let length = self.buffer.length;
+		self.current.size += length;
+		self.prevsize = length;
 
 		if (self.limits.data && self.current.size > self.limits.data) {
 			self.kill('5: Data are too large');
@@ -6338,6 +5665,46 @@ MultipartParser.prototype.parse_data = function() {
 			return;
 		}
 
+	}
+};
+
+MultipartParser.prototype.parse_custom = function() {
+
+	var self = this;
+
+	let length = self.buffer.length;
+	let beg = (self.prevsize - ((self.header.length * 1.3) >> 0)) < 0 ? 0 : (self.prevsize - self.header.length);
+	let index = self.buffer.indexOf(self.header, beg);
+
+	if (index !== -1) {
+		self.sizes.total += index - 2;
+		self.sizes.data += index - 2;
+		self.prevsize = 0;
+		let val = self.buffer.slice(0, index - 4);
+		self.custom.data(val);
+		self.buffer = self.buffer.slice(index);
+		self.step = 0;
+		self.parse(2);
+	} else {
+		self.current.size += length;
+		self.prevsize = length;
+	}
+};
+
+MultipartParser.prototype.parse_skip = function() {
+	var self = this;
+	var index = self.buffer.indexOf(self.header);
+	if (index !== -1) {
+		self.sizes.total += index - 2;
+		self.sizes.data += index - 2;
+		self.buffer = self.buffer.slice(index);
+		self.current.file = null;
+		self.prevsize = 0;
+		self.step = 0;
+		self.parse(2);
+	} else {
+		self.current.size += self.buffer.length;
+		self.buffer = null;
 	}
 };
 
@@ -6561,8 +5928,15 @@ String.prototype.toJSONSchema = function(name, url) {
 			if (type[0] === '{') {
 				isenum = true;
 				type = type.substring(1, type.length - 1);
-			} else if ((/:|,|\n/).test(type))
+			} else if ((/:|,|\n/).test(type)) {
 				isenum = true;
+			} else {
+				index = type.indexOf('(');
+				if (index !== -1) {
+					size = +type.substring(index + 1, type.length - 1).trim();
+					type = type.substring(0, index);
+				}
+			}
 
 			// Is nested object? {...}
 			if (isenum) {
@@ -6611,7 +5985,7 @@ String.prototype.toJSONSchema = function(name, url) {
 				tmp = {};
 				if (isarr) {
 					tmp.type = 'array';
-					tmp.items = { type: 'string', subtype: type === 'string' ? undefined : type };
+					tmp.items = { type: 'string', subtype: type === 'text' ? undefined : type };
 					if (size)
 						tmp.items.maxLength = size;
 				} else {
@@ -6727,7 +6101,6 @@ exports.jsonschematransform = function(value, partial, error, path) {
 		schema.$id = self.$id;
 		schema.$schema = self.$schema;
 		schema.type = self.type;
-
 		response = F.TJSONSchema.transform(schema, error, tmp, false, path);
 
 	} else

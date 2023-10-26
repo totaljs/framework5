@@ -1130,9 +1130,9 @@ function WebSocketClient() {
 	t.closed = true;
 
 	// type: json, text, binary
+	t.headers = {};
 	t.options = { type: 'json', size: 0, masking: false, compress: true, reconnect: 3000, encodedecode: false, encryptdecrypt: false, rejectunauthorized: false }; // key: Buffer, cert: Buffer, dhparam: Buffer
 	t.cookies = {};
-	t.headers = {};
 
 	t.ondata2 = () => t.ondata();
 	F.TUtils.EventEmitter2.extend(t);
@@ -1222,6 +1222,7 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 
 	self.req.on('response', function(res) {
 
+		print(res.statusCode);
 		self.$events.error && self.emit('error', new Error('Unexpected server response (' + res.statusCode + ')'));
 
 		if (self.options.reconnectserver) {
@@ -1622,6 +1623,28 @@ WebSocketClient.prototype.destroy = function() {
 	self.$events.destroy && self.emit('destroy');
 };
 
+WebSocketClient.prototype.free = function() {
+
+	var self = this;
+
+	if (self.req) {
+		self.req.connection && self.req.connection.destroy();
+		self.req.removeAllListeners();
+		self.req.destroy();
+		F.cleanup(self.req);
+	}
+
+	if (self.socket) {
+		self.socket.removeAllListeners();
+		self.socket.destroy();
+		F.cleanup(self.socket);
+	}
+
+	self.socket = null;
+	self.req = null;
+	return self;
+};
+
 WebSocketClient.prototype.send = function(message, raw, replacer) {
 
 	var self = this;
@@ -1856,4 +1879,8 @@ function wsclient_closecallbacks(client, e) {
 	}
 }
 
-exports.WebSocketClient = WebSocketClient;
+exports.createclient = function(callback) {
+	var client = new WebSocketClient();
+	callback && callback(client);
+	return client;
+};

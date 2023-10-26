@@ -1269,7 +1269,7 @@ HttpFile.prototype.$md5 = function(callback) {
 	var md5 = F.Crypto.createHash('md5');
 	var stream = F.Fs.createReadStream(self.path);
 
-	stream.on('data', (buffer) => md5.update(buffer));
+	stream.on('data', buffer => md5.update(buffer));
 	stream.on('error', function(error) {
 		if (callback) {
 			callback(error, null);
@@ -1295,15 +1295,12 @@ HttpFile.prototype.pipe = function(stream, opt) {
 	return F.Fs.createReadStream(this.path, opt).pipe(stream, opt);
 };
 
-HttpFile.prototype.image = function(im) {
-	if (im === undefined)
-		im = F.config.default_image_converter === 'im';
-	return F.TImage.init(this.path, im, this.width, this.height);
+HttpFile.prototype.image = function(shell) {
+	return F.TImages.load(this.path, shell, this.width, this.height);
 };
 
 HttpFile.prototype.fs = function(storage, fileid, callback, custom, expire) {
-	return FILESTORAGE(storage).save(fileid, this.filename, this.path, callback, custom, expire);
+	return F.filestorage(storage).save(fileid, this.filename, this.path, callback, custom, expire);
 };
 
 exports.Controller = Controller;
-exports.HttpFile = HttpFile;

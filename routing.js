@@ -37,7 +37,8 @@ function Route(url, action, size) {
 	if (index === -1)
 		index = url.length;
 
-	t.url = exports.split(url.substring(0, index), true);
+	t.url2 = url.substring(0, index);
+	t.url = exports.split(t.url2, true);
 	url = url.substring(index + 1);
 	t.id = t.method + '/' + t.url.join('/');
 
@@ -129,7 +130,7 @@ function Route(url, action, size) {
 			return '';
 		}).trim();
 	} else
-		t.actions = url.substring(0, index + 3).replace(/\s{2,}/g, ' ').split(' ');
+		t.actions = url.substring(0, index + 3).replace(/\s{2,}/g, ' ').split(/\s|,/);
 
 	if (endpoint) {
 
@@ -154,7 +155,8 @@ function Route(url, action, size) {
 		}
 
 		delete t.actions;
-	}
+	} else
+		t.actions = t.actions.join(',');
 
 	// Max. payload size
 	if (!t.size) {
@@ -312,6 +314,7 @@ exports.sort = function() {
 	}
 
 	F.routes.filescache = cache;
+	DEBUG && F.TSourceMap.refresh();
 };
 
 function compareflags(ctrl, routes, auth) {

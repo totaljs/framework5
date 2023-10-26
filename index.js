@@ -77,7 +77,7 @@ global.DEF = {};
 		filescache: {},
 		timeout: null,
 		middleware: {},
-		imagemiddleware: {},
+		imagesmiddleware: {},
 		proxies: []
 	};
 
@@ -378,6 +378,7 @@ function unlink(arr, callback) {
 	CONF.$httpchecktypes = true; // for multipart data only
 	CONF.$blacklist = '';
 	CONF.$xpoweredby = 'Total.js';
+	CONF.$maxopenfiles = 100;
 	CONF.$minifyjs = true;
 	CONF.$minifycss = true;
 	CONF.$minifyhtml = true;
@@ -749,6 +750,8 @@ F.load = async function(types = [], callback) {
 	F.loadservices();
 	F.stats.compilation = Date.now() - beg;
 	F.isloaded = true;
+	DEBUG && F.TSourceMap.refresh();
+
 	process.send && process.send('total:ready');
 
 	callback && callback();
@@ -1384,14 +1387,13 @@ F.service = function(count) {
 
 	}
 
-	if (count % 5 === 0) {
+	if (count % 5 === 0)
 		global.TEMP = {};
-	}
 
 	// Update expires date
 	if (count % 60 === 0) {
 		F.config.$httpexpire = NOW.add('y', 1).toUTCString();
-		F.TImage.clear();
+		F.TImages.clear();
 	}
 
 	if (count % F.config.$tmsclearblocked === 0)
@@ -2103,6 +2105,7 @@ process.on('message', function(msg, h) {
 	F.TBundles = require('./bundles');
 	F.TFileStorage = require('./filestorage');
 	F.TTemplates = require('./templates');
+	F.TSourceMap = require('./sourcemap');
 
 	// Settings
 	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
@@ -2111,7 +2114,7 @@ process.on('message', function(msg, h) {
 	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
 
 	F.cache = require('./cache');
-	F.TImage = require('./image');
+	F.TImages = require('./images');
 	F.path.fs = F.Fs;
 	F.path.join = F.Path.join;
 
@@ -2140,6 +2143,9 @@ process.on('message', function(msg, h) {
 	F.api = F.TApi.exec;
 	F.newapi = F.TApi.newapi;
 	F.template = F.TTemplates.render;
+	F.websocketclient = F.TWebSocket.createclient;
+	F.image = F.TImages.load;
+	F.sourcemap = F.TSourceMap.create;
 
 	// Needed "F"
 	F.TFlow = require('./flow');

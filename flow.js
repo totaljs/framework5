@@ -102,9 +102,7 @@ FS.init = function(directory, callback) {
 		}
 
 		load.wait(function(filename, next) {
-			console.log(filename);
 			F.Fs.readFile(F.path.join(directory, filename), 'utf8', function(err, response) {
-
 				if (response) {
 					response = response.parseJSON();
 					response.directory = directory;

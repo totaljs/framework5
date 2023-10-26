@@ -1,185 +1,126 @@
 var timeout = null;
 
-function parsefields(schema) {
-	var input = [];
-	for (let key in schema.schema) {
-		let field = schema.schema[key];
-		let type = 'string';
-		let name = (field.required ? '*' : '') + key;
-		switch (field.type) {
-			case 1:
-			case 2:
-			case 11:
-				type = field.isArray ? '[number]' : 'number';
-				input.push(name + ':' + type);
-				break;
-			case 3:
-				type = field.isArray ? '[string]' : 'string';
-				input.push(name + ':' + type);
-				break;
-			case 4:
-				type = field.isArray ? '[boolean]' : 'boolean';
-				input.push(name + ':' + type);
-				break;
-			case 5:
-				type = field.isArray ? '[date]' : 'date';
-				input.push(name + ':' + type);
-				break;
+function stringify(schema) {
 
-			case 6:
-				type = field.isArray ? '[object]' : 'object';
-				input.push(name + ':' + type);
-				break;
-
-			case 7:
-				type = field.isArray ? ('[' + field.raw + ']') : field.raw;
-				input.push(name + ':' + type);
-				break;
-
-			case 8:
-				input.push(name + ':{' + field.raw.join('|') + '}');
-				break;
-		}
+	if (typeof(schema) === 'string') {
+		if (schema[0] !== '@')
+			return schema;
+		schema = F.jsonschemas[schema.substring(1)];
 	}
-	return input.join(',');
+
+	if (!schema)
+		return undefined;
+
+	var builder = [];
+	for (let key in schema.properties) {
+		let name = key;
+		let meta = schema.properties[key];
+		if (schema.required && schema.required.includes(key))
+			name = '*' + name;
+
+		let type = '';
+		if (meta.type === 'array')
+			type = '[' + meta.items.subtype + (meta.items.maxLength ? ('(' + meta.items.maxLength + ')') : '') + ']';
+		else
+			type = (meta.subtype || meta.type) + (meta.maxLength ? ('(' + meta.maxLength + ')') : '');
+
+		builder.push(name + ':' + type);
+	}
+
+	return builder.join(',');
 }
 
-F.sourcemap = function() {
+exports.create = function() {
 
 	var actions = [];
 	var routes = [];
 	var items = [];
 
-	EACHSCHEMA(function(name, schema) {
-
-		for (let key in schema.actions) {
-			let action = schema.actions[key];
-			let permissions = action.permissions instanceof Array ? action.permissions.join(',') : action.permissions;
-			let input = action.input || parsefields(schema);
-			items.push({ action: key, schema: name, name: action.name, summary: action.summary, params: action.params, input: input, output: action.output, query: action.query, permissions: permissions, owner: schema.$owner });
-			actions.push({ name: name + ' --> ' + key, params: action.params, input: input, output: action.output, query: action.query, user: action.user, permissions: permissions, public: action.public, publish: action.publish, owner: schema.$owner });
-		}
-
-	});
-
 	for (let key in F.actions) {
 		let action = F.actions[key];
 		let permissions = action.permissions instanceof Array ? action.permissions.join(',') : action.permissions;
-		items.push({ action: key, name: action.name, summary: action.summary, params: action.params, input: action.input, output: action.output, query: action.query, permissions: permissions, owner: action.$owner });
-		actions.push({ name: '* --> ' + key, params: action.params, input: action.input, output: action.output, query: action.query, user: action.user, permissions: permissions, public: action.public, publish: action.publish, owner: action.$owner });
+		items.push({ action: key, name: action.name, summary: action.summary, params: stringify(action.params), input: stringify(action.input), output: stringify(action.output), query: stringify(action.query), permissions: permissions, owner: action.$owner });
+		actions.push({ name: key, params: stringify(action.params), input: stringify(action.input), output: stringify(action.output), query: stringify(action.query), user: action.user, permissions: permissions, public: action.public, publish: action.publish, owner: action.$owner });
 	}
 
-	for (let a in F.routes.api) {
-		let actions = F.routes.api[a];
-		for (let b in actions) {
-
-			let action = actions[b];
-			let obj = {};
-
-			obj.id = action.name;
-			obj.method = 'API';
-			obj.schema = action.schema;
-			obj.url = action.url;
-			obj.auth = action.member;
-			obj.summary = action.summary;
-			obj.error = 'Action not found';
-			obj.owner = action.owner;
-
-			if (action.timeout !== CONF.default_request_timeout)
-				obj.timeout = action.timeout;
-
-			for (let i = 0; i < items.length; i++) {
-				let m = items[i];
-
-				if (action.action.indexOf(' ' + m.action) !== -1 && action.action.indexOf(m.schema + ' ') !== -1) {
-
-					if (m.params)
-						obj.params = m.params;
-
-					if (m.query)
-						obj.query = m.query;
-
-					obj.input = m.input;
-					obj.output = m.output;
-					obj.permissions = m.permissions;
-					obj.error = undefined;
-					break;
-				}
-
-			}
-
-			routes.push(obj);
-		}
-	}
-
-	for (let a of F.routes.web) {
+	for (let route of F.routes.routes) {
 
 		let m = {};
-		m.method = a.method;
-		m.url = a.isWILDCARD ? a.urlraw.replace(/\*\//, '*') : a.urlraw;
-		m.auth = a.MEMBER;
-		m.owner = a.owner;
+		m.method = route.method;
+		m.url = route.url2;
+		m.auth = route.auth;
 
-		if (a.paramnames && a.paramnames.length) {
+		if (route.params && route.params.length) {
 			m.params = [];
-			for (let p of a.paramnames)
-				m.params.push(p + ':' + (a.paramtypes[p] || 'String'));
+			for (let param of route.params)
+				m.params.push(param.name + ':' + param.type);
 			m.params = m.params.join(',');
 		}
 
-		if (a.schema) {
+		if (route.timeout)
+			m.timeout = route.timeout;
 
-			m.schema = a.schema.slice(0).trim().join('/');
-
-			var schema = GETSCHEMA(m.schema);
-			if (schema) {
-
-				let id = a.workflow ? (a.workflow.id instanceof Array ? a.workflow.id[0] : a.workflow.id) : '';
-				let action = id && schema.actions ? schema.actions[id] : null;
-
-				if (action) {
-
-					m.summary = action.summary;
-					m.params = action.params;
-					m.query = action.query;
-					m.output = action.output;
-					m.permissions = m.permissions instanceof Array ? m.permissions.join(',') : m.permissions;
-
-					if (m.method !== 'GET')
-						m.input = action.input;
-
-				} else {
-					// old declaration
-					if (m.method !== 'GET')
-						m.input = parsefields(schema);
-				}
-
-			} else
-				m.error = 'Schema not found';
+		if (route.flags.upload) {
+			m.upload = true;
+			m.limit = route.size / 1024;
 		}
 
-		if (a.timeout !== CONF.default_request_timeout)
-			m.timeout = a.timeout;
+		if (route.api) {
 
-		if (a.isUPLOAD) {
-			m.upload = true;
-			m.limit = a.length / 1024;
+			for (let key in route.api) {
+
+				let tmp = CLONE(m);
+				let api = route.api[key];
+
+				tmp.id = key;
+				tmp.method = 'API';
+				tmp.auth = api.auth;
+				tmp.params = undefined;
+
+				let name = (api.actions.split(',')[0] || '').replaceAll('(response)', '').trim();
+				if (name) {
+					let action = F.actions[name];
+					if (action) {
+						tmp.input = action.input;
+
+						if (tmp.input && tmp.input[0] === '@')
+							tmp.input = stringify(F.jsonschemas[tmp.input.substring(1)]);
+
+						tmp.query = action.query;
+						if (tmp.query && tmp.query[0] === '@')
+							tmp.query = stringify(F.jsonschemas[tmp.query.substring(1)]);
+
+						if (api.params && api.params.length) {
+							m.params = [];
+							for (let param of api.params)
+								m.params.push(param.name + ':' + (param.type || 'string'));
+							tmp.params = m.params.join(',');
+						}
+					} else
+						tmp.error = 'Action not found';
+				} else
+					tmp.error = 'Action not found';
+				routes.push(tmp);
+			}
+
+			continue;
 		}
 
 		routes.push(m);
 	}
 
-	for (let a of F.routes.websockets) {
-		let m = {};
-		m.method = 'SOCKET';
-		m.url = a.isWILDCARD ? a.urlraw.replace(/\*\//, '*') : a.urlraw;
-		m.auth = a.MEMBER;
-		m.owner = a.owner;
+	for (let route of F.routes.websockets) {
 
-		if (a.paramnames && a.paramnames.length) {
+		let m = {};
+
+		m.method = 'SOCKET';
+		m.url = route.url2;
+		m.auth = route.auth;
+
+		if (route.params && route.params.length) {
 			m.params = [];
-			for (let p of a.paramnames)
-				m.params.push(p + ':' + (a.paramtypes[p] || 'String'));
+			for (let param of route.params)
+				m.params.push(param.name + ':' + param.type);
 			m.params = m.params.join(',');
 		}
 
@@ -205,7 +146,7 @@ F.sourcemap = function() {
 	return output;
 };
 
-F.makesourcemap = function(force) {
+exports.refresh = function(force) {
 
 	if (!force && (CONF.nosourcemap || F.id))
 		return;

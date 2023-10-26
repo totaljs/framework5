@@ -33,6 +33,17 @@ global.NEWACTION = F.TBuilders.newaction;
 global.ACTION = F.TBuilders.action;
 global.TEMPLATE = F.template;
 global.FILESTORAGE = F.filestorage;
+global.WEBSOCKETCLIENT = F.websocketclient;
+
+global.LDAP = function(opt, callback) {
+	if (!opt.ldap.port)
+		opt.ldap.port = 389;
+	var Ldap = require('./ldap');
+	if (callback)
+		Ldap.load(opt, callback);
+	else
+		return new Promise((resolve, reject) => Ldap.load(opt, (err, res) => err ? reject(err) : resolve(res)));
+};
 
 global.CORS = function(origin) {
 	CONF.$cors = origin || '*';

@@ -717,7 +717,7 @@ exports.load = function(opt, callback) {
 		profile = true;
 	}
 
-	U.connect(opt.ldap, function(err, meta) {
+	F.TUtils.connect(opt.ldap, function(err, meta) {
 
 		if (err) {
 			callback(err);
