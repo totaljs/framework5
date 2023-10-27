@@ -42,6 +42,11 @@ function Controller(req, res) {
 	ctrl.files = [];
 	ctrl.body = {};
 
+	if (ctrl.isfile)
+		F.stats.performance.file++;
+	else
+		F.stats.performance.request++;
+
 	// ctrl.payload = null;
 	// ctrl.payloadsize = 0;
 	// ctrl.user = null;
@@ -736,6 +741,7 @@ Controller.prototype.$route = function() {
 				}
 
 				ctrl.payload = Buffer.concat(ctrl.payload);
+				F.stats.performance.download += ctrl.payload.length / 1024 / 1024;
 
 				switch (ctrl.datatype) {
 					case 'json':
@@ -758,6 +764,7 @@ Controller.prototype.$route = function() {
 };
 
 function readfile(filename, callback) {
+	F.stats.performance.open++;
 	F.Fs.lstat(filename, function(err, stats) {
 
 		if (err) {
@@ -765,6 +772,7 @@ function readfile(filename, callback) {
 			return;
 		}
 
+		F.stats.performance.open++;
 		F.Fs.readFile(filename, 'utf8', function(err, text) {
 			if (err) {
 				callback(err);
@@ -1096,6 +1104,8 @@ function send_file(ctrl, path, ext) {
 		ctrl.response.headers['content-type'] = type;
 		F.temporary.tmp[ctrl.uri.key] = cache;
 
+		F.stats.performance.open++;
+
 		var reader;
 
 		if (range) {
@@ -1140,18 +1150,24 @@ function send_file(ctrl, path, ext) {
 		}
 	};
 
-	if (cache)
+	if (cache) {
 		loadstats(null, null, cache);
-	else
+	} else {
+		F.stats.performance.open++;
 		F.Fs.lstat(path, loadstats);
+	}
 }
 
 function middleware(ctrl) {
 	var run = function(index) {
-		var fn = ctrl.route.middleware[index];
-		if (fn)
-			fn(ctrl, () => run(index + 1));
-		else
+		var name = ctrl.route.middleware[index];
+		if (name) {
+			let fn = F.routes.middleware[name];
+			if (fn)
+				fn(ctrl, () => run(index + 1));
+			else
+				run(index + 1);
+		} else
 			ctrl.route.action(ctrl);
 	};
 	run(0);
@@ -1191,10 +1207,13 @@ HttpFile.prototype.rename = HttpFile.prototype.move = function(filename, callbac
 
 HttpFile.prototype.$move = function(filename, callback) {
 	var self = this;
+	F.stats.performance.open++;
 	F.Fs.rename(self.path, filename, function(err) {
 		if (err && err.code === 'EXDEV') {
+			F.stats.performance.open++;
 			self.copy(filename, function(err){
 
+				F.stats.performance.open++;
 				F.path.unlink(self.path, NOOP);
 
 				if (!err) {
@@ -1228,10 +1247,12 @@ HttpFile.prototype.$copy = function(filename, callback) {
 	var self = this;
 
 	if (!callback) {
+		F.stats.performance.open++;
 		F.Fs.createReadStream(self.path).pipe(F.Fs.createWriteStream(filename));
 		return;
 	}
 
+	F.stats.performance.open++;
 	var reader = F.Fs.createReadStream(self.path);
 	var writer = F.Fs.createWriteStream(filename);
 
@@ -1251,6 +1272,7 @@ HttpFile.prototype.read = function(callback) {
 
 HttpFile.prototype.$read = function(callback) {
 	var self = this;
+	F.stats.performance.open++;
 	F.Fs.readFile(self.path, callback);
 	return self;
 };
@@ -1268,6 +1290,7 @@ HttpFile.prototype.$md5 = function(callback) {
 	var self = this;
 	var md5 = F.Crypto.createHash('md5');
 	var stream = F.Fs.createReadStream(self.path);
+	F.stats.performance.open++;
 
 	stream.on('data', buffer => md5.update(buffer));
 	stream.on('error', function(error) {
@@ -1288,10 +1311,12 @@ HttpFile.prototype.$md5 = function(callback) {
 };
 
 HttpFile.prototype.stream = function(opt) {
+	F.stats.performance.open++;
 	return F.Fs.createReadStream(this.path, opt);
 };
 
 HttpFile.prototype.pipe = function(stream, opt) {
+	F.stats.performance.open++;
 	return F.Fs.createReadStream(this.path, opt).pipe(stream, opt);
 };
 

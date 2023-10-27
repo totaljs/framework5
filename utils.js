@@ -1,6 +1,6 @@
 // Total.js Utils
 // The MIT License
-// Copyright 2012-2024 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2012-2023 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -85,7 +85,7 @@ const REG_UTF8 = /[\u3400-\u9FBF]/;
 exports.success = { success: true };
 exports.noop = function() {};
 
-exports.parseconfig = function(value) {
+exports.parseConfig = function(value) {
 
 	if (typeof(value) === 'string') {
 
@@ -122,7 +122,7 @@ exports.parseconfig = function(value) {
 			response.push({ id: name, type: type, value: value });
 		}
 
-		return exports.parseconfig(response);
+		return exports.parseConfig(response);
 	}
 
 	var cfg = {};
@@ -969,6 +969,7 @@ function request_writefile(req, options, file, next) {
 		};
 		exports.request(opt);
 	} else {
+		F.stats.performance.open++;
 		var stream = F.Fs.createReadStream(file.path || file.filename);
 		stream.once('close', next);
 		stream.pipe(req, STREAMPIPE);
@@ -5484,6 +5485,7 @@ MultipartParser.prototype.parse_head = function() {
 			self.current.file = null;
 		} else {
 			self.current.path = self.tmp + (UPLOADINDEXER++) + '.bin';
+			F.stats.performance.open++;
 			self.current.stream = F.Fs.createWriteStream(self.current.path);
 			var file = { path: self.current.path, name: self.current.name, filename: self.current.filename, size: 0, type: self.current.type, width: 0, height: 0 };
 			self.current.file = file;

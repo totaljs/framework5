@@ -1,3 +1,7 @@
+// Total.js Templates
+// The MIT License
+// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+
 exports.render = function(body, model, $) {
 	return new Promise(function(resolve, reject) {
 

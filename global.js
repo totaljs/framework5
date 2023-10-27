@@ -34,6 +34,7 @@ global.ACTION = F.TBuilders.action;
 global.TEMPLATE = F.template;
 global.FILESTORAGE = F.filestorage;
 global.WEBSOCKETCLIENT = F.websocketclient;
+global.PAUSESERVER = F.pauseserver;
 
 global.LDAP = function(opt, callback) {
 	if (!opt.ldap.port)
@@ -73,3 +74,8 @@ global.NEWAPI = (name, callback) => F.TApi.newapi(name, callback);
 
 // NoSQL
 global.NOSQL = F.TNoSQL.nosql;
+
+// Workers
+global.NEWFORK = F.TWorkers.createfork;
+global.NEWTHREAD = F.TWorkers.createthread;
+global.NEWTHREADPOOL = F.TWorkers.createpool;

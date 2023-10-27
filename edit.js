@@ -1,3 +1,7 @@
+// Total.js Edit
+// The MIT License
+// Copyright 2020-2023 (c) Peter Širka <petersirka@gmail.com>
+
 'use strict';
 
 const Fs = require('fs');

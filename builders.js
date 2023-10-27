@@ -156,7 +156,7 @@ Options.prototype.redirect = function(url) {
 
 // @TODO: Missing functionality "Options.audit()"
 Options.prototype.audit = function(message, type) {
-	F.audit(this, message, type);
+	F.audit(this, this.variables(message), type);
 };
 
 Options.prototype.success = function(value) {

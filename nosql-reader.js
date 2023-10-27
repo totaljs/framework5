@@ -14,7 +14,6 @@ function NoSQLReader(builder) {
 		self.add(builder);
 		self.prepare();
 	}
-
 }
 
 NoSQLReader.prototype.add = function(builder) {

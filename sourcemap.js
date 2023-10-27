@@ -1,3 +1,7 @@
+// Total.js SourceMap generator
+// The MIT License
+// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+
 var timeout = null;
 
 function stringify(schema) {

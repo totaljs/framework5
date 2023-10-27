@@ -11,19 +11,20 @@ const EMPTYARRAY = [];
 const REG_SKIPERRORS = /epipe|invalid\sdistance/i;
 const REG_HTTPHTTPS = /^(http|https):\/\//i;
 
+const MSG_SNAPSHOT = { TYPE: 'usage' };
+const IGNORE_AUDIT = { password: 1, token: 1, accesstoken: 1, access_token: 1, pin: 1 };
+
 Object.freeze(EMPTYOBJECT);
 Object.freeze(EMPTYARRAY);
 
 // Globals
-global.DEBUG = true;
 global.F = {};
+global.DEBUG = true;
 global.CONF = {};
 global.REPO = {};
 global.MAIN = {};
 global.TEMP = {};
 global.FUNC = {};
-global.PERF = {};
-// global.EMPTYBUFFER = Buffer.alloc(0);
 global.EMPTYOBJECT = EMPTYOBJECT;
 global.EMPTYARRAY = EMPTYARRAY;
 global.NOW = new Date();
@@ -48,12 +49,15 @@ global.DEF = {};
 	F.apiservices = {};
 	F.processing = {};
 	F.transformations = {};
+	F.consumption = {};
 	F.flowstreams = {};
 	F.filestorages = {};
 	F.jsonschemas = {};
 	F.querybuilders = {};
+	F.workers = {};
 	F.config = CONF;
 	F.def = DEF;
+	F.timeouts = [];
 	F.errors = [];
 	F.paused = [];
 	F.crons = [];
@@ -107,9 +111,11 @@ global.DEF = {};
 		blocked: {},
 		calls: {},
 		utils: {},
+		mail: {},
 		images: {},
 		querybuilders: {},
 		templates: {},
+		smtp: {},
 		datetime: {} // date time formatters
 	};
 
@@ -204,13 +210,22 @@ global.DEF = {};
 
 	F.path = {};
 	F.path.root = path => F.Path.join(F.directory, path || '');
+	F.path.logs = path => F.path.$join('logs', path || '');
 	F.path.views = path => F.Path.join(F.directory, 'views', path || '');
 	F.path.public = path => F.Path.join(F.directory, 'public', path || '');
 	F.path.plugins = path => F.Path.join(F.directory, 'plugins', path || '');
-	F.path.private = path => F.Path.join(F.directory, 'private', path || '');
+	F.path.private = path => F.path.$join('private', path || '');
 	F.path.templates = path => F.Path.join(F.directory, 'templates', path || '');
-	F.path.databases = path => F.Path.join(F.directory, 'databases', path || '');
+	F.path.databases = path => F.path.$join('databases', path || '');
 	F.path.flowstreams = path => F.Path.join(F.directory, 'flowstreams', path || '');
+	F.path.tmp = F.path.temp = path => F.path.$join('tmp', path || '');
+
+	F.path.$join = function(directory, path) {
+		var key = 'directory_' + directory;
+		if (!F.temporary.path[key])
+			F.path.verify(directory);
+		return F.Path.join(F.directory, directory, path || '');
+	};
 
 	F.path.route = function(path, directory = 'root') {
 
@@ -226,12 +241,6 @@ global.DEF = {};
 		}
 
 		return F.path[directory](path);
-	};
-
-	F.path.tmp = F.path.temp = function(path) {
-		if (!F.temporary.path.directory_tmp)
-			F.path.verify('tmp');
-		return F.Path.join(F.directory, 'tmp', path || '');
 	};
 
 	F.path.unlink = unlink;
@@ -302,6 +311,10 @@ global.DEF = {};
 
 })(global.F);
 
+function mailsendforce(message) {
+	message.send2();
+}
+
 function pathexists(filename, isfile) {
 	try {
 		var val = F.Fs.statSync(filename);
@@ -360,6 +373,7 @@ function unlink(arr, callback) {
 	CONF.author = '';
 	CONF.secret = F.syshash;
 	CONF.secret_encryption = '';
+	CONF.secret_totalapi = '';
 	CONF.secret_csrf = '';
 	CONF.secret_tapi = '';
 	CONF.secret_tms = '';
@@ -396,6 +410,7 @@ function unlink(arr, callback) {
 	CONF.$clearcache = 10;
 	CONF.$imageconverter = 'gm';
 	CONF.$imagememory = 0; // disabled because e.g. GM v1.3.32 throws some error about the memory
+	CONF.$stats = true;
 
 	CONF.$nodemodules = require.resolve('./index');
 	CONF.$nodemodules = CONF.$nodemodules.substring(0, CONF.$nodemodules.length - (8 + 7));
@@ -412,6 +427,8 @@ function unlink(arr, callback) {
 
 	CONF.$tapi = true;
 	CONF.$tapiurl = 'eu';
+	CONF.$tapimail = false;
+	CONF.$tapilogger = false;
 
 	CONF.$tms = false;
 	CONF.$tmsmaxsize = 256;
@@ -448,6 +465,56 @@ function unlink(arr, callback) {
 		return true;
 	};
 
+	DEF.onAudit = function(name, data) {
+		F.stats.performance.open++;
+		data.dtcreated = NOW = new Date();
+		F.Fs.appendFile(F.path.logs((name || 'audit') + '.log'), JSON.stringify(data) + '\n', NOOP);
+	};
+
+	DEF.onMail = function(email, subject, body, callback, reply) {
+
+		var tmp;
+
+		if (typeof(callback) === 'string') {
+			tmp = reply;
+			reply = callback;
+			callback = tmp;
+		}
+
+		var msg = new F.TMail.Message(subject, body);
+
+		if (email.indexOf(',') !== -1)
+			email = email.split(',').trim();
+
+		if (email instanceof Array) {
+			for (let m of email)
+				msg.to(m);
+		} else
+			msg.to(email);
+
+		msg.from(F.config.mail_from);
+		callback && msg.callback(callback);
+
+		if (reply)
+			msg.reply(reply);
+		else {
+			tmp = F.config.mail_reply;
+			if (tmp && tmp.length > 3)
+				msg.reply(tmp);
+		}
+
+		tmp = F.config.mail_cc;
+		if (tmp && tmp.length > 3)
+			msg.cc(tmp);
+
+		tmp = F.config.mail_bcc;
+		if (tmp && tmp.length > 3)
+			msg.bcc(tmp);
+
+		msg.$sending = setImmediate(mailsendforce, msg);
+		return msg;
+	};
+
 	DEF.onViewCompile = function(name, html) {
 		return html;
 	};
@@ -464,7 +531,7 @@ function unlink(arr, callback) {
 
 		var obj = { error: err, name: name, url: url, date: NOW };
 
-		if (F.errors.push(obj) > 5)
+		if (F.errors.push(obj) > 10)
 			F.errors.shift();
 
 		EMIT('error', obj);
@@ -496,7 +563,8 @@ function unlink(arr, callback) {
 
 F.loadconfig = function(value) {
 
-	var cfg = F.TUtils.parseconfig(value);
+	var cfg = F.TUtils.parseConfig(value);
+	var smtp = null;
 
 	for (let key in cfg) {
 
@@ -504,12 +572,34 @@ F.loadconfig = function(value) {
 		let tmp;
 
 		switch (key) {
+			case 'totalapi':
+				key = '$tapi';
+				break;
 			case '$tms':
 				break;
-			case 'mail_from':
-			case 'mail_options':
-			case 'mail_smtp':
+			case 'smtp':
+				if (typeof(value) === 'string')
+					value = new Function('return ' + value)();
+				smtp = value || {};
 				break;
+			case 'mail_smtp':
+				if (!smtp)
+					smtp = {};
+				smtp.smtp = value;
+				break;
+			case 'mail_smtp_options':
+
+				if (typeof(value) === 'string')
+					value = new Function('return ' + value)();
+
+				if (!smtp)
+					smtp = {};
+
+				for (let k in value)
+					smtp[k] = value[k];
+
+				break;
+			case 'mail_from':
 			case '$crypto_iv':
 				break;
 			case '$root':
@@ -539,12 +629,35 @@ F.loadconfig = function(value) {
 	if (!F.config.$httpetag)
 		F.config.$httpetag = F.config.version.replace(/\.|\s/g, '');
 
+	if (smtp)
+		F.config.smtp = smtp;
+
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = F.config.$insecure ? '0' : '1';
 	F.logger(F.config.$logger == true);
 	F.emit('@tms');
 };
 
 F.loadresource = function(name, value) {
+
+	if (value == null) {
+		// download
+		RESTBuilder.GET(name).callback(function(err, response) {
+
+			if (err)
+				throw new Error(err.toString());
+
+			if (response && (response instanceof Array || typeof(response) === 'object')) {
+				if (response instanceof Array) {
+					for (let item of response)
+						LOADRESOURCE(item.id || item.key || item.code || item.language, item.value || item.name || item.text || item.body);
+				} else {
+					for (let key in response)
+						LOADRESOURCE(key, response[key]);
+				}
+			}
+		});
+		return;
+	}
 
 	var lines = value.split('\n');
 	var response = {};
@@ -747,8 +860,10 @@ F.load = async function(types = [], callback) {
 	if (!types.length || types.includes('flowstreams'))
 		F.TFlow.init();
 
+	F.loadstats();
 	F.loadservices();
 	F.stats.compilation = Date.now() - beg;
+	F.stats.compiled = files.length;
 	F.isloaded = true;
 	DEBUG && F.TSourceMap.refresh();
 
@@ -938,7 +1053,7 @@ F.console = function() {
 	F.config.author && print('Author        : ' + F.config.author);
 	print('Date ({0})    : '.format(process.env.TZ) + NOW.format('yyyy-MM-dd HH:mm:ss'));
 	print('Mode          : ' + (DEBUG ? 'debug' : 'release'));
-	print('Compilation   : ' + F.stats.compilation + ' ms');
+	print('Compiled      : ' + F.stats.compiled + ' files (' + F.stats.compilation + 'ms)');
 	// F.threads && print('Threads       : ' + Object.keys(F.threads).join(', '));
 	// global.THREAD && print('Thread        : ' + global.THREAD);
 	print('====================================================');
@@ -947,7 +1062,7 @@ F.console = function() {
 	print('node_modules  : ' + F.config.$nodemodules);
 	print('====================================================\n');
 
-	if (!F.isWorker) {
+	if (!F.isworker) {
 
 		var hostname = F.config.$unixsocket ? ('Socket: ' + F.config.$unixsocket) : '{2}://{0}:{1}/'.format(F.config.$ip, F.config.$port, F.isHTTPS ? 'https' : 'http');
 
@@ -989,7 +1104,8 @@ F.loadservices = function() {
 		if (F.internal.ticks == 12) {
 			F.internal.ticks = 0;
 			F.internal.counter++;
-			F.emit('service', F.internal.counter);
+			F.service(F.internal.counter);
+			F.$events.service && F.emit('service', F.internal.counter);
 		}
 
 		if (F.internal.ticks == 6 || F.internal.ticks == 12)
@@ -1008,6 +1124,12 @@ F.loadservices = function() {
 				if (ctrl.destroyed) {
 					F.temporary.pending.splice(index, 1);
 				} else if (ctrl.timeout <= 0) {
+
+					F.stats.response.timeout++;
+
+					if (F.timeouts.push((NOW = new Date()).toJSON() + ' ' + ctrl.url) > 5)
+						F.timeouts.shift();
+
 					ctrl.fallback(408);
 					F.temporary.pending.splice(index, 1);
 				} else {
@@ -1269,6 +1391,7 @@ F.touch = function(url) {
 F.middleware = function(name, fn, assign) {
 
 	if (fn == null) {
+		// @TODO: remove the middleware from all routes
 		delete F.routes.middleware[name];
 		return;
 	}
@@ -1306,7 +1429,7 @@ F.middleware = function(name, fn, assign) {
 	}
 };
 
-F.pause = function(name, enable) {
+F.pauseserver = function(name, enable) {
 
 	var index;
 
@@ -1384,11 +1507,12 @@ F.service = function(count) {
 
 		for (let key in F.filestorages)
 			F.filestorages[key].cache = {};
-
 	}
 
-	if (count % 5 === 0)
+	if (count % 5 === 0) {
 		global.TEMP = {};
+		F.TMail.refresh();
+	}
 
 	// Update expires date
 	if (count % 60 === 0) {
@@ -1425,6 +1549,40 @@ F.service = function(count) {
 
 	if (count % 10 === 0 && global.gc)
 		setTimeout(cleargc, 1000);
+
+	F.temporary.service.publish = F.stats.performance.publish;
+	F.temporary.service.subscribe = F.stats.performance.subscribe;
+	F.temporary.service.call = F.stats.performance.call;
+	F.temporary.service.request = F.stats.performance.request;
+	F.temporary.service.file = F.stats.performance.file;
+	F.temporary.service.message = F.stats.performance.message;
+	F.temporary.service.mail = F.stats.performance.mail;
+	F.temporary.service.open = F.stats.performance.open;
+	F.temporary.service.dbrm = F.stats.performance.dbrm;
+	F.temporary.service.dbwm = F.stats.performance.dbwm;
+	F.temporary.service.external = F.stats.performance.external;
+	F.temporary.service.upload = F.stats.performance.upload;
+	F.temporary.service.download = F.stats.performance.download;
+
+	F.stats.request.size += F.stats.performance.download;
+	F.stats.response.size += F.stats.performance.upload;
+	F.stats.performance.publish = 0;
+	F.stats.performance.subscribe = 0;
+	F.stats.performance.call = 0;
+	F.stats.performance.upload = 0;
+	F.stats.performance.download = 0;
+	F.stats.performance.external = 0;
+	F.stats.performance.dbrm = 0;
+	F.stats.performance.dbwm = 0;
+	F.stats.performance.request = 0;
+	F.stats.performance.file = 0;
+	F.stats.performance.open = 0;
+	F.stats.performance.message = 0;
+	F.stats.performance.mail = 0;
+
+	console.log('SOM TU', F.usage)
+	F.usage && F.usage();
+	F.temporary.service.usage = 0;
 };
 
 function cleargc() {
@@ -1606,12 +1764,56 @@ F.transform = function(name, value, callback, controller) {
 		callback(null, value);
 };
 
-F.makesourcemap = function() {
-	// @TODO: Not implemented: F.makesourcemap()
-};
+function auditjsonserialization(key, value) {
+	if (!IGNORE_AUDIT[key] && value != null && value !== '')
+		return value;
+}
 
-F.audit = function() {
-	// @TODO: Not implemented: F.audit()
+F.audit = function(name, $, message, type) {
+
+	if (typeof(name) === 'object') {
+		type = message;
+		message = $;
+		$ = name;
+		name = null;
+	}
+
+	var data = {};
+
+	if ($.user) {
+		data.userid = $.user.id;
+		data.username = $.user.name || $.user.nick || $.user.alias;
+	}
+
+	if ($.controller) {
+		if ($.controller.sessionid)
+			data.sessionid = $.controller.sessionid;
+		data.ua = $.ua;
+		data.ip = $.ip;
+		data.url = $.url;
+	}
+
+	if (type)
+		data.type = type || 'info';
+
+	if ($.id)
+		data.schema = $.id;
+
+	if ($.model)
+		data.data = JSON.stringify({ params: $.params, query: $.query, model: $.model }, auditjsonserialization);
+
+	if (F.id)
+		data.instance = F.id;
+
+	if (message)
+		data.message = message;
+
+	data.app = F.config.url || F.config.name;
+
+	if (F.config.$tapilogger && F.config.$tapi && F.config.secret_totalapi)
+		API('TAPI/logger', data).callback(ERROR('totalapi'));
+	else
+		DEF.onAudit(name, data, $);
 };
 
 F.restore = function(filename, target, callback, filter) {
@@ -2025,6 +2227,91 @@ F.filestorage = function(name) {
 	return fs;
 };
 
+F.loadstats = function() {
+
+	var main = {};
+	var stats = F.consumption;
+	var lastwarning = 0;
+
+	stats.id = F.id;
+	stats.version = {};
+	stats.version.node = process.version;
+	stats.version.total = F.version_header;
+	stats.version.build = F.version;
+	stats.version.app = F.config.version;
+	stats.pid = process.pid;
+	stats.thread = global.THREAD;
+	stats.mode = DEBUG ? 'debug' : 'release';
+	stats.overload = 0;
+
+	main.pid = process.pid;
+	main.date = NOW;
+	main.port = F.port;
+	main.ip = F.ip;
+	main.stats = [stats];
+
+	F.usage = function() {
+
+		console.log('USAGE');
+
+		var memory = process.memoryUsage();
+		stats.date = NOW;
+
+		stats.memory = (memory.heapUsed / 1024 / 1024).floor(2);
+		stats.rm = F.temporary.service.request || 0;      // request min
+		stats.fm = F.temporary.service.file || 0;         // files min
+		stats.wm = F.temporary.service.message || 0;      // websocket messages min
+		stats.em = F.temporary.service.external || 0;     // external requests min
+		stats.mm = F.temporary.service.mail || 0;         // mail min
+		stats.om = F.temporary.service.open || 0;         // open files min
+		stats.dm = (F.temporary.service.download || 0).floor(3);       // downloaded MB min
+		stats.um = (F.temporary.service.upload || 0).floor(3);         // uploaded MB min
+		stats.pm = F.temporary.service.publish || 0;      // publish messages min
+		stats.sm = F.temporary.service.subscribe || 0;    // subscribe messages min
+		stats.cm = F.temporary.service.call || 0;         // calls messages min
+		stats.dbrm = F.temporary.service.dbrm || 0;       // db read
+		stats.dbwm = F.temporary.service.dbwm || 0;       // db write
+		stats.usage = F.temporary.service.usage.floor(2); // app usage in % min
+		stats.requests = F.stats.request.request;
+		stats.pending = F.stats.request.pending;
+		stats.external = F.stats.request.external || 0;
+		stats.errors = F.stats.error;
+		stats.timeouts = F.stats.response.timeout;
+		stats.online = F.stats.performance.online;
+		stats.uptime = F.cache.count;
+		stats.download = F.stats.request.size.floor(3);
+		stats.upload = F.stats.response.size.floor(3);
+
+		var err = F.errors[F.errors.length - 1];
+		var timeout = F.timeouts[F.timeouts.length - 1];
+
+		stats.lasterror = err ? (err.date.toJSON() + ' '  + (err.name ? (err.name + ' - ') : '') + err.error) : undefined;
+		stats.lasttimeout = timeout;
+
+		if ((stats.usage > 80 || stats.memory > 600 || stats.pending > 1000) && lastwarning !== NOW.getHours()) {
+			lastwarning = NOW.getHours();
+			stats.overload++;
+		}
+
+		if (F.isworker) {
+			if (process.connected) {
+				MSG_SNAPSHOT.data = stats;
+				process.send(MSG_SNAPSHOT);
+			}
+		} else if (F.config.$stats) {
+			try {
+				F.Fs.writeFile(process.mainModule.filename + '.json', JSON.stringify(main, null, '\t'), NOOP);
+			} catch (e) {
+				// readonly or something else
+				F.usage = null;
+				console.log(e);
+			}
+		}
+
+	};
+
+};
+
 function httptuningperformance(socket) {
 	socket.setNoDelay(true);
 	socket.setKeepAlive(true, 10);
@@ -2088,6 +2375,7 @@ process.on('message', function(msg, h) {
 	F.Url = F.require('url');
 	F.Tls = F.require('tls');
 	F.Stream = F.require('stream');
+	F.Cluster = require('cluster');
 
 	// Total.js modules
 	F.TUtils = require('./utils');
@@ -2106,10 +2394,13 @@ process.on('message', function(msg, h) {
 	F.TFileStorage = require('./filestorage');
 	F.TTemplates = require('./templates');
 	F.TSourceMap = require('./sourcemap');
+	F.TMail = require('./mail');
+	F.TWorkers = require('./workers');
 
 	// Settings
 	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
 	F.iswindows = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
+	F.isworker = process.env.PASSENGER_APP_ENV ? false : F.Cluster.isworker;
 	F.syshash = (__dirname + '-' + F.Os.hostname() + '-' + F.Os.platform() + '-' + F.Os.arch() + '-' + F.Os.release() + '-' + F.Os.tmpdir() + JSON.stringify(process.versions)).md5();
 	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
 

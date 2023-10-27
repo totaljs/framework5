@@ -1,6 +1,6 @@
 // Total.js CMS module
 // The MIT License
-// Copyright 2021 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2021-2023 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 

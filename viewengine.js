@@ -1,6 +1,6 @@
 // Total.js ViewEngine
 // The MIT License
-// Copyright 20124-2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2014-2023 (c) Peter Širka <petersirka@gmail.com>
 
 const REG_NOCOMPRESS = /@\{nocompress\s\w+}/gi;
 const REG_TAGREMOVE = /[^>](\r)\n\s{1,}$/;
@@ -10,6 +10,12 @@ const VIEW_IF = { 'if ': 1, 'if(': 1 };
 
 exports.cache = [];
 exports.compile = function(name, content, debug = true) {
+
+	if (F.$events['@view']) {
+		let meta = { name: name, body: content, debug: debug };
+		F.emit('@view', meta);
+		content = meta.body;
+	}
 
 	content = F.TMinificators.htmlremovecomments(content);
 

@@ -1,3 +1,7 @@
+// Total.js Bundles
+// The MIT License
+// Copyright 2018-2023 (c) Peter Širka <petersirka@gmail.com>
+
 require('./index');
 
 'use strict';

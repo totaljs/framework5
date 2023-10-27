@@ -1,5 +1,7 @@
-- sourcemap
-- stats
 - mail
 - cluster
 - openclient
+- update
+
+- CSRF tokeny
+- encryption/decryption

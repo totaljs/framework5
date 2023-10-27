@@ -1,3 +1,7 @@
+// Total.js Cluster
+// The MIT License
+// Copyright 2018-2023 (c) Peter Širka <petersirka@gmail.com>
+
 'use strict';
 
 const Fs = require('fs');
@@ -413,7 +417,7 @@ function message(m) {
 			for (var i = 0, length = MASTER[m.name].length; i < length; i++)
 				MASTER[m.name][i](m.a, m.b, m.c, m.d, m.e);
 		}
-	} else if (m.TYPE === 'snapshot') {
+	} else if (m.TYPE === 'usage') {
 		var is = false;
 		STATS[i];
 		for (var i = 0; i < STATS.length; i++) {
