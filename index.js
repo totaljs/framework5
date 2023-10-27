@@ -14,6 +14,8 @@ const REG_HTTPHTTPS = /^(http|https):\/\//i;
 const MSG_SNAPSHOT = { TYPE: 'usage' };
 const IGNORE_AUDIT = { password: 1, token: 1, accesstoken: 1, access_token: 1, pin: 1 };
 
+var CONCAT = new Array(2);
+
 Object.freeze(EMPTYOBJECT);
 Object.freeze(EMPTYARRAY);
 
@@ -66,7 +68,7 @@ global.DEF = {};
 		ticks: 0,
 		counter: 0,
 		uid: 1,
-		timeouts: null // setInterval identifier
+		interval: null // setInterval identifier
 	};
 
 	F.routes = {
@@ -97,7 +99,7 @@ global.DEF = {};
 		versions: {},
 		dependencies: {}, // temporary for module dependencies
 		other: {},
-		keys: {}, // for crypto keys
+		cryptokeys: {}, // for crypto keys
 		internal: {}, // controllers/modules names for the routing
 		ready: {},
 		ddos: {},
@@ -599,9 +601,10 @@ F.loadconfig = function(value) {
 					smtp[k] = value[k];
 
 				break;
-			case 'mail_from':
-			case '$crypto_iv':
+			case '$cryptoiv':
+				cfg[key] = value ? Buffer.from(value, 'hex') : null;
 				break;
+			case 'mail_from':
 			case '$root':
 				break;
 			case '$port':
@@ -635,6 +638,7 @@ F.loadconfig = function(value) {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = F.config.$insecure ? '0' : '1';
 	F.logger(F.config.$logger == true);
 	F.emit('@tms');
+	F.emit('@reconfigure');
 };
 
 F.loadresource = function(name, value) {
@@ -1027,8 +1031,8 @@ F.shell = function(cmd, callback, cwd) {
 
 	args.cwd = cwd || F.directory;
 
-	if (CONF.$shell)
-		args.shell = CONF.$shell;
+	if (F.config.$shell)
+		args.shell = F.config.$shell;
 
 	if (callback)
 		F.Child.exec(cmd, args, callback);
@@ -1087,15 +1091,13 @@ F.console = function() {
 
 F.loadservices = function() {
 
-	F.internal.timeouts && clearInterval(F.internal.timeouts);
+	F.internal.interval && clearInterval(F.internal.timeouts);
 
 	// This timer solving timeouts
-	F.internal.timeouts = setInterval(function() {
+	F.internal.interval = setInterval(function() {
 
 		F.internal.ticks++;
-
-		if (F.internal.ticks % 2 === 0)
-			global.NOW = new Date();
+		global.NOW = new Date();
 
 		for (let key in F.flowstreams)
 			F.flowstreams[key].service(F.internal.ticks);
@@ -1164,8 +1166,7 @@ F.http = function(opt) {
 			F.config.$ip = opt.ip;
 
 		F.server.listen(F.config.$port, F.config.$ip);
-
-		CONF.$performance && F.server.on('connection', httptuningperformance);
+		F.config.$performance && F.server.on('connection', httptuningperformance);
 
 		if (!process.connected && F.console)
 			F.console();
@@ -1530,9 +1531,8 @@ F.service = function(count) {
 	if (count % F.config.$tmsclearblocked === 0)
 		F.temporary.tmsblocked = {};
 
-	if (count % 30 === 0) {
-		// @TODO: clear DNS
-	}
+	if (count % 30 === 0)
+		F.temporary.dnscache = {};
 
 	let blocked = F.temporary.blocked;
 	if (blocked.is) {
@@ -1682,16 +1682,16 @@ F.memorize = function(name, delay, skip) {
 		data = F.Fs.readFileSync(filename, 'utf8').parseJSON(true);
 	} catch (e) {}
 
-	var blacklist = {};
-	var timeout;
 	var replacer;
+	var timeout;
+	var ignore = {};
 
 	if (skip) {
 		if (typeof(skip) === 'string')
 			skip = skip.split(',').trim();
 		for (var m of skip)
-			blacklist[m] = 1;
-		replacer = (key, value) => blacklist[key] ? undefined : value;
+			ignore[m] = 1;
+		replacer = (key, value) => ignore[key] ? undefined : value;
 	}
 
 	var save = () => F.Fs.writeFile(filename, replacer ? JSON.stringify(data, replacer, '\t') : JSON.stringify(data, null, '\t'), F.error('MEMORIZE(\'' + name + '\').save()'));
@@ -1699,6 +1699,11 @@ F.memorize = function(name, delay, skip) {
 	data.save = function() {
 		timeout && clearTimeout(timeout);
 		timeout = setTimeout(save, delay || 10000);
+	};
+
+	data.set = function(key, value) {
+		data[key] = value;
+		data.save();
 	};
 
 	return data;
@@ -2233,6 +2238,66 @@ F.filestorage = function(name) {
 	return fs;
 };
 
+F.encryptreq = function(ctrl, val, key, strict) {
+	var obj = {};
+	obj.ua = ctrl.ua;
+	if (strict)
+		obj.ip = ctrl.ip;
+	obj.data = val;
+	return F.encrypt(obj, key);
+};
+
+F.decryptreq = function(ctrl, val, key) {
+	if (!val)
+		return;
+	var obj = F.decrypt(val, key || '', true);
+	if (!obj || (obj.ip && obj.ip !== ctrl.ip) || (obj.ua !== ctrl.ua))
+		return;
+	return obj.data;
+};
+
+F.encrypt = function(value, key, unique) {
+
+	if (value == null)
+		return '';
+
+	value = JSON.stringify(value);
+
+	if (F.config.$crypto) {
+		if (!F.temporary.cryptokeys[key])
+			F.temporary.cryptokeys[key] = Buffer.from(key);
+		var cipher = F.Crypto.createCipheriv(F.config.$crypto, F.temporary.cryptokeys[key], F.config.$cryptoiv);
+		CONCAT[0] = cipher.update(value);
+		CONCAT[1] = cipher.final();
+		return Buffer.concat(CONCAT).toString('hex');
+	}
+
+	return value.encrypt(F.config.secret + '=' + key, unique);
+};
+
+F.decrypt = function(value, key, tojson = true) {
+
+	var response;
+
+	if (F.config.$crypto) {
+
+		if (!F.temporary.cryptokeys[key])
+			F.temporary.cryptokeys[key] = Buffer.from(key);
+
+		var decipher = F.Crypto.createDecipheriv(F.config.$crypto, F.temporary.cryptokeys[key], F.config.$cryptoiv);
+		try {
+			CONCAT[0] = decipher.update(Buffer.from(value || '', 'hex'));
+			CONCAT[1] = decipher.final();
+			response = Buffer.concat(CONCAT).toString('utf8');
+		} catch (e) {
+			response = null;
+		}
+	} else
+		response = (value || '').decrypt(F.config.secret + '=' + key);
+
+	return response ? (tojson ? (response.isJSON() ? response.parseJSON(true) : null) : response) : null;
+};
+
 F.loadstats = function() {
 
 	var main = {};
@@ -2428,6 +2493,7 @@ process.on('message', function(msg, h) {
 	// Configuration
 	CONF.secret_uid = F.syshash.substring(10);
 	CONF.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
+	CONF.$cryptoiv = Buffer.from(F.syshash).slice(0, 16);
 
 	// Methods
 	F.route = F.TRouting.route;

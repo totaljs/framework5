@@ -663,6 +663,10 @@ Controller.prototype.cookie = function(name, value, expires, options) {
 	return ctrl;
 };
 
+Controller.prototype.custom = function() {
+	this.destroyed = true;
+};
+
 Controller.prototype.autoclear = function(value) {
 	this.preventclearfiles = value === false;
 };

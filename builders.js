@@ -95,7 +95,6 @@ Options.prototype.action = function(schema, payload) {
 	return F.action(schema, payload, this.controller);
 };
 
-// @TODO: Missing functionality "Options.publish()"
 Options.prototype.publish = function(value) {
 	var self = this;
 	var name = self.id;
@@ -138,7 +137,6 @@ Options.prototype.emit = function(name, a, b, c, d) {
 	return true;
 };
 
-// @TODO: Missing functionality "Options.cancel()"
 Options.prototype.cancel = function() {
 	var self = this;
 	self.callback = self.next = null;
@@ -149,12 +147,11 @@ Options.prototype.cancel = function() {
 	return self;
 };
 
-// @TODO: Missing functionality "Options.cancel()"
 Options.prototype.redirect = function(url) {
-	this.callback(new F.callback_redirect(url));
+	this.redirect(url);
+	this.cancel();
 };
 
-// @TODO: Missing functionality "Options.audit()"
 Options.prototype.audit = function(message, type) {
 	F.audit(this, this.variables(message), type);
 };
@@ -189,19 +186,10 @@ Options.prototype.done = function(arg) {
 };
 
 Options.prototype.invalid = function(error, path, index) {
-
 	var self = this;
-
-	if (arguments.length) {
-		self.error.push(error, path, index);
-		self.callback();
-		return self;
-	}
-
-	return function(err) {
-		self.error.push(err);
-		self.callback();
-	};
+	self.error.push(error, path, index);
+	self.callback();
+	return self;
 };
 
 Options.prototype.cookie = function(name, value, expire, options) {
@@ -1268,7 +1256,7 @@ exports.newaction = function(name, obj) {
 		obj.route && obj.route.remove();
 		delete F.actions[obj.id];
 		obj = null;
-		F.makesourcemap();
+		F.makesourcemap && F.makesourcemap();
 	};
 
 	if (obj.route) {
@@ -1302,7 +1290,7 @@ exports.newaction = function(name, obj) {
 		F.TMS.newpublish(name, tmsschema);
 	}
 
-	F.makesourcemap();
+	F.makesourcemap && F.makesourcemap();
 	return obj;
 };
 
@@ -1374,6 +1362,7 @@ ActionCaller.prototype.exec = function() {
 	$.id = id;
 	$.error = self.error;
 	$.controller = self.controller;
+	$.fields = action.fields;
 
 	$.$callback = function(err, response) {
 		if (err) {
@@ -1402,6 +1391,7 @@ ActionCaller.prototype.exec = function() {
 		let permissions = action.permissions.slice(0);
 		permissions.unshift($);
 		if (F.unauthorized.apply(global, permissions)) {
+			self.finish = null;
 			self.cancel();
 			return;
 		}
@@ -1417,7 +1407,6 @@ ActionCaller.prototype.exec = function() {
 		response = action.jsquery.transform(query, false, self.error);
 		self.error.prefix = '';
 		if (response.error) {
-			self.options.callback(self.error);
 			self.cancel();
 			return;
 		}
@@ -1429,7 +1418,6 @@ ActionCaller.prototype.exec = function() {
 		response = action.jsparams.transform(params, false, self.error);
 		self.error.prefix = '';
 		if (response.error) {
-			self.options.callback(self.error);
 			self.cancel();
 			return;
 		}
@@ -1439,7 +1427,6 @@ ActionCaller.prototype.exec = function() {
 	if (action.jsinput && type !== '-') {
 		response = action.jsinput.transform(payload, type === '%', self.error);
 		if (response.error) {
-			self.options.callback(self.error);
 			self.cancel();
 			return;
 		}

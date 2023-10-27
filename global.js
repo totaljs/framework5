@@ -35,6 +35,13 @@ global.TEMPLATE = F.template;
 global.FILESTORAGE = F.filestorage;
 global.WEBSOCKETCLIENT = F.websocketclient;
 global.PAUSESERVER = F.pauseserver;
+global.MODS = F.modules;
+global.PLUGINS = F.plugins;
+global.DECRYPT = F.decrypt;
+global.ENCRYPT = F.encrypt;
+global.DECRYPTREQ = F.decryptreq;
+global.ENCRYPTREQ = F.encryptreq;
+global.PATH = F.path;
 
 global.LDAP = function(opt, callback) {
 	if (!opt.ldap.port)

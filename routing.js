@@ -649,7 +649,15 @@ Proxy.prototype.remove = function() {
 };
 
 exports.proxy = function(url, target) {
-	var proxy = new Proxy(url, target);
+
+	if (!target) {
+		let index = F.routes.proxies.findIndex('url', url.toLowerCase());
+		if (index !== -1)
+			F.routes.proxies.splice(index, 1);
+		return;
+	}
+
+	let proxy = new Proxy(url, target);
 	F.routes.proxies.push(proxy);
 	return proxy;
 };
