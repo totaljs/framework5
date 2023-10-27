@@ -89,7 +89,7 @@ FS.init = function(directory, callback) {
 	F.Fs.readdir(directory, function(err, files) {
 
 		if (err) {
-			callback();
+			callback && callback();
 			return;
 		}
 

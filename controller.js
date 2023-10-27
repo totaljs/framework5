@@ -926,7 +926,7 @@ function multipart(ctrl) {
 
 function authorize(ctrl) {
 	if (DEF.onAuthorize) {
-		var opt = new F.TBuilders.AuthOptions(ctrl);
+		var opt = new F.TBuilders.Options(ctrl);
 		opt.next = opt.callback = function(user) {
 			let auth = user ? 1 : 2;
 			ctrl.user = user;

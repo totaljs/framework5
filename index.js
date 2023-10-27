@@ -59,6 +59,7 @@ global.DEF = {};
 	F.workers = {};
 	F.config = CONF;
 	F.def = DEF;
+	F.repo = REPO;
 	F.timeouts = [];
 	F.errors = [];
 	F.paused = [];
@@ -870,10 +871,11 @@ F.load = async function(types = [], callback) {
 	F.stats.compiled = files.length;
 	F.isloaded = true;
 	DEBUG && F.TSourceMap.refresh();
-
 	process.send && process.send('total:ready');
-
 	callback && callback();
+
+	F.emit('ready');
+	F.emit('load');
 };
 
 F.require = function(name) {
@@ -2509,6 +2511,7 @@ process.on('message', function(msg, h) {
 	F.websocketclient = F.TWebSocket.createclient;
 	F.image = F.TImages.load;
 	F.sourcemap = F.TSourceMap.create;
+	F.tmpdir = F.Os.tmpdir();
 
 	// Needed "F"
 	F.TFlow = require('./flow');

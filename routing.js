@@ -38,6 +38,13 @@ function Route(url, action, size) {
 		index = url.length;
 
 	t.url2 = url.substring(0, index);
+
+	if (t.url2[0] === '@') {
+		// @TODO: missing WAPI implementation
+		// link to existing API
+		return;
+	}
+
 	t.url = exports.split(t.url2, true);
 	url = url.substring(index + 1);
 	t.id = t.method + '/' + t.url.join('/');
@@ -91,7 +98,10 @@ function Route(url, action, size) {
 		t.url.splice(index, 1);
 
 	url = url.replace(/<\d+/g, function(text) {
-		t.size = +text.substring(1);
+		if (text.indexOf('s') === -1)
+			t.size = (+(text.substring(1))) / 1024;
+		else
+			t.timeout = +(text.replace('s', '').substring(1));
 		return '';
 	});
 

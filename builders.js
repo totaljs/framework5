@@ -12,7 +12,7 @@ var restbuilderupgrades = [];
 function Options(ctrl, error) {
 	var t = this;
 	t.controller = ctrl;
-	t.error = error;
+	t.error = error || new ErrorBuilder();
 	t.response = {};
 }
 
@@ -153,7 +153,7 @@ Options.prototype.redirect = function(url) {
 };
 
 Options.prototype.audit = function(message, type) {
-	F.audit(this, this.variables(message), type);
+	F.audit(this, message ? this.variables(message) : '', type);
 };
 
 Options.prototype.success = function(value) {
@@ -257,7 +257,11 @@ ErrorBuilder.prototype = {
 
 ErrorBuilder.prototype.push = function(err, path, index) {
 	var self = this;
-	if (err > 400) {
+
+	if (!err)
+		err = 401;
+
+	if (err > 399) {
 		self.status = err;
 		self.items.push({ error: F.TUtils.httpstatus(err) });
 	} else

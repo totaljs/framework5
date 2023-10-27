@@ -2135,7 +2135,7 @@ SP.ROOT = function(noremap) {
 		return '';
 	});
 
-	if (!noremap && CONF.default_root)
+	if (!noremap && F.config.$root)
 		str = str.replace(REG_REMAP, $urlremap).replace(REG_AJAX, $urlajax);
 
 	return str.replace(REG_ROOT, $urlmaker);
@@ -2145,16 +2145,16 @@ function $urlremap(text) {
 	var plus = text[0] == ' ' ? 1 : 0;
 	var pos = (text[plus] === 'h' ? 6 : 5) + plus;
 	var url = text.substring(pos, text.length - 1);
-	return REG_URLEXT.test(url) ? text : ((text[plus] === 'h' ? 'href' : 'src') + '="' + CONF.default_root + (text[pos] === '/' ? text.substring(pos + 1) : text));
+	return REG_URLEXT.test(url) ? text : ((text[plus] === 'h' ? 'href' : 'src') + '="' + F.config.$root + (text[pos] === '/' ? text.substring(pos + 1) : text));
 }
 
 function $urlajax(text) {
-	return text.substring(0, text.length - 1) + CONF.default_root;
+	return text.substring(0, text.length - 1) + F.config.$root;
 }
 
 function $urlmaker(text) {
 	var c = text[4];
-	return CONF.default_root ? CONF.default_root : (c || '');
+	return F.config.$root ? F.config.$root : (c || '');
 }
 
 if (!SP.trim) {
