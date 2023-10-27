@@ -259,7 +259,7 @@ exports.compile = function(name, content, debug = true) {
 		builder = builder.replace(/(\+\$EMPTY\+)/g, '+').replace(/(\$output=\$EMPTY\+)/g, '$output=').replace(/(\$output\+=\$EMPTY\+)/g, '$output+=').replace(/(\}\$output\+=\$EMPTY)/g, '}').replace(/(\{\$output\+=\$EMPTY;)/g, '{').replace(/(\+\$EMPTY\+)/g, '+').replace(/(>'\+'<)/g, '><').replace(/'\+'/g, '');
 
 	var fn = ('(function(self){var model=self.model;var ctrl=self.controller;var query=ctrl?.query || EMPTYOBJECT,repository=self.repository,files=ctrl?.files || EMPTYARRAY,user=ctrl?.user,session=ctrl?.session,body=ctrl?.body,language=ctrl?.language || \'\'' + (isCookie ? ',cookie=name=>ctrl?ctrl.cookie(name):\'\'' : '') + ';' + builder + ';return $output;})');
-console.log(fn);
+
 	try {
 		fn = eval(fn);
 	} catch (e) {
