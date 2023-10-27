@@ -28,7 +28,8 @@ const REG_GUID = (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-
 const REG_JPG = /jfif|exif/;
 const REG_WEBP = /jfif|webp|exif/;
 const REG_SVG = /xml|svg/i;
-const REG_DOUBLESLASH = /\/{2}|\.{2,}|\.{1,}\/|/g;
+// const REG_DOUBLESLASH = /\/{2}|\.{2,}|\.{1,}\/|/g;
+const REG_DOUBLESLASH = /\/{2,}/g;
 const REG_TRIM = /^[\s]+|[\s]+$/g;
 const REG_DATE = /(\d{1,2}\.\d{1,2}\.\d{4})|(\d{4}-\d{1,2}-\d{1,2})|(\d{1,2}:\d{1,2}(:\d{1,2})?)/g;
 const REG_DATEFORMAT = /YYYY|yyyy|YY|yy|MMMM|MMM|MM|M|dddd|DDDD|DDD|ddd|DD|dd|D|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
@@ -627,7 +628,7 @@ function _request(opt, callback) {
 
 	if (opt.query) {
 		if (typeof(opt.query) !== 'string')
-			opt.query = U.toURLEncode(opt.query);
+			opt.query = exports.toURLEncode(opt.query);
 		if (opt.url) {
 			if (opt.url.lastIndexOf('?') === -1)
 				opt.url += '?' + opt.query;
@@ -6131,7 +6132,7 @@ exports.set = function(obj, path, value) {
 
 	var v = arr[arr.length - 1];
 	var ispush = v.lastIndexOf('[]') !== -1;
-	var a = builder.join(';') + ';var v=typeof(a)===\'function\'?a(U.get(b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(REG_REPLACEARR, '.push(v)') : (v + '=v')) + ';return v';
+	var a = builder.join(';') + ';var v=typeof(a)===\'function\'?a(F.TUtils.get(b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(REG_REPLACEARR, '.push(v)') : (v + '=v')) + ';return v';
 
 	var fn = new Function('w', 'a', 'b', a);
 	F.temporary.utils[cachekey] = fn;
@@ -6217,7 +6218,7 @@ exports.parseURI2 = function(url) {
 		url = url.substring(0, index);
 	}
 
-	url = url.replace(REG_DOUBLESLASH, '');
+	url = url.replace(REG_DOUBLESLASH, '/');
 	index = url.indexOf('.', url.length - 10); // max. 10 chars for extension
 
 	if (index == -1 && url[url.length - 1] !== '/')

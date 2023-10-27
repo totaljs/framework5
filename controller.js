@@ -8,10 +8,13 @@ const REG_FILETMP = /\//g;
 const REG_RANGE = /bytes=/;
 const REG_ROBOT = /search|agent|bot|crawler|spider/i;
 const REG_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i;
+const REG_ENCODINGCLEANER = /[;\s]charset=utf-8/g;
+
 const CHECK_DATA = { POST: 1, PUT: 1, PATCH: 1, DELETE: 1 };
 const CHECK_COMPRESSION = { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'image/svg+xml': true, 'text/x-markdown': true, 'text/html': true };
 const CHECK_CHARSET =  { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'text/x-markdown': true, 'text/html': true };
 const CHECK_NOCACHE = { zip: 1, rar: 1 };
+
 const GZIP_FILE = { memLevel: 9 };
 const GZIP_STREAM = { memLevel: 1 };
 
@@ -484,12 +487,69 @@ Controller.prototype.binary = function(buffer, type, download) {
 	F.stats.response.binary++;
 };
 
-Controller.prototype.proxy = function() {
+Controller.prototype.proxy = function(opt) {
 
 	var ctrl = this;
 
 	if (ctrl.destroyed)
 		return;
+
+	if (typeof(opt) === 'string')
+		opt = { url: opt };
+
+	if (!opt.headers)
+		opt.headers = {};
+
+	if (!opt.method)
+		opt.method = ctrl.method;
+
+	opt.resolve = true;
+	opt.encoding = 'binary';
+	opt.body = ctrl.payload;
+
+	var tmp;
+
+	if (opt.url.indexOf('?') === -1) {
+		tmp = F.TUtils.toURLEncode(ctrl.query);
+		if (tmp)
+			opt.url += '?' + tmp;
+	}
+
+	for (let key in ctrl.headers) {
+		switch (key) {
+			case 'x-forwarded-for':
+			case 'x-forwarded-protocol':
+			case 'x-forwarded-proto':
+			case 'x-nginx-proxy':
+			case 'connection':
+			case 'host':
+			case 'accept-encoding':
+				break;
+			default:
+				opt.headers[key] = ctrl.headers[key];
+				break;
+		}
+	}
+
+	if (!opt.timeout)
+		opt.timeout = 10000;
+
+	var prepare = opt.callback;
+
+	opt.callback = function(err, response) {
+
+		prepare && prepare(err, response);
+
+		if (err) {
+			ctrl.invalid(err);
+			return;
+		}
+
+		ctrl.response.status = response.status;
+		ctrl.binary(response.body, (response.headers['content-type'] || 'text/plain').replace(REG_ENCODINGCLEANER, ''));
+	};
+
+	REQUEST(opt);
 
 };
 
@@ -613,7 +673,6 @@ Controller.prototype.resume = function() {
 
 	if (ctrl.isfile) {
 
-		// @TODO: security escaping
 		var path = ctrl.uri.key;
 
 		if (path[0] === '_') {

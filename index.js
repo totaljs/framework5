@@ -1390,8 +1390,15 @@ F.touch = function(url) {
 
 F.middleware = function(name, fn, assign) {
 
-	if (fn == null) {
-		// @TODO: remove the middleware from all routes
+	if (!fn) {
+		let types = ['routes', 'files', 'websockets'];
+		for (let type of types) {
+			for (let route of F.routes[type]) {
+				let index = route.middleware.indexOf(name);
+				if (index !== -1)
+					route.middleware.splice(index, 1);
+			}
+		}
 		delete F.routes.middleware[name];
 		return;
 	}

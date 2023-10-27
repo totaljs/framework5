@@ -287,10 +287,8 @@ exports.newcall = function(name, schema, callback) {
 		return;
 	}
 
-	if (callback == null) {
-		// @TODO: missing connection between Action and Call
-		// callback = (data, callback, client) => CALL(path, data, callback, client);
-	}
+	if (!callback)
+		callback = (data, callback, client) => F.action(schema, data, client).callback(callback);
 
 	let obj = {};
 	obj.schema = F.TUtils.jsonschema(schema);
