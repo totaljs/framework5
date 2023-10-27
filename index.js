@@ -1580,7 +1580,6 @@ F.service = function(count) {
 	F.stats.performance.message = 0;
 	F.stats.performance.mail = 0;
 
-	console.log('SOM TU', F.usage)
 	F.usage && F.usage();
 	F.temporary.service.usage = 0;
 };
