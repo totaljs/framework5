@@ -112,6 +112,7 @@ global.DEF = {};
 		tmsblocked: {},
 		dnscache: {},
 		blocked: {},
+		bans: {},
 		calls: {},
 		utils: {},
 		mail: {},
@@ -1524,6 +1525,17 @@ F.service = function(count) {
 		F.TMail.refresh();
 	}
 
+	// Bans
+	for (let key in F.temporary.bans) {
+		if (key !== 'is') {
+			let tmp = F.temporary.bans[key];
+			if (tmp.expire < NOW)
+				delete F.temporary.bans[key];
+			else
+				F.temporary.bans.is = true;
+		}
+	}
+
 	// Update expires date
 	if (count % 60 === 0) {
 		F.config.$httpexpire = NOW.add('y', 1).toUTCString();
@@ -1696,7 +1708,7 @@ F.memorize = function(name, delay, skip) {
 		replacer = (key, value) => ignore[key] ? undefined : value;
 	}
 
-	var save = () => F.Fs.writeFile(filename, replacer ? JSON.stringify(data, replacer, '\t') : JSON.stringify(data, null, '\t'), F.error('MEMORIZE(\'' + name + '\').save()'));
+	var save = () => F.Fs.writeFile(filename, replacer ? JSON.stringify(data, replacer, '\t') : JSON.stringify(data, null, '\t'), ERROR('MEMORIZE(\'' + name + '\').save()'));
 
 	data.save = function() {
 		timeout && clearTimeout(timeout);
@@ -2324,8 +2336,6 @@ F.loadstats = function() {
 	main.stats = [stats];
 
 	F.usage = function() {
-
-		console.log('USAGE');
 
 		var memory = process.memoryUsage();
 		stats.date = NOW;

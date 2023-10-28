@@ -333,12 +333,14 @@ Controller.prototype.fallback = function(code, err) {
 		// Paused
 		if (code === 999) {
 			view = F.temporary.views.$pause;
+			ctrl.response.status = 503;
 			if (!view) {
 				F.temporary.views.$pause = view = new F.TViewEngine.View();
 				view.compiled = F.TViewEngine.compile('$pause', F.Fs.readFileSync(F.Path.join(F.config.$nodemodules, 'total5/pause.html'), 'utf8'), false);
 			}
 			view.model = F.paused;
 		} else {
+			ctrl.response.status = code === 408 ? 503 : code;
 			view = F.temporary.views.$error;
 			if (!view) {
 				F.temporary.views.$error = view = new F.TViewEngine.View();
@@ -644,7 +646,7 @@ Controller.prototype.cookie = function(name, value, expires, options) {
 
 	builder.push('SameSite=' + same);
 
-	arr = ctrl.getHeader('set-cookie') || [];
+	arr = ctrl.response.headers['set-cookie'] || [];
 
 	// Cookie, already, can be in array, resulting in duplicate 'set-cookie' header
 	if (arr.length) {
@@ -658,7 +660,7 @@ Controller.prototype.cookie = function(name, value, expires, options) {
 	}
 
 	arr.push(builder.join('; '));
-	ctrl.setHeader('Set-Cookie', arr);
+	ctrl.response.headers['set-cookie'] = arr;
 
 	return ctrl;
 };
@@ -689,7 +691,6 @@ Controller.prototype.resume = function() {
 			}
 
 			path = F.path.plugins(tmp.substring(0, index) + '/public/' + tmp.substring(index + 2));
-
 		} else
 			path = F.path.public(path.substring(1));
 
@@ -927,10 +928,13 @@ function multipart(ctrl) {
 function authorize(ctrl) {
 	if (DEF.onAuthorize) {
 		var opt = new F.TBuilders.Options(ctrl);
+		opt.TYPE = 'auth'; // important
 		opt.next = opt.callback = function(user) {
 			let auth = user ? 1 : 2;
 			ctrl.user = user;
-			if (ctrl.route.auth !== auth) {
+			if (ctrl.route.auth === auth) {
+				execute(ctrl);
+			} else {
 				ctrl.route = F.TRouting.lookup(ctrl, auth);
 				if (ctrl.route)
 					execute(ctrl);
@@ -975,12 +979,21 @@ function execute(ctrl) {
 				ctrl.fallback(400, 'Invalid data');
 			}
 		} else {
-			if (ctrl.route.action) {
-				ctrl.route.action(ctrl);
-			} else
+			if (ctrl.route.actions) {
 				F.action(ctrl.route.actions, ctrl.body, ctrl).autorespond();
+			} else {
+				var action = ctrl.route.action;
+				if (!action)
+					action = auto_view;
+				action(ctrl);
+			}
 		}
 	}
+}
+
+function auto_view(ctrl) {
+	console.log(ctrl.user);
+	ctrl.view(ctrl.split[2] || 'index', ctrl.body);
 }
 
 function send_html(ctrl, path) {

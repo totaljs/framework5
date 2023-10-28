@@ -6219,7 +6219,7 @@ exports.parseURI2 = function(url) {
 	}
 
 	url = url.replace(REG_DOUBLESLASH, '/');
-	index = url.indexOf('.', url.length - 10); // max. 10 chars for extension
+	index = url.lastIndexOf('.'); // max. 10 chars for extension
 
 	if (index == -1 && url[url.length - 1] !== '/')
 		url += '/';

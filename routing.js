@@ -65,7 +65,11 @@ function Route(url, action, size) {
 
 	if (t.method === 'FILE') {
 		let types = t.url[t.url.length - 1];
-		if (types === '*') {
+
+		// fixed filename
+		if (t.url2.indexOf('*') === -1) {
+			t.fixed = true;
+		} else if (types === '*') {
 			t.url[t.url.length - 1] = '*';
 		} else if (types === '*.*') {
 			t.url.splice(t.url.length - 1, 1);
@@ -315,6 +319,12 @@ exports.sort = function() {
 	cache = {};
 
 	for (let route of F.routes.files) {
+
+		if (route.fixed) {
+			cache[route.url2] = route;
+			continue;
+		}
+
 		tmp = cache;
 		let key = route.url.join('/');
 		if (cache[key])
@@ -516,9 +526,16 @@ exports.lookupcors = function(ctrl) {
 
 exports.lookupfile = function(ctrl, auth) {
 	if (F.routes.files.length) {
+
+		// fixed
+		let route = F.routes.filescache[ctrl.url];
+		if (route)
+			return route;
+
 		let key = '';
 		for (let i = 0; i < ctrl.split2.length - 1; i++)
 			key += (i ? '/' : '') + ctrl.split2[i];
+
 		let routes = F.routes.filescache[key];
 		if (routes)
 			return compareflags(ctrl, routes, auth);

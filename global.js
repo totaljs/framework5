@@ -15,7 +15,6 @@ global.LOADRESOURCE = F.loadresource;
 global.SHELL = F.shell;
 global.NPMINSTALL = F.npminstall;
 global.COMPONENTATOR = F.componentator;
-global.ERROR = F.error;
 global.MERGE = F.merge;
 global.TOUCH = F.touch;
 global.AUTH = F.auth;
@@ -42,6 +41,36 @@ global.ENCRYPT = F.encrypt;
 global.DECRYPTREQ = F.decryptreq;
 global.ENCRYPTREQ = F.encryptreq;
 global.PATH = F.path;
+
+global.BLOCKED = function($, limit, expire) {
+
+	var key = $.ip;
+
+	if (limit === -1 || limit === null) {
+		delete F.temporary.bans[key];
+		return;
+	}
+
+	if (!limit)
+		limit = 5;
+
+	var item = F.temporary.bans[key];
+	if (item) {
+		if (item.count > limit)
+			return true;
+		item.count++;
+	} else {
+		item = F.temporary.bans[key] = {};
+		item.expire = NOW.add(expire || '15 minutes');
+		item.count = 1;
+	}
+};
+
+global.ERROR = function(name) {
+	return name == null ? F.errorcallback : function(err) {
+		err && F.error(err, name);
+	};
+};
 
 global.LDAP = function(opt, callback) {
 	if (!opt.ldap.port)

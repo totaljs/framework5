@@ -157,7 +157,11 @@ Options.prototype.audit = function(message, type) {
 };
 
 Options.prototype.success = function(value) {
-	this.callback(DEF.onSuccess(value));
+	var self = this;
+	if (self.TYPE === 'auth')
+		self.callback(value);
+	else
+		self.callback(DEF.onSuccess(value));
 };
 
 Options.prototype.callback = function(value) {
@@ -180,8 +184,12 @@ Options.prototype.done = function(arg) {
 		if (err) {
 			err && self.error.push(err);
 			self.callback();
-		} else
-			self.callback(DEF.onSuccess(arg === true ? response : arg));
+		} else {
+			if (self.TYPE === 'auth')
+				self.callback(arg === true ? response : arg);
+			else
+				self.callback(DEF.onSuccess(arg === true ? response : arg));
+		}
 	};
 };
 

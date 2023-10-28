@@ -258,8 +258,7 @@ exports.compile = function(name, content, debug = true) {
 	if (!debug)
 		builder = builder.replace(/(\+\$EMPTY\+)/g, '+').replace(/(\$output=\$EMPTY\+)/g, '$output=').replace(/(\$output\+=\$EMPTY\+)/g, '$output+=').replace(/(\}\$output\+=\$EMPTY)/g, '}').replace(/(\{\$output\+=\$EMPTY;)/g, '{').replace(/(\+\$EMPTY\+)/g, '+').replace(/(>'\+'<)/g, '><').replace(/'\+'/g, '');
 
-	var fn = ('(function(self){var model=self.model;var ctrl=self.controller;var query=ctrl?.query || EMPTYOBJECT,repository=self.repository,files=ctrl?.files || EMPTYARRAY,user=ctrl?.user,session=ctrl?.session,body=ctrl?.body,language=ctrl?.language || \'\'' + (isCookie ? ',cookie=name=>ctrl?ctrl.cookie(name):\'\'' : '') + ';' + builder + ';return $output;})');
-
+	var fn = ('(function(self){var model=self.model;var ctrl=self.controller;var query=ctrl?.query || EMPTYOBJECT,repository=self.repository,controller=self.controller,files=ctrl?.files || EMPTYARRAY,user=ctrl?.user,session=ctrl?.session,body=ctrl?.body,language=ctrl?.language || \'\'' + (isCookie ? ',cookie=name=>ctrl?ctrl.cookie(name):\'\'' : '') + ';' + (nocompressHTML ? 'if(ctrl)ctrl.response.minify=false;' : '') + builder + ';return $output;})');
 	try {
 		fn = eval(fn);
 	} catch (e) {
@@ -607,6 +606,23 @@ View.prototype.layout = function(value) {
 	return '';
 };
 
+View.prototype.json = function(obj, id, beautify, replacer) {
+
+	if (typeof(id) === 'boolean') {
+		replacer = beautify;
+		beautify = id;
+		id = null;
+	}
+
+	if (typeof(beautify) === 'function') {
+		replacer = beautify;
+		beautify = false;
+	}
+
+	var value = beautify ? JSON.stringify(obj, replacer == true ? framework_utils.json2replacer : replacer, 4) : JSON.stringify(obj, replacer == true ? framework_utils.json2replacer : replacer);
+	return id ? ('<script type="application/json" id="' + id + '">' + value + '</script>') : value;
+};
+
 View.prototype.view = function(name, model) {
 	return this.render(name, model, true);
 };
@@ -756,6 +772,9 @@ View.prototype.import = function() {
 		switch (m) {
 			case 'meta':
 				builder += makehtmlmeta(self);
+				break;
+			case 'head':
+				builder += '';
 				break;
 			case 'favicon.ico':
 			case 'favicon.png':
