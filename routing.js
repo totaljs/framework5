@@ -83,11 +83,13 @@ function Route(url, action, size) {
 		}
 	} else {
 		t.params = [];
+		index = 0;
 		for (let path of t.url) {
 			if (path[0] === '{') {
 				let tmp = path.split(':').trim();
-				t.params.push({ name: tmp[0].replace(/\{|\}/g, ''), type: tmp[1] || 'string', index: t.params.length });
+				t.params.push({ name: tmp[0].replace(/\{|\}/g, ''), type: tmp[1] || 'string', index: index });
 			}
+			index++;
 		}
 		t.size = size || 0;
 	}
@@ -103,7 +105,7 @@ function Route(url, action, size) {
 
 	url = url.replace(/<\d+/g, function(text) {
 		if (text.indexOf('s') === -1)
-			t.size = (+(text.substring(1))) / 1024;
+			t.size = (+(text.substring(1))) * 1024;
 		else
 			t.timeout = +(text.replace('s', '').substring(1));
 		return '';
@@ -116,7 +118,7 @@ function Route(url, action, size) {
 
 	if (t.method === 'API') {
 		t.method = 'POST';
-		url = url.replace(/\*[a-z0-9-_/{}]+/i, function(text) {
+		url = url.replace(/(\*|\+|-)?[a-z0-9-_/{}]+/i, function(text) {
 			endpoint = text.trim().substring(1);
 			return text;
 		});
@@ -579,6 +581,7 @@ exports.lookupwebsocket = function(ctrl, auth, skip = false) {
 				}
 			}
 		}
+
 		if (routes) {
 			if (skip)
 				return routes[0];

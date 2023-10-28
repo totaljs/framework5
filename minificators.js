@@ -431,7 +431,7 @@ async function mergefile(filename, minify) {
 				return;
 			}
 
-			var isminified = (/(-|_|@|.)min\./).test(filename);
+			var isminified = (/(-|_|@|.)min(-|_|@|.)/).test(filename);
 			var index = filename.lastIndexOf('.');
 			var ext = '';
 
@@ -462,7 +462,8 @@ async function mergefile(filename, minify) {
 				}
 			}
 
-			resolve(response);
+			output.body = response;
+			resolve(output);
 		});
 
 	});

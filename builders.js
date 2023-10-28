@@ -196,8 +196,7 @@ Options.prototype.done = function(arg) {
 Options.prototype.invalid = function(error, path, index) {
 	var self = this;
 	self.error.push(error, path, index);
-	self.callback();
-	return self;
+	self.$callback(error);
 };
 
 Options.prototype.cookie = function(name, value, expire, options) {
@@ -1375,6 +1374,7 @@ ActionCaller.prototype.exec = function() {
 	$.error = self.error;
 	$.controller = self.controller;
 	$.fields = action.fields;
+	$.user = self.options.user;
 
 	$.$callback = function(err, response) {
 		if (err) {
@@ -1565,6 +1565,7 @@ exports.action = function(name, payload, controller) {
 	action.payload = payload;
 	action.actions = actions.slice(0);
 	action.options.payload = payload;
+	action.options.user = controller?.user;
 	action.options.query = controller?.query;
 	action.options.params = controller?.params;
 	return action;

@@ -1392,6 +1392,38 @@ F.touch = function(url) {
 	}
 };
 
+F.unauthorized = function($) {
+
+	var user = $.user;
+	if (user) {
+
+		if (user.sa || user.su)
+			return false;
+
+		var compare = user.permissions || user.roles;
+		var args = arguments;
+
+		if (compare) {
+			if (compare instanceof Array) {
+				for (let i = 0; i < compare.length; i++) {
+					for (let j = 1; j < args.length; j++) {
+						if (args[j] === compare[i])
+							return false;
+					}
+				}
+			} else {
+				for (let j = 1; j < args.length; j++) {
+					if (compare[args[j]])
+						return false;
+				}
+			}
+		}
+	}
+
+	$.invalid(401);
+	return true;
+};
+
 F.middleware = function(name, fn, assign) {
 
 	if (!fn) {
@@ -2310,6 +2342,10 @@ F.decrypt = function(value, key, tojson = true) {
 		response = (value || '').decrypt(F.config.secret + '=' + key);
 
 	return response ? (tojson ? (response.isJSON() ? response.parseJSON(true) : null) : response) : null;
+};
+
+F.dir = function(val) {
+	F.directory = val;
 };
 
 F.loadstats = function() {

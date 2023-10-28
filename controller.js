@@ -116,6 +116,10 @@ Controller.prototype = {
 		return ua ? REG_ROBOT.test(ua) : false;
 	},
 
+	get xhr() {
+		return this.headers['x-requested-with'] === 'XMLHttpRequest';
+	},
+
 	get ua() {
 		if (this.$ua != null)
 			return this.$ua;
@@ -261,7 +265,7 @@ Controller.prototype.invalid = function(value) {
 	response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
 	response.headers.vary = 'Accept-Encoding, Last-Modified, User-Agent';
 	response.value = JSON.stringify(err.output(ctrl.language));
-	response.status = err.status;
+	response.status = err.status === 408 ? 503 : err.status;
 	ctrl.flush();
 
 	var key = 'error' + err.status;
@@ -329,6 +333,13 @@ Controller.prototype.fallback = function(code, err) {
 	} else {
 
 		var view;
+
+		if (ctrl.xhr) {
+			if (code === 999)
+				code = 503;
+			ctrl.invalid(code);
+			return;
+		}
 
 		// Paused
 		if (code === 999) {
@@ -841,9 +852,9 @@ function readfile(filename, callback) {
 			if (err) {
 				callback(err);
 			} else {
-				var obj = {};
+				let obj = {};
 				obj.date = stats.mtime.toUTCString();
-				obj.body = text;
+				obj.body = text.ROOT();
 				callback(null, obj);
 			}
 		});
@@ -929,7 +940,8 @@ function authorize(ctrl) {
 	if (DEF.onAuthorize) {
 		var opt = new F.TBuilders.Options(ctrl);
 		opt.TYPE = 'auth'; // important
-		opt.next = opt.callback = function(user) {
+		opt.next = opt.callback;
+		opt.$callback = function(err, user) {
 			let auth = user ? 1 : 2;
 			ctrl.user = user;
 			if (ctrl.route.auth === auth) {
@@ -972,7 +984,7 @@ function execute(ctrl) {
 					}
 					body = body.data;
 					if (!body || typeof(body) === 'object') {
-						F.action(endpoint.actions, body || EMPTYOBJECT, ctrl).params(params).autorespond();
+						F.action(endpoint.actions, body || EMPTYOBJECT, ctrl).autorespond();
 						return;
 					}
 				}
@@ -992,8 +1004,7 @@ function execute(ctrl) {
 }
 
 function auto_view(ctrl) {
-	console.log(ctrl.user);
-	ctrl.view(ctrl.split[2] || 'index', ctrl.body);
+	ctrl.view(ctrl.split[0] || 'index', ctrl.body);
 }
 
 function send_html(ctrl, path) {

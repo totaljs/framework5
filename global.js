@@ -41,6 +41,7 @@ global.ENCRYPT = F.encrypt;
 global.DECRYPTREQ = F.decryptreq;
 global.ENCRYPTREQ = F.encryptreq;
 global.PATH = F.path;
+global.UNAUTHORIZED = F.unauthorized;
 
 global.BLOCKED = function($, limit, expire) {
 

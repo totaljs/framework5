@@ -113,6 +113,34 @@ Controller.prototype.upgrade = function(websocket) {
 	ctrl.parent.$events.open && ctrl.parent.emit('open', ctrl);
 };
 
+// Readonly
+Controller.prototype.cookie = function(name) {
+
+	var ctrl = this;
+	var arr;
+
+	if (ctrl.cookies)
+		return F.TUtils.decodeURIComponent(ctrl.cookies[name] || '');
+
+	var cookie = ctrl.headers.cookie;
+	if (!cookie) {
+		ctrl.cookies = F.EMPTYOBJECT;
+		return '';
+	}
+
+	ctrl.cookies = {};
+
+	arr = cookie.split(';');
+	for (let i = 0; i < arr.length; i++) {
+		let line = arr[i].trim();
+		let index = line.indexOf('=');
+		if (index !== -1)
+			ctrl.cookies[line.substring(0, index)] = line.substring(index + 1);
+	}
+
+	return name ? F.TUtils.decodeURIComponent(ctrl.cookies[name] || '') : '';
+};
+
 function websocket_ondata(chunk) {
 	this.$controller.ondata(chunk);
 }
@@ -123,8 +151,8 @@ function websocket_onerror(e) {
 }
 
 function websocket_close() {
-	this.destroy && this.destroy();
 	this.$controller && this.$controller.onclose();
+	this.destroy && this.destroy();
 }
 
 Controller.prototype.destroy = function() {
@@ -173,8 +201,10 @@ Controller.prototype.onclose = function() {
 	delete ctrl.parent.connections[ctrl.ID];
 	ctrl.parent.online--;
 	ctrl.parent.$events.close && ctrl.parent.emit('close', ctrl, ctrl.closecode, ctrl.closemessage);
+
 	ctrl.socket.removeAllListeners();
 	F.$events.websocket_end && EMIT('websocket_end', ctrl.parent, ctrl);
+
 };
 
 Controller.prototype.ondata = function(data) {
@@ -734,9 +764,6 @@ WebSocket.prototype.destroy = function() {
 		if (index !== -1)
 			self.route.connections.splice(index, 1);
 
-		delete self.connections;
-		delete self.route;
-
 	}, 1000, self);
 
 };
@@ -805,11 +832,16 @@ WebSocket.prototype.autodestroy = function(callback) {
 function authorize(ctrl) {
 	if (DEF.onAuthorize) {
 		var opt = new F.TBuilders.Options(ctrl);
-		opt.$callback = function(user) {
+		opt.TYPE = 'auth'; // important
+		opt.iswebsocket = true;
+		opt.next = opt.callback;
+		opt.$callback = function(err, user) {
 			let auth = user ? 1 : 2;
 			ctrl.user = user;
-			if (ctrl.route.auth !== auth) {
-				ctrl.route = F.TRouting.lookup(ctrl, auth);
+			if (ctrl.route.auth === auth) {
+				execute(ctrl);
+			} else {
+				ctrl.route = F.TRouting.lookupwebsocket(ctrl, auth);
 				if (ctrl.route)
 					execute(ctrl);
 				else
@@ -1064,12 +1096,10 @@ function converBytesToInt64(data, startIndex, isLE) {
 }
 
 exports.ping = function() {
-	for (var key in F.connections) {
-		var conn = F.connections[key];
-		if (conn && conn.keys.length) {
-			conn.check();
-			conn.ping();
-		}
+	for (let key in F.connections) {
+		let socket = F.connections[key];
+		socket.check();
+		socket.ping();
 	}
 };
 
