@@ -370,8 +370,6 @@ function unlink(arr, callback) {
 
 (function(CONF) {
 
-	CONF.nowarnings = process.argv.indexOf('--restart') !== -1;
-	CONF.nosourcemap = false;
 	CONF.name = 'Total.js';
 	CONF.version = '1.0.0';
 	CONF.author = '';
@@ -381,11 +379,11 @@ function unlink(arr, callback) {
 	CONF.secret_csrf = '';
 	CONF.secret_tapi = '';
 	CONF.secret_tms = '';
-	CONF.node_modules = 'node_modules';
 
 	// New internal configuration
-	CONF.$cors = '';
 	CONF.$root = '';
+	CONF.$cors = ''; // hostnames separated by comma
+	CONF.$sourcemap = true;
 	CONF.$httpreqlimit = 0; // request limit per ip
 	CONF.$httpcompress = true;
 	CONF.$httpetag = '';
@@ -582,29 +580,32 @@ F.loadconfig = function(value) {
 			case '$tms':
 				break;
 			case 'smtp':
-				if (typeof(value) === 'string')
-					value = new Function('return ' + value)();
-				smtp = value || {};
+			case 'mail':
+				if (typeof(val) === 'string')
+					val = new Function('return ' + val)();
+				smtp = val || {};
+				if (!smtp.server)
+					smtp.server = smtp.smtp || smtp.host || smtp.hostname || smtp.url;
 				break;
 			case 'mail_smtp':
 				if (!smtp)
 					smtp = {};
-				smtp.smtp = value;
+				smtp.server = val;
 				break;
 			case 'mail_smtp_options':
 
-				if (typeof(value) === 'string')
-					value = new Function('return ' + value)();
+				if (typeof(val) === 'string')
+					val = new Function('return ' + val)();
 
 				if (!smtp)
 					smtp = {};
 
-				for (let k in value)
-					smtp[k] = value[k];
+				for (let k in val)
+					smtp[k] = val[k];
 
 				break;
 			case '$cryptoiv':
-				cfg[key] = value ? Buffer.from(value, 'hex') : null;
+				cfg[key] = val ? Buffer.from(val, 'hex') : null;
 				break;
 			case 'mail_from':
 			case '$root':
@@ -661,6 +662,7 @@ F.loadresource = function(name, value) {
 						LOADRESOURCE(key, response[key]);
 				}
 			}
+
 		});
 		return;
 	}
@@ -2348,6 +2350,55 @@ F.dir = function(val) {
 	F.directory = val;
 };
 
+F.logmail = function(email, subject, body, callback) {
+
+	if (typeof(body) === 'function') {
+		callback = body;
+		body = subject;
+		subject = null;
+	} else if (body === undefined) {
+		body = subject;
+		subject = null;
+	}
+
+	if (!subject)
+		subject = F.config.name;
+
+	var body = '<!DOCTYPE html><html><head><title>' + subject + '</title><meta charset="utf-8" /></head><body><pre style="max-width:600px;font-size:13px;line-height:16px;white-space:pre-line">' + (typeof(body) === 'object' ? JSON.stringify(body).escape() : body) + '</pre></body></html>';
+	return DEF.onMail(email, subject, body, callback);
+};
+
+F.mail = function(email, subject, name, model, language, callback) {
+
+	if (typeof(language) === 'function') {
+		let tmp = language;
+		language = callback;
+		callback = tmp;
+	}
+
+	let body = F.view(name, model, view => view.language = language || '');
+	return DEF.onMail(email, subject, body, callback);
+};
+
+F.htmlmail = function(email, subject, body, language, callback) {
+
+	if (typeof(language) === 'function') {
+		let tmp = language;
+		language = callback;
+		callback = tmp;
+	}
+
+	// Translation
+	if (typeof(language) === 'string') {
+		subject = subject.indexOf('@(') === -1 ? TRANSLATE(language, subject) : TRANSLATOR(language, subject);
+		if (body.indexOf('@(') !== -1)
+			body = TRANSLATOR(language, body);
+	}
+
+	var body = body.indexOf('<body>') === -1 ? ('<!DOCTYPE html><html><head><title>' + subject + '</title><meta charset="utf-8" /></head><body style="padding:0;margin:0;font-family:Arial;font-size:14px;font-weight:normal">' + body + '</body></html>') : body;
+	return DEF.onMail(email, subject, body, callback);
+};
+
 F.loadstats = function() {
 
 	var main = {};
@@ -2442,7 +2493,6 @@ process.on('unhandledRejection', function(e) {
 });
 
 process.on('uncaughtException', function(e) {
-
 	var err = e + '';
 	if (err.indexOf('listen EADDRINUSE') !== -1) {
 		process.send && process.send('total:eaddrinuse');

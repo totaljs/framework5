@@ -42,6 +42,12 @@ global.DECRYPTREQ = F.decryptreq;
 global.ENCRYPTREQ = F.encryptreq;
 global.PATH = F.path;
 global.UNAUTHORIZED = F.unauthorized;
+global.LOGMAIL = F.logmail;
+global.HTMLMAIL = F.htmlmail;
+global.MAIL = F.mail;
+global.Mail = F.TMail.Mailer;
+global.RESTBuilder = F.TBuilders.RESTBuilder;
+global.ErrorBuilder = F.TBuilders.ErrorBuilder;
 
 global.BLOCKED = function($, limit, expire) {
 

@@ -4,8 +4,6 @@
 
 'use strict';
 
-const Fs = require('fs');
-const Path = require('path');
 const SKIP = /\/\.git\//;
 const VERSION = 1;
 const HEADER = '> Total.js Code Editor';
@@ -176,9 +174,9 @@ function mkdir(path, callback) {
 	path = path.split('/').trim();
 	path.wait(function(p, next) {
 		a = a + p + '/';
-		Fs.lstat(a, function(err) {
+		F.Fs.lstat(a, function(err) {
 			if (err)
-				Fs.mkdir(a, next);
+				F.Fs.mkdir(a, next);
 			else
 				next();
 		});
@@ -186,7 +184,7 @@ function mkdir(path, callback) {
 }
 
 function browse($, model) {
-	var path = PATH.root();
+	var path = F.path.root();
 	var m = (model.data || '{}').parseJSON() || EMPTYARRAY;
 	var skip = m.skip ? new RegExp(m.skip) : null;
 	var validator;
@@ -196,7 +194,7 @@ function browse($, model) {
 	else
 		validator = n => !SKIP.test(n) && (!skip || !skip.test(n));
 
-	U.ls(path, function(files, directories) {
+	F.TUtils.ls(path, function(files, directories) {
 
 		for (var i = 0; i < files.length; i++)
 			files[i] = files[i].substring(path.length);
@@ -206,7 +204,7 @@ function browse($, model) {
 
 		if (m.type === 'localization') {
 			var allowed = { html: 1, js: 1 };
-			files = files.remove(n => allowed[U.getExtension(n)] != 1);
+			files = files.remove(n => allowed[F.TUtils.getExtension(n)] != 1);
 		}
 
 		$.callback({ files: files, directories: directories });
@@ -215,14 +213,14 @@ function browse($, model) {
 }
 
 function log($, model) {
-	var filename = PATH.root(model.path);
-	Fs.stat(filename, function(err, stats) {
+	var filename = F.path.root(model.path);
+	F.Fs.stat(filename, function(err, stats) {
 		if (stats) {
 			var start = stats.size - (1024 * 4); // Max. 4 kB
 			if (start < 0)
 				start = 0;
 			var buffer = [];
-			Fs.createReadStream(filename, { start: start < 0 ? 0 : start }).on('data', chunk => buffer.push(chunk)).on('end', function() {
+			F.Fs.createReadStream(filename, { start: start < 0 ? 0 : start }).on('data', chunk => buffer.push(chunk)).on('end', function() {
 				$.callback(Buffer.concat(buffer).toString('utf8'));
 			});
 		} else {
@@ -232,14 +230,14 @@ function log($, model) {
 }
 
 function clearlog($, model) {
-	var filename = PATH.root(model.path);
-	Fs.truncate(filename, NOOP);
+	var filename = F.path.root(model.path);
+	F.Fs.truncate(filename, NOOP);
 	$.success();
 }
 
 function load($, model) {
-	var filename = PATH.root(model.path);
-	Fs.readFile(filename, function(err, data) {
+	var filename = F.path.root(model.path);
+	F.Fs.readFile(filename, function(err, data) {
 
 		if (err) {
 			$.invalid(err);
@@ -261,7 +259,7 @@ function load($, model) {
 			if (err)
 				$.invalid(err);
 			else
-				$.callback({ type: U.getContentType(U.getExtension(model.path)), data: buffer.toString('base64') });
+				$.callback({ type: F.TUtils.contentTypes[F.TUtils.getExtension(model.path)], data: buffer.toString('base64') });
 		});
 	});
 }
@@ -269,32 +267,31 @@ function load($, model) {
 function save($, model) {
 
 	// Tries to create a folder
-	var filename = PATH.root(model.path);
-	var name = U.getName(model.path);
+	var filename = F.path.root(model.path);
+	var name = F.TUtils.getName(model.path);
 	var directory = filename.substring(0, filename.length - name.length);
 
-	Fs.mkdir(directory, { recursive: true }, function() {
+	F.Fs.mkdir(directory, { recursive: true }, function() {
 		decodedata(model, function(err, buffer) {
 			if (err)
 				$.invalid(err);
 			else
-				Fs.writeFile(filename, buffer, $.done());
+				F.Fs.writeFile(filename, buffer, $.done());
 		});
 	});
 }
 
 function remove($, model) {
-
-	var filename = PATH.root(model.path);
+	var filename = F.path.root(model.path);
 	try {
-		var stats = Fs.lstatSync(filename);
+		var stats = F.Fs.lstatSync(filename);
 		if (stats.isFile()) {
-			Fs.unlink(filename, NOOP);
+			F.Fs.unlink(filename, NOOP);
 		} else {
 			if (stats.isDirectory())
 				F.path.rmdir(filename);
 			else
-				Fs.unlink(filename, NOOP);
+				F.Fs.unlink(filename, NOOP);
 		}
 	} catch (e) {}
 
@@ -302,14 +299,14 @@ function remove($, model) {
 }
 
 function info($, model) {
-	var filename = PATH.root(model.path);
-	Fs.lstat(filename, $.callback);
+	var filename = F.path.root(model.path);
+	F.Fs.lstat(filename, $.callback);
 }
 
 function download($, model) {
-	var filename = PATH.root(model.path);
-	var ext = U.getExtension(model.path);
-	Fs.lstat(filename, function(err, stats) {
+	var filename = F.path.root(model.path);
+	var ext = F.TUtils.getExtension(model.path);
+	F.Fs.lstat(filename, function(err, stats) {
 		if (err || stats.isDirectory() || stats.isSocket()) {
 			$.status = 400;
 			$.invalid('400', 'error-file');
@@ -318,7 +315,7 @@ function download($, model) {
 			if (stats.size > (1024 * 1024 * 5)) {
 				$.invalid('Too large');
 			} else {
-				Fs.readFile(filename, function(err, data) {
+				F.Fs.readFile(filename, function(err, data) {
 					if (err) {
 						$.invalid(err);
 					} else {
@@ -326,7 +323,7 @@ function download($, model) {
 							if (err)
 								$.invalid(err);
 							else
-								$.callback({ type: U.getContentType(ext), data: buffer.toString('base64') });
+								$.callback({ type: F.TUtils.contentTypes[ext], data: buffer.toString('base64') });
 						});
 					}
 				});
@@ -336,53 +333,62 @@ function download($, model) {
 }
 
 function send($, model) {
-	var filename = PATH.root(model.path);
+	var filename = F.path.root(model.path);
 	F.Fs.fstat(filename, function() {
 		var opt = {};
 		opt.method = 'GET';
 		opt.url = model.data;
-		opt.files = [{ name: U.getName(filename), filename: filename }];
+		opt.files = [{ name: F.TUtils.getName(filename), filename: filename }];
 		opt.callback = $.done();
 		REQUEST(opt);
 	});
 }
 
 function customimport($, model) {
-	var filename = PATH.root(model.path);
+	var filename = F.path.root(model.path);
 	DOWNLOAD(model.data, filename, $.done());
 }
 
+const SchemaRename = F.TUtils.jsonschema('newpath:String,oldpath:String');
+
 function rename($, model) {
-	var data = CONVERT((model.data || '{}').parseJSON(), 'newpath:String,oldpath:String');
-	data.newpath = PATH.root(data.newpath);
-	data.oldpath = PATH.root(data.oldpath);
-	mkdir(Path.dirname(data.newpath), function() {
-		Fs.rename(data.oldpath, data.newpath, $.done());
+
+	var data = SchemaRename.transform((model.data || '{}').parseJSON());
+	if (data.error) {
+		$.invalid(data.error);
+		return;
+	}
+
+	data.newpath = F.path.root(data.newpath);
+	data.oldpath = F.path.root(data.oldpath);
+
+	mkdir(F.Path.dirname(data.newpath), function() {
+		F.Fs.rename(data.oldpath, data.newpath, $.done());
 	});
 }
 
 function create($, model) {
 
-	var filename = PATH.root(model.path);
+	var filename = F.path.root(model.path);
 	var data = (model.data || '{}').parseJSON();
 
-	Fs.lstat(filename, function(err) {
+	F.Fs.lstat(filename, function(err) {
 
 		if (err) {
 			// file not found
 			// we can continue
 			if (data.folder) {
 				if (model.clone)
-					F.Fs.cp(PATH.root(data.clone), filename, { recursive: true, force: true }, $.done());
+					F.Fs.cp(F.path.root(data.clone), filename, { recursive: true, force: true }, $.done());
 				else
 					mkdir(filename, $.done());
 			} else {
-				var name = U.getName(filename);
+				var name = F.TUtils.getName(filename);
 				mkdir(filename.substring(0, filename.length - name.length), function() {
 					if (data.clone)
-						Fs.copyFile(PATH.root(data.clone), filename, $.done());
+						F.Fs.copyFile(F.path.root(data.clone), filename, $.done());
 					else
-						Fs.writeFile(filename, '', $.done());
+						F.Fs.writeFile(filename, '', $.done());
 				});
 			}
 		} else
@@ -391,38 +397,38 @@ function create($, model) {
 }
 
 function upload($, model) {
-	var name = U.getName(model.path);
-	var filename = PATH.root(model.path);
-	var directory = PATH.root(model.path.substring(0, model.length - name.length));
+	var name = F.TUtils.getName(model.path);
+	var filename = F.path.root(model.path);
+	var directory = F.path.root(model.path.substring(0, model.length - name.length));
 	mkdir(directory, function() {
 		decodedata(model, function(err, buffer) {
 			if (err)
 				$.invalid(err);
 			else
-				Fs.writeFile(filename, buffer, $.done());
+				F.Fs.writeFile(filename, buffer, $.done());
 		});
 	});
 }
 
 function modify($, model) {
-	var filename = PATH.root(model.path);
+	var filename = F.path.root(model.path);
 	var dt = new Date();
-	Fs.utimes(filename, dt, dt, NOOP);
+	F.Fs.utimes(filename, dt, dt, NOOP);
 	$.success();
 }
 
 function wiki($) {
 
-	var path = PATH.root();
+	var path = F.path.root();
 
-	U.ls(path, function(files) {
+	F.TUtils.ls(path, function(files) {
 
 		var builder = [];
 
 		files.wait(function(item, next) {
 
 			if (item.substring(item.length - 3) === '.js') {
-				Fs.readFile(item, function(err, buffer) {
+				F.Fs.readFile(item, function(err, buffer) {
 					if (buffer) {
 						builder.push(buffer.toString('utf8'));
 						builder.push('');
@@ -456,7 +462,6 @@ function decodedata(model, callback) {
 		callback(null, Buffer.from(model.data, 'base64'));
 	else
 		F.Zlib.inflate(Buffer.from(model.data, 'base64'), callback);
-
 }
 
 function encodedata(model, buffer, callback) {

@@ -348,7 +348,6 @@ ErrorBuilder.transform = function(callback) {
 
 function RESTBuilder(url) {
 
-	this.$schema;
 	this.$length = 0;
 	this.$transform = transforms.restbuilder_default;
 	this.$persistentcookies = false;
@@ -357,8 +356,7 @@ function RESTBuilder(url) {
 
 	// this.$data = {};
 	// this.$nodnscache = true;
-	// this.$cache_expire;
-	// this.$cache_nocache;
+	// this.$expire;
 	// this.$redirect
 
 	// Auto Total.js Error Handling
@@ -429,18 +427,6 @@ RESTBuilder.upgrade = function(fn) {
 	restbuilderupgrades.push(fn);
 };
 
-RESTBuilder.addTransform = function(name, fn, isDefault) {
-	transforms.restbuilder[name] = fn;
-	isDefault && RESTBuilder.setDefaultTransform(name);
-};
-
-RESTBuilder.setDefaultTransform = function(name) {
-	if (name)
-		transforms.restbuilder_default = name;
-	else
-		delete transforms.restbuilder_default;
-};
-
 var RESTP = RESTBuilder.prototype;
 
 RESTP.insecure = function() {
@@ -453,11 +439,6 @@ RESTP.error = function(err) {
 	return this;
 };
 
-RESTP.strict = function() {
-	this.$strict = true;
-	return this;
-};
-
 RESTP.noparse = function() {
 	this.$noparse = true;
 	return this;
@@ -466,28 +447,6 @@ RESTP.noparse = function() {
 RESTP.debug = function() {
 	this.$debug = true;
 	return this;
-};
-
-RESTP.map = function(map) {
-
-	var arr = map.split(',');
-	var self = this;
-	var reg = /=|:|\s/;
-	var convertor = [];
-
-	self.$map = [];
-
-	for (var i = 0; i < arr.length; i++) {
-		var item = arr[i].split(reg);
-		var target = (item[2] || item[0]).trim();
-		convertor.push(target + ':' + (item[1].trim() || 'string'));
-		self.$map.push({ id: item[0], target: target });
-	}
-
-	if (convertor.length)
-		self.$mapconvertor = convertor.join(',');
-
-	return self;
 };
 
 RESTP.unixsocket = function(socket, path) {
@@ -516,11 +475,6 @@ RESTP.proxy = function(value) {
 	return this;
 };
 
-RESTP.setTransform = function(name) {
-	this.$transform = name;
-	return this;
-};
-
 RESTP.url = function(url) {
 	if (url === undefined)
 		return this.options.url;
@@ -537,6 +491,7 @@ RESTP.cert = function(key, cert, dhparam) {
 
 RESTP.file = function(name, filename, buffer) {
 
+	var self = this;
 	var obj = { name: name, filename: filename };
 
 	if (buffer) {
@@ -549,19 +504,12 @@ RESTP.file = function(name, filename, buffer) {
 			obj.buffer = buffer;
 	}
 
-	if (this.options.files)
-		this.options.files.push(obj);
+	if (self.options.files)
+		self.options.files.push(obj);
 	else
-		this.options.files = [obj];
-	return this;
-};
+		self.options.files = [obj];
 
-RESTP.maketransform = function(obj, data) {
-	if (this.$transform) {
-		var fn = transforms.restbuilder[this.$transform];
-		return fn ? fn.call(this, obj, data) : obj;
-	}
-	return obj;
+	return self;
 };
 
 RESTP.timeout = function(number) {
@@ -581,13 +529,6 @@ RESTP.auth = function(user, password) {
 
 RESTP.convert = function(convert) {
 	this.$convert = convert;
-	return this;
-};
-
-RESTP.schema = function(name) {
-	this.$schema = GETSCHEMA(name);
-	if (!this.$schema)
-		throw Error('RESTBuilder: Schema "{0}" not found.'.format(name));
 	return this;
 };
 
@@ -698,7 +639,7 @@ RESTP.accept = function(ext) {
 	if (ext.length > 8)
 		type = ext;
 	else
-		type = framework_utils.getContentType(ext);
+		type = F.TUtils.contentTypes[ext];
 	this.options.headers.Accept = type;
 	return this;
 };
@@ -727,7 +668,7 @@ RESTP.raw = function(value, type) {
 	return this;
 };
 
-RESTP.plain = function(val) {
+RESTP.text = RESTP.plain = function(val) {
 	this.$plain = true;
 	this.options.body = val;
 	this.options.type = 'plain';
@@ -798,7 +739,7 @@ RESTP.compress = function(val) {
 };
 
 RESTP.cache = function(expire) {
-	this.$cache_expire = expire;
+	this.$expire = expire;
 	return this;
 };
 
@@ -887,32 +828,30 @@ RESTP.exec = function(callback) {
 
 	var key;
 
-	if (self.$cache_expire && !self.$nocache) {
-		key = '$rest_' + ((self.options.url || '') + (self.options.socketpath || '') + (self.options.path || '') + (self.options.body || '')).hash(true);
-		var data = F.cache.read2(key);
+	if (self.$expire && !self.$nocache) {
+		key = 'restbuilder' + ((self.options.url || '') + (self.options.socketpath || '') + (self.options.path || '') + (self.options.body || '')).hash(true);
+		var data = F.cache.read(key);
 		if (data) {
-			data = self.$transform ? self.maketransform(self.$schema ? self.$schema.make(data.value) : data.value, data) : self.$schema ? self.$schema.make(data.value) : data.value;
-
+			data = data.value;
 			if (self.$resolve) {
 				self.$resolve(data);
 				self.$reject = null;
 				self.$resolve = null;
 			} else
 				callback(null, data, data);
-
 			return self;
 		}
 	}
 
-	self.$callback_key = key;
-	self.options.callback = exec_callback;
+	self.$cachekey = key;
+	self.options.callback = restbuilder_callback;
 	self.options.response = {};
 	self.options.response.builder = self;
-	self.request = REQUEST(self.options);
+	self.request = F.TUtils.request(self.options);
 	return self;
 };
 
-function exec_callback(err, response) {
+function restbuilder_callback(err, response) {
 
 	var self = response.builder;
 
@@ -931,7 +870,7 @@ function exec_callback(err, response) {
 	}
 
 	var callback = self.$callback;
-	var key = self.$callback_key;
+	var key = self.$cachekey;
 	var type = err ? '' : response.headers['content-type'] || '';
 	var output = new RESTBuilderResponse();
 
@@ -968,36 +907,6 @@ function exec_callback(err, response) {
 		}
 	}
 
-	if (output.value && self.$map) {
-
-		var res;
-
-		if (output.value instanceof Array) {
-			res = [];
-			for (var j = 0; j < output.value.length; j++) {
-				var item = {};
-				for (var i = 0; i < self.$map.length; i++) {
-					var m = self.$map[i];
-					if (output.value[j])
-						item[m.target] = output.value[j][m.id];
-				}
-				if (self.$mapconvertor)
-					item = CONVERT(item, self.$mapconvertor);
-				res.push(item);
-			}
-		} else {
-			res = {};
-			for (var i = 0; i < self.$map.length; i++) {
-				var m = self.$map[i];
-				res[m.target] = output.value[m.id];
-			}
-			if (self.$mapconvertor)
-				res = CONVERT(res, self.$mapconvertor);
-		}
-
-		output.value = res;
-	}
-
 	if (output.value == null)
 		output.value = EMPTYOBJECT;
 
@@ -1007,119 +916,59 @@ function exec_callback(err, response) {
 	output.hostname = response.host;
 	output.origin = response.origin;
 	output.cache = false;
-	output.datetime = NOW;
 
 	if (self.$debug)
 		console.log('--DEBUG-- RESTBuilder: ' + response.status + ' ' + self.options.method + ' ' + QUERIFY(self.options.url || (self.options.unixsocket + self.options.path), self.options.query), '|', 'Error:', err, '|', 'Response:', response.body);
 
-	if (!err && self.$errorhandler) {
-		if (typeof(self.$errorhandler) === 'function')
-			err = self.$errorhandler(output.value);
-		else if (!output.value || output.value === EMPTYOBJECT || (output.value instanceof Array && output.value.length))
-			err = self.$errorhandler;
+	var val = output.value;
+
+	if (!err && output.status >= 400) {
+		err = output.status;
+		if (val instanceof Array && val.length && val[0] && val[0].error)
+			err = ErrorBuilder.assign(val);
+		else
+			err = null;
 	}
 
-	var val;
+	if (!err && key)
+		F.cache.add(key, output, self.$expire);
 
-	if (self.$schema) {
-
-		if (err) {
-			if (self.$resolve) {
-				self.$.invalid(err);
-				self.$ = null;
-				self.$reject = null;
-				self.$resolve = null;
-			} else
-				callback(err, EMPTYOBJECT, output);
-			return;
+	if (self.$errorbuilderhandler) {
+		// Is the response Total.js ErrorBuilder?
+		if (val instanceof Array && val.length && val[0] && val[0].error) {
+			err = ErrorBuilder.assign(val);
+			if (err)
+				val = null;
 		}
+	}
 
-		val = self.$transform ? self.maketransform(output.value, output) : output.value;
+	if (!err && output.status >= 400)
+		err = output.status;
 
-		if (self.$errorbuilderhandler) {
+	if (!err && self.$jsonschema && val) {
+		let jsresponse = $jsonschema.transform(val);
+		if (jsresponse.error)
+			err = jsresponse.error;
+		else
+			val = jsresponse.response;
+	}
 
-			// Is the response Total.js ErrorBuilder?
-			if (val instanceof Array && val.length && val[0] && val[0].error) {
-				err = ErrorBuilder.assign(val);
-				if (err)
-					val = EMPTYOBJECT;
-				if (err) {
-					callback(err, EMPTYOBJECT, output);
-					return;
-				}
-			} else if (output.status >= 400) {
-				err = output.status;
-				if (self.$resolve) {
-					self.$.invalid(err);
-					self.$ = null;
-					self.$reject = null;
-					self.$resolve = null;
-				} else
-					callback(err, response, output);
-				return;
-			}
+	if (self.$resolve) {
 
-		}
+		if (err)
+			self.$.invalid(err);
+		else
+			self.$resolve(val);
 
-		self.$schema.make(val, function(err, model) {
-
-			if (!err && key && output.status === 200)
-				F.cache.add(key, output, self.$cache_expire);
-
-			if (self.$resolve) {
-
-				if (err)
-					self.$.invalid(err);
-				else
-					self.$resolve(model);
-
-				self.$ = null;
-				self.$reject = null;
-				self.$resolve = null;
-				return;
-			}
-
-			callback(err, err ? EMPTYOBJECT : model, output);
-			output.cache = true;
-		});
+		self.$ = null;
+		self.$reject = null;
+		self.$resolve = null;
 
 	} else {
-
-		if (!err && key && output.status === 200)
-			F.cache.add(key, output, self.$cache_expire);
-
-		val = self.$transform ? self.maketransform(output.value, output) : output.value;
-
-		if (self.$errorbuilderhandler) {
-			// Is the response Total.js ErrorBuilder?
-			if (val instanceof Array && val.length && val[0] && val[0].error) {
-				err = ErrorBuilder.assign(val);
-				if (err)
-					val = EMPTYOBJECT;
-			}
-		}
-
-		if (!err && self.$strict && output.status >= 400)
-			err = output.status;
-
-		if (self.$convert && val && val !== EMPTYOBJECT)
-			val = CONVERT(val, self.$convert);
-
-		if (self.$resolve) {
-
-			if (err)
-				self.$.invalid(err);
-			else
-				self.$resolve(val);
-
-			self.$ = null;
-			self.$reject = null;
-			self.$resolve = null;
-		} else {
-			callback(err, val, output);
-			output.cache = true;
-		}
+		callback(err, val, output);
+		output.cache = true;
 	}
+
 }
 
 function RESTBuilderResponse() {}
@@ -1223,7 +1072,7 @@ function parseactioncache(obj, meta) {
 			}
 
 			$.cachekey = key + sum;
-			return F.cache.get2($.cachekey);
+			return F.cache.read($.cachekey);
 		}
 
 		$.cachekey && F.cache.set($.cachekey, value && value.success ? CLONE(value) : value, meta.expire || '5 minutes');

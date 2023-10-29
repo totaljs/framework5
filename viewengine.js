@@ -619,7 +619,7 @@ View.prototype.json = function(obj, id, beautify, replacer) {
 		beautify = false;
 	}
 
-	var value = beautify ? JSON.stringify(obj, replacer == true ? framework_utils.json2replacer : replacer, 4) : JSON.stringify(obj, replacer == true ? framework_utils.json2replacer : replacer);
+	var value = beautify ? JSON.stringify(obj, replacer == true ? F.TUtils.json2replacer : replacer, 4) : JSON.stringify(obj, replacer == true ? F.TUtils.json2replacer : replacer);
 	return id ? ('<script type="application/json" id="' + id + '">' + value + '</script>') : value;
 };
 

@@ -152,7 +152,7 @@ exports.create = function() {
 
 exports.refresh = function(force) {
 
-	if (!force && (CONF.nosourcemap || F.id))
+	if (!force && (!F.config.$sourcemap || F.id))
 		return;
 
 	timeout && clearTimeout(timeout);

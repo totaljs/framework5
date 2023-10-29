@@ -222,7 +222,7 @@ Message.prototype.send2 = function(callback) {
 	for (let key in F.temporary.smtp)
 		Mailer.destroy(F.temporary.smtp[key]);
 
-	Mailer.send(F.config.mail_smtp, self, callback);
+	Mailer.send(F.config.smtp, self, callback);
 };
 
 Message.prototype.send = function(smtp, options, callback) {
@@ -289,8 +289,8 @@ Mailer.destroy = function(obj) {
 		obj.socket2 = null;
 	}
 
-	if (obj === F.temporary.smtp[obj.smtp])
-		delete F.temporary.smtp[obj.smtp];
+	if (obj === F.temporary.smtp[obj.server])
+		delete F.temporary.smtp[obj.server];
 
 	delete self.connections[obj.id];
 	return self;
@@ -428,7 +428,7 @@ Mailer.send2 = function(messages, callback) {
 
 Mailer.send = function(opt, messages, callback, cache) {
 
-	var cached = opt.keepalive != false ? F.temporary.smtp[opt.smtp] : null;
+	var cached = opt.keepalive != false ? F.temporary.smtp[opt.server] : null;
 
 	if (cached) {
 		if (messages instanceof Array) {
@@ -469,7 +469,7 @@ Mailer.send = function(opt, messages, callback, cache) {
 	if (opt.secure && !opt.port)
 		opt.port = 465;
 
-	if (!opt.smtp)  {
+	if (!opt.server)  {
 		var err = new Error('No SMTP server configuration.');
 		callback && callback(err);
 		F.error(err, 'mail_smtp');
@@ -478,10 +478,10 @@ Mailer.send = function(opt, messages, callback, cache) {
 
 	if (opt.secure) {
 		let internal = F.TUtils.copy(opt);
-		internal.host = opt.smtp;
+		internal.host = opt.server;
 		obj.socket = F.Tls.connect(internal, () => Mailer.$send(obj, opt));
 	} else
-		obj.socket = F.Net.createConnection(opt.port, opt.smtp);
+		obj.socket = F.Net.createConnection(opt.port, opt.server);
 
 	if (cache) {
 		obj.trytosend = function() {
@@ -493,13 +493,13 @@ Mailer.send = function(opt, messages, callback, cache) {
 			}
 		};
 		obj.TS = NOW.add(cache === true ? '10 minutes' : typeof(cache) === 'number' ? (cache + ' minutes') : cache);
-		F.temporary.smtp[opt.smtp] = obj;
+		F.temporary.smtp[opt.server] = obj;
 	}
 
 	obj.cached = cache;
 	obj.smtp = opt;
-	obj.socket.$host = opt.smtp;
-	obj.host = opt.smtp.substring(opt.smtp.lastIndexOf('.', opt.smtp.lastIndexOf('.') - 1) + 1);
+	obj.socket.$host = opt.server;
+	obj.host = opt.server.substring(opt.server.lastIndexOf('.', opt.server.lastIndexOf('.') - 1) + 1);
 
 	obj.socket.on('error', function(err) {
 
@@ -514,10 +514,10 @@ Mailer.send = function(opt, messages, callback, cache) {
 			return;
 
 		if (!obj.try && !is)
-			F.error(err, 'mail_smtp', opt.smtp);
+			F.error(err, 'mail_smtp', opt.server);
 
-		if (obj === F.temporary.smtp[opt.smtp])
-			delete F.temporary.smtp[opt.smtp];
+		if (obj === F.temporary.smtp[opt.server])
+			delete F.temporary.smtp[opt.server];
 
 		Mailer.$events.error && Mailer.emit('error', err, obj);
 	});
@@ -527,13 +527,13 @@ Mailer.send = function(opt, messages, callback, cache) {
 		Mailer.destroy(obj);
 
 		if (!obj.try && !obj.callback)
-			F.error(err, 'mail_smtp', opt.smtp);
+			F.error(err, 'mail_smtp', opt.server);
 
 		obj.callback && obj.callback(err);
 		obj.callback = null;
 
-		if (obj === F.temporary.smtp[opt.smtp])
-			delete F.temporary.smtp[opt.smtp];
+		if (obj === F.temporary.smtp[opt.server])
+			delete F.temporary.smtp[opt.server];
 
 		if (Mailer.$events.error && !obj.try)
 			Mailer.emit('error', err, obj);
@@ -546,13 +546,13 @@ Mailer.send = function(opt, messages, callback, cache) {
 			Mailer.destroy(obj);
 
 			if (!obj.try && !obj.callback)
-				F.error(err, 'mail_smtp', opt.smtp);
+				F.error(err, 'mail_smtp', opt.server);
 
 			obj.callback && obj.callback(err);
 			obj.callback = null;
 
-			if (obj === F.temporary.smtp[opt.smtp])
-				delete F.temporary.smtp[opt.smtp];
+			if (obj === F.temporary.smtp[opt.server])
+				delete F.temporary.smtp[opt.server];
 
 			if (Mailer.$events.error && !obj.try)
 				Mailer.emit('error', err, obj);
@@ -701,7 +701,7 @@ Mailer.$send = function(obj, options, autosend) {
 		obj.callback && obj.callback();
 		obj.callback = null;
 		if (obj.cached)
-			delete F.temporary.smtp[obj.smtp];
+			delete F.temporary.smtp[obj.server];
 		line = null;
 	});
 

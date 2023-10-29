@@ -395,6 +395,8 @@ async function mergedownload(url, minify = true) {
 
 			var output = { ext: ext };
 
+			response.body = response.body.ROOT();
+
 			if (minify && !isminified) {
 				switch (ext) {
 					case 'js':
@@ -444,6 +446,8 @@ async function mergefile(filename, minify) {
 			}
 
 			var output = { ext: ext };
+
+			response = response.ROOT();
 
 			if (minify && !isminified) {
 				switch (ext) {

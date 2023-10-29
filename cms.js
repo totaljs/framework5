@@ -161,7 +161,7 @@ function tidy(body) {
 	var tag;
 	var tagend;
 
-	body = U.minify_html(body);
+	body = F.TUtils.minify_html(body);
 
 	while (true) {
 
@@ -251,12 +251,12 @@ exports.compile = function(html, widgets, used) {
 	if (!used) {
 		for (var widget of widgets) {
 			if (widget.css)
-				response.css.push(U.minify_css(widget.css));
+				response.css.push(F.TUtils.minify_css(widget.css));
 			if (widget.js)
-				response.js.push(U.minify_js(widget.js));
+				response.js.push(F.TUtils.minify_js(widget.js));
 			if (widget.ui) {
-				widget.ui.css && response.css.push(U.minify_css(widget.ui.css));
-				widget.ui.js && response.js.push(U.minify_js(widget.ui.js));
+				widget.ui.css && response.css.push(F.TUtils.minify_css(widget.ui.css));
+				widget.ui.js && response.js.push(F.TUtils.minify_js(widget.ui.js));
 			}
 		}
 	}
@@ -317,14 +317,14 @@ exports.compile = function(html, widgets, used) {
 		if (used) {
 
 			if (widget.css)
-				response.css.push(U.minify_css(widget.css));
+				response.css.push(F.TUtils.minify_css(widget.css));
 
 			if (widget.js)
-				response.js.push(U.minify_js(widget.js));
+				response.js.push(F.TUtils.minify_js(widget.js));
 
 			if (widget.ui) {
-				widget.ui.css && response.css.push(U.minify_css(widget.ui.css));
-				widget.ui.js && response.js.push(U.minify_js(widget.ui.js));
+				widget.ui.css && response.css.push(F.TUtils.minify_css(widget.ui.css));
+				widget.ui.js && response.js.push(F.TUtils.minify_js(widget.ui.js));
 			}
 
 		}

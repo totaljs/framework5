@@ -8,6 +8,42 @@ const PROXY_KEEPALIVE = new F.Http.Agent({ keepAlive: true, timeout: 60000 });
 const PROXY_KEEPALIVEHTTPS = new F.Https.Agent({ keepAlive: true, timeout: 60000 });
 const PROXY_OPTIONS = { end: true };
 
+function parseSizeTimeout(route, value) {
+
+	var number = +value.match(/\d+/)[0];
+	var type = value.match(/[a-z]+/i);
+
+	if (type)
+		type = type[0].toLowerCase();
+	else
+		type = '';
+
+	switch (type) {
+		case 's':
+			route.timeout = number;
+			break;
+		case 'm':
+			route.timeout = number * 60;
+			break;
+		case 'h':
+			route.timeout = number * 60 * 60;
+			break;
+		case 'b':
+			route.size = number / 1024;
+			break;
+		case 'kb':
+			route.size = number;
+			break;
+		case 'gb':
+			route.size = (number * 1024) * 1000;
+			break;
+		case 'mb':
+		default:
+			route.size = number * 1024;
+			break;
+	}
+}
+
 // Total.js routing
 function Route(url, action, size) {
 
@@ -41,7 +77,8 @@ function Route(url, action, size) {
 
 	if (t.url2[0] === '@') {
 		// @TODO: missing WAPI implementation
-		// link to existing API
+		t.skip = true;
+		console.log('This "{0}" kind of routes are not supported yet'.formaT(t.url2));
 		return;
 	}
 
@@ -103,11 +140,8 @@ function Route(url, action, size) {
 	if (index != -1)
 		t.url.splice(index, 1);
 
-	url = url.replace(/<\d+/g, function(text) {
-		if (text.indexOf('s') === -1)
-			t.size = (+(text.substring(1))) * 1024;
-		else
-			t.timeout = +(text.replace('s', '').substring(1));
+	url = url.replace(/<\d+[mb|gb|kb|b|m|s|h]+/gi, function(text) {
+		parseSizeTimeout(t, text.substring(1));
 		return '';
 	});
 

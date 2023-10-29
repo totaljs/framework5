@@ -4,7 +4,7 @@ Total.js framework 5
 [![Made in EU](https://cdn.componentator.com/eu-small.png)](https://european-union.europa.eu/)
 
 - [Website](https://www.totaljs.com/)
-- [__Documentation__](https://docs.totaljs.com/total4/)
+- [__Documentation__](https://docs.totaljs.com/total5/)
 - [Chat support](https://platform.totaljs.com/?open=messenger)
 - [Join __Total.js Telegram__](https://t.me/totalplatform)
 - [Support](https://www.totaljs.com/support/)
@@ -12,7 +12,7 @@ Total.js framework 5
 __Total.js framework v5__ is the framework for Node.js platform written in `pure` JavaScript similar to PHP's Laravel or Python's Django or ASP.NET MVC. It can be used as a web, desktop, service, or IoT application.
 
 ```bash
-$ npm install -g total5
+$ npm install total5
 ```
 
 ## Social networks

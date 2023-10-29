@@ -1785,6 +1785,27 @@ WebSocketClient.prototype.senddeflate = function() {
 	}
 };
 
+WebSocketClient.prototype.close = function(code, message) {
+
+	var self = this;
+
+	if (message !== true) {
+		self.options.reconnect = 0;
+		self.reconnecting && clearTimeout(self.reconnecting);
+		self.reconnecting = null;
+	} else
+		message = undefined;
+
+	if (!self.isclosed && self.socket) {
+		self.isclosed = true;
+		if (message && self.options.encodedecode)
+			message = encodeURIComponent(message);
+		self.socket.end(getWebSocketFrame(code || 1000, message || '', 0x08, false, self.options.masking));
+	}
+
+	return self;
+};
+
 function registerapi(client) {
 
 	if (client.$api)

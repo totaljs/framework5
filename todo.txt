@@ -2,6 +2,8 @@
 - cluster
 - openclient
 - update
+- workers (check)
+- autoquery
 
 - CSRF tokeny
 - encryption/decryption

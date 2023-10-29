@@ -252,7 +252,7 @@ Instance.prototype.cmd = function(path, data) {
 	if (self.flow.isworkerthread) {
 		self.flow.postMessage2({ TYPE: 'stream/cmd', path: path, data: data });
 	} else {
-		var fn = path.indexOf('.') === - 1 ? global[path] : U.get(global, path);
+		var fn = path.indexOf('.') === - 1 ? global[path] : F.TUtils.get(global, path);
 		if (typeof(fn) === 'function')
 			fn(data);
 	}
@@ -914,7 +914,7 @@ function init_current(meta, callback, nested) {
 
 	// Due to C/C++ modules
 	if (W.workerData || meta.sandbox)
-		CONF.node_modules = '~' + F.path.join(meta.directory, meta.id, 'node_modules');
+		CONF.$node_modules = F.path.join(meta.directory, meta.id, 'node_modules');
 
 	ASFILES = meta.asfiles === true;
 
@@ -975,7 +975,7 @@ function init_current(meta, callback, nested) {
 					break;
 
 				case 'stream/cmd':
-					var fn = msg.path.indexOf('.') === - 1 ? global[msg.path] : U.get(global, msg.path);
+					var fn = msg.path.indexOf('.') === - 1 ? global[msg.path] : F.TUtils.get(global, msg.path);
 					if (fn && typeof(fn) === 'function')
 						fn(msg.data);
 					break;
@@ -2744,7 +2744,7 @@ TMS.connect = function(fs, sourceid, callback) {
 					if (schema) {
 						// HACK: very fast validation
 						var err = new F.TBuilders.ErrorBuilder();
-						var data = framework_jsonschema.transform(schema, err, msg.data, true);
+						var data = F.TJSONSchema.transform(schema, err, msg.data, true);
 						if (data) {
 							var id = 'pub' + item.id + 'X' + msg.id;
 							for (var key in fs.meta.flow) {
@@ -2817,7 +2817,7 @@ const TEMPLATE_SUBSCRIBE = `<script total>
 
 				/*
 					var err = new F.ErrorBuilder();
-					data = framework_jsonschema.transform(schema, err, data, true);
+					data = F.TJSONSchema.transform(schema, err, data, true);
 
 					if (err.is) {
 						$.destroy();
@@ -2870,7 +2870,7 @@ const TEMPLATE_CALL = `<script total>
 
 				/*
 					var err = new F.ErrorBuilder();
-					data = framework_jsonschema.transform(schema, err, data, true);
+					data = F.TJSONSchema.transform(schema, err, data, true);
 
 					if (err.is) {
 						$.send('error', err.toString());

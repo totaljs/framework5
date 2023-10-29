@@ -568,6 +568,7 @@ function _request(opt, callback) {
 	if (opt.type) {
 		switch (opt.type) {
 			case 'plain':
+			case 'text':
 				opt.headers[CT] = 'text/plain';
 				break;
 			case 'html':
@@ -5541,7 +5542,7 @@ MultipartParser.prototype.parse_meta_check = function() {
 	}
 
 	if (self.current.measure) {
-		var tmp = framework_image[self.current.measure](self.buffer);
+		var tmp = F.TImages[self.current.measure](self.buffer);
 		if (tmp) {
 			self.current.file.width = tmp.width;
 			self.current.file.height = tmp.height;
