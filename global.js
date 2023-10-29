@@ -94,12 +94,12 @@ global.CORS = function(origin) {
 };
 
 // Utils
+global.U = F.TUtils;
 global.GUID = F.TUtils.guid;
 global.NOOP = F.TUtils.noop;
 global.REQUEST = F.TUtils.request;
 global.HASH = (val, type) => val.hash(type ? type : true);
 global.DIFFARR = F.TUtils.diffarr;
-global.U = F.TUtils;
 global.CLONE = F.TUtils.clone;
 
 // TMS

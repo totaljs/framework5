@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-require('total4/utils');
+require('total5/utils');
 
 const Exec = require('child_process').exec;
 const ExecFile = require('child_process').execFile;
