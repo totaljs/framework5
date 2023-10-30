@@ -921,10 +921,10 @@ function init_current(meta, callback, nested) {
 	var flow = MAKEFLOWSTREAM(meta);
 	FLOWS[meta.id] = flow;
 
-	if (isFLOWSTREAMWORKER && meta.unixsocket && meta.proxypath && F.frameworkless) {
+	if (isFLOWSTREAMWORKER && meta.unixsocket && meta.proxypath) {
 		if (!F.isWindows)
 			F.Fs.unlink(meta.unixsocket, NOOP);
-		F.frameworkless(false, { unixsocket: meta.unixsocket, config: { allow_stats_snapshot: false }});
+		F.http({ load: 'none', unixsocket: meta.unixsocket, config: { $stats: false, $sourcemap: false }});
 	}
 
 	if (meta.import) {
