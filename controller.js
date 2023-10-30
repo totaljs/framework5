@@ -185,7 +185,7 @@ Controller.prototype.html = function(value) {
 	F.stats.response.html++;
 };
 
-Controller.prototype.text = function(value) {
+Controller.prototype.text = Controller.prototype.plain = function(value) {
 	var ctrl = this;
 
 	if (ctrl.destroyed)
@@ -329,7 +329,7 @@ Controller.prototype.fallback = function(code, err) {
 	var route = F.routes.fallback[key];
 	if (route) {
 		ctrl.route = route;
-		ctrl.route.action(ctrl);
+		ctrl.route.action.call(ctrl, ctrl);
 	} else {
 
 		var view;
@@ -764,7 +764,7 @@ Controller.prototype.$route = function() {
 				if (route.middleware.length)
 					middleware(ctrl);
 				else
-					route.action(ctrl);
+					route.action.call(ctrl, ctrl);
 				return;
 			}
 		}
@@ -984,6 +984,7 @@ function execute(ctrl) {
 					}
 					body = body.data;
 					if (!body || typeof(body) === 'object') {
+						ctrl.params = params;
 						F.action(endpoint.actions, body || EMPTYOBJECT, ctrl).autorespond();
 						return;
 					}
@@ -997,7 +998,7 @@ function execute(ctrl) {
 				var action = ctrl.route.action;
 				if (!action)
 					action = auto_view;
-				action(ctrl);
+				action.call(ctrl, ctrl); // .call due to backward compatibility
 			}
 		}
 	}

@@ -11,9 +11,9 @@ const VIEW_IF = { 'if ': 1, 'if(': 1 };
 exports.cache = [];
 exports.compile = function(name, content, debug = true) {
 
-	if (F.$events['@view']) {
+	if (F.$events.$view) {
 		let meta = { name: name, body: content, debug: debug };
-		F.emit('@view', meta);
+		F.emit('$view', meta);
 		content = meta.body;
 	}
 

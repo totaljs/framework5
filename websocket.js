@@ -33,7 +33,7 @@ function Controller(req, socket, head) {
 	var ctrl = this;
 
 	ctrl.req = req;
-	ctrl.socket = socket;
+	ctrl.res = ctrl.socket = socket;
 	ctrl.route = null;
 	ctrl.head = head;
 	ctrl.uri = F.TUtils.parseURI2(req.url);
@@ -157,7 +157,10 @@ function websocket_close() {
 
 Controller.prototype.destroy = function() {
 	var ctrl = this;
+	ctrl.socket.destroy();
 	ctrl.req.destroy();
+	F.TUtils.destroystream(ctrl.socket);
+	F.TUtils.destroystream(ctrl.req);
 };
 
 Controller.prototype.onerror = function(err) {
@@ -925,7 +928,7 @@ function prepare(ctrl) {
 		ctrl.route.connections = [];
 
 	ctrl.route.connections.push(websocket);
-	ctrl.route.action(websocket);
+	ctrl.route.action.call(websocket, websocket);
 
 	setImmediate(upgradecontinue, ctrl, websocket);
 }
@@ -1129,7 +1132,6 @@ exports.listen = function(req, socket, head) {
 	if (F.routes.proxies.length && F.TRouting.lookupproxy(ctrl))
 		return;
 
-	// disables timeout
 	socket.setTimeout(0);
 	socket.on('error', NOOP);
 

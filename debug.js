@@ -10,7 +10,7 @@ const Os = require('os');
 
 var Meta = {
 	iswatcher: process.connected !== true,
-	iswindows: Os.platform().substring(0, 3).toLowerCase() === 'win',
+	isWindows: Os.platform().substring(0, 3).toLowerCase() === 'win',
 	callback: null, // watcher callback
 	delay: null
 };
@@ -521,7 +521,7 @@ function runwatching() {
 }
 
 function normalize(path) {
-	return Meta.iswindows ? path.replace(/\\/g, '/') : path;
+	return Meta.isWindows ? path.replace(/\\/g, '/') : path;
 }
 
 function init() {

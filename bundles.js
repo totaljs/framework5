@@ -243,7 +243,7 @@ function makeignore(arr) {
 }
 
 function normalize(path) {
-	return F.iswindows ? path.replace(/\\/g, '/') : path;
+	return F.isWindows ? path.replace(/\\/g, '/') : path;
 }
 
 function cleanFiles(callback) {

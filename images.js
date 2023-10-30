@@ -4,7 +4,7 @@
 
 'use strict';
 
-const D = F.iswindows ? '"' : '\'';
+const D = F.isWindows ? '"' : '\'';
 const SOF = { 0xc0: true, 0xc1: true, 0xc2: true, 0xc3: true, 0xc5: true, 0xc6: true, 0xc7: true, 0xc9: true, 0xca: true, 0xcb: true, 0xcd: true, 0xce: true, 0xcf: true };
 const SPAWN_OPT = { shell: true };
 const CMD_CONVERT = { gm: 'gm', im: 'convert', magick: 'magick' };
@@ -241,7 +241,7 @@ ImageProto.save = function(filename, callback, writer) {
 
 	var command = self.cmd(self.filename ? self.filename : '-', filename);
 
-	if (F.iswindows)
+	if (F.isWindows)
 		command = command.replace(REG_PATH, '\\');
 
 	var cmd = F.Child.exec(command, function(err) {

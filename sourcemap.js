@@ -150,9 +150,9 @@ exports.create = function() {
 	return output;
 };
 
-exports.refresh = function(force) {
+exports.refresh = function() {
 
-	if (!force && (!F.config.$sourcemap || F.id))
+	if (!F.isloaded || !F.config.$sourcemap || F.id)
 		return;
 
 	timeout && clearTimeout(timeout);

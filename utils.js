@@ -1618,7 +1618,7 @@ exports.link = function() {
 };
 
 exports.$normalize = function(path) {
-	return F.iswindows ? path.replace(REG_PATH, '/') : path;
+	return F.isWindows ? path.replace(REG_PATH, '/') : path;
 };
 
 exports.convert62 = function(number) {
@@ -4954,6 +4954,7 @@ EventEmitter2.prototype.emit = function(name, a, b, c, d, e, f, g) {
 };
 
 EventEmitter2.prototype.on = function(name, fn) {
+
 	var self = this;
 
 	if (!self.$events)
@@ -5206,8 +5207,8 @@ function MultipartParser(multipart, stream, callback) {
 
 	self.ondata = function(chunk) {
 
-		if (!self.size)
-			chunk = chunk.slice(4);
+		// if (!self.size)
+		// 	chunk = chunk.slice(4);
 
 		self.size += chunk.length;
 
@@ -5238,7 +5239,7 @@ function MultipartParser(multipart, stream, callback) {
 }
 
 MultipartParser.prototype.custom = function(check, callback) {
-	this.custom = { check: check, data: callback };
+	this.$custom = { check: check, data: callback };
 	return this;
 };
 
@@ -5359,11 +5360,11 @@ MultipartParser.prototype.parse_head = function() {
 		return;
 	}
 
-	if (self.custom) {
+	if (self.$custom) {
 		self.current.file = null;
 		self.buffer = self.buffer.slice(index + HEADEREND.length);
 		self.current.size = 0;
-		if (self.custom.check(header, m))
+		if (self.$custom.check(header, m))
 			self.step = 4;
 		else
 			self.step = 9; // skip
@@ -5483,19 +5484,15 @@ MultipartParser.prototype.parse_head = function() {
 			self.current.stream = null;
 		}
 
-		if (self.skipfiles) {
-			self.current.file = null;
-		} else {
-			self.current.path = self.tmp + (UPLOADINDEXER++) + '.bin';
-			F.stats.performance.open++;
-			self.current.stream = F.Fs.createWriteStream(self.current.path);
-			var file = { path: self.current.path, name: self.current.name, filename: self.current.filename, size: 0, type: self.current.type, width: 0, height: 0 };
-			self.current.file = file;
-			self.current.fileheader = Buffer.alloc(0);
-			self.current.stream.$mpfile = file;
-			self.current.stream.$mpinstance = self;
-			self.current.stream.on('close', multipartfileready);
-		}
+		self.current.path = self.tmp + (UPLOADINDEXER++) + '.bin';
+		F.stats.performance.open++;
+		self.current.stream = F.Fs.createWriteStream(self.current.path);
+		var file = { path: self.current.path, name: self.current.name, filename: self.current.filename, size: 0, type: self.current.type, width: 0, height: 0 };
+		self.current.file = file;
+		self.current.fileheader = Buffer.alloc(0);
+		self.current.stream.$mpfile = file;
+		self.current.stream.$mpinstance = self;
+		self.current.stream.on('close', multipartfileready);
 
 	} else
 		self.current.file = null;
@@ -5685,7 +5682,7 @@ MultipartParser.prototype.parse_custom = function() {
 		self.sizes.data += index - 2;
 		self.prevsize = 0;
 		let val = self.buffer.slice(0, index - 4);
-		self.custom.data(val);
+		self.$custom.data(val);
 		self.buffer = self.buffer.slice(index);
 		self.step = 0;
 		self.parse(2);

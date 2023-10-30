@@ -261,15 +261,12 @@ Route.prototype.remove = function() {
 			break;
 	}
 
+	exports.sort();
 };
 
 exports.route = function(url, action, size) {
 	var route = new Route(url, action, size);
-	if (route) {
-
-		if (route.skip)
-			return;
-
+	if (route && !route.skip) {
 		switch (route.type) {
 			case 'websocket':
 				F.routes.websockets.push(route);
@@ -284,6 +281,7 @@ exports.route = function(url, action, size) {
 		F.routes.timeout && clearTimeout(F.routes.timeout);
 		F.routes.timeout = setTimeout(exports.sort, 100);
 	}
+	return route;
 };
 
 exports.cors = function(url) {
@@ -799,7 +797,6 @@ function proxycreate(proxy, ctrl) {
 	uri.headers['x-forwarded-for'] = ctrl.ip;
 	uri.headers['x-forwarded-url'] = ctrl.url;
 	uri.headers['x-forwarded-host'] = ctrl.headers.host;
-
 	uri.agent = secured ? PROXY_KEEPALIVEHTTPS : PROXY_KEEPALIVE;
 
 	delete uri.headers.host;
@@ -808,6 +805,7 @@ function proxycreate(proxy, ctrl) {
 	F.stats.performance.external++;
 	F.stats.request.external++;
 
+	// ctrl.res {HttpResponse} or {Socket}
 	if (ctrl.res.headersSent || ctrl.destroyed)
 		return;
 
@@ -840,8 +838,7 @@ function proxycreate(proxy, ctrl) {
 		ctrl.res.setKeepAlive(true, 0);
 
 		ctrl.iswebsocket && ctrl.head && ctrl.res.unshift(ctrl.head);
-
-		request.on('response', function (proxyres) {
+		request.on('response', function(proxyres) {
 
 			if (request.$destroyed)
 				return;
@@ -854,6 +851,12 @@ function proxycreate(proxy, ctrl) {
 		});
 
 		request.on('upgrade', function(proxyres, proxysocket, proxyhead) {
+
+			proxysocket.on('close', function() {
+				ctrl.destroy();
+				request.destroy();
+				proxyres.destroy();
+			});
 
 			if (request.$destroyed)
 				return;
@@ -875,7 +878,12 @@ function proxycreate(proxy, ctrl) {
 function proxydestroy(self, err) {
 	if (!self.$destroyed) {
 		self.$destroyed = true;
-		self.$controller.fallback(503, err);
+		if (self.$controller) {
+			if (self.$controller.socket)
+				self.$controller.destroy();
+			else
+				self.$controller.fallback(503, err);
+		}
 		self.destroy();
 	}
 }

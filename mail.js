@@ -570,7 +570,7 @@ Mailer.$writemessage = function(obj, buffer) {
 	var message = [];
 
 	F.stats.other.mail++;
-	F.$events.mail && F.emit('@mail', msg);
+	F.$events.$mail && F.emit('$mail', msg);
 
 	var dt = obj.date.getTime();
 

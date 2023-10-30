@@ -10,6 +10,7 @@ const EMPTYARRAY = [];
 
 const REG_SKIPERRORS = /epipe|invalid\sdistance/i;
 const REG_HTTPHTTPS = /^(http|https):\/\//i;
+const SOCKETWINDOWS = '\\\\?\\pipe';
 
 const MSG_SNAPSHOT = { TYPE: 'usage' };
 const IGNORE_AUDIT = { password: 1, token: 1, accesstoken: 1, access_token: 1, pin: 1 };
@@ -272,7 +273,7 @@ global.DEF = {};
 
 		F.temporary.path[key] = true;
 
-		var is = F.iswindows;
+		var is = F.isWindows;
 		var s = '';
 
 		if (p[0] === '/') {
@@ -640,8 +641,8 @@ F.loadconfig = function(value) {
 
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = F.config.$insecure ? '0' : '1';
 	F.logger(F.config.$logger == true);
-	F.emit('@tms');
-	F.emit('@reconfigure');
+	F.emit('$tms');
+	F.emit('$reconfigure');
 };
 
 F.loadresource = function(name, value) {
@@ -745,7 +746,7 @@ F.auth = function(fn) {
 	DEF.onAuthorize = fn;
 };
 
-F.load = async function(types = [], callback) {
+F.load = async function(types, callback) {
 
 	var beg = Date.now();
 
@@ -758,7 +759,7 @@ F.load = async function(types = [], callback) {
 	if (types.includes('release'))
 		global.DEBUG = false;
 
-	var list = async (path, extension) => new Promise(resolve => F.TUtils.ls(path, files => resolve(files), (isdir, path) => isdir ? true : path.indexOf('-bk') === -1 && path.indexOf('_bk') === -1 && F.TUtils.getExtension(path) === (extension || 'js')));
+	var list = async (path, extension = 'js') => new Promise(resolve => F.TUtils.ls(path, files => resolve(files), (path, isdir) => isdir ? true : (path.indexOf('-bk') === -1 && path.indexOf('_bk') === -1 && F.TUtils.getExtension(path) === extension)));
 	var read = async (path) => new Promise(resolve => F.Fs.readFile(path, 'utf8', (err, response) => resolve(response ? response : '')));
 
 	var update = function(type, arr) {
@@ -770,6 +771,11 @@ F.load = async function(types = [], callback) {
 		}
 		return arr;
 	};
+
+	if (!types.length || types.includes('stats')) {
+		F.config.$stats = false;
+		F.config.$sourcemap = false;
+	}
 
 	if (!types.length || types.includes('env')) {
 		var env = await read(F.path.root('.env'));
@@ -1071,7 +1077,7 @@ F.console = function() {
 	print('node_modules  : ' + F.config.$nodemodules);
 	print('====================================================\n');
 
-	if (!F.isworker) {
+	if (!F.isWorker) {
 
 		var hostname = F.config.$unixsocket ? ('Socket: ' + F.config.$unixsocket) : '{2}://{0}:{1}/'.format(F.config.$ip, F.config.$port, F.isHTTPS ? 'https' : 'http');
 
@@ -1160,17 +1166,69 @@ F.http = function(opt) {
 	if (!opt)
 		opt = {};
 
-	F.load([], function() {
+	// opt.unixsocket {String}
+	// opt.ip {String}
+	// opt.port {Number}
+
+	// opt.load {String}
+	// config, env, modules, controllers, actions, schemas, models, definitions, sources, middleware, resources, plugins, stats
+	// none - loads only web server
+
+	if (opt.config) {
+		let cfg = [];
+		for (let key in opt.config)
+			cfg.push({ id: key, value: opt.config[key] });
+		F.loadconfig(cfg);
+	}
+
+	F.load(opt.load || opt.type || '', function() {
 
 		F.server = F.Http.createServer(F.THttp.listen);
 		F.server.on('upgrade', F.TWebSocket.listen);
 
-		if (opt.port)
-			F.config.$port = opt.port;
-		if (opt.ip)
-			F.config.$ip = opt.ip;
+		var unixsocket = opt.unixsocket || F.config.$unixsocket;
 
-		F.server.listen(F.config.$port, F.config.$ip);
+		if (unixsocket) {
+
+			if (F.isWindows && unixsocket.indexOf(SOCKETWINDOWS) === -1)
+				unixsocket = F.Path.join(SOCKETWINDOWS, unixsocket);
+
+			F.unixsocket = unixsocket;
+
+			var listen = function(count) {
+				F.server.listen(unixsocket, function() {
+
+					// Check if the socket exists
+					if (F.isWindows)
+						return;
+
+					F.Fs.lstat(unixsocket, function(err) {
+
+						if (count > 9)
+							throw new Error('HTTP server can not listen the path "{0}"'.format(unixsocket));
+
+						if (err)
+							setTimeout(listen, 500, count + 1);
+						else if (opt.unixsocket777)
+							F.Fs.chmodSync(unixsocket, 0o777);
+					});
+
+				});
+			};
+
+			listen(1);
+
+		} else {
+
+			if (opt.port)
+				F.config.$port = opt.port;
+
+			if (opt.ip)
+				F.config.$ip = opt.ip;
+
+			F.server.listen(F.config.$port, F.config.$ip);
+		}
+
 		F.config.$performance && F.server.on('connection', httptuningperformance);
 
 		if (!process.connected && F.console)
@@ -1654,7 +1712,7 @@ F.clear = function(init = true, callback) {
 	if (dir[dir.length - 1] !== '/')
 		dir += '/';
 
-	if (F.iswindows)
+	if (F.is)
 		dir = dir.replaceAll('/', '\\');
 
 	if (init) {
@@ -1933,7 +1991,7 @@ F.restore = function(filename, target, callback, filter) {
 
 			cache[path] = true;
 
-			var npath = path.substring(0, path.lastIndexOf(F.iswindows ? '\\' : '/'));
+			var npath = path.substring(0, path.lastIndexOf(F.is ? '\\' : '/'));
 			filename = filter && filter(item, false);
 
 			if (!filter || filename || filename == null) {
@@ -2136,7 +2194,7 @@ F.backup = function(filename, files, callback, filter) {
 
 			var file = F.Path.join(path, item);
 
-			if (F.iswindows)
+			if (F.is)
 				item = item.replace(/\\/g, '/');
 
 			if (item[0] !== '/')
@@ -2257,11 +2315,11 @@ F.exit = function(signal) {
 		} catch (e) {}
 	}
 
-	let key = '@exit';
+	let key = '$exit';
 
 	F.$events[key] && F.emit(key, signal);
 
-	if (!F.isworker && process.send && process.connected) {
+	if (!F.isWorker && process.send && process.connected) {
 		try {
 			process.send('total:stop');
 		} catch (e) {}
@@ -2463,7 +2521,7 @@ F.loadstats = function() {
 			stats.overload++;
 		}
 
-		if (F.isworker) {
+		if (F.isWorker) {
 			if (process.connected) {
 				MSG_SNAPSHOT.data = stats;
 				process.send(MSG_SNAPSHOT);
@@ -2477,6 +2535,8 @@ F.loadstats = function() {
 				console.log(e);
 			}
 		}
+
+		F.$events.$stats && F.emit('$stats', stats);
 
 	};
 
@@ -2518,33 +2578,33 @@ process.on('message', function(msg, h) {
 	else if (msg === 'total:ping')
 		setImmediate(ping);
 	else if (msg === 'total:update') {
-		key = '@update';
+		key = '$update';
 		F.$events[key] && F.emit(key);
 	} else if (msg === 'stop' || msg === 'exit' || msg === 'kill')
 		F.exit();
 
-	key = '@message';
+	key = '$message';
 	F.$events[key] && F.emit(key, msg, h);
 });
 
 (function(F) {
 
 	// Node.js modules
-	F.Zlib = F.require('zlib');
-	F.Fs = F.require('fs');
-	F.Path = F.require('path');
-	F.Http = F.require('http');
-	F.Https = F.require('https');
-	F.Worker = F.require('worker_threads');
-	F.Crypto = F.require('crypto');
-	F.Child = F.require('child_process');
-	F.Os = F.require('os');
-	F.Dns = F.require('dns');
-	F.Net = F.require('net');
-	F.Url = F.require('url');
-	F.Tls = F.require('tls');
-	F.Stream = F.require('stream');
-	F.Cluster = require('cluster');
+	F.Zlib = F.require('node:zlib');
+	F.Fs = F.require('node:fs');
+	F.Path = F.require('node:path');
+	F.Http = F.require('node:http');
+	F.Https = F.require('node:https');
+	F.Worker = F.require('node:worker_threads');
+	F.Crypto = F.require('node:crypto');
+	F.Child = F.require('node:child_process');
+	F.Os = F.require('node:os');
+	F.Dns = F.require('node:dns');
+	F.Net = F.require('node:net');
+	F.Url = F.require('node:url');
+	F.Tls = F.require('node:tls');
+	F.Stream = F.require('node:stream');
+	F.Cluster = require('node:cluster');
 
 	// Total.js modules
 	F.TUtils = require('./utils');
@@ -2568,8 +2628,8 @@ process.on('message', function(msg, h) {
 
 	// Settings
 	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
-	F.iswindows = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
-	F.isworker = process.env.PASSENGER_APP_ENV ? false : F.Cluster.isworker;
+	F.is = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
+	F.isWorker = process.env.PASSENGER_APP_ENV ? false : F.Cluster.isWorker;
 	F.syshash = (__dirname + '-' + F.Os.hostname() + '-' + F.Os.platform() + '-' + F.Os.arch() + '-' + F.Os.release() + '-' + F.Os.tmpdir() + JSON.stringify(process.versions)).md5();
 	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
 
