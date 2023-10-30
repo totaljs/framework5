@@ -2,17 +2,16 @@
 
 'use strict';
 
-const FlowStream = require('./flow-flowstream');
 const PING = { TYPE: 'ping' };
 const REG_BK = /-bk|_bk/i;
 
 var FS = exports;
 
+FS.module = require('./flow-flowstream');
 FS.version = 1;
 FS.proxies = {};
 FS.db = {};
 FS.worker = false;
-FS.ping = false;
 FS.instances = {};
 FS.onerror = function(err, source, id, componentid, stack) {
 
@@ -130,9 +129,8 @@ FS.load = function(flow, callback) {
 	var id = flow.id;
 	flow.directory = flow.directory || F.path.root('/flowstream/');
 	FS.db[id] = flow;
-	flow.worker && initping();
 
-	FlowStream.init(flow, flow.worker, function(err, instance) {
+	FS.module.init(flow, flow.worker, function(err, instance) {
 
 		FS.$events.load && FS.emit('load', instance, flow);
 
@@ -161,9 +159,6 @@ FS.load = function(flow, callback) {
 	});
 
 };
-
-FS.socket = FlowStream.socket;
-FS.client = FlowStream.client;
 
 FS.notify = function(controller, id) {
 
@@ -207,3 +202,8 @@ FS.ping = function() {
 
 global.Flow = FS;
 global.FlowStream = exports;
+
+setImmediate(function() {
+	FS.socket = FS.module.socket;
+	FS.client = FS.module.client;
+});

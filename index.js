@@ -874,7 +874,9 @@ F.load = async function(types, callback) {
 	if (!types.length || types.includes('flowstreams'))
 		F.TFlow.init();
 
-	F.loadstats();
+	if (!types.length || types.includes('stats'))
+		F.loadstats();
+
 	F.loadservices();
 	F.stats.compilation = Date.now() - beg;
 	F.stats.compiled = files.length;
@@ -1124,6 +1126,8 @@ F.loadservices = function() {
 		if (F.internal.ticks == 6 || F.internal.ticks == 12)
 			F.TWebSocket.ping();
 
+		F.TFlow.ping();
+
 		if (!F.temporary.pending.length) {
 			F.stats.request.pending = 0;
 			return;
@@ -1155,7 +1159,6 @@ F.loadservices = function() {
 		}
 
 		F.stats.request.pending = F.temporary.pending.length;
-		F.TFlow.ping();
 
 	}, 5000);
 
@@ -2618,13 +2621,13 @@ process.on('message', function(msg, h) {
 	F.TJSONSchema = require('./jsonschema');
 	F.TCron = require('./cron');
 	F.TApi = require('./api');
-	F.TFlowStream = require('./flowstream');
 	F.TBundles = require('./bundles');
 	F.TFileStorage = require('./filestorage');
 	F.TTemplates = require('./templates');
 	F.TSourceMap = require('./sourcemap');
 	F.TMail = require('./mail');
 	F.TWorkers = require('./workers');
+	F.TFlowStream = require('./flowstream');
 
 	// Settings
 	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
@@ -2668,6 +2671,7 @@ process.on('message', function(msg, h) {
 	F.image = F.TImages.load;
 	F.sourcemap = F.TSourceMap.create;
 	F.tmpdir = F.Os.tmpdir();
+	F.proxy = F.TRouting.proxy;
 
 	// Needed "F"
 	F.TFlow = require('./flow');
