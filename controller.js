@@ -329,7 +329,7 @@ Controller.prototype.fallback = function(code, err) {
 	var route = F.routes.fallback[key];
 	if (route) {
 		ctrl.route = route;
-		ctrl.route.action.call(ctrl, ctrl);
+		ctrl.route.action(ctrl);
 	} else {
 
 		var view;
@@ -764,7 +764,7 @@ Controller.prototype.$route = function() {
 				if (route.middleware.length)
 					middleware(ctrl);
 				else
-					route.action.call(ctrl, ctrl);
+					route.action(ctrl);
 				return;
 			}
 		}
@@ -995,10 +995,10 @@ function execute(ctrl) {
 			if (ctrl.route.actions) {
 				F.action(ctrl.route.actions, ctrl.body, ctrl).autorespond();
 			} else {
-				var action = ctrl.route.action;
+				let action = ctrl.route.action;
 				if (!action)
 					action = auto_view;
-				action.call(ctrl, ctrl); // .call due to backward compatibility
+				action(ctrl);
 			}
 		}
 	}
