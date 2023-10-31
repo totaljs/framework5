@@ -1,5 +1,4 @@
-- mail
-- cluster
+- release
 - openclient
 - update
 - workers (check)

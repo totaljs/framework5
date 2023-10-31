@@ -1040,7 +1040,7 @@ function send_html(ctrl, path) {
 			ctrl.response.value = output.body;
 			ctrl.flush();
 		} else {
-			let filename = F.path.tmp(F.id + (ctrl.language ? (ctrl.language + '-') : '') + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.html');
+			let filename = F.path.tmp(F.clusterid + (ctrl.language ? (ctrl.language + '-') : '') + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.html');
 			F.Fs.writeFile(filename, output.body, function(err) {
 				if (err) {
 					F.temporary.notfound[ctrl.uri.key] = 1;
@@ -1084,7 +1084,7 @@ function send_css(ctrl, path) {
 			ctrl.response.value = output.body;
 			ctrl.flush();
 		} else {
-			let filename = F.path.tmp(F.id + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.css');
+			let filename = F.path.tmp(F.clusterid + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.css');
 			F.Fs.writeFile(filename, output.body, function(err) {
 				if (err) {
 					F.temporary.notfound[ctrl.uri.key] = 1;
@@ -1128,7 +1128,7 @@ function send_js(ctrl, path) {
 			ctrl.response.value = output.body;
 			ctrl.flush();
 		} else {
-			let filename = F.path.tmp(F.id + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.js');
+			let filename = F.path.tmp(F.clusterid + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.js');
 			F.Fs.writeFile(filename, output.body, function(err) {
 				if (err) {
 					F.temporary.notfound[ctrl.uri.key] = 1;

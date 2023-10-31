@@ -1,4 +1,4 @@
-// Total.js CMS module
+// Total.js CMS compiler
 // The MIT License
 // Copyright 2021-2023 (c) Peter Širka <petersirka@gmail.com>
 

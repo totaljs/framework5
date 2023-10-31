@@ -459,7 +459,7 @@ function runwatching() {
 					app = null;
 			});
 
-			EMIT('watcher', app);
+			F.emit('$watcher', app);
 		}
 
 		process.on('SIGTERM', end);
@@ -526,10 +526,10 @@ function normalize(path) {
 
 function init() {
 
-	if (options.cluster && !options.threads) {
-		var cluster = options.cluster;
-		delete options.cluster;
-		require('total5').cluster.http(cluster, 'debug', options);
+	if (options.cluster) {
+		require('./index');
+		options.count = options.cluster;
+		F.TCluster.http(options);
 		return;
 	}
 

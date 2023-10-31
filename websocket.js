@@ -833,7 +833,7 @@ WebSocket.prototype.autodestroy = function(callback) {
 };
 
 function authorize(ctrl) {
-	if (DEF.onAuthorize) {
+	if (F.def.onAuthorize) {
 		var opt = new F.TBuilders.Options(ctrl);
 		opt.TYPE = 'auth'; // important
 		opt.iswebsocket = true;
@@ -851,7 +851,7 @@ function authorize(ctrl) {
 					ctrl.close(4001);
 			}
 		};
-		DEF.onAuthorize(opt);
+		F.def.onAuthorize(opt);
 	} else {
 		ctrl.route = F.TRouting.lookupwebsocket(ctrl, 0);
 		if (ctrl.route)
@@ -1142,7 +1142,7 @@ exports.listen = function(req, socket, head) {
 		return;
 	}
 
-	if (ctrl.route.flags.csrf && !DEF.onCSRFcheck(ctrl)) {
+	if (ctrl.route.flags.csrf && !F.def.onCSRFcheck(ctrl)) {
 		ctrl.destroy();
 		return;
 	}

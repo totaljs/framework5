@@ -11,8 +11,7 @@ const EMPTYARRAY = [];
 const REG_SKIPERRORS = /epipe|invalid\sdistance/i;
 const REG_HTTPHTTPS = /^(http|https):\/\//i;
 const SOCKETWINDOWS = '\\\\?\\pipe';
-
-const MSG_SNAPSHOT = { TYPE: 'usage' };
+const CLUSTER_STATS = { TYPE: 'stats' };
 const IGNORE_AUDIT = { password: 1, token: 1, accesstoken: 1, access_token: 1, pin: 1 };
 
 var CONCAT = new Array(2);
@@ -743,7 +742,7 @@ F.resource = function(language, key) {
 };
 
 F.auth = function(fn) {
-	DEF.onAuthorize = fn;
+	F.def.onAuthorize = fn;
 };
 
 F.load = async function(types, callback) {
@@ -900,7 +899,7 @@ F.import = function(url, callback) {
 	if (callback == null)
 		return new Promise((resolve, reject) => F.import(url, (err, response) => err ? reject(err) : resolve(response)));
 
-	var filename = F.path.tmp((F.id ? (F.id + '_') : '') + url.makeid() + '.js');
+	var filename = F.path.tmp(F.clusterid + url.makeid() + '.js');
 
 	if (F.temporary.dependencies[url]) {
 		callback && callback(null, require(filename));
@@ -1400,7 +1399,7 @@ F.merge = function(url) {
 
 	var ext = F.TUtils.getExtension(url);
 	var key = url.substring(1).replace(/\//g, '-').replace(/\.(js|html|css)$/, '') + '-min.' + ext;
-	var filename = F.path.tmp(F.id + 'merged_' + key);
+	var filename = F.path.tmp(F.clusterid + 'merged_' + key);
 
 	F.routes.virtual[url] = async function(ctrl) {
 		if (DEBUG) {
@@ -1710,7 +1709,7 @@ F.clear = function(init = true, callback) {
 		return new Promise(resolve => F.clear(init, () => resolve()));
 
 	var dir = F.path.tmp();
-	var plus = F.id;
+	var plus = F.clusterid;
 
 	if (dir[dir.length - 1] !== '/')
 		dir += '/';
@@ -1922,8 +1921,8 @@ F.audit = function(name, $, message, type) {
 	if ($.model)
 		data.data = JSON.stringify({ params: $.params, query: $.query, model: $.model }, auditjsonserialization);
 
-	if (F.id)
-		data.instance = F.id;
+	if (F.clusterid)
+		data.instance = F.clusterid;
 
 	if (message)
 		data.message = message;
@@ -1933,7 +1932,7 @@ F.audit = function(name, $, message, type) {
 	if (F.config.$tapilogger && F.config.$tapi && F.config.secret_totalapi)
 		API('TAPI/logger', data).callback(ERROR('totalapi'));
 	else
-		DEF.onAudit(name, data, $);
+		F.def.onAudit(name, data, $);
 };
 
 F.restore = function(filename, target, callback, filter) {
@@ -2411,6 +2410,9 @@ F.dir = function(val) {
 	F.directory = val;
 };
 
+F.cmscompiler = (html, widgets, used) => require('./cms').compile(html, widgets, used);
+F.uibuildercompiler = (opt, callback) => require('./uibuilder').compile(opt, callback);
+
 F.logmail = function(email, subject, body, callback) {
 
 	if (typeof(body) === 'function') {
@@ -2426,7 +2428,7 @@ F.logmail = function(email, subject, body, callback) {
 		subject = F.config.name;
 
 	var body = '<!DOCTYPE html><html><head><title>' + subject + '</title><meta charset="utf-8" /></head><body><pre style="max-width:600px;font-size:13px;line-height:16px;white-space:pre-line">' + (typeof(body) === 'object' ? JSON.stringify(body).escape() : body) + '</pre></body></html>';
-	return DEF.onMail(email, subject, body, callback);
+	return F.def.onMail(email, subject, body, callback);
 };
 
 F.mail = function(email, subject, name, model, language, callback) {
@@ -2438,7 +2440,7 @@ F.mail = function(email, subject, name, model, language, callback) {
 	}
 
 	let body = F.view(name, model, view => view.language = language || '');
-	return DEF.onMail(email, subject, body, callback);
+	return F.def.onMail(email, subject, body, callback);
 };
 
 F.htmlmail = function(email, subject, body, language, callback) {
@@ -2457,7 +2459,7 @@ F.htmlmail = function(email, subject, body, language, callback) {
 	}
 
 	var body = body.indexOf('<body>') === -1 ? ('<!DOCTYPE html><html><head><title>' + subject + '</title><meta charset="utf-8" /></head><body style="padding:0;margin:0;font-family:Arial;font-size:14px;font-weight:normal">' + body + '</body></html>') : body;
-	return DEF.onMail(email, subject, body, callback);
+	return F.def.onMail(email, subject, body, callback);
 };
 
 F.loadstats = function() {
@@ -2466,7 +2468,7 @@ F.loadstats = function() {
 	var stats = F.consumption;
 	var lastwarning = 0;
 
-	stats.id = F.id;
+	stats.id = F.clusterid;
 	stats.version = {};
 	stats.version.node = process.version;
 	stats.version.total = F.version_header;
@@ -2487,6 +2489,9 @@ F.loadstats = function() {
 
 		var memory = process.memoryUsage();
 		stats.date = NOW;
+
+		if (stats.id != F.clusterid)
+			stats.id = F.clusterid;
 
 		stats.memory = (memory.heapUsed / 1024 / 1024).floor(2);
 		stats.rm = F.temporary.service.request || 0;      // request min
@@ -2526,8 +2531,8 @@ F.loadstats = function() {
 
 		if (F.isWorker) {
 			if (process.connected) {
-				MSG_SNAPSHOT.data = stats;
-				process.send(MSG_SNAPSHOT);
+				CLUSTER_STATS.data = stats;
+				process.send(CLUSTER_STATS);
 			}
 		} else if (F.config.$stats) {
 			try {
@@ -2586,8 +2591,7 @@ process.on('message', function(msg, h) {
 	} else if (msg === 'stop' || msg === 'exit' || msg === 'kill')
 		F.exit();
 
-	key = '$message';
-	F.$events[key] && F.emit(key, msg, h);
+	F.$events.$message && F.emit('$message', msg, h);
 });
 
 (function(F) {
@@ -2628,6 +2632,7 @@ process.on('message', function(msg, h) {
 	F.TMail = require('./mail');
 	F.TWorkers = require('./workers');
 	F.TFlowStream = require('./flowstream');
+	F.TCluster = require('./cluster');
 
 	// Settings
 	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
@@ -2679,6 +2684,8 @@ process.on('message', function(msg, h) {
 	F.TNoSQL = require('./nosql');
 
 })(F);
+
+process.connected && setTimeout(() => process.send('total:init'), 100);
 
 require('./global');
 require('./Tangular');

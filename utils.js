@@ -3326,27 +3326,27 @@ SP.isJSON = function() {
 };
 
 SP.isURL = function() {
-	return this.length <= 7 ? false : DEF.validators.url.test(this);
+	return this.length <= 7 ? false : F.def.validators.url.test(this);
 };
 
 SP.isZIP = function() {
-	return DEF.validators.zip.test(this);
+	return F.def.validators.zip.test(this);
 };
 
 SP.isXSS = function() {
-	return DEF.validators.xss.test(this);
+	return F.def.validators.xss.test(this);
 };
 
 SP.isSQLInjection = function() {
-	return DEF.validators.sqlinjection.test(this);
+	return F.def.validators.sqlinjection.test(this);
 };
 
 SP.isEmail = function() {
-	return this.length <= 4 ? false : DEF.validators.email.test(this);
+	return this.length <= 4 ? false : F.def.validators.email.test(this);
 };
 
 SP.isPhone = function() {
-	return this.length < 6 ? false : DEF.validators.phone.test(this);
+	return this.length < 6 ? false : F.def.validators.phone.test(this);
 };
 
 SP.isBase64 = function(isdata) {
@@ -3373,7 +3373,7 @@ SP.isUID = function() {
 	if (str.length < 10 && str.length > 25)
 		return false;
 
-	var is = DEF.validators.uid.test(str);
+	var is = F.def.validators.uid.test(str);
 	if (is) {
 
 		var sum;
@@ -4125,7 +4125,7 @@ NP.round = function(precision) {
 };
 
 NP.currency = function(currency, a, b, c) {
-	var curr = DEF.currencies[currency || 'default'];
+	var curr = F.def.currencies[currency || 'default'];
 	return curr ? curr(this, a, b, c) : this.format(2);
 };
 

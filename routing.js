@@ -530,8 +530,8 @@ exports.split = function(url, lowercase) {
 exports.lookupcors = function(ctrl) {
 
 	// Custom handling
-	if (DEF.onCORS) {
-		DEF.onCORS(ctrl);
+	if (F.def.onCORS) {
+		F.def.onCORS(ctrl);
 		return false;
 	}
 
