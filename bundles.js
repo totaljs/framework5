@@ -205,7 +205,7 @@ function extract(callback) {
 		callback();
 	});
 
-};
+}
 
 function makeignore(arr) {
 

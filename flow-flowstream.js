@@ -1436,7 +1436,7 @@ function init_worker(meta, type, callback) {
 
 			case 'stream/export':
 			case 'stream/components':
-				cb = CALLBACKS[msg.callbackid];
+				var cb = CALLBACKS[msg.callbackid];
 				if (cb) {
 					delete CALLBACKS[msg.callbackid];
 					cb.callback(null, msg.data);
