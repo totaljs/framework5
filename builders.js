@@ -1420,6 +1420,16 @@ exports.action = function(name, payload, controller) {
 	return action;
 };
 
+exports.newschema = function(name, callback) {
+	var $ = {};
+	$.name = name;
+	$.actions = {};
+	$.action = function(aname, meta) {
+		return $.actions[aname] = F.newaction(name + '/' + aname, meta);
+	};
+	callback($);
+};
+
 exports.RESTBuilder = RESTBuilder;
 exports.ErrorBuilder = ErrorBuilder;
 exports.Options = Options;

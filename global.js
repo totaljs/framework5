@@ -29,6 +29,7 @@ global.DATA = new F.TQueryBuilder.Controller(true);
 global.DB = () => new F.TQueryBuilder.Controller();
 global.CACHE = F.cache;
 global.NEWACTION = F.TBuilders.newaction;
+global.NEWSCHEMA = F.TBuilders.newschema;
 global.ACTION = F.TBuilders.action;
 global.TEMPLATE = F.template;
 global.FILESTORAGE = F.filestorage;
