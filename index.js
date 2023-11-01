@@ -755,9 +755,6 @@ F.load = async function(types, callback) {
 	if (typeof(types) === 'string')
 		types = types.split(',').trim();
 
-	if (types.includes('release'))
-		global.DEBUG = false;
-
 	var list = async (path, extension = 'js') => new Promise(resolve => F.TUtils.ls(path, files => resolve(files), (path, isdir) => isdir ? true : (path.indexOf('-bk') === -1 && path.indexOf('_bk') === -1 && F.TUtils.getExtension(path) === extension)));
 	var read = async (path) => new Promise(resolve => F.Fs.readFile(path, 'utf8', (err, response) => resolve(response ? response : '')));
 
@@ -1080,7 +1077,7 @@ F.console = function() {
 
 	if (!F.isWorker) {
 
-		var hostname = F.config.$unixsocket ? ('Socket: ' + F.config.$unixsocket) : '{2}://{0}:{1}/'.format(F.config.$ip, F.config.$port, F.isHTTPS ? 'https' : 'http');
+		var hostname = F.unixsocket ? ('Socket: ' + F.unixsocket) : '{2}://{0}:{1}/'.format(F.config.$ip, F.config.$port, F.isHTTPS ? 'https' : 'http');
 
 		if (!F.unixsocket && F.ip === '0.0.0.0') {
 			var ni = F.Os.networkInterfaces();
@@ -2410,6 +2407,11 @@ F.dir = function(val) {
 	F.directory = val;
 };
 
+F.start = function(opt) {
+	var type = opt.release ? 'release' : 'debug';
+	require('./' + type)(opt);
+};
+
 F.cmscompiler = (html, widgets, used) => require('./cms').compile(html, widgets, used);
 F.uibuildercompiler = (opt, callback) => require('./uibuilder').compile(opt, callback);
 
@@ -2689,3 +2691,5 @@ process.connected && setTimeout(() => process.send('total:init'), 100);
 
 require('./global');
 require('./Tangular');
+
+module.exports = F;

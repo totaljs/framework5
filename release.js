@@ -11,7 +11,7 @@ var restarting;
 
 module.exports = function(opt) {
 
-	options = opt;
+	options = opt || {};
 
 	// options.ip = '127.0.0.1';
 	// options.port = parseInt(process.argv[2]);
@@ -25,11 +25,8 @@ module.exports = function(opt) {
 	// options.livereload = true;
 	// options.watcher = false;
 	// options.cluster = 'auto' || or NUMBER
-	// options.cluster_limit = 10;
+	// options.limit = 10;
 	// options.timeout = 5000;
-	// options.threads = '/api/' || or true or false;
-	// options.thread = 'thread_name';
-	// options.logs = 'isolated';
 	// options.edit = 'wss://.....com/?id=myprojectname'
 
 	if (!WATCHER)
@@ -101,10 +98,10 @@ function run() {
 
 function init() {
 
-	if (options.cluster && !options.threads) {
-		var cluster = options.cluster;
-		delete options.cluster;
-		require('total4').cluster.http(cluster, 'release', options);
+	if (options.cluster) {
+		options.release = true;
+		options.count = options.cluster;
+		F.TCluster.http(options);
 		return;
 	}
 
@@ -114,7 +111,7 @@ function init() {
 
 		if (options.servicemode) {
 			var types = options.servicemode === true || options.servicemode === 1 ? '' : options.servicemode.split(',').trim();
-			global.DEBUG = true;
+			global.DEBUG = false;
 			F.load(types);
 			if (!process.connected)
 				F.console();

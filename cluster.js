@@ -210,7 +210,7 @@ function message(m) {
 
 	if (m === 'total:init') {
 		OPTIONS.id = this.$id;
-		this.send({ TYPE: 'init', bundling: !CONTINUE, id: this.$id, release: !!OPTIONS.release, options: OPTIONS, unixsocket: OPTIONS, threads: OPTIONS, index: this.$index, https: this.$https });
+		this.send({ TYPE: 'init', bundling: !CONTINUE, id: this.$id, release: !!OPTIONS.release, options: OPTIONS, index: this.$index });
 		return;
 	}
 
@@ -301,18 +301,20 @@ function exec(index) {
 }
 
 function fork() {
-	OPTIONS.load = '';
-	F.http(OPTIONS);
 	F.on('$message', oninit);
 }
 
 function oninit(msg) {
 	if (msg.TYPE === 'init') {
+		OPTIONS = msg.options;
 		THREADS = msg.threads;
 		msg.options.bundling = msg.bundling;
 		F.isCluster = true;
 		F.id = msg.id;
 		F.clusterid = msg.id;
+		global.DEBUG = msg.release != true;
+		OPTIONS.load = '';
+		F.http(OPTIONS);
 		F.off(msg.TYPE, oninit);
 	}
 }

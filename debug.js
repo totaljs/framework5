@@ -4,13 +4,10 @@
 
 'use strict';
 
-const Path = require('path');
-const Fs = require('fs');
-const Os = require('os');
+require('./index');
 
 var Meta = {
-	iswatcher: process.connected !== true,
-	isWindows: Os.platform().substring(0, 3).toLowerCase() === 'win',
+	isWatcher: process.connected !== true,
 	callback: null, // watcher callback
 	delay: null
 };
@@ -33,11 +30,8 @@ module.exports = function(opt) {
 	// options.watch = ['adminer'];
 	// options.livereload = true;
 	// options.cluster = 'auto' || or NUMBER
-	// options.cluster_limit = 10;
+	// options.limit = 10;
 	// options.timeout = 5000;
-	// options.threads = '/api/' || or true or false;
-	// options.thread = 'thread_name';
-	// options.logs = 'isolated';
 	// options.edit = 'wss://.....com/?id=myprojectname'
 
 };
@@ -51,7 +45,6 @@ module.exports.watcher = function(callback) {
 
 function runapp() {
 	!options && (options = {});
-	require('./index');
 	if (options.servicemode) {
 		var types = options.servicemode === true || options.servicemode === 1 ? '' : options.servicemode.split(',').trim();
 		global.DEBUG = true;
@@ -64,8 +57,6 @@ function runwatching() {
 
 	if (!options)
 		options = {};
-
-	require('./index');
 
 	var directory = process.cwd();
 	var root = directory;
@@ -88,9 +79,9 @@ function runwatching() {
 		options.livereload = options.livereload.replace(/^(https|http):\/\//g, '');
 
 	function copyFile(oldname, newname, callback) {
-		var writer = Fs.createWriteStream(newname);
+		var writer = F.Fs.createWriteStream(newname);
 		callback && writer.on('finish', callback);
-		Fs.createReadStream(oldname).pipe(writer);
+		F.Fs.createReadStream(oldname).pipe(writer);
 	}
 
 	function app() {
@@ -104,33 +95,33 @@ function runwatching() {
 		F.directory = directory;
 
 		try {
-			if (Fs.readFileSync(F.path.join(directory, 'bundles.debug'))) {
+			if (F.Fs.readFileSync(F.path.join(directory, 'bundles.debug'))) {
 				skipbundle = true;
 				F.directory = directory = F.path.join(directory, '.src');
 			}
 
 		} catch(e) {}
 
-		const fork = require('child_process').fork;
+		const fork = F.Child.fork;
 		const directories = [
-			Path.join(directory, 'controllers'),
-			Path.join(directory, 'definitions'),
-			Path.join(directory, 'extensions'),
-			Path.join(directory, 'modules'),
-			Path.join(directory, 'models'),
-			Path.join(directory, 'schemas'),
-			Path.join(directory, 'actions'),
-			Path.join(directory, 'resources'),
-			Path.join(directory, 'source'),
-			Path.join(directory, 'workers'),
-			Path.join(directory, 'middleware'),
-			Path.join(directory, 'bundles'),
-			Path.join(directory, 'flowstreams'),
-			Path.join(directory, '/startup/'),
-			Path.join(directory, '/plugins/')
+			F.Path.join(directory, 'controllers'),
+			F.Path.join(directory, 'definitions'),
+			F.Path.join(directory, 'extensions'),
+			F.Path.join(directory, 'modules'),
+			F.Path.join(directory, 'models'),
+			F.Path.join(directory, 'schemas'),
+			F.Path.join(directory, 'actions'),
+			F.Path.join(directory, 'resources'),
+			F.Path.join(directory, 'source'),
+			F.Path.join(directory, 'workers'),
+			F.Path.join(directory, 'middleware'),
+			F.Path.join(directory, 'bundles'),
+			F.Path.join(directory, 'flowstreams'),
+			F.Path.join(directory, '/startup/'),
+			F.Path.join(directory, '/plugins/')
 		];
 
-		const SRC = Path.join(directory, '.src');
+		const SRC = F.Path.join(directory, '.src');
 		const prefix = '--------> ';
 
 		if (options.watch) {
@@ -139,7 +130,7 @@ function runwatching() {
 					item = item.substring(1);
 				if (item[item.length - 1] === '/')
 					item = item.substring(0, item.length - 1);
-				directories.push(Path.join(directory, item));
+				directories.push(F.Path.join(directory, item));
 			}
 		}
 
@@ -173,8 +164,8 @@ function runwatching() {
 					client.connect('wss://livereload.totaljs.com/?hostname=' + encodeURIComponent(options.livereload));
 				});
 			} else {
-				var tmppath = Path.join(Os.tmpdir(), 'total5livereload');
-				Fs.mkdir(tmppath, function() {
+				var tmppath = F.Path.join(F.Os.tmpdir(), 'total5livereload');
+				F.Fs.mkdir(tmppath, function() {
 					F.console = NOOP;
 					F.route('SOCKET / @text', function($) {
 						$.autodestroy(() => WS = null);
@@ -190,14 +181,14 @@ function runwatching() {
 
 		if (skipbundle) {
 			try {
-				Fs.statSync(F.path.root('bundles'));
+				F.Fs.statSync(F.path.root('bundles'));
 				isbundle = true;
 			} catch(e) {}
 		}
 
 		if (isbundle || isRELOAD) {
-			directories.push(Path.join(directory, 'public'));
-			directories.push(Path.join(directory, 'views'));
+			directories.push(F.Path.join(directory, 'public'));
+			directories.push(F.Path.join(directory, 'views'));
 		}
 
 		function onFilter(path, isdir) {
@@ -225,7 +216,7 @@ function runwatching() {
 
 		function onComplete(f) {
 
-			Fs.readdir(directory, function(err, arr) {
+			F.Fs.readdir(directory, function(err, arr) {
 
 				var length = arr.length;
 				for (var i = 0; i < length; i++) {
@@ -278,7 +269,7 @@ function runwatching() {
 
 			Object.keys(files).wait(function(filename, next) {
 
-				Fs.stat(filename, function(err, stat) {
+				F.Fs.stat(filename, function(err, stat) {
 					var stamp = makestamp();
 					if (err) {
 						delete files[filename];
@@ -287,7 +278,7 @@ function runwatching() {
 						var log = stamp.replace('#', 'REM') + prefix + LIVERELOADCHANGE;
 						if (tmp) {
 							if (isbundle) {
-								Fs.unlinkSync(Path.join(SRC, tmp));
+								F.Fs.unlinkSync(F.Path.join(SRC, tmp));
 								console.log(log);
 							}
 							reload = true;
@@ -323,7 +314,7 @@ function runwatching() {
 									var skip = true;
 									if (isbundle) {
 										if (filename.lastIndexOf('--') === -1)
-											copyFile(filename, Path.join(SRC, tmp));
+											copyFile(filename, F.Path.join(SRC, tmp));
 										else
 											skip = false;
 									}
@@ -425,7 +416,7 @@ function runwatching() {
 				arr.push('--restart');
 
 			port && arr.push(port);
-			app = fork(Path.join(root, FILENAME), arr);
+			app = fork(F.Path.join(root, FILENAME), arr);
 
 			app.on('message', function(msg) {
 				switch (msg) {
@@ -472,7 +463,7 @@ function runwatching() {
 				return;
 
 			process.isending = true;
-			Fs.unlink(pid, noop);
+			F.Fs.unlink(pid, noop);
 
 			if (app === null) {
 				process.exit(0);
@@ -491,13 +482,13 @@ function runwatching() {
 
 			!Meta.callback && console.log(prefix.substring(8) + 'DEBUG PID: ' + process.pid + ' (v' + VERSION + ')');
 
-			pid = Path.join(directory, PIDNAME);
-			Fs.writeFileSync(pid, process.pid + '');
+			pid = F.Path.join(directory, PIDNAME);
+			F.Fs.writeFileSync(pid, process.pid + '');
 
 			setInterval(function() {
-				Fs.stat(pid, function(err) {
+				F.Fs.stat(pid, function(err) {
 					if (err) {
-						Fs.unlink(pid, noop);
+						F.Fs.unlink(pid, noop);
 						if (app !== null) {
 							skiprestart = true;
 							process.kill(app.pid);
@@ -512,22 +503,21 @@ function runwatching() {
 		refresh_directory();
 	}
 
-	var filename = Path.join(process.cwd(), PIDNAME);
-	if (Fs.existsSync(filename)) {
-		Fs.unlinkSync(filename);
+	var filename = F.Path.join(process.cwd(), PIDNAME);
+	if (F.Fs.existsSync(filename)) {
+		F.Fs.unlinkSync(filename);
 		setTimeout(app, 3500);
 	} else
 		app();
 }
 
 function normalize(path) {
-	return Meta.isWindows ? path.replace(/\\/g, '/') : path;
+	return F.isWindows ? path.replace(/\\/g, '/') : path;
 }
 
 function init() {
 
 	if (options.cluster) {
-		require('./index');
 		options.count = options.cluster;
 		F.TCluster.http(options);
 		return;
@@ -536,9 +526,8 @@ function init() {
 	process.on('uncaughtException', e => e.toString().indexOf('ESRCH') == -1 && console.log(e));
 	process.title = 'total: debug';
 
-	if (Meta.iswatcher) {
+	if (Meta.isWatcher) {
 		if (options.edit) {
-			require('./index');
 			require('./edit').init(options.edit.replace(/^http/, 'ws'));
 			setTimeout(runwatching, 1000);
 		} else
