@@ -21,7 +21,7 @@ module.exports = function(opt) {
 
 	// options.ip = '127.0.0.1';
 	// options.port = parseInt(process.argv[2]);
-	// options.unixsocket = require('path').join(require('os').tmpdir(), 'app_name');
+	// options.unixsocket = require('node:path').join(require('node:os').tmpdir(), 'app_name');
 	// options.config = { name: 'Total.js' };
 	// options.https = { key: Fs.readFileSync('keys/agent2-key.pem'), cert: Fs.readFileSync('keys/agent2-cert.pem')};
 	// options.sleep = 3000;

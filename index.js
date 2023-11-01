@@ -2407,7 +2407,7 @@ F.dir = function(val) {
 	F.directory = val;
 };
 
-F.start = function(opt) {
+F.run = function(opt) {
 	var type = opt.release ? 'release' : 'debug';
 	require('./' + type)(opt);
 };

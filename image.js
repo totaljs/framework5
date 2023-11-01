@@ -192,7 +192,7 @@ ImageProto.measure = function(callback) {
 
 	F.stats.performance.open++;
 	var extension = self.filename.substring(index).toLowerCase();
-	var stream = require('fs').createReadStream(self.filename, { start: 0, end: (extension === '.jpg' || extension === '.webp') ? 40000 : 24 });
+	var stream = F.Fs.createReadStream(self.filename, { start: 0, end: (extension === '.jpg' || extension === '.webp') ? 40000 : 24 });
 
 	stream.on('data', function(buffer) {
 
