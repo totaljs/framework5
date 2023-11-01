@@ -11,72 +11,69 @@ const DIVIDER = '----------------------------------------------------';
 
 exports.init = function(url) {
 
-	WEBSOCKETCLIENT(function(client) {
+	var client = F.websocketclient();
 
-		client.options.reconnect = 10000;
-		client.options.reconnectserver = true;
+	client.options.reconnect = 10000;
+	client.options.reconnectserver = true;
 
-		client.on('message', function(msg) {
+	client.on('message', function(msg) {
 
-			if (msg.TYPE === 'init') {
-				console.log(DIVIDER);
-				console.log(HEADER + ': Welcome to "' + msg.name + ' (' + msg.version + ')"');
-				console.log('> Project: "' + msg.project + '"');
-				console.log(DIVIDER);
-				return;
+		if (msg.TYPE === 'init') {
+			console.log(DIVIDER);
+			console.log(HEADER + ': Welcome to "' + msg.name + ' (' + msg.version + ')"');
+			console.log('> Project: "' + msg.project + '"');
+			console.log(DIVIDER);
+			return;
+		}
+
+		console.log(msg);
+
+		F.action('editor', msg).callback(function(err, response) {
+
+			if (err) {
+				msg.error = err;
+			} else {
+				msg.response = response;
+				msg.success = true;
 			}
 
-			EXEC('+CodeModule --> exec', msg, function(err, response) {
-
-				if (err) {
-					msg.error = err;
-				} else {
-					msg.response = response;
-					msg.success = true;
-				}
-
-				client.send(msg);
-			});
+			client.send(msg);
 		});
-
-		client.on('open', function() {
-			client.send({ TYPE: 'init', version: VERSION });
-		});
-
-		client.on('close', function(e) {
-
-			if (e === 4004) {
-				console.log(HEADER + ': 404 project not found');
-				// Tries again in 10 second interval
-				// client.destroy();
-				return;
-			}
-
-			if (e === 4009) {
-				console.log(HEADER + ': 409 project is already open');
-				client.destroy();
-				return;
-			}
-
-		});
-
-		client.on('error', function(err) {
-			console.log(HEADER + ':', err.message);
-		});
-
-		client.connect(url.replace(/^http/, 'ws'));
 	});
+
+	client.on('open', function() {
+		client.send({ TYPE: 'init', version: VERSION });
+	});
+
+	client.on('close', function(e) {
+
+		if (e === 4004) {
+			console.log(HEADER + ': 404 project not found');
+			// Tries again in 10 second interval
+			// client.destroy();
+			return;
+		}
+
+		if (e === 4009) {
+			console.log(HEADER + ': 409 project is already open');
+			client.destroy();
+			return;
+		}
+
+	});
+
+	client.on('error', function(err) {
+		console.log(HEADER + ':', err.message);
+	});
+
+	client.connect(url.replace(/^http/, 'ws'));
 
 };
 
-NEWSCHEMA('CodeModule', function(schema) {
-
-	schema.define('TYPE', String, true);
-	schema.define('path', String);
-	schema.define('data', String);
-	schema.define('nocompress', Boolean);
-
-	schema.addWorkflow('exec', function($, model) {
+F.newaction('editor', {
+	name: 'Code editor',
+	input: '*TYPE,path,data,nocompress:Boolean',
+	action: function($, model) {
 
 		switch (model.TYPE) {
 
@@ -164,9 +161,7 @@ NEWSCHEMA('CodeModule', function(schema) {
 				$.invalid(400);
 				break;
 		}
-
-	});
-
+	}
 });
 
 function mkdir(path, callback) {
@@ -358,6 +353,8 @@ function rename($, model) {
 		$.invalid(data.error);
 		return;
 	}
+
+	data = data.response;
 
 	data.newpath = F.path.root(data.newpath);
 	data.oldpath = F.path.root(data.oldpath);
