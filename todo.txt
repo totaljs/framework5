@@ -1,4 +1,3 @@
-- release
 - openclient
 - update
 - workers (check)
