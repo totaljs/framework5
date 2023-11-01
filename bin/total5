@@ -1,12 +1,7 @@
 #! /usr/bin/env node
 
-require('total5/utils');
+require('total5');
 
-const Exec = require('child_process').exec;
-const ExecFile = require('child_process').execFile;
-const Fs = require('fs');
-const Path = require('path');
-const Os = require('os');
 const Internal = require('total4/internal');
 var $type = 0;
 var isDirectory = false;
@@ -53,10 +48,10 @@ function log_error(error) {
 
 function translateFile(a) {
 
-	if (!Fs.existsSync(a))
+	if (!F.Fs.existsSync(a))
 		return false;
 
-	var arr = Fs.readFileSync(a).toString('utf8').split('\n');
+	var arr = F.Fs.readFileSync(a).toString('utf8').split('\n');
 	var builder = [];
 	var count = 0;
 
@@ -68,25 +63,25 @@ function translateFile(a) {
 		}
 	}
 
-	Fs.writeFileSync('translate.resource', '// Total.js translation file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + builder.join('\n'));
+	F.Fs.writeFileSync('translate.resource', '// Total.js translation file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + builder.join('\n'));
 	console.log('Translation has been created successfully (' + count + ' texts)');
 	return true;
 }
 
 function diff(a, b) {
 
-	if (!Fs.existsSync(a)) {
+	if (!F.Fs.existsSync(a)) {
 		console.log('Translation file does not exist: ' + a);
 		return;
 	}
 
-	if (!Fs.existsSync(b)) {
+	if (!F.Fs.existsSync(b)) {
 		console.log('Translation file does not exist: ' + b);
 		return;
 	}
 
-	var ba = Fs.readFileSync(a).toString('utf8');
-	var bb = Fs.readFileSync(b).toString('utf8');
+	var ba = F.Fs.readFileSync(a).toString('utf8');
+	var bb = F.Fs.readFileSync(b).toString('utf8');
 	var ca = ba.parseConfig();
 	var cb = bb.parseConfig();
 	var ka = Object.keys(ca);
@@ -197,8 +192,8 @@ function diff(a, b) {
 		output += '\n';
 	}
 
-	var filename = Path.join(Path.dirname(b), Path.basename(b, '.resource') + '-diff.txt');
-	Fs.writeFileSync(filename, '// Total.js diff file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + clean_resource(output));
+	var filename = F.Path.join(F.Path.dirname(b), F.Path.basename(b, '.resource') + '-diff.txt');
+	F.Fs.writeFileSync(filename, '// Total.js diff file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + clean_resource(output));
 	log_title('Translation differences:');
 	console.log('');
 	console.log('Add      : ' + add);
@@ -209,18 +204,18 @@ function diff(a, b) {
 
 function merge(a, b) {
 
-	if (!Fs.existsSync(a)) {
+	if (!F.Fs.existsSync(a)) {
 		log_error('Translation file does not exist: ' + a);
 		return;
 	}
 
-	if (!Fs.existsSync(b)) {
+	if (!F.Fs.existsSync(b)) {
 		log_error('Translation file does not exist: ' + b);
 		return;
 	}
 
-	var ba = Fs.readFileSync(b).toString('utf8');
-	var bb = Fs.readFileSync(a).toString('utf8');
+	var ba = F.Fs.readFileSync(b).toString('utf8');
+	var bb = F.Fs.readFileSync(a).toString('utf8');
 	var arr = ba.split('\n');
 	var output = [];
 	var cb = bb.parseConfig();
@@ -254,8 +249,8 @@ function merge(a, b) {
 		output.push(key.padRight(index) + ' : ' + val);
 	}
 
-	var filename = Path.join(Path.dirname(b), Path.basename(b, '.resource') + '-merged.txt');
-	Fs.writeFileSync(filename, '// Total.js merged file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + clean_resource(output.join('\n')));
+	var filename = F.Path.join(F.Path.dirname(b), F.Path.basename(b, '.resource') + '-merged.txt');
+	F.Fs.writeFileSync(filename, '// Total.js merged file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + clean_resource(output.join('\n')));
 	log_title('Merged result:');
 	console.log('');
 	console.log('Merged   : ' + upd);
@@ -308,12 +303,12 @@ function clean_resource(content) {
 
 function convert4(a) {
 
-	if (!Fs.existsSync(a)) {
+	if (!F.Fs.existsSync(a)) {
 		log_error('Translation file does not exist: ' + a);
 		return;
 	}
 
-	var body = Fs.readFileSync(a).toString('utf8');
+	var body = F.Fs.readFileSync(a).toString('utf8');
 	var output = [];
 
 	var lines = body.split('\n');
@@ -344,7 +339,7 @@ function convert4(a) {
 	}
 
 	var filename = a.replace('.', '-new.');
-	Fs.writeFileSync(filename, clean_resource(output.join('\n')));
+	F.Fs.writeFileSync(filename, clean_resource(output.join('\n')));
 	log_title('Converted:');
 	console.log('');
 	console.log('Output   : ' + filename);
@@ -382,7 +377,7 @@ function main() {
 	console.log('');
 	console.log('╔──────────────────────────────────────────────────╗');
 	console.log('│ ⬢ Total.js - www.totaljs.com                     │');
-	console.log('│ ⬡ Version: v' + require('total4').version_header.padRight(37) + '│');
+	console.log('│ ⬡ Version: v' + F.version_header.padRight(37) + '│');
 	console.log('╚──────────────────────────────────────────────────╝');
 	console.log('');
 
@@ -399,7 +394,7 @@ function main() {
 			var port = cmd.parseInt();
 			if (port) {
 
-				CONF.directory_temp = '~' + Path.join(Os.tmpdir(), 'total' + dir.makeid());
+				CONF.directory_temp = '~' + F.Path.join(F.Os.tmpdir(), 'total' + dir.makeid());
 				CONF.directory_public = '~' + dir;
 				CONF.directory_tasks = '';
 				CONF.directory_definitions = '';
@@ -416,21 +411,20 @@ function main() {
 				CONF.allow_compile_script = false;
 				CONF.allow_compile_style = false;
 
-				F.accept('.less', 'text/less');
 				F.http('debug', { port: port, directory: dir });
 
-				ROUTE('/*', function() {
+				ROUTE('GET /*', function() {
 
 					var self = this;
 					var dir = PATH.public(self.url.substring(1));
-					var filename = Path.join(self.url, 'index.html').substring(1);
+					var filename = F.Path.join(self.url, 'index.html').substring(1);
 
 					PATH.exists(filename, function(e) {
 
 						if (e)
 							return self.file(filename, '');
 
-						Fs.readdir(dir, function(err, items) {
+						F.Fs.readdir(dir, function(err, items) {
 
 							var render = function(controller, directories, files) {
 								controller.content('<!DOCTYPE html><html><head><title>Directory listing: {0}</title><meta charset="utf-8" /><style>body{font-family:Arial;font-size:16px;padding:10px 30px 30px}a{display:block}.directory:last-child{margin-bottom:10px}.directory{padding:2px 10px;background-color:#F8F8F8;margin-bottom:2px;text-decoration:none;color:black;font-weight:bold;font-size:18px}.directory-back{text-decoration:none;font-size:50px;margin:0 0 10px 5px;color:gray}.file{color:gray;text-decoration:none;font-size:14px;padding:3px 10px;border-bottom:1px solid #F0F0F0;}.file span{float:right;font-size:12px;margin:2px 0 0 0;color:#A0A0A0}.file:hover{background-color:#F8F8F8}</style></head><body><div class="directories">{1}</div><div class="files">{2}</div></body></html>'.format(controller.url, directories.join(''), files.join('')), 'text/html');
@@ -446,8 +440,8 @@ function main() {
 								return render(self, directories, files);
 
 							items.wait(function(item, next) {
-								var filename = Path.join(dir, item);
-								Fs.stat(filename, function(err, info) {
+								var filename = F.Path.join(dir, item);
+								F.Fs.stat(filename, function(err, info) {
 
 									if (info.isFile())
 										files.push('<a href="{1}" class="file">{0}<span>{2}</span></a>'.format(item, self.url + item, info.size.filesize()));
@@ -497,8 +491,8 @@ function main() {
 
 		if (!$type && (cmd === '-csv' || cmd === 'csv')) {
 			var tmp = process.argv[i + 1] || '';
-			var tt = Path.join(Path.dirname(tmp), Path.basename(tmp, '.csv') + '.resource');
-			Fs.writeFileSync(tt, '// Total.js resource file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + parse_csv(Fs.readFileSync(tmp).toString('utf8')));
+			var tt = F.Path.join(F.Path.dirname(tmp), F.Path.basename(tmp, '.csv') + '.resource');
+			F.Fs.writeFileSync(tt, '// Total.js resource file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + parse_csv(F.Fs.readFileSync(tmp).toString('utf8')));
 			log_title('Parsed CSV:');
 			console.log('');
 			console.log('Output   : ' + tt);
@@ -513,8 +507,8 @@ function main() {
 
 		if (!$type && (cmd === '-clean' || cmd === 'clean')) {
 			var tmp = process.argv[i + 1] || '';
-			var tt = Path.join(Path.dirname(tmp), Path.basename(tmp, '.resource') + '-cleaned.txt');
-			Fs.writeFileSync(tt, '// Total.js cleaned file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + clean_resource(Fs.readFileSync(tmp).toString('utf8')));
+			var tt = F.Path.join(F.Path.dirname(tmp), F.Path.basename(tmp, '.resource') + '-cleaned.txt');
+			F.Fs.writeFileSync(tt, '// Total.js cleaned file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + clean_resource(F.Fs.readFileSync(tmp).toString('utf8')));
 			log_title('Cleaned result:');
 			console.log('');
 			console.log('Output   : ' + tt);
@@ -569,26 +563,26 @@ function main() {
 
 	if ($type === 5) {
 
-		dir = Path.join(dir, process.argv.last());
+		dir = F.Path.join(dir, process.argv.last());
 
-		if (!Fs.existsSync(dir)) {
+		if (!F.Fs.existsSync(dir)) {
 			log_error('File not found');
 			return;
 		}
 
-		var content = Fs.readFileSync(dir).toString('utf8');
+		var content = F.Fs.readFileSync(dir).toString('utf8');
 		var extension = U.getExtension(dir);
 		var filename = dir.replace('.' + extension, '.min.' + extension);
 
 		switch (extension.toLowerCase()) {
 			case 'html':
-				Fs.writeFileSync(filename, U.minify_html(content));
+				F.Fs.writeFileSync(filename, U.minify_html(content));
 				break;
 			case 'js':
-				Fs.writeFileSync(filename, U.minify_js(content));
+				F.Fs.writeFileSync(filename, U.minify_js(content));
 				break;
 			case 'css':
-				Fs.writeFileSync(filename, U.minify_css(content));
+				F.Fs.writeFileSync(filename, U.minify_css(content));
 				break;
 		}
 
@@ -608,7 +602,7 @@ function main() {
 			return;
 		}
 
-		if (!Fs.existsSync(dir)) {
+		if (!F.Fs.existsSync(dir)) {
 			log_error('Directory does not exist');
 			return;
 		}
@@ -629,7 +623,7 @@ function main() {
 				if (filename.indexOf('sitemap') === -1 && ext !== 'html' && ext !== 'js')
 					continue;
 
-				var content = Fs.readFileSync(filename).toString('utf8');
+				var content = F.Fs.readFileSync(filename).toString('utf8');
 				var command = Internal.findLocalization(content, 0);
 				while (command !== null) {
 
@@ -710,7 +704,7 @@ function main() {
 			for (var i = 0, length = keys.length; i < length; i++)
 				builder.push('\n// ' + keys[i] + '\n' + output[keys[i]].join('\n'));
 
-			Fs.writeFileSync('translate.resource', '// Total.js translation file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + builder.join('\n'));
+			F.Fs.writeFileSync('translate.resource', '// Total.js translation file\n// Created: ' + new Date().format('yyyy-MM-dd HH:mm') + '\n' + builder.join('\n'));
 
 			console.log('Translation has been created successfully (' + count + ' texts)');
 			console.log('');
@@ -736,7 +730,7 @@ function main() {
 				if (ext !== 'html' && ext !== 'js')
 					continue;
 
-				var content = Fs.readFileSync(filename).toString('utf8');
+				var content = F.Fs.readFileSync(filename).toString('utf8');
 				var command = Internal.findLocalization(content, 0);
 				while (command !== null) {
 
@@ -760,7 +754,7 @@ function main() {
 				}
 			}
 
-			Fs.writeFileSync('translate.csv', output.join('\n'));
+			F.Fs.writeFileSync('translate.csv', output.join('\n'));
 			console.log('Translation has been created successfully (' + count + ' texts).');
 			console.log('');
 		}, (path, dir) => dir ? (path.endsWith('/node_modules') && path.endsWith('/tmp') && path.endsWith('/.git')) ? false : true : true);
@@ -796,10 +790,10 @@ function main() {
 
 		path = PATH.join(dir, path);
 
-		if (!Fs.existsSync(path))
-			Fs.mkdirSync(path);
+		if (!F.Fs.existsSync(path))
+			F.Fs.mkdirSync(path);
 
-		var files = Fs.readdirSync(path);
+		var files = F.Fs.readdirSync(path);
 
 		if (files.length > 0) {
 
@@ -854,11 +848,14 @@ function git(dir, template) {
 		console.log('Template "{0}" was created successfully.'.format(template.name));
 		console.log('');
 	};
-	ExecFile('git', ['--version'], (error) => {
+
+	F.Child.execFile('git', ['--version'], (error) => {
+
 		if (error) {
 			log_error('Git not found. Please, download the template from https://github.com/totaljs/{0}.git'.format(template.id));
 			return;
 		}
+
 		U.ls(dir, function(fol, fil) {
 
 			if (fol.length || fil.length) {
@@ -867,15 +864,15 @@ function git(dir, template) {
 			}
 
 			PATH.mkdir(dir);
-			Exec('git clone https://github.com/totaljs/{0}.git {1}'.format(template.id, dir), function() {
-				PATH.mkdir(Path.join(dir, '/node_modules/'));
-				PATH.rmdir(Path.join(dir, '.git'), function() {
-					PATH.unlink(Path.join(dir, '.gitignore'), function() {
-						PATH.exists(Path.join(dir, 'package.json'), function(e) {
+			F.Child.exec('git clone https://github.com/totaljs/{0}.git {1}'.format(template.id, dir), function() {
+				PATH.mkdir(F.Path.join(dir, '/node_modules/'));
+				PATH.rmdir(F.Path.join(dir, '.git'), function() {
+					PATH.unlink(F.Path.join(dir, '.gitignore'), function() {
+						PATH.exists(F.Path.join(dir, 'package.json'), function(e) {
 							if (e)
-								Exec('npm install total4 --save', done);
+								F.Child.exec('npm install total5 --save', done);
 							else
-								Exec('npm install', done);
+								F.Child.exec('npm install', done);
 						});
 					});
 				});
@@ -919,17 +916,17 @@ function makebundle(dir, filename) {
 
 	blacklist[filename] = 1;
 
-	console.log('--- CREATE BUNDLE PACKAGE --');
+	console.log('--- CREATE BUNDLE --');
 	console.log('');
 	console.log('Directory    :', dir);
 	console.log('Filename     :', filename);
 
-	BACKUP(filename, U.path(dir), function(err, path) {
+	F.backup(filename, U.path(dir), function(err, path) {
 
 		if (err)
 			throw err;
 
-		console.log('Success      :', path.files.pluralize('# files', '# file', '# files', '# files') + ' (' + path.size.filesize() + ')');
+		console.log('Success      :', path.files.pluralize('# files,# file,# files,# files') + ' (' + path.size.filesize() + ')');
 		console.log('');
 
 	}, function(path) {
@@ -940,14 +937,13 @@ function makebundle(dir, filename) {
 
 function restorebundle(dir, filename) {
 
-	RESTORE(filename, U.path(dir), function(err, path) {
+	F.restore(filename, U.path(dir), function(err, path) {
 
 		if (err)
 			throw err;
 
-		console.log('Success      :', path.files.pluralize('# files', '# file', '# files', '# files') + ' (' + path.size.filesize() + ')');
+		console.log('Success      :', path.files.pluralize('# files,# file,# files,# files') + ' (' + path.size.filesize() + ')');
 		console.log('');
-
 	});
 }
 
@@ -985,17 +981,15 @@ function makepackage(dir, filename) {
 	console.log('Directory    :', dir);
 	console.log('Filename     :', filename);
 
-	BACKUP(filename, U.path(dir), function(err, path) {
+	F.backup(filename, dir, function(err, path) {
 
 		if (err)
 			throw err;
 
-		console.log('Success      :', path.files.pluralize('# files', '# file', '# files', '# files') + ' (' + path.size.filesize() + ')');
+		console.log('Success      :', path.files.pluralize('# files,# file,# files,# files') + ' (' + path.size.filesize() + ')');
 		console.log('');
 
-	}, function(path) {
-		return blacklist[path] == null;
-	});
+	}, path => blacklist[path] == null);
 }
 
 main();

@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "description": "Total.js framework v5",
   "main": "index.js",
-  "types": "index.d.ts",
   "directories": {
     "test": "test"
   },
@@ -19,9 +18,8 @@
   },
   "keywords": [
     "total.js",
-    "total4",
+    "total5",
     "framework",
-    "mvc",
     "web",
     "platform"
   ],
