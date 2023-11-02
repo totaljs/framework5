@@ -15,7 +15,6 @@ function display_help() {
 	console.log('translate "TEXT"          : Creates an identificator for the resource');
 	console.log('translate <filename>      : Parses and creates a resource file from the text file');
 	console.log('translatecsv              : Parses and creates CSV with localization in the current directory');
-	console.log('translate4 <source>       : Converts old version of localization to a new');
 	console.log('csv <filename>            : Parses CSV and creates resources from CSV file');
 	console.log('diff <source> <target>    : Creates differences between two resources');
 	console.log('merge <source> <target>   : Merges first resource into the second');
@@ -394,24 +393,14 @@ function main() {
 			var port = cmd.parseInt();
 			if (port) {
 
-				CONF.directory_temp = '~' + F.Path.join(F.Os.tmpdir(), 'total' + dir.makeid());
-				CONF.directory_public = '~' + dir;
-				CONF.directory_tasks = '';
-				CONF.directory_definitions = '';
-				CONF.directory_models = '';
-				CONF.directory_modules = '';
-				CONF.directory_plugins = '';
-				CONF.directory_schemas = '';
-				CONF.directory_operations = '';
-				CONF.directory_middleware = '';
-				CONF.directory_themes = '';
-				CONF.directory_packages = '';
-				CONF.directory_jsonschemas = '';
-				CONF.allow_compile_html = false;
-				CONF.allow_compile_script = false;
-				CONF.allow_compile_style = false;
+				CONF.$dirtmp = F.Path.join(F.Os.tmpdir(), 'total' + dir.makeid());
+				CONF.$dirpublic = dir;
+				CONF.$minifyjs = false;
+				CONF.$minifycss = false;
+				CONF.$minifyhtml = false;
 
-				F.http('debug', { port: port, directory: dir });
+				F.directory = dir;
+				F.http('debug', { port: port });
 
 				ROUTE('GET /*', function() {
 
