@@ -88,6 +88,9 @@ exports.noop = function() {};
 
 exports.parseConfig = function(value) {
 
+	if (!value)
+		return {};
+
 	if (typeof(value) === 'string') {
 
 		var lines = value.split('\n');
@@ -124,6 +127,13 @@ exports.parseConfig = function(value) {
 		}
 
 		return exports.parseConfig(response);
+	}
+
+	if (!(value instanceof Array)) {
+		let tmp = [];
+		for (let key in value)
+			tmp.push({ id: key, value: value[key] });
+		value = tmp;
 	}
 
 	var cfg = {};
