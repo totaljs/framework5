@@ -808,6 +808,8 @@ F.load = async function(types, callback) {
 			case 'plugins':
 				tmp = require(file.filename);
 				F.plugins[file.id] = tmp;
+				if (!tmp.id)
+					tmp.id = file.id;
 				tmp.install && tmp.install();
 				break;
 
