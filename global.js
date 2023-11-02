@@ -104,13 +104,13 @@ global.DIFFARR = F.TUtils.diffarr;
 global.CLONE = F.TUtils.clone;
 
 // TMS
-global.SUBSCRIBE = F.TMS.subscribe;
-global.UNSUBSCRIBE = F.TMS.unsubscribe;
-global.PUBLISH = F.TMS.publish;
-global.NEWPUBLISH = F.TMS.newpublish;
-global.NEWSUBSCRIBE = F.TMS.newsubscribe;
-global.NEWCALL = F.TMS.newcall;
-global.TMSCLIENT = F.TMS.client;
+global.SUBSCRIBE = F.TTMS.subscribe;
+global.UNSUBSCRIBE = F.TTMS.unsubscribe;
+global.PUBLISH = F.TTMS.publish;
+global.NEWPUBLISH = F.TTMS.newpublish;
+global.NEWSUBSCRIBE = F.TTMS.newsubscribe;
+global.NEWCALL = F.TTMS.newcall;
+global.TMSCLIENT = F.TTMS.client;
 
 // API
 global.API = (name, schema, data, $) => F.TApi.exec(name, schema, data, $);
