@@ -97,6 +97,7 @@ global.DEF = {};
 		processing: {},
 		views: {},
 		viewscache: [],
+		directories: {},
 		versions: {},
 		dependencies: {}, // temporary for module dependencies
 		other: {},
@@ -213,22 +214,20 @@ global.DEF = {};
 	};
 
 	F.path = {};
-	F.path.root = path => F.Path.join(F.directory, path || '');
-	F.path.logs = path => F.path.$join('logs', path || '');
-	F.path.views = path => F.Path.join(F.directory, 'views', path || '');
-	F.path.public = path => F.Path.join(F.directory, 'public', path || '');
-	F.path.plugins = path => F.Path.join(F.directory, 'plugins', path || '');
-	F.path.private = path => F.path.$join('private', path || '');
-	F.path.templates = path => F.Path.join(F.directory, 'templates', path || '');
-	F.path.databases = path => F.path.$join('databases', path || '');
-	F.path.flowstreams = path => F.Path.join(F.directory, 'flowstreams', path || '');
-	F.path.tmp = F.path.temp = path => F.path.$join('tmp', path || '');
+
+	F.path.root = path => path ? F.path.$join(F.directory, path) : F.directory;
+	F.path.logs = path => path ? F.path.$join(F.temporary.directories.logs, path) : F.temporary.directories.logs;
+	F.path.public = path => path ? F.path.$join(F.temporary.directories.public, path) : F.temporary.directories.public;
+	F.path.private = path => path ? F.path.$join(F.temporary.directories.private, path) : F.temporary.directories.private;
+	F.path.databases = path => path ? F.path.$join(F.temporary.directories.databases, path) : F.temporary.directories.databases;
+	F.path.directory = (type, path) => path ? F.path.$join(F.temporary.directories[type], path) : F.temporary.directories[type];
+	F.path.tmp = F.path.temp = path => path ? F.path.$join(F.temporary.directories.tmp, path) : F.temporary.directories.tmp;
 
 	F.path.$join = function(directory, path) {
-		var key = 'directory_' + directory;
+		var key = '$' + directory;
 		if (!F.temporary.path[key])
 			F.path.verify(directory);
-		return F.Path.join(F.directory, directory, path || '');
+		return F.Path.join(directory, path || '');
 	};
 
 	F.path.route = function(path, directory = 'root') {
@@ -249,68 +248,22 @@ global.DEF = {};
 
 	F.path.unlink = unlink;
 	F.path.rmdir = rmdir;
-	F.path.verify = function(name) {
+	F.path.verify = function(path) {
 
-		var key = 'directory_' + name;
+		var key = '$verify' + path;
+
 		if (F.temporary.path[key])
 			return;
 
-		var dir = F.path.root(name);
-		try {
-			if (!pathexists(dir))
-				F.Fs.mkdirSync(dir);
-		} catch(e) {}
+		F.path.mkdir(path);
 		F.temporary.path[key] = true;
 	};
 
-	F.path.mkdir = function(p, cache) {
-
-		var key = '$directory_' + p;
-
-		if (cache && F.temporary.path[key])
-			return;
-
-		F.temporary.path[key] = true;
-
-		var is = F.isWindows;
-		var s = '';
-
-		if (p[0] === '/') {
-			s = is ? '\\' : '/';
-			p = p.substring(1);
-		}
-
-		var l = p.length - 1;
-		var beg = 0;
-
-		if (is) {
-			if (p[l] === '\\')
-				p = p.substring(0, l);
-
-			if (p[1] === ':')
-				beg = 1;
-
-		} else {
-			if (p[l] === '/')
-				p = p.substring(0, l);
-		}
-
-		if (pathexists(p))
-			return;
-
-		var arr = is ? p.replace(/\//g, '\\').split('\\') : p.split('/');
-		var directory = s;
-
-		for (let i = 0; i < arr.length; i++) {
-			let name = arr[i];
-			if (is)
-				directory += (i && directory ? '\\' : '') + name;
-			else
-				directory += (i && directory ? '/' : '') + name;
-
-			if (i >= beg && !pathexists(directory))
-				F.Fs.mkdirSync(directory);
-		}
+	F.path.mkdir = function(path) {
+		try {
+			if (!pathexists(path))
+				F.Fs.mkdirSync(path, { recursive: true });
+		} catch (e) {}
 	};
 
 })(global.F);
@@ -640,6 +593,7 @@ F.loadconfig = function(value) {
 
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = F.config.$insecure ? '0' : '1';
 	F.logger(F.config.$logger == true);
+	F.dir();
 	F.emit('$tms');
 	F.emit('$reconfigure');
 };
@@ -749,6 +703,8 @@ F.load = async function(types, callback) {
 
 	var beg = Date.now();
 
+	F.dir();
+
 	await F.TBundles.extract();
 	await F.clear(true);
 
@@ -802,7 +758,7 @@ F.load = async function(types, callback) {
 	}
 
 	if (!types.length || types.includes('plugins')) {
-		var plugins = async () => new Promise(resolve => F.Fs.readdir(F.path.plugins(), (err, response) => resolve(response || [])));
+		var plugins = async () => new Promise(resolve => F.Fs.readdir(F.path.directory('plugins'), (err, response) => resolve(response || [])));
 		tmp = await plugins();
 
 		for (let plugin of tmp) {
@@ -810,7 +766,7 @@ F.load = async function(types, callback) {
 			if (plugin.indexOf('-bk') !== -1 || plugin.indexOf('_bk') !== -1)
 				continue;
 
-			files.push({ id: F.TUtils.getName(plugin).replace(/\.js$/, ''), type: 'plugins', filename: F.path.root('plugins/' + plugin + '/index.js') });
+			files.push({ id: F.TUtils.getName(plugin).replace(/\.js$/, ''), type: 'plugins', filename: F.path.directory('plugins', plugin + '/index.js') });
 
 			let loader = ['controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware'];
 			for (let type of loader) {
@@ -2404,16 +2360,23 @@ F.decrypt = function(value, key, tojson = true) {
 };
 
 F.dir = function(val) {
-	F.directory = val;
+
+	if (val)
+		F.directory = val;
+
+	var dirs = ['public', 'tmp', 'logs', 'databases', 'controllers', 'resources', 'plugins', 'views', 'definitions', 'schemas', 'models', 'flowstreams', 'bundles', 'actions', 'extensions', 'source', 'services', 'updates', 'templates'];
+
+	for (let dir of dirs) {
+		var cfg = F.config['$dir' + dir];
+		F.temporary.directories[dir] = cfg || F.Path.join(F.directory, dir);
+	}
+
 };
 
 F.run = function(opt) {
 	var type = opt.release ? 'release' : 'debug';
 	require('./' + type)(opt);
 };
-
-F.cmscompiler = (html, widgets, used) => require('./cms').compile(html, widgets, used);
-F.uibuildercompiler = (opt, callback) => require('./uibuilder').compile(opt, callback);
 
 F.logmail = function(email, subject, body, callback) {
 
@@ -2557,7 +2520,6 @@ function httptuningperformance(socket) {
 	socket.setKeepAlive(true, 10);
 }
 
-/*
 process.on('unhandledRejection', function(e) {
 	F.error(e, '');
 });
@@ -2573,7 +2535,6 @@ process.on('uncaughtException', function(e) {
 		return;
 	F.error(e, '');
 });
-*/
 
 function ping() {
 	process.connected && process.send('total:ping');
@@ -2682,8 +2643,10 @@ process.on('message', function(msg, h) {
 
 	// Needed "F"
 	F.TFlow = require('./flow');
-	F.TMS = require('./tms');
+	F.TTMS = require('./tms');
+	F.TCMS = require('./cms');
 	F.TNoSQL = require('./nosql');
+	F.TUIBuilder = require('./uibuilder');
 
 })(F);
 

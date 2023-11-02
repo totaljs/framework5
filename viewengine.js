@@ -858,7 +858,7 @@ View.prototype.render = function(name, model, ispartial = false) {
 
 	if (!fn) {
 
-		content = F.translate(self.language, F.Fs.readFileSync(F.path.views(name + '.html'), 'utf8'));
+		content = F.translate(self.language, F.Fs.readFileSync(F.path.directory('views', name + '.html'), 'utf8'));
 		fn = exports.compile(name, content, DEBUG);
 
 		if (!DEBUG)
