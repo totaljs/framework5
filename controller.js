@@ -691,8 +691,7 @@ Controller.prototype.resume = function() {
 	if (ctrl.isfile) {
 
 		var path = ctrl.uri.key;
-
-		if (path[0] === '_') {
+		if (path[1] === '_') {
 
 			let tmp = path.substring(1);
 			let index = tmp.indexOf('/', 1);
@@ -701,7 +700,7 @@ Controller.prototype.resume = function() {
 				return;
 			}
 
-			path = F.path.plugins(tmp.substring(0, index) + '/public/' + tmp.substring(index + 2));
+			path = F.path.root('plugins/' + tmp.substring(1, index) + '/public/' + tmp.substring(index + 1));
 		} else
 			path = F.path.public(path.substring(1));
 

@@ -5,3 +5,7 @@
 
 - CSRF tokeny
 - encryption/decryption
+
+---
+
+CHECK WINDOWS PLUGINS STATIC FILES
