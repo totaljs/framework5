@@ -2521,10 +2521,12 @@ function httptuningperformance(socket) {
 }
 
 process.on('unhandledRejection', function(e) {
-	F.error(e, '');
+	F.error(e.stack, '');
 });
 
+// process.on('uncaughtException', function(e) {
 process.on('uncaughtException', function(e) {
+
 	var err = e + '';
 	if (err.indexOf('listen EADDRINUSE') !== -1) {
 		process.send && process.send('total:eaddrinuse');
@@ -2533,7 +2535,7 @@ process.on('uncaughtException', function(e) {
 		return;
 	} else if (F.config.$filtererrors && REG_SKIPERRORS.test(err))
 		return;
-	F.error(e, '');
+	F.error(e.stack, '');
 });
 
 function ping() {
