@@ -2653,6 +2653,6 @@ process.on('message', function(msg, h) {
 process.connected && setTimeout(() => process.send('total:init'), 100);
 
 require('./global');
-require('./Tangular');
+require('./tangular');
 
 module.exports = F;
