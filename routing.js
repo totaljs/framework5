@@ -1,4 +1,3 @@
-// Total.js Routing
 // The MIT License
 // Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
 
@@ -139,6 +138,9 @@ function Route(url, action, size) {
 
 	if (index != -1)
 		t.url.splice(index, 1);
+
+	if (!t.url.length)
+		t.url[0] = '/';
 
 	url = url.replace(/<\d+[mb|gb|kb|b|m|s|h]+/gi, function(text) {
 		parseSizeTimeout(t, text.substring(1));

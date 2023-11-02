@@ -25,6 +25,7 @@ global.CRON = F.cron;
 global.UID = F.uid;
 global.MEMORIZE = F.memorize;
 global.AUDIT = F.audit;
+global.TRANSLATE = F.translate;
 global.DATA = new F.TQueryBuilder.Controller(true);
 global.DB = () => new F.TQueryBuilder.Controller();
 global.CACHE = F.cache;

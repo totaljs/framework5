@@ -258,7 +258,7 @@ exports.compile = function(name, content, debug = true) {
 	if (!debug)
 		builder = builder.replace(/(\+\$EMPTY\+)/g, '+').replace(/(\$output=\$EMPTY\+)/g, '$output=').replace(/(\$output\+=\$EMPTY\+)/g, '$output+=').replace(/(\}\$output\+=\$EMPTY)/g, '}').replace(/(\{\$output\+=\$EMPTY;)/g, '{').replace(/(\+\$EMPTY\+)/g, '+').replace(/(>'\+'<)/g, '><').replace(/'\+'/g, '');
 
-	var fn = ('(function(self){var model=self.model;var ctrl=self.controller;var query=ctrl?.query || EMPTYOBJECT,repository=self.repository,controller=self.controller,files=ctrl?.files || EMPTYARRAY,user=ctrl?.user,session=ctrl?.session,body=ctrl?.body,language=ctrl?.language || \'\'' + (isCookie ? ',cookie=name=>ctrl?ctrl.cookie(name):\'\'' : '') + ';' + (nocompressHTML ? 'if(ctrl)ctrl.response.minify=false;' : '') + builder + ';return $output;})');
+	var fn = ('(function(self){var model=self.model;var config=F.config;var ctrl=self.controller;var query=ctrl?.query || EMPTYOBJECT,repository=self.repository,controller=self.controller,files=ctrl?.files || EMPTYARRAY,user=ctrl?.user,session=ctrl?.session,body=ctrl?.body,language=ctrl?.language || \'\'' + (isCookie ? ',cookie=name=>ctrl?ctrl.cookie(name):\'\'' : '') + ';' + (nocompressHTML ? 'if(ctrl)ctrl.response.minify=false;' : '') + builder + ';return $output;})');
 	try {
 		fn = eval(fn);
 	} catch (e) {
@@ -332,6 +332,7 @@ function prepare(command, dynamicCommand, functions) {
 			return '\'' + (r ? r.substring(0, r.length - 1) : r) + '\'';
 
 		case 'CONF':
+		case 'config':
 		case 'controller':
 		case 'FUNC':
 		case 'MAIN':
