@@ -155,7 +155,7 @@ CTP.next = function(t) {
 
 CTP.callback = function($) {
 	var t = this;
-	t.$callback = typeof($) === 'function' ? $ : $.callback;
+	t.$callback = typeof($) === 'function' ? $ : $.callback();
 	return t;
 };
 
@@ -380,7 +380,6 @@ CTP.command = function(table, name) {
 };
 
 DBP.evaluate = function(err, response) {
-
 	var t = this;
 
 	if (t.options.first && response instanceof Array)
@@ -501,7 +500,7 @@ QBP.set = function(name) {
 
 QBP.callback = function($) {
 	var t = this;
-	t.main.callback = typeof($) === 'function' ? $ : $.callback;
+	t.main.callback = typeof($) === 'function' ? $ : $.callback();
 	return t;
 };
 

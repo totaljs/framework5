@@ -1586,10 +1586,8 @@ F.service = function(count) {
 	}
 
 	// Update expires date
-	if (count % 60 === 0) {
+	if (count % 60 === 0)
 		F.config.$httpexpire = NOW.add('y', 1).toUTCString();
-		F.TImages.clear();
-	}
 
 	if (count % F.config.$tmsclearblocked === 0)
 		F.temporary.tmsblocked = {};
@@ -2658,5 +2656,8 @@ process.connected && setTimeout(() => process.send('total:init'), 100);
 
 require('./global');
 require('./tangular');
+
+// Init directories
+F.dir();
 
 module.exports = F;
