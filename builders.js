@@ -1219,7 +1219,7 @@ ActionCaller.prototype.exec = function() {
 	var type = meta.payload || (action.input ? '+' : '-');
 	var $ = self.$;
 
-	$.id = id;
+	$.id = action.id;
 	$.error = self.error;
 	$.controller = self.controller;
 	$.fields = action.fields;
