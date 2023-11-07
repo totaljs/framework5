@@ -220,6 +220,7 @@ global.DEF = {};
 	F.path.public = path => path ? F.path.$join(F.temporary.directories.public, path) : F.temporary.directories.public;
 	F.path.private = path => path ? F.path.$join(F.temporary.directories.private, path) : F.temporary.directories.private;
 	F.path.databases = path => path ? F.path.$join(F.temporary.directories.databases, path) : F.temporary.directories.databases;
+	F.path.plugins = path => path ? F.path.$join(F.temporary.directories.plugins, path) : F.temporary.directories.plugins;
 	F.path.directory = (type, path) => path ? F.path.$join(F.temporary.directories[type], path) : F.temporary.directories[type];
 	F.path.tmp = F.path.temp = path => path ? F.path.$join(F.temporary.directories.tmp, path) : F.temporary.directories.tmp;
 
