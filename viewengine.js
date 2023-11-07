@@ -741,7 +741,7 @@ function makehtmlmeta(self) {
 		title = repo.title.safehtml();
 
 	if (title) {
-		if (!F.config.$customtitle && self?.controller?.url !== '/')
+		if (!F.config.$customtitles && self?.controller?.url !== '/')
 			title += ' - ' + F.config.name;
 	} else if (!title)
 		title = F.config.name;
