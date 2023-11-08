@@ -2226,17 +2226,6 @@ function string_hash(s, convert) {
 	return hash;
 }
 
-SP.count = function(text) {
-	var index = 0;
-	var count = 0;
-	do {
-		index = this.indexOf(text, index + text.length);
-		if (index > 0)
-			count++;
-	} while (index > 0);
-	return count;
-};
-
 SP.parseComponent = function(tags) {
 
 	var html = this;
