@@ -8,7 +8,7 @@ const NODE_MODULES = { buffer: 1, child_process: 1, process: 1, fs: 1, events: 1
 const EMPTYOBJECT = {};
 const EMPTYARRAY = [];
 
-const REG_SKIPERRORS = /epipe|invalid\sdistance/i;
+const REG_SKIPERRORS = /epipe|invalid\sdistance|err_ipc_channel_closed/i;
 const REG_HTTPHTTPS = /^(http|https):\/\//i;
 const SOCKETWINDOWS = '\\\\?\\pipe';
 const CLUSTER_STATS = { TYPE: 'stats' };
