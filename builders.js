@@ -262,6 +262,11 @@ ErrorBuilder.prototype = {
 	}
 };
 
+ErrorBuilder.prototype.reject = function(language) {
+	var self = this;
+	return new Error(self.toString(language, ''));
+};
+
 ErrorBuilder.prototype.push = function(err, path, index) {
 	var self = this;
 
@@ -333,12 +338,12 @@ ErrorBuilder.prototype.output = function(language = 'default') {
 	return output;
 };
 
-ErrorBuilder.prototype.toString = function(language = 'default') {
+ErrorBuilder.prototype.toString = function(language = 'default', divider = '\n') {
 	var self = this;
 	var output = self.output(language);
 	var str = '';
 	for (let err of output)
-		str += (str ? '\n' : '') + err.error;
+		str += (str ? divider : '') + err.error;
 	return str;
 };
 
@@ -463,7 +468,7 @@ RESTP.promise = function($) {
 				if ($ && $.invalid)
 					$.invalid(err);
 				else
-					reject(err);
+					reject(err.reject());
 			} else
 				resolve(response);
 		});
@@ -1363,7 +1368,7 @@ ActionCaller.prototype.promise = function($) {
 				if ($ && $.invalid)
 					$.invalid(err);
 				else
-					reject(err);
+					reject(err.reject());
 			} else
 				resolve(response);
 		};
