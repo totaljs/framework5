@@ -2427,6 +2427,10 @@ F.htmlmail = function(email, subject, body, language, callback) {
 	return F.def.onMail(email, subject, body, callback);
 };
 
+F.readfile = function(path, type = null) {
+	return new Promise(resolve => F.Fs.readFile(path, type, (err, response) => err ? resolve(null) : resolve(response)));
+};
+
 F.loadstats = function() {
 
 	var main = {};
