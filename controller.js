@@ -154,7 +154,7 @@ Controller.prototype = {
 };
 
 Controller.prototype.csrf = function() {
-	return DEF.onCSRFcreate(this);
+	return F.def.onCSRFcreate(this);
 };
 
 Controller.prototype.redirect = function(value, permanent) {
@@ -777,6 +777,7 @@ Controller.prototype.$route = function() {
 	}
 
 	let route = F.TRouting.lookup(ctrl);
+
 	if (route) {
 
 		ctrl.route = route;
@@ -936,7 +937,7 @@ function multipart(ctrl) {
 }
 
 function authorize(ctrl) {
-	if (DEF.onAuthorize) {
+	if (F.def.onAuthorize) {
 		var opt = new F.TBuilders.Options(ctrl);
 		opt.TYPE = 'auth'; // important
 		opt.next = opt.callback;
@@ -953,7 +954,7 @@ function authorize(ctrl) {
 					ctrl.fallback(401);
 			}
 		};
-		DEF.onAuthorize(opt);
+		F.def.onAuthorize(opt);
 	} else
 		execute(ctrl);
 }
@@ -984,7 +985,7 @@ function execute(ctrl) {
 					body = body.data;
 					if (!body || typeof(body) === 'object') {
 						ctrl.params = params;
-						F.action(endpoint.actions, body || EMPTYOBJECT, ctrl).autorespond();
+						F.action(endpoint.actions, body || {}, ctrl).autorespond();
 						return;
 					}
 				}
