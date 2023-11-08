@@ -796,7 +796,7 @@ Controller.prototype.$route = function() {
 
 			ctrl.req.on('data', function(chunk) {
 				ctrl.payloadsize += chunk.length;
-				if (ctrl.payloadsize > ctrl.route.size) {
+				if ((ctrl.payloadsize / 1024) > ctrl.route.size) {
 					if (!ctrl.toolarge) {
 						ctrl.toolarge = true;
 						delete ctrl.payload;

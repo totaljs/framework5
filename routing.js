@@ -184,6 +184,8 @@ function Route(url, action, size) {
 	} else
 		t.actions = url.substring(0, index + 3).replace(/\s{2,}/g, ' ').split(/\s|,/);
 
+	var parent = null;
+
 	if (endpoint) {
 
 		let params = [];
@@ -194,11 +196,11 @@ function Route(url, action, size) {
 			params.push({ index: i, name: param });
 		}
 
-		var route = F.routes.routes.findItem('id', t.id);
-		var apiroute = { auth: t.auth, params: params, actions: t.actions.join(',') };
+		parent = F.routes.routes.findItem('id', t.id);
 
-		if (route) {
-			route.api[arr[0]] = apiroute;
+		var apiroute = { auth: t.auth, params: params, actions: t.actions.join(',') };
+		if (parent) {
+			parent.api[arr[0]] = apiroute;
 			t.skip = true;
 		} else {
 			if (!t.api)
@@ -222,6 +224,9 @@ function Route(url, action, size) {
 				break;
 		}
 	}
+
+	if (parent && parent.size < t.size)
+		parent.size = t.size;
 
 	if (t.wildcard)
 		t.priority -= 50;
