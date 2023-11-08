@@ -214,7 +214,6 @@ global.DEF = {};
 	};
 
 	F.path = {};
-
 	F.path.root = path => path ? F.path.$join(F.directory, path) : F.directory;
 	F.path.logs = path => path ? F.path.$join(F.temporary.directories.logs, path) : F.temporary.directories.logs;
 	F.path.public = path => path ? F.path.$join(F.temporary.directories.public, path) : F.temporary.directories.public;
