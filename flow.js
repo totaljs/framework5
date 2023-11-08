@@ -53,7 +53,7 @@ FS.onsave = function(data) {
 	FS.$events.save && FS.emit('save', data);
 };
 
-FS.reload = function(flow, restart) {
+FS.reload = function(flow, restart = false) {
 
 	var prev = FS.db[flow.id];
 	if (!prev)
@@ -72,7 +72,7 @@ FS.reload = function(flow, restart) {
 		FS.proxies[flow.proxypath] = F.proxy(flow.proxypath, flow.unixsocket);
 
 	FS.db[flow.id] = flow;
-	FS.instances[flow.id].restart(flow, restart);
+	FS.instances[flow.id].reload(flow, restart);
 };
 
 FS.init = function(directory, callback) {
@@ -118,13 +118,19 @@ FS.init = function(directory, callback) {
 
 };
 
-FS.load = function(flow, callback) {
+FS.load = function(flow, callback, restart = false) {
 
 	// flow.directory {String}
 	// flow.asfiles {Boolean}
 	// flow.worker {String/Boolean}
 	// flow.memory {Number}
 	// flow.proxypath {String}
+
+	if (FS.db[flow.id]) {
+		FS.reload(flow, restart);
+		callback && setImmediate(callback, null, FS.instances[flow.id]);
+		return;
+	}
 
 	var id = flow.id;
 	flow.directory = flow.directory || F.path.root('/flowstream/');

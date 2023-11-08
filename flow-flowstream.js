@@ -565,12 +565,30 @@ Instance.prototype.reconfigure = function(id, config) {
 
 Instance.prototype.reload = function(data, restart) {
 	var self = this;
-	return self.refresh(self.id, 'meta', data, restart);
+	var flow = self.flow;
+
+	if (flow.isworkerthread) {
+		for (var key in data)
+			flow.$schema[key] = data[key];
+		if (restart) {
+			if (flow.terminate)
+				flow.terminate();
+			else
+				flow.kill(9);
+		} else
+			flow.postMessage2({ TYPE: 'stream/merge', data: data });
+	} else {
+		for (var key in data)
+			flow.$schema[key] = data[key];
+		flow.merge(data.components, data.design, () => flow.proxy.refreshmeta());
+	}
+	return self;
 };
 
 Instance.prototype.refresh = function(id, type, data, restart) {
 	var self = this;
 	var flow = self.flow;
+
 	if (flow.isworkerthread) {
 
 		for (var key in data)
@@ -581,9 +599,8 @@ Instance.prototype.refresh = function(id, type, data, restart) {
 				flow.terminate();
 			else
 				flow.kill(9);
-		}
-
-		flow.postMessage2({ TYPE: 'stream/refresh', id: id, type: type, data: data });
+		} else
+			flow.postMessage2({ TYPE: 'stream/refresh', id: id, type: type, data: data });
 
 	} else {
 
@@ -1028,6 +1045,22 @@ function init_current(meta, callback, nested) {
 				case 'stream/pause':
 					flow.pause(msg.is == null ? !flow.paused : msg.is);
 					flow.save();
+					break;
+
+				case 'stream/merge':
+					for (var key in msg.data)
+						flow.$schema[key] = msg.data[key];
+
+					flow.merge(msg.data.components, msg.data.design, function(err) {
+
+						flow.proxy.refreshmeta();
+
+						if (flow.proxy.online) {
+							flow.proxy.send({ TYPE: 'flow/components', data: flow.components(true) });
+							flow.proxy.send({ TYPE: 'flow/design', data: flow.export() });
+						}
+
+					});
 					break;
 
 				case 'stream/refresh':

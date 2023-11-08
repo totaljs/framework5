@@ -896,8 +896,8 @@ FP.unregister = function(name, callback) {
 			callback && callback();
 			self.clean();
 		});
-	} else
-		callback && callback();
+	} else if (callback)
+		callback();
 
 	return self;
 };
@@ -1222,7 +1222,7 @@ FP.load = function(components, design, callback, asfile) {
 
 	var self = this;
 	if (self.loading) {
-		setTimeout(() => self.load(components, design, callback), 200);
+		setTimeout(() => self.load(components, design, callback, asfile), 200);
 		return self;
 	}
 
@@ -1254,6 +1254,54 @@ FP.load = function(components, design, callback, asfile) {
 				self.clean();
 			});
 
+		});
+	});
+
+	return self;
+};
+
+FP.merge = function(components, design, callback, asfile) {
+
+	var self = this;
+	if (self.loading) {
+		setTimeout(() => self.merge(components, design, callback, asfile), 200);
+		return self;
+	}
+
+	self.loading = 10000;
+
+	var keys = Object.keys(components);
+	var error = new F.ErrorBuilder();
+	var processed = {};
+
+	keys.wait(function(key, next) {
+		var body = components[key];
+		processed[key] = 1;
+		if (typeof(body) === 'string' && body.indexOf('<script ') !== -1) {
+			self.add(key, body, function(err) {
+				err && error.push(err);
+				next();
+			}, asfile);
+		} else {
+			error.push('Invalid component: ' + key);
+			next();
+		}
+	}, function() {
+		// Removed non-exist components
+		Object.keys(self.meta.components).wait(function(key, next) {
+			if (processed[key])
+				next();
+			else
+				self.unregister(key, next);
+		}, function() {
+			// Loads design
+			self.inc(0);
+			self.use(design, function(err) {
+				self.inc(0);
+				err && error.push(err);
+				callback && callback(err);
+				self.clean();
+			});
 		});
 	});
 
