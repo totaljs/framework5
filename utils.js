@@ -5957,9 +5957,7 @@ String.prototype.toJSONSchema = function(name, url) {
 
 			// other schema
 			var subname = type.substring(1);
-			var schema = GETSCHEMA(subname);
-
-			schema =  schema ? schema.toJSONSchema() : F.jsonschemas[subname];
+			var schema =  F.jsonschemas[subname];
 
 			if (schema)
 				nestedschema = schema;
