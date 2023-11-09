@@ -37,6 +37,7 @@ global.DEF = {};
 	F.id = '';
 	F.clusterid = '';
 	F.is5 = F.version = 5000;
+	F.isBundle = false;
 	F.version_header = '5';
 	F.version_node = process.version + '';
 	F.EMPTYOBJECT = EMPTYOBJECT;
@@ -2272,6 +2273,10 @@ F.backup = function(filename, files, callback, filter) {
 			});
 		}, () => writer.end());
 	});
+};
+
+F.restart = function() {
+	process.send && process.send('total:restart');
 };
 
 F.exit = function(signal) {

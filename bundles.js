@@ -400,7 +400,7 @@ exports.extract = function(callback, skip) {
 	try {
 
 		if (F.Fs.readFileSync('bundles.debug')) {
-			F.isbundle = true;
+			F.isBundle = true;
 			F.dir(F.path.root('/.src/'));
 			callback();
 			return;
@@ -428,7 +428,7 @@ exports.extract = function(callback, skip) {
 			});
 		}, function() {
 			extract(function() {
-				F.isbundle = true;
+				F.isBundle = true;
 				F.dir(F.path.root('/.src/'));
 				callback();
 			});
@@ -436,21 +436,11 @@ exports.extract = function(callback, skip) {
 	};
 
 	try {
-
 		var files = F.Fs.readdirSync(bundles);
 		if (files.length)
 			extractbundles();
 		else
 			callback();
-
-		/*
-		if (F.$bundling) {
-			makebundle();
-			return;
-		} else {
-			F.isbundle = true;
-			F.dir(F.path.root('/.src/'));
-		}*/
 	} catch(e) {
 		callback();
 	}
