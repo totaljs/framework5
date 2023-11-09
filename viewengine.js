@@ -858,10 +858,9 @@ View.prototype.render = function(name, model, ispartial = false) {
 	self.model = model;
 
 	if (!fn) {
-
-		content = F.translate(self.language, F.Fs.readFileSync(F.path.directory('views', name + '.html'), 'utf8'));
+		let path = name[0] === '#' ? F.path.plugins(name.substring(1) + '.html') : F.path.directory('views', name + '.html');
+		content = F.translate(self.language, F.Fs.readFileSync(path, 'utf8'));
 		fn = exports.compile(name, content, DEBUG);
-
 		if (!DEBUG)
 			F.temporary.views[key] = fn;
 	}
