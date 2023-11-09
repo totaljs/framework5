@@ -352,7 +352,7 @@ function unlink(arr, callback) {
 	CONF.$minifycss = true;
 	CONF.$minifyhtml = true;
 	CONF.$localize = true;
-	CONF.$port = 8000;
+	CONF.$port = 'auto';
 	CONF.$ip = '0.0.0.0';
 	CONF.$unixsocket = '';
 	CONF.$timezone = 'utc';
@@ -1147,6 +1147,10 @@ F.http = function(opt) {
 
 		if (unixsocket) {
 
+			try {
+				F.Fs.unlinkSync(unixsocket);
+			} catch (e) {}
+
 			if (F.isWindows && unixsocket.indexOf(SOCKETWINDOWS) === -1)
 				unixsocket = F.Path.join(SOCKETWINDOWS, unixsocket);
 
@@ -1179,6 +1183,23 @@ F.http = function(opt) {
 
 			if (opt.port)
 				F.config.$port = opt.port;
+
+			if (F.config.$port === 'auto') {
+				let port = process.env.PORT;
+				if (!port) {
+					for (let arg of process.argv) {
+						if ((/^\d{3,5}$/).test(arg)) {
+							port = arg;
+							break;
+						}
+					}
+				}
+				if (port)
+					port = +port;
+				if (isNaN(port))
+					port = 8000;
+				F.config.$port = port;
+			}
 
 			if (opt.ip)
 				F.config.$ip = opt.ip;
@@ -2528,13 +2549,11 @@ process.on('unhandledRejection', function(e) {
 	F.error(e.stack, '');
 });
 
-// process.on('uncaughtException', function(e) {
 process.on('uncaughtException', function(e) {
-
 	var err = e + '';
 	if (err.indexOf('listen EADDRINUSE') !== -1) {
-		process.send && process.send('total:eaddrinuse');
 		console.log('\nThe IP address and the PORT is already in use.\nYou must change the PORT\'s number or IP address.\n');
+		process.send && process.send('total:eaddrinuse');
 		process.exit(1);
 		return;
 	} else if (F.config.$filtererrors && REG_SKIPERRORS.test(err))
