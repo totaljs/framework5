@@ -2577,51 +2577,50 @@ function MAKEFLOWSTREAM(meta) {
 // TMS implementation:
 TMS.check = function(item, callback) {
 
-	WEBSOCKETCLIENT(function(client) {
+	var client = F.websocketclient();
 
-		if (item.token)
-			client.headers['x-token'] = item.token;
+	if (item.token)
+		client.headers['x-token'] = item.token;
 
-		client.options.reconnect = 0;
+	client.options.reconnect = 0;
 
-		client.on('open', function() {
-			client.tmsready = true;
-		});
-
-		client.on('error', function(err) {
-			client.tmsready = false;
-			callback(err);
-			clearTimeout(client.timeout);
-		});
-
-		client.on('close', function() {
-			client.tmsready = false;
-			callback('401: Unauthorized');
-		});
-
-		client.on('message', function(msg) {
-			switch (msg.type) {
-				case 'ping':
-					msg.type = 'pong';
-					client.send(msg);
-					break;
-				case 'meta':
-					callback(null, msg);
-					clearTimeout(client.timeout);
-					client.close();
-					break;
-			}
-		});
-
-		client.timeout = setTimeout(function() {
-			if (client.tmsready) {
-				client.close();
-				callback('408: Timeout');
-			}
-		}, 1500);
-
-		client.connect(item.url.replace(/^http/g, 'ws'));
+	client.on('open', function() {
+		client.tmsready = true;
 	});
+
+	client.on('error', function(err) {
+		client.tmsready = false;
+		callback(err);
+		clearTimeout(client.timeout);
+	});
+
+	client.on('close', function() {
+		client.tmsready = false;
+		callback('401: Unauthorized');
+	});
+
+	client.on('message', function(msg) {
+		switch (msg.type) {
+			case 'ping':
+				msg.type = 'pong';
+				client.send(msg);
+				break;
+			case 'meta':
+				callback(null, msg);
+				clearTimeout(client.timeout);
+				client.close();
+				break;
+		}
+	});
+
+	client.timeout = setTimeout(function() {
+		if (client.tmsready) {
+			client.close();
+			callback('408: Timeout');
+		}
+	}, 1500);
+
+	client.connect(item.url.replace(/^http/g, 'ws'));
 };
 
 function makemodel(item) {
@@ -2635,168 +2634,166 @@ TMS.connect = function(fs, sourceid, callback) {
 		delete fs.sockets[sourceid];
 	}
 
-	WEBSOCKETCLIENT(function(client) {
+	var client = F.websocketclient();
 
-		var item = fs.sources[sourceid];
-		var prev;
+	var item = fs.sources[sourceid];
+	var prev;
 
-		item.restart = false;
-		client.options.reconnectserver = true;
-		client.callbacks = {};
-		client.callbackindexer = 0;
-		client.callbacktimeout = function(callbackid) {
-			var cb = client.callbacks[callbackid];
-			if (cb) {
-				delete client.callbacks[callbackid];
-				cb(new ErrorBuilder().push(408).output());
+	item.restart = false;
+	client.options.reconnectserver = true;
+	client.callbacks = {};
+	client.callbackindexer = 0;
+	client.callbacktimeout = function(callbackid) {
+		var cb = client.callbacks[callbackid];
+		if (cb) {
+			delete client.callbacks[callbackid];
+			cb(new ErrorBuilder().push(408).output());
+		}
+	};
+
+	if (item.token)
+		client.headers['x-token'] = item.token;
+
+	var syncforce = function() {
+		client.synchronize();
+	};
+
+	client.on('open', function() {
+		prev = null;
+		fs.sockets[item.id] = client;
+		item.error = 0;
+		item.init = true;
+		item.online = true;
+		client.subscribers = {};
+		client.tmsready = true;
+		client.model = makemodel(item);
+		setTimeout(syncforce, 10);
+	});
+
+	client.synchronize = function() {
+
+		if (!client.tmsready)
+			return;
+
+		var publishers = {};
+
+		for (var key in fs.meta.flow) {
+			var instance = fs.meta.flow[key];
+			var com = fs.meta.components[instance.component];
+			if (com && com.itemid === item.id && com.outputs && com.outputs.length) {
+				if (Object.keys(instance.connections).length)
+					publishers[com.schema.id] = 1;
 			}
-		};
+		}
 
-		if (item.token)
-			client.headers['x-token'] = item.token;
+		var keys = Object.keys(publishers);
+		var cache = keys.join(',');
 
-		var syncforce = function() {
-			client.synchronize();
-		};
+		if (!prev || prev !== cache) {
+			prev = cache;
+			client.send({ type: 'subscribers', subscribers: keys });
+		}
 
-		client.on('open', function() {
-			prev = null;
-			fs.sockets[item.id] = client;
-			item.error = 0;
-			item.init = true;
-			item.online = true;
-			client.subscribers = {};
-			client.tmsready = true;
-			client.model = makemodel(item);
-			setTimeout(syncforce, 10);
-		});
+	};
 
-		client.synchronize = function() {
+	client.on('close', function(code) {
 
-			if (!client.tmsready)
-				return;
+		if (code === 4001)
+			client.destroy();
 
-			var publishers = {};
+		item.error = code;
+		item.online = false;
 
-			for (var key in fs.meta.flow) {
-				var instance = fs.meta.flow[key];
-				var com = fs.meta.components[instance.component];
-				if (com && com.itemid === item.id && com.outputs && com.outputs.length) {
-					if (Object.keys(instance.connections).length)
-						publishers[com.schema.id] = 1;
+		client.model = makemodel(item);
+		// AUDIT(client, 'close');
+
+		delete fs.sockets[item.id];
+		client.tmsready = false;
+	});
+
+	client.on('message', function(msg) {
+
+		var type = msg.type || msg.TYPE;
+
+		switch (type) {
+			case 'meta':
+
+				item.meta = msg;
+
+				var checksum = HASH(JSON.stringify(msg)).toString(36);
+				client.subscribers = {};
+				client.publishers = {};
+				client.calls = {};
+
+				for (var i = 0; i < msg.publish.length; i++) {
+					var pub = msg.publish[i];
+					client.publishers[pub.id] = pub.schema;
 				}
-			}
 
-			var keys = Object.keys(publishers);
-			var cache = keys.join(',');
+				for (var i = 0; i < msg.subscribe.length; i++) {
+					var sub = msg.subscribe[i];
+					client.subscribers[sub.id] = 1;
+				}
 
-			if (!prev || prev !== cache) {
-				prev = cache;
-				client.send({ type: 'subscribers', subscribers: keys });
-			}
-
-		};
-
-		client.on('close', function(code) {
-
-			if (code === 4001)
-				client.destroy();
-
-			item.error = code;
-			item.online = false;
-
-			client.model = makemodel(item);
-			// AUDIT(client, 'close');
-
-			delete fs.sockets[item.id];
-			client.tmsready = false;
-		});
-
-		client.on('message', function(msg) {
-
-			var type = msg.type || msg.TYPE;
-
-			switch (type) {
-				case 'meta':
-
-					item.meta = msg;
-
-					var checksum = HASH(JSON.stringify(msg)).toString(36);
-					client.subscribers = {};
-					client.publishers = {};
-					client.calls = {};
-
-					for (var i = 0; i < msg.publish.length; i++) {
-						var pub = msg.publish[i];
-						client.publishers[pub.id] = pub.schema;
+				if (msg.call) {
+					for (var i = 0; i < msg.call.length; i++) {
+						var call = msg.call[i];
+						client.calls[call.id] = 1;
 					}
+				}
 
-					for (var i = 0; i < msg.subscribe.length; i++) {
-						var sub = msg.subscribe[i];
-						client.subscribers[sub.id] = 1;
+				if (item.checksum !== checksum) {
+					item.checksum = checksum;
+					item.init = false;
+					TMS.refresh2(fs);
+				}
+
+				client.synchronize();
+				break;
+
+			case 'call':
+
+				var callback = client.callbacks[msg.callbackid];
+				if (callback) {
+					callback.id && clearTimeout(callback.id);
+					callback.callback(msg.error ? msg.data : null, msg.error ? null : msg.data);
+					delete client.callbacks[msg.callbackid];
+				}
+
+				break;
+
+			case 'subscribers':
+				client.subscribers = {};
+				if (msg.subscribers instanceof Array) {
+					for (var i = 0; i < msg.subscribers.length; i++) {
+						var key = msg.subscribers[i];
+						client.subscribers[key] = 1;
 					}
+				}
+				break;
 
-					if (msg.call) {
-						for (var i = 0; i < msg.call.length; i++) {
-							var call = msg.call[i];
-							client.calls[call.id] = 1;
+			case 'publish':
+
+				if (fs.paused)
+					return;
+
+				var schema = client.publishers[msg.id];
+				if (schema) {
+					// HACK: very fast validation
+					var err = new F.TBuilders.ErrorBuilder();
+					var data = F.TJSONSchema.transform(schema, err, msg.data, true);
+					if (data) {
+						var id = 'pub' + item.id + 'X' + msg.id;
+						for (var key in fs.meta.flow) {
+							var flow = fs.meta.flow[key];
+							if (flow.component === id)
+								flow.process(data, client);
 						}
 					}
+				}
 
-					if (item.checksum !== checksum) {
-						item.checksum = checksum;
-						item.init = false;
-						TMS.refresh2(fs);
-					}
-
-					client.synchronize();
-					break;
-
-				case 'call':
-
-					var callback = client.callbacks[msg.callbackid];
-					if (callback) {
-						callback.id && clearTimeout(callback.id);
-						callback.callback(msg.error ? msg.data : null, msg.error ? null : msg.data);
-						delete client.callbacks[msg.callbackid];
-					}
-
-					break;
-
-				case 'subscribers':
-					client.subscribers = {};
-					if (msg.subscribers instanceof Array) {
-						for (var i = 0; i < msg.subscribers.length; i++) {
-							var key = msg.subscribers[i];
-							client.subscribers[key] = 1;
-						}
-					}
-					break;
-
-				case 'publish':
-
-					if (fs.paused)
-						return;
-
-					var schema = client.publishers[msg.id];
-					if (schema) {
-						// HACK: very fast validation
-						var err = new F.TBuilders.ErrorBuilder();
-						var data = F.TJSONSchema.transform(schema, err, msg.data, true);
-						if (data) {
-							var id = 'pub' + item.id + 'X' + msg.id;
-							for (var key in fs.meta.flow) {
-								var flow = fs.meta.flow[key];
-								if (flow.component === id)
-									flow.process(data, client);
-							}
-						}
-					}
-
-					break;
-			}
-
-		});
+				break;
+		}
 
 		client.connect(item.url.replace(/^http/g, 'ws'));
 		callback && setImmediate(callback);
