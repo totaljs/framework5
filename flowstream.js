@@ -1218,27 +1218,43 @@ FP.unload = function(callback) {
 	return self;
 };
 
-FP.load = function(components, design, callback, asfile) {
+FP.loadvariables = function(variables, type = 'variables') {
+
+	// @type {String} variables (default), variables2, secrets
+
+	var self = this;
+	if (JSON.stringify(self[type]) !== JSON.stringify(variables)) {
+		self[type] = variables;
+		for (let key in self.meta.flow) {
+			let instance = self.meta.flow[key];
+			instance[type] && instance[type](self[type]);
+			instance.vary && instance.vary(type);
+		}
+	}
+	return self;
+};
+
+FP.load = function(data, callback) {
 
 	var self = this;
 	if (self.loading) {
-		setTimeout(() => self.load(components, design, callback, asfile), 200);
+		setTimeout(() => self.load(data, callback), 200);
 		return self;
 	}
 
-	self.loading = 10000;
+	self.loading = 100000;
 	self.unload(function() {
 
-		var keys = Object.keys(components);
+		var keys = Object.keys(data.components);
 		var error = new F.ErrorBuilder();
 
 		keys.wait(function(key, next) {
-			var body = components[key];
+			var body = data.components[key];
 			if (typeof(body) === 'string' && body.indexOf('<script ') !== -1) {
 				self.add(key, body, function(err) {
 					err && error.push(err);
 					next();
-				}, asfile);
+				}, data.asfiles);
 			} else {
 				error.push('Invalid component: ' + key);
 				next();
@@ -1247,7 +1263,7 @@ FP.load = function(components, design, callback, asfile) {
 
 			// Loads design
 			self.inc(0);
-			self.use(design, function(err) {
+			self.use(data.design, function(err) {
 				self.inc(0);
 				err && error.push(err);
 				callback && callback(err);
@@ -1260,28 +1276,28 @@ FP.load = function(components, design, callback, asfile) {
 	return self;
 };
 
-FP.replace = function(components, design, callback, asfile) {
+FP.replace = function(data, callback) {
 
 	var self = this;
 	if (self.loading) {
-		setTimeout(() => self.replace(components, design, callback, asfile), 200);
+		setTimeout(() => self.replace(data, callback), 200);
 		return self;
 	}
 
-	self.loading = 10000;
+	self.loading = 100000;
 
-	var keys = Object.keys(components);
+	var keys = Object.keys(data.components);
 	var error = new F.ErrorBuilder();
 	var processed = {};
 
 	keys.wait(function(key, next) {
-		var body = components[key];
+		var body = data.components[key];
 		processed[key] = 1;
 		if (typeof(body) === 'string' && body.indexOf('<script ') !== -1) {
 			self.add(key, body, function(err) {
 				err && error.push(err);
 				next();
-			}, asfile);
+			}, data.asfiles);
 		} else {
 			error.push('Invalid component: ' + key);
 			next();
@@ -1296,7 +1312,11 @@ FP.replace = function(components, design, callback, asfile) {
 		}, function() {
 			// Loads design
 			self.inc(0);
-			self.use(design, function(err) {
+			self.use(data.design, function(err) {
+
+				if (data.variables)
+					self.loadvariables(F.TUtils.clone(data.variables));
+
 				self.inc(0);
 				err && error.push(err);
 				callback && callback(err);

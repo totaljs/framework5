@@ -563,12 +563,12 @@ Instance.prototype.reconfigure = function(id, config) {
 	return self;
 };
 
-Instance.prototype.reload = function(data, restart) {
+Instance.prototype.reload = function(data, restart = false) {
 	var self = this;
 	var flow = self.flow;
 
 	if (flow.isworkerthread) {
-		for (var key in data)
+		for (let key in data)
 			flow.$schema[key] = data[key];
 		if (restart) {
 			if (flow.terminate)
@@ -578,10 +578,12 @@ Instance.prototype.reload = function(data, restart) {
 		} else
 			flow.postMessage2({ TYPE: 'stream/replace', data: data });
 	} else {
-		for (var key in data)
+		for (let key in data)
 			flow.$schema[key] = data[key];
-		flow.replace(data.components, data.design, () => flow.proxy.refreshmeta());
+		flow.variables = data.variables;
+		flow.replace(data, () => flow.proxy.refreshmeta());
 	}
+
 	return self;
 };
 
@@ -1051,7 +1053,7 @@ function init_current(meta, callback, nested) {
 					for (var key in msg.data)
 						flow.$schema[key] = msg.data[key];
 
-					flow.replace(msg.data.components, msg.data.design, function() {
+					flow.replace(msg.data, function() {
 
 						// @err {Error}
 
@@ -1060,6 +1062,7 @@ function init_current(meta, callback, nested) {
 						if (flow.proxy.online) {
 							flow.proxy.send({ TYPE: 'flow/components', data: flow.components(true) });
 							flow.proxy.send({ TYPE: 'flow/design', data: flow.export() });
+							flow.proxy.send({ TYPE: 'flow/variables', data: flow.variables });
 						}
 
 					});
@@ -2241,7 +2244,7 @@ function MAKEFLOWSTREAM(meta) {
 	if (meta.paused)
 		flow.pause(true);
 
-	flow.load(meta.components, meta.design, function() {
+	flow.load(meta, function() {
 
 		if (flow.sources) {
 			Object.keys(flow.sources).wait(function(key, next) {
