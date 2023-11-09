@@ -576,11 +576,11 @@ Instance.prototype.reload = function(data, restart) {
 			else
 				flow.kill(9);
 		} else
-			flow.postMessage2({ TYPE: 'stream/merge', data: data });
+			flow.postMessage2({ TYPE: 'stream/replace', data: data });
 	} else {
 		for (var key in data)
 			flow.$schema[key] = data[key];
-		flow.merge(data.components, data.design, () => flow.proxy.refreshmeta());
+		flow.replace(data.components, data.design, () => flow.proxy.refreshmeta());
 	}
 	return self;
 };
@@ -1047,11 +1047,13 @@ function init_current(meta, callback, nested) {
 					flow.save();
 					break;
 
-				case 'stream/merge':
+				case 'stream/replace':
 					for (var key in msg.data)
 						flow.$schema[key] = msg.data[key];
 
-					flow.merge(msg.data.components, msg.data.design, function(err) {
+					flow.replace(msg.data.components, msg.data.design, function() {
+
+						// @err {Error}
 
 						flow.proxy.refreshmeta();
 

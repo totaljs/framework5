@@ -1260,11 +1260,11 @@ FP.load = function(components, design, callback, asfile) {
 	return self;
 };
 
-FP.merge = function(components, design, callback, asfile) {
+FP.replace = function(components, design, callback, asfile) {
 
 	var self = this;
 	if (self.loading) {
-		setTimeout(() => self.merge(components, design, callback, asfile), 200);
+		setTimeout(() => self.replace(components, design, callback, asfile), 200);
 		return self;
 	}
 
