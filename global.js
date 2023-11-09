@@ -104,6 +104,7 @@ global.HASH = (val, type) => val.hash(type ? type : true);
 global.DIFFARR = F.TUtils.diffarr;
 global.CLONE = F.TUtils.clone;
 global.COPY = F.TUtils.copy;
+global.QUERIFY = F.TUtils.querify;
 
 // TMS
 global.SUBSCRIBE = F.TTMS.subscribe;

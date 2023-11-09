@@ -5757,13 +5757,17 @@ exports.querify = function(url, obj) {
 	}
 
 	if (url) {
+
+		if (!arg.length)
+			return url;
+
 		let arr = url.split(' ');
 		let index = QUERIFYMETHODS[arr[0]] ? 1 : 0;
 		arr[index] += (arr[index].indexOf('?') === -1 ? '?' : '&') + arg.join('&');
 		return arr.join(' ');
 	}
 
-	return '?' + arg.join('&');
+	return arg.length ? ('?' + arg.join('&')) : '';
 };
 
 exports.connect = function(opt, callback) {

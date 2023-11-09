@@ -153,6 +153,30 @@ Controller.prototype = {
 
 };
 
+Controller.prototype.callback = function(err, value) {
+
+	var ctrl = this;
+
+	if (arguments.length == 0) {
+		return function(err, response) {
+			if (err)
+				ctrl.invalid(err);
+			else
+				ctrl.json(response);
+		};
+	}
+
+	if (err)
+		ctrl.invalid(err);
+	else {
+		if (value === undefined)
+			ctrl.success();
+		else
+			ctrl.json(value);
+	}
+
+};
+
 Controller.prototype.csrf = function() {
 	return F.def.onCSRFcreate(this);
 };
