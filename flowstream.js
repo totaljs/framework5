@@ -2052,8 +2052,8 @@ FP.components = function(prepare_export) {
 	return arr;
 };
 
-exports.create = function(name, errorhandler) {
-	let flowstream = new FlowStream(name, errorhandler);
-	F.flowstreams[name] =flowstream;
+exports.create = function(id, errorhandler) {
+	let flowstream = new FlowStream(id, errorhandler);
+	F.flowstreams[id] = flowstream;
 	return flowstream;
 };

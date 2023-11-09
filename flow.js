@@ -53,9 +53,24 @@ FS.onsave = function(data) {
 	FS.$events.save && FS.emit('save', data);
 };
 
+FS.remove = function(id) {
+
+	var tmp = FS.db[id];
+
+	if (FS.instances[id]) {
+		FS.instances[id].destroy();
+		delete FS.instances[id];
+	}
+
+	if (tmp)
+		delete FS.db[id];
+
+	FS.$events.remove && FS.emit('remove', tmp);
+};
+
 FS.reload = function(flow, restart = false) {
 
-	var prev = FS.db[flow.id];
+	var prev = FS.instances[flow.id];
 	if (!prev)
 		return;
 
@@ -126,7 +141,7 @@ FS.load = function(flow, callback, restart = false) {
 	// flow.memory {Number}
 	// flow.proxypath {String}
 
-	if (FS.db[flow.id]) {
+	if (FS.instances[flow.id]) {
 		FS.reload(flow, restart);
 		callback && setImmediate(callback, null, FS.instances[flow.id]);
 		return;
@@ -176,7 +191,7 @@ FS.notify = function(controller, id) {
 	if (instance) {
 		var obj = {};
 		obj.id = arr[1];
-		obj.method = $.req.method;
+		obj.method = $.method;
 		obj.headers = $.headers;
 		obj.query = $.query;
 		obj.body = $.body;

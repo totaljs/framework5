@@ -378,12 +378,22 @@ Instance.prototype.kill = Instance.prototype.destroy = function() {
 	self.flow.$destroyed = true;
 
 	if (self.flow.isworkerthread) {
+
 		self.flow.$socket && self.flow.$socket.destroy();
 		self.flow.$client && self.flow.$client.destroy();
+
 		if (self.flow.terminate)
 			self.flow.terminate();
 		else
 			self.flow.kill(9);
+
+		var schema = self.flow.$schema;
+
+		var tmp = F.TFlow;
+		if (tmp.proxies[schema.proxypath]) {
+			tmp.proxies[schema.proxypath].remove();
+			delete tmp.proxies[schema.proxypath];
+		}
 	} else {
 		if (self.flow.sockets) {
 			for (var key in self.flow.sockets)
@@ -940,10 +950,16 @@ function init_current(meta, callback, nested) {
 	var flow = MAKEFLOWSTREAM(meta);
 	FLOWS[meta.id] = flow;
 
-	if (isFLOWSTREAMWORKER && meta.unixsocket && meta.proxypath) {
-		if (!F.isWindows)
-			F.Fs.unlink(meta.unixsocket, NOOP);
-		F.http({ load: 'none', unixsocket: meta.unixsocket, config: { $stats: false, $sourcemap: false }});
+	if (isFLOWSTREAMWORKER) {
+		if (meta.unixsocket && meta.proxypath) {
+			if (!F.isWindows)
+				F.Fs.unlink(meta.unixsocket, NOOP);
+			F.http({ load: 'none', unixsocket: meta.unixsocket, config: { $stats: false, $sourcemap: false }});
+		} else {
+			F.config.$sourcemap = false;
+			F.config.$stats = false;
+			F.load('none');
+		}
 	}
 
 	if (meta.import) {
@@ -1761,12 +1777,11 @@ exports.client = function(flow, socket) {
 function MAKEFLOWSTREAM(meta) {
 
 	var flow = F.TFlowStream.create(meta.id, function(err, type, instance) {
-		flow.proxy.error(err, type, instance);
+		this.proxy.error(err, type, instance);
 	});
 
-	var saveid;
+	var saveid = null;
 
-	flow.metadata = meta;
 	flow.cloning = meta.cloning != false;
 	flow.export_instance2 = function(id) {
 
@@ -2618,7 +2633,7 @@ TMS.check = function(item, callback) {
 			client.close();
 			callback('408: Timeout');
 		}
-	}, 1500);
+	}, 2500);
 
 	client.connect(item.url.replace(/^http/g, 'ws'));
 };
@@ -2714,36 +2729,31 @@ TMS.connect = function(fs, sourceid, callback) {
 	client.on('message', function(msg) {
 
 		var type = msg.type || msg.TYPE;
+		var tmp;
 
 		switch (type) {
 			case 'meta':
 
 				item.meta = msg;
 
-				var checksum = HASH(JSON.stringify(msg)).toString(36);
+				tmp = HASH(JSON.stringify(msg)).toString(36);
 				client.subscribers = {};
 				client.publishers = {};
 				client.calls = {};
 
-				for (var i = 0; i < msg.publish.length; i++) {
-					var pub = msg.publish[i];
+				for (let pub of msg.publish)
 					client.publishers[pub.id] = pub.schema;
-				}
 
-				for (var i = 0; i < msg.subscribe.length; i++) {
-					var sub = msg.subscribe[i];
+				for (let sub of msg.subscribe)
 					client.subscribers[sub.id] = 1;
-				}
 
 				if (msg.call) {
-					for (var i = 0; i < msg.call.length; i++) {
-						var call = msg.call[i];
+					for (let call of msg.call)
 						client.calls[call.id] = 1;
-					}
 				}
 
-				if (item.checksum !== checksum) {
-					item.checksum = checksum;
+				if (item.checksum !== tmp) {
+					item.checksum = tmp;
 					item.init = false;
 					TMS.refresh2(fs);
 				}
@@ -2753,10 +2763,10 @@ TMS.connect = function(fs, sourceid, callback) {
 
 			case 'call':
 
-				var callback = client.callbacks[msg.callbackid];
-				if (callback) {
-					callback.id && clearTimeout(callback.id);
-					callback.callback(msg.error ? msg.data : null, msg.error ? null : msg.data);
+				tmp = client.callbacks[msg.callbackid];
+				if (tmp) {
+					tmp.id && clearTimeout(tmp.id);
+					tmp.callback(msg.error ? msg.data : null, msg.error ? null : msg.data);
 					delete client.callbacks[msg.callbackid];
 				}
 
@@ -2765,10 +2775,8 @@ TMS.connect = function(fs, sourceid, callback) {
 			case 'subscribers':
 				client.subscribers = {};
 				if (msg.subscribers instanceof Array) {
-					for (var i = 0; i < msg.subscribers.length; i++) {
-						var key = msg.subscribers[i];
+					for (let key of msg.subscribers)
 						client.subscribers[key] = 1;
-					}
 				}
 				break;
 
@@ -2777,14 +2785,14 @@ TMS.connect = function(fs, sourceid, callback) {
 				if (fs.paused)
 					return;
 
-				var schema = client.publishers[msg.id];
-				if (schema) {
+				tmp = client.publishers[msg.id];
+				if (tmp) {
 					// HACK: very fast validation
 					var err = new F.TBuilders.ErrorBuilder();
-					var data = F.TJSONSchema.transform(schema, err, msg.data, true);
+					var data = F.TJSONSchema.transform(tmp, err, msg.data, true);
 					if (data) {
 						var id = 'pub' + item.id + 'X' + msg.id;
-						for (var key in fs.meta.flow) {
+						for (let key in fs.meta.flow) {
 							var flow = fs.meta.flow[key];
 							if (flow.component === id)
 								flow.process(data, client);
@@ -2794,10 +2802,10 @@ TMS.connect = function(fs, sourceid, callback) {
 
 				break;
 		}
-
-		client.connect(item.url.replace(/^http/g, 'ws'));
-		callback && setImmediate(callback);
 	});
+
+	client.connect(item.url.replace(/^http/g, 'ws'));
+	callback && setImmediate(callback);
 };
 
 const TEMPLATE_PUBLISH = `<script total>
@@ -2973,7 +2981,6 @@ TMS.refresh = function(fs, callback) {
 
 		var item = fs.sources[key];
 		if (item.init) {
-
 			if (item.restart || !fs.sources[key])
 				TMS.connect(fs, item.id, next);
 			else
