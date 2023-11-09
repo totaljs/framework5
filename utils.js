@@ -5875,10 +5875,14 @@ String.prototype.toJSONSchema = function(name, url) {
 	var nestedtypes = [];
 
 	str = str.replace(/\[.*?\]/g, function(text) {
+		if (text.substring(1, 2) === '@')
+			return text;
 		return '[#' + (nestedtypes.push(text.substring(1, text.length - 1)) - 1) + ']';
 	});
 
 	str = str.replace(/\{.*?\}/g, function(text) {
+		if (text.substring(1, 2) === '@')
+			return text;
 		return '{#' + (nestedtypes.push(text.substring(1, text.length - 1)) - 1) + '}';
 	});
 
@@ -6072,6 +6076,10 @@ String.prototype.toJSONSchema = function(name, url) {
 		obj.required = required;
 
 	obj.transform = exports.jsonschematransform;
+
+	if (name)
+		F.jsonschemas[name] = obj;
+
 	return obj;
 };
 
