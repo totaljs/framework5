@@ -2430,6 +2430,12 @@ F.mail = function(email, subject, name, model, language, callback) {
 		callback = tmp;
 	}
 
+	// Localization
+	if (typeof(language) === 'string') {
+		if (subject.includes('@('))
+			subject = TRANSLATE(language, subject);
+	}
+
 	let body = F.view(name, model, view => view.language = language || '');
 	return F.def.onMail(email, subject, body, callback);
 };
@@ -2442,14 +2448,15 @@ F.htmlmail = function(email, subject, body, language, callback) {
 		callback = tmp;
 	}
 
-	// Translation
+	// Localization
 	if (typeof(language) === 'string') {
-		subject = subject.indexOf('@(') === -1 ? TRANSLATE(language, subject) : TRANSLATOR(language, subject);
-		if (body.indexOf('@(') !== -1)
-			body = TRANSLATOR(language, body);
+		if (subject.includes('@('))
+			subject = TRANSLATE(language, subject);
+		if (body.includes('@('))
+			body = TRANSLATE(language, body);
 	}
 
-	var body = body.indexOf('<body>') === -1 ? ('<!DOCTYPE html><html><head><title>' + subject + '</title><meta charset="utf-8" /></head><body style="padding:0;margin:0;font-family:Arial;font-size:14px;font-weight:normal">' + body + '</body></html>') : body;
+	body = body.indexOf('<body>') === -1 ? ('<!DOCTYPE html><html><head><title>' + subject + '</title><meta charset="utf-8" /></head><body style="padding:0;margin:0;font-family:Arial;font-size:14px;font-weight:normal">' + body + '</body></html>') : body;
 	return F.def.onMail(email, subject, body, callback);
 };
 
