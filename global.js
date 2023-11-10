@@ -23,6 +23,7 @@ global.NEWDB = F.newdb;
 global.REQUIRE = F.require;
 global.CRON = F.cron;
 global.UID = F.uid;
+global.SUCCESS = value => DEF.onSuccess(value);
 global.MEMORIZE = F.memorize;
 global.AUDIT = F.audit;
 global.TRANSLATE = F.translate;
