@@ -277,7 +277,7 @@ function variables(str, data, encoding) {
 	if (typeof(str) !== 'string' || str.indexOf('{') === -1)
 		return str;
 
-	var main = this.main;
+	var main = this.main ? this.main : this;
 
 	if (data == null || data == true)
 		data = this;
@@ -1276,7 +1276,8 @@ FP.load = function(data, callback) {
 	return self;
 };
 
-FP.replace = function(data, callback) {
+FP.replace = variables;
+FP.rewrite = function(data, callback) {
 
 	var self = this;
 	if (self.loading) {

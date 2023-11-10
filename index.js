@@ -2296,7 +2296,7 @@ F.exit = function(signal) {
 		} catch (e) {}
 	}
 
-	let key = '$exit';
+	let key = 'exit';
 
 	F.$events[key] && F.emit(key, signal);
 

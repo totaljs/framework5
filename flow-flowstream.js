@@ -586,12 +586,12 @@ Instance.prototype.reload = function(data, restart = false) {
 			else
 				flow.kill(9);
 		} else
-			flow.postMessage2({ TYPE: 'stream/replace', data: data });
+			flow.postMessage2({ TYPE: 'stream/rewrite', data: data });
 	} else {
 		for (let key in data)
 			flow.$schema[key] = data[key];
 		flow.variables = data.variables;
-		flow.replace(data, () => flow.proxy.refreshmeta());
+		flow.rewrite(data, () => flow.proxy.refreshmeta());
 	}
 
 	return self;
@@ -1065,11 +1065,11 @@ function init_current(meta, callback, nested) {
 					flow.save();
 					break;
 
-				case 'stream/replace':
+				case 'stream/rewrite':
 					for (var key in msg.data)
 						flow.$schema[key] = msg.data[key];
 
-					flow.replace(msg.data, function() {
+					flow.rewrite(msg.data, function() {
 
 						// @err {Error}
 
