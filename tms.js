@@ -361,7 +361,7 @@ exports.unsubscribe = function(name, callback) {
 	return false;
 };
 
-F.on('@tms', function() {
+F.on('$tms', function() {
 
 	var endpoint = F.config.$tmsurl;
 	var is = Cache.url !== endpoint;
