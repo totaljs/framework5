@@ -2705,6 +2705,7 @@ process.connected && setTimeout(() => process.send('total:init'), 100);
 
 require('./global');
 require('./tangular');
+require('./markdown');
 
 // Init directories
 F.dir();
