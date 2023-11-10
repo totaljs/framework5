@@ -490,7 +490,7 @@ function unlink(arr, callback) {
 		if (F.errors.push(obj) > 10)
 			F.errors.shift();
 
-		EMIT('error', obj);
+		F.$events.error && F.emit('error', obj);
 		F.stats.error++;
 	};
 
