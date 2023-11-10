@@ -731,19 +731,33 @@ F.load = async function(types, callback) {
 	}
 
 	if (!types.length || types.includes('env')) {
-		var env = await read(F.path.root('.env'));
+		let env = await read(F.path.root('.env'));
 		env && F.loadenv(env);
 	}
 
 	if (!types.length || types.includes('config')) {
-		var config = await read(F.path.root('config'));
+		let config = await read(F.path.root('config'));
 		config && F.loadconfig(config);
 	}
 
 	if (!types.length || types.includes('resources')) {
-		var resources = await list(F.path.root('resources'), 'resource');
+		let resources = await list(F.path.root('resources'), 'resource');
 		for (let resource of resources)
 			F.loadresource(F.TUtils.getName(resource).replace(/\.resource$/i, ''), await read(resource));
+	}
+
+	if (!types.length || types.includes('jsonschemas')) {
+		let jsonschemas = await list(F.path.root('jsonschemas'), 'json');
+		for (let jsonschema of jsonschemas) {
+			let json = await read(jsonschema);
+			json = json.parseJSON();
+			json && F.newjsonschema(F.TUtils.getName(jsonschema).replace(/\.json$/i, ''), json);
+		}
+		jsonschemas = await list(F.path.root('jsonschemas'), 'txt');
+		for (let jsonschema of jsonschemas) {
+			let txt = await read(jsonschema);
+			txt && F.newjsonschema(F.TUtils.getName(jsonschema).replace(/\.txt$/i, ''), txt);
+		}
 	}
 
 	let loader = ['modules', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'middleware'];
