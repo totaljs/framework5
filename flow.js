@@ -214,6 +214,19 @@ FS.notify = function(controller, id) {
 		$.success();
 };
 
+FS.restart = function(id) {
+	let item = FS.instances[id];
+	if (item) {
+		if (item.flow) {
+			if (item.flow.terminate)
+				item.flow.terminate();
+			else
+				item.flow.kill(9);
+			return true;
+		}
+	}
+};
+
 FS.ping = function() {
 	// ping all services
 	for (let key in FS.instances) {
