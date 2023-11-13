@@ -3164,6 +3164,11 @@ SP.parseConfig = function(def, onerr) {
 		} else
 			subtype = '';
 
+		if (value.substring(0, 7) === 'base64 ' && value.length > 8)
+			value = Buffer.from(value.substring(7).trim(), 'base64').toString('utf8');
+		else if (value.substring(0, 4) === 'hex ' && value.length > 6)
+			value = Buffer.from(value.substring(4).trim(), 'hex').toString('utf8');
+
 		switch (subtype) {
 			case 'string':
 				obj[name] = value;
