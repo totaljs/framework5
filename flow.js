@@ -227,6 +227,10 @@ FS.restart = function(id) {
 	}
 };
 
+FS.save = function(data) {
+	FS.onsave(data);
+};
+
 FS.ping = function() {
 	// ping all services
 	for (let key in FS.instances) {
