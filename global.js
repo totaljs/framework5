@@ -127,3 +127,61 @@ global.NOSQL = F.TNoSQL.nosql;
 global.NEWFORK = F.TWorkers.createfork;
 global.NEWTHREAD = F.TWorkers.createthread;
 global.NEWTHREADPOOL = F.TWorkers.createpool;
+
+// Custom global functionality
+function timeout2(key, a, b, c, d, e) {
+	let tmp = F.temporary.internal[key];
+	if (tmp) {
+		tmp.callback(a, b, c, d, e);
+		delete F.temporary.internal[key];
+	}
+}
+
+global.setTimeout2 = function(id, callback, timeout, limit, a, b, c, d, e) {
+
+	let key = 'timeout2' + id;
+	let internal = F.temporary.internal;
+	let cache = internal[key];
+
+	if (limit > 0) {
+
+		if (cache && cache.count >= limit) {
+			clearTimeout(cache.timer);
+			delete internal[key];
+			callback();
+			return;
+		}
+
+		if (cache) {
+			clearTimeout(cache.timer);
+			cache.count++;
+		} else
+			cache = internal[key] = {};
+
+		cache.callback = callback;
+		cache.timer = setTimeout(timeout2, timeout, key, a, b, c, d, e);
+
+	} else {
+
+		if (cache)
+			clearTimeout(cache.timer);
+		else
+			cache = internal[key] = {};
+
+		cache.callback = callback;
+		cache.timer = setTimeout(timeout2, timeout, key, a, b, c, d, e);
+	}
+};
+
+global.clearTimeout2 = function(id) {
+
+	let key = 'timeout2' + id;
+	let tmp = F.temporary.internal[key];
+
+	if (tmp) {
+		clearTimeout(tmp.timer);
+		delete F.temporary.internal[key];
+	}
+
+	return !!tmp;
+};
