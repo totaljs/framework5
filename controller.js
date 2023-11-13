@@ -998,6 +998,15 @@ function execute(ctrl) {
 		if (ctrl.route.api) {
 			let body = ctrl.body;
 			if (body && typeof(body) === 'object' && body.schema && typeof(body.schema) === 'string') {
+
+				let index = body.schema.indexOf('?');
+				let query = null;
+
+				if (index !== -1) {
+					query = body.schema.substring(index + 1);
+					body.schema = body.schema.substring(0, index);
+				}
+
 				let schema = body.schema.split('/');
 				let endpoint = ctrl.route.api[schema[0]];
 				let params = {};
@@ -1009,6 +1018,7 @@ function execute(ctrl) {
 					body = body.data;
 					if (!body || typeof(body) === 'object') {
 						ctrl.params = params;
+						ctrl.query = query ? query.parseEncoded() : {};
 						F.action(endpoint.actions, body || {}, ctrl).autorespond();
 						return;
 					}

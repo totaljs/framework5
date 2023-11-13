@@ -1159,13 +1159,17 @@ exports.newaction = function(name, obj) {
 	return obj;
 };
 
+function ActionCallerExec(self) {
+	self.exec();
+}
+
 function ActionCaller() {
 	var self = this;
 	self.$ = new Options();
 	self.error = new ErrorBuilder();
 	self.options = {};
 	self.actions = [];
-	setImmediate(self => self.exec(), self);
+	setImmediate(ActionCallerExec, self);
 }
 
 ActionCaller.prototype.debug = function() {
@@ -1271,13 +1275,15 @@ ActionCaller.prototype.exec = function() {
 	if (action.jsquery) {
 		self.error.prefix = 'query.';
 		response = action.jsquery.transform(query, false, self.error);
+		console.log(query, response, action);
 		self.error.prefix = '';
 		if (response.error) {
 			self.cancel();
 			return;
 		}
 		$.query = response.response;
-	}
+	} else
+		$.query = query;
 
 	if (action.jsparams) {
 		self.error.prefix = 'params.';
@@ -1288,7 +1294,8 @@ ActionCaller.prototype.exec = function() {
 			return;
 		}
 		$.params = response.response;
-	}
+	} else
+		$.params = params;
 
 	if (action.jsinput && type !== '-') {
 		response = action.jsinput.transform(payload, type === '%', self.error);
@@ -1297,7 +1304,8 @@ ActionCaller.prototype.exec = function() {
 			return;
 		}
 		$.payload = response.response;
-	}
+	} else
+		$.payload = payload;
 
 	action.action($, $.payload);
 };
