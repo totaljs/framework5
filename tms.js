@@ -8,7 +8,6 @@ var Cache = {
 	subscribers: {},
 	swatchers: {},    // watchers for subscribers
 	scache: {},       // cache for subscribers
-	publishers: {},
 	pcache: {},       // cache for publishers
 	calls: {},
 	socket: null,
@@ -46,7 +45,7 @@ function tmscontroller($) {
 		}
 
 		delete temporary.tmsblocked[client.ip];
-		Cache.publishers = {};
+		client.$subscribers = {};
 		client.tmsready = true;
 		refresh(client);
 	});
@@ -71,9 +70,9 @@ function tmscontroller($) {
 						F.TTMS.subscribe(msg.id, response, client);
 				}
 			} else if (msg.type === 'subscribers' && msg.subscribers instanceof Array) {
-				Cache.publishers = {};
-				for (var i = 0; i < msg.subscribers.length; i++)
-					Cache.publishers[msg.subscribers[i]] = 1;
+				client.$subscribers = {};
+				for (let sub of msg.subscribers)
+					client.$subscribers[sub] = true;
 			} else if (msg.type === 'call' && msg.id) {
 				var tmp = Cache.calls[msg.id];
 				if (tmp) {
@@ -315,9 +314,9 @@ exports.newsubscribe = function(name, schema, callback) {
 };
 
 exports.publish = function(name, value) {
-	if (Cache.socket && Cache.pcache[name] && Cache.publishers[name]) {
+	if (Cache.socket && Cache.pcache[name]) {
 		F.stats.performance.publish++;
-		Cache.socket.send({ type: 'publish', id: name, data: value }, client => client.tmsready);
+		Cache.socket.send({ type: 'publish', id: name, data: value }, client => client.tmsready && client.$subscribers[name]);
 	}
 };
 
