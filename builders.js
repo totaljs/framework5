@@ -196,7 +196,7 @@ Options.prototype.done = function(arg) {
 Options.prototype.invalid = function(error, path, index) {
 	var self = this;
 	self.error.push(error, path, index);
-	self.$callback(error);
+	self.$callback(true);
 };
 
 Options.prototype.cookie = function(name, value, expire, options) {
@@ -321,8 +321,10 @@ ErrorBuilder.prototype.output = function(language = 'default') {
 
 		let err = m.error;
 
-		if (err[0] == '@')
+		if (err == '@')
 			err = F.resource(language, 'T' + (err === '@' ? m.name : err.substring(1)).hash(true).toString(36)) || 'The field "' + m.name + '" is invalid';
+		else if (err[0] === '@')
+			err = F.translate(language, err);
 
 		if (self.replacer) {
 			for (let key in self.replacer)
