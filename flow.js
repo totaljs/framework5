@@ -8,7 +8,7 @@ const REG_BK = /-bk|_bk/i;
 var FS = exports;
 
 FS.module = require('./flow-flowstream');
-FS.version = 1;
+FS.version = 32;
 FS.db = {};
 FS.worker = false;
 FS.instances = {};
