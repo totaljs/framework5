@@ -577,7 +577,7 @@ CMSRender.prototype._render = function(meta, layout, callback) {
 		}
 
 		render(opt, function(response, replace, cache) {
-			widgets[item.indexer] = replace === true ? response == null ? '' : (response + '').replace(/~(BEG|END)~/g, '') : (item.beg + (response || '') + item.end);
+			widgets[item.indexer] = replace === true ? (response == null || response == '' ? '' : (response + '').replace(/~(BEG|END)~/g, '')) : (item.beg + (response || '') + item.end);
 			if (cache)
 				self.cache[opt.cacheid] = widgets[item.indexer];
 			next();
