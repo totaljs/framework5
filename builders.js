@@ -98,7 +98,7 @@ Options.prototype.action = function(schema, payload) {
 Options.prototype.publish = function(value) {
 	var self = this;
 	var name = self.id;
-	if (F.TMS.cache.socket && F.TMS.cache.pcache[name] && F.TMS.cache.publishers[name]) {
+	if (F.TMS.cache.socket && F.TMS.cache.pcache[name]) {
 
 		var tmp = {};
 		if (tmp) {
@@ -109,7 +109,7 @@ Options.prototype.publish = function(value) {
 		}
 
 		F.stats.performance.publish++;
-		F.TMS.cache.socket.send({ type: 'publish', id: name, data: tmp }, client => client.tmsready);
+		F.TMS.cache.socket.send({ type: 'publish', id: name, data: tmp }, client => client.tmsready && client.$subscribers[name]);
 	}
 	return self;
 };
