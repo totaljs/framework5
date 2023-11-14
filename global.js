@@ -51,6 +51,7 @@ global.MAIL = F.mail;
 global.Mail = F.TMail.Mailer;
 global.RESTBuilder = F.TBuilders.RESTBuilder;
 global.ErrorBuilder = F.TBuilders.ErrorBuilder;
+global.DOWNLOAD = F.download;
 
 global.BLOCKED = function($, limit, expire) {
 

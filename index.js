@@ -223,6 +223,7 @@ global.DEF = {};
 	F.path.plugins = path => path ? F.path.$join(F.temporary.directories.plugins, path) : F.temporary.directories.plugins;
 	F.path.directory = (type, path) => path ? F.path.$join(F.temporary.directories[type], path) : F.temporary.directories[type];
 	F.path.tmp = F.path.temp = path => path ? F.path.$join(F.temporary.directories.tmp, path) : F.temporary.directories.tmp;
+	F.path.exists = (path, callback) => callback ? (F.Fs.lstat(path, (err, stats) => callback(err ? false : true, stats ? stats.size : 0, stats ? stats.isFile() : false))) : new Promise(resolve => F.path.exists(path, resolve));
 
 	F.path.$join = function(directory, path) {
 		var key = '$' + directory;
