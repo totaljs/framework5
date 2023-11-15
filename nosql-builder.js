@@ -253,7 +253,7 @@ NoSQLQueryBuilder.prototype.sort = function(sort) {
 
 	if (self.$fields && self.$fields.length) {
 		// Internal hack
-		var meta = F.temporary.other['sort_' + sort];
+		var meta = F.temporary.utils['sort_' + sort];
 		for (var i = 0; i < meta.length; i++) {
 			var sort = meta[i];
 			if (!self.$fieldsall[sort.name]) {
