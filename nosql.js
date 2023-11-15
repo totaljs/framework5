@@ -93,6 +93,17 @@ NoSQL.prototype.find = function(builder) {
 	return builder;
 };
 
+NoSQL.prototype.update = function(builder) {
+	var self = this;
+	if (builder instanceof NoSQLQueryBuilder)
+		builder.db = self;
+	else
+		builder = new NoSQLQueryBuilder(self);
+	self.pending_update.push(builder);
+	setImmediate(next_operation, self, 2);
+	return builder;
+};
+
 NoSQL.prototype.find2 = function(builder) {
 	var self = this;
 	if (builder instanceof NoSQLQueryBuilder)
