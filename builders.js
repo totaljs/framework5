@@ -1277,7 +1277,6 @@ ActionCaller.prototype.exec = function() {
 	if (action.jsquery) {
 		self.error.prefix = 'query.';
 		response = action.jsquery.transform(query, false, self.error);
-		console.log(query, response, action);
 		self.error.prefix = '';
 		if (response.error) {
 			self.cancel();
@@ -1436,6 +1435,12 @@ exports.action = function(name, payload, controller) {
 };
 
 exports.newschema = function(name, callback) {
+
+	if (typeof(callback) === 'string') {
+		F.jsonschemas[name] = F.TUtils.jsonschema(callback, true);
+		return;
+	}
+
 	var $ = {};
 	$.name = name;
 	$.actions = {};
