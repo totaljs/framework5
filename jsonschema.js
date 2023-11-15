@@ -312,7 +312,8 @@ function read_def(ref, definitions) {
 				return obj;
 			}
 		}
-	}
+	} else
+		return F.jsonschemas[ref];
 }
 
 function check_array(meta, error, value, stop, definitions, path) {
@@ -422,11 +423,12 @@ function check_array(meta, error, value, stop, definitions, path) {
 			if (meta.items.$ref) {
 				var ref = read_def(meta.items.$ref, definitions);
 				if (ref) {
-					var newerror = [];
-					tmp = transform(ref, newerror, val);
-					if (newerror.length) {
-						for (var err of newerror)
-							error.push2(ref.$$ID + '.' + err, path, i);
+					var newerror = new F.ErrorBuilder();
+					tmp = transform(ref, newerror, val, false, currentpath + '[' + i + ']');
+					if (newerror.items.length) {
+						for (var err of newerror.items) {
+							error.push2(err.name, err.path, i);
+						}
 					} else if (tmp != null && (!meta.uniqueItems || response.indexOf(tmp) === -1))
 						response.push(tmp);
 					continue;
@@ -574,6 +576,7 @@ function check_object(meta, error, value, response, stop, definitions, path) {
 				}
 				break;
 			case 'object':
+
 				if (prop.properties) {
 					tmp = check_object(prop, error, val, null, null, definitions, currentpath);
 					if (tmp != null) {
@@ -586,11 +589,12 @@ function check_object(meta, error, value, response, stop, definitions, path) {
 					if (prop.$ref) {
 						var ref = read_def(prop.$ref, definitions);
 						if (ref) {
-							var newerror = new ErrorBuilder();
-							tmp = transform(ref, newerror, val);
+							var newerror = new F.ErrorBuilder();
+							tmp = transform(ref, newerror, val, false, currentpath);
 							if (newerror.items.length) {
-								for (var err of newerror.items)
-									error.push(ref.$$ID + '.' + err, '@');
+								for (var err of newerror.items) {
+									error.push2(err.name, err.path);
+								}
 							} else
 								response[key] = tmp;
 							continue;

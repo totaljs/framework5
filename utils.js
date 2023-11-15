@@ -5906,7 +5906,8 @@ String.prototype.toJSONSchema = function(name, url) {
 			required.push(arr[0]);
 		}
 
-		var type = (arr[1] || 'string').toLowerCase().trim();
+		var type = (arr[1] || 'string').trim();
+		// var type = typename.toLowerCase().trim();
 		var size = 0;
 		var isarr = type[0] === '[';
 		if (isarr)
@@ -5960,20 +5961,11 @@ String.prototype.toJSONSchema = function(name, url) {
 				type = type.toLowerCase();
 
 		} else if (type[0] === '@') {
-
-			// other schema
-			var subname = type.substring(1);
-			var schema =  F.jsonschemas[subname];
-
-			if (schema)
-				nestedschema = schema;
-			else
-				throw new Error('Schema "' + subname + '" not found');
-
+			nestedschema = type.substring(1);
 			type = 'object';
 		}
 
-		switch (type) {
+		switch (type.toLowerCase()) {
 			case 'string':
 			case 'uid':
 			case 'guid':
@@ -6053,11 +6045,11 @@ String.prototype.toJSONSchema = function(name, url) {
 
 				if (isarr) {
 					tmp.type = 'array';
-					tmp.items = nestedschema || { type: 'object' };
-				} else if (nestedschema)
-					tmp = nestedschema;
-				else
+					tmp.items = { type: 'object', $ref: nestedschema };
+				} else {
 					tmp.type = 'object';
+					tmp.$ref = nestedschema;
+				}
 
 				break;
 			case 'enum':
