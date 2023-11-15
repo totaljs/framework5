@@ -3958,6 +3958,12 @@ SP.base64ToBuffer = function() {
 	return Buffer.from(self.substring(index), 'base64');
 };
 
+SP.parseDataURI = function() {
+	var self = this;
+	var index = self.indexOf(';');
+	return index == -1 ? null : { type: self.substring(5, index), buffer: Buffer.from(self.substring(self.indexOf(',', index) + 1), 'base64') };
+};
+
 SP.base64ContentType = function() {
 	var self = this;
 	var index = self.indexOf(';');
