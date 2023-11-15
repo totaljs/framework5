@@ -915,7 +915,7 @@ function multipart(ctrl) {
 	}
 
 	var boundary = type.substring(index + 9, end);
-	var parser = F.TUtils.multipartparser(boundary, ctrl, function(err, meta) {
+	var parser = F.TUtils.multipartparser(boundary, ctrl.req, function(err, meta) {
 
 		F.stats.performance.download += meta.size / 1024 / 1024;
 
@@ -957,7 +957,7 @@ function multipart(ctrl) {
 	});
 
 	parser.skipcheck = !F.config.$httpchecktypes;
-	parser.limits.total = ctrl.route.size;
+	parser.limits.total = ctrl.route.size * 1024; // to bytes
 }
 
 function authorize(ctrl) {

@@ -405,7 +405,7 @@ function compareflags(ctrl, routes, auth) {
 		if (route.flags.xhr && !ctrl.xhr)
 			continue;
 
-		if (route.flags.upload && ctrl.datatype !== 'upload')
+		if (route.flags.upload && ctrl.datatype !== 'multipart')
 			continue;
 
 		if (route.flags.mobile && !ctrl.mobile)

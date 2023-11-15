@@ -94,14 +94,14 @@ FP.readjson = function(id, callback) {
 	});
 };
 
-FP.save = FP.insert = function(id, name, filename, callback, custom, expire, headers) {
+FP.save = FP.insert = function(id, name, filename, custom, callback, expire, headers) {
 	var self = this;
 
-	if (callback && typeof(callback) !== 'function') {
+	if (typeof(custom) === 'function') {
 		headers = expire;
-		expire = custom;
-		custom = callback;
-		callback = null;
+		expire = callback;
+		callback = custom;
+		custom = null;
 	}
 
 	if (callback)
