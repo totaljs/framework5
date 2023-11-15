@@ -710,6 +710,8 @@ F.load = async function(types, callback) {
 	await F.TBundles.extract();
 	await F.clear(true);
 
+	process.send && process.send('total:ready');
+
 	if (typeof(types) === 'string')
 		types = types.split(',').trim();
 
@@ -852,7 +854,6 @@ F.load = async function(types, callback) {
 	F.stats.compiled = files.length;
 	F.isloaded = true;
 	DEBUG && F.TSourceMap.refresh();
-	process.send && process.send('total:ready');
 	callback && callback();
 
 	F.emit('ready');
