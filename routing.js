@@ -199,9 +199,12 @@ function Route(url, action, size) {
 		parent = F.routes.routes.findItem('id', t.id);
 
 		var apiroute = { auth: t.auth, params: params, actions: t.actions.join(',') };
+
+		t.apiendpoint = arr[0];
 		if (parent) {
 			parent.api[arr[0]] = apiroute;
 			t.skip = true;
+			t.parent = parent;
 		} else {
 			if (!t.api)
 				t.api = {};
@@ -261,10 +264,27 @@ Route.prototype.remove = function() {
 				F.routes.files.splice(index);
 			break;
 		default:
-			index = F.routes.routes.indexOf(self);
-			if (index !== -1)
-				F.routes.routes.splice(index);
-			delete F.routes.api[self.url.join('/')];
+			if (self.apiendpoint) {
+				if (self.parent) {
+					delete self.parent.api[self.apiendpoint];
+					if (Object.keys(self.parent.api).length == 0) {
+						index = F.routes.routes.indexOf(self.parent);
+						if (index !== -1)
+							F.routes.routes.splice(index);
+					}
+				} else {
+					delete self.api[self.apiendpoint];
+					if (Object.keys(self.api).length == 0) {
+						index = F.routes.routes.indexOf(self);
+						if (index !== -1)
+							F.routes.routes.splice(index);
+					}
+				}
+			} else {
+				index = F.routes.routes.indexOf(self);
+				if (index !== -1)
+					F.routes.routes.splice(index, 1);
+			}
 			break;
 	}
 
