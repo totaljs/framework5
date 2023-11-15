@@ -27,6 +27,8 @@ global.SUCCESS = value => DEF.onSuccess(value);
 global.MEMORIZE = F.memorize;
 global.AUDIT = F.audit;
 global.TRANSLATE = F.translate;
+global.TRANSFORM = F.transform;
+global.NEWTRANSFORM = F.newtransform;
 global.DATA = new F.TQueryBuilder.Controller(true);
 global.DB = () => new F.TQueryBuilder.Controller();
 global.CACHE = F.cache;
