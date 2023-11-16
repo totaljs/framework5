@@ -17,6 +17,7 @@ global.NPMINSTALL = F.npminstall;
 global.COMPONENTATOR = F.componentator;
 global.MERGE = F.merge;
 global.TOUCH = F.touch;
+global.LOCALIZE = F.localize;
 global.AUTH = F.auth;
 global.CLEANUP = F.cleanup;
 global.NEWDB = F.newdb;

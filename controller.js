@@ -992,6 +992,9 @@ function execute(ctrl) {
 		ctrl.params[param.name] = value;
 	}
 
+	if (!ctrl.language && F.def.onLocalize)
+		ctrl.language = F.def.onLocalize(ctrl);
+
 	if (ctrl.route.middleware.length) {
 		middleware(ctrl);
 	} else {
@@ -1062,6 +1065,9 @@ function send_html(ctrl, path) {
 			ctrl.fallback(404);
 			return;
 		}
+
+		if (!ctrl.language && F.def.onLocalize)
+			ctrl.language = F.def.onLocalize(ctrl);
 
 		output.body = F.translate(ctrl.language, output.body);
 

@@ -697,6 +697,10 @@ F.resource = function(language, key) {
 	return language === 'default' ? '' : F.resource('default', key);
 };
 
+F.localize = function(fn) {
+	F.def.onLocalize = fn;
+};
+
 F.auth = function(fn) {
 	if (typeof(fn) === 'object')
 		F.TBuilders.builtinauth(fn);

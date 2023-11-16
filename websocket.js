@@ -960,8 +960,8 @@ function execute(ctrl) {
 		ctrl.params[param.name] = value;
 	}
 
-	if (F.def.onLocale)
-		ctrl.language = F.def.onLocale(ctrl);
+	if (F.def.onLocalize)
+		ctrl.language = F.def.onLocalize(ctrl);
 
 	if (ctrl.route.flags.binary)
 		ctrl.datatype = 'binary';
