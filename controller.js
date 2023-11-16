@@ -120,6 +120,10 @@ Controller.prototype = {
 		return this.headers['x-requested-with'] === 'XMLHttpRequest';
 	},
 
+	get extension() {
+		return this.ext;
+	},
+
 	get ua() {
 		if (this.$ua != null)
 			return this.$ua;
@@ -1319,6 +1323,9 @@ function HttpFile(meta) {
 }
 
 HttpFile.prototype = {
+	get extension() {
+		return this.ext;
+	},
 	get isImage() {
 		return this.type.indexOf('image/') !== -1;
 	},
