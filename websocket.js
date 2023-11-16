@@ -836,6 +836,7 @@ function authorize(ctrl) {
 	if (F.def.onAuthorize) {
 		var opt = new F.TBuilders.Options(ctrl);
 		opt.TYPE = 'auth'; // important
+		opt.query = ctrl.query;
 		opt.iswebsocket = true;
 		opt.next = opt.callback;
 		opt.$callback = function(err, user) {

@@ -5,6 +5,7 @@
 'use strict';
 
 const REG_ARGS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
+const SESSIONSEPARATOR = '\0';
 
 var transforms = { error: {}, restbuilder: {} };
 var restbuilderupgrades = [];
@@ -1532,7 +1533,7 @@ exports.builtinauth = function(opt) {
 		if (!options)
 			options = opt.options;
 		var ctrl = $.controller ? $.controller : $;
-		ctrl.cookie && ctrl.parent && $.cookie(opt.cookie, opt.sign(sessionid, userid), expiration, options);
+		ctrl.cookie && !ctrl.parent && $.cookie(opt.cookie, opt.sign(sessionid, userid), expiration, options);
 	};
 
 	if (!opt.expire)

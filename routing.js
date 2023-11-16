@@ -231,6 +231,11 @@ function Route(url, action, size) {
 	if (parent && parent.size < t.size)
 		parent.size = t.size;
 
+	if (typeof(t.action) === 'string') {
+		t.view = t.action;
+		t.action = null;
+	}
+
 	if (t.wildcard)
 		t.priority -= 50;
 }

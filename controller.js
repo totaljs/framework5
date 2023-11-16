@@ -964,6 +964,7 @@ function authorize(ctrl) {
 	if (F.def.onAuthorize) {
 		var opt = new F.TBuilders.Options(ctrl);
 		opt.TYPE = 'auth'; // important
+		opt.query = ctrl.query;
 		opt.next = opt.callback;
 		opt.$callback = function(err, user) {
 			let auth = user ? 1 : 2;
@@ -1032,6 +1033,10 @@ function execute(ctrl) {
 			if (ctrl.route.actions) {
 				F.action(ctrl.route.actions, ctrl.body, ctrl).autorespond();
 			} else {
+				if (ctrl.route.view) {
+					ctrl.view(ctrl.route.view);
+					return;
+				}
 				let action = ctrl.route.action;
 				if (!action)
 					action = auto_view;
@@ -1042,7 +1047,7 @@ function execute(ctrl) {
 }
 
 function auto_view(ctrl) {
-	ctrl.view(ctrl.split[0] || 'index', ctrl.body);
+	ctrl.view(ctrl.split[0] || 'index');
 }
 
 function send_html(ctrl, path) {
