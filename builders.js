@@ -1450,6 +1450,262 @@ exports.newschema = function(name, callback) {
 	callback($);
 };
 
+exports.builtinauth = function(opt) {
+
+	// opt.secret {String}
+	// opt.ddos {Number}
+	// opt.expire {String}
+	// opt.cookie {String} A cookie name
+	// opt.header {String} A header name
+	// opt.options {Object} A cookie options
+	// opt.strict {Boolean}
+
+	if (opt.strict == null)
+		opt.strict = true;
+
+	// Delegates
+	// opt.onddos = function($)
+	// opt.onread = function({ sessionid: String, userid: String, ua: String }, callback(USER_DATA), $)
+	// opt.onfree = function({ sessions: Array, users: Array })
+	// opt.onlogout = function(sessionid, userid)
+	// opt.onauthorize = function($) must return true for canceling of processing
+
+	opt.sessions = {};
+	opt.blocked = {};
+	opt.pending = {};
+
+	if (!opt.cleaner)
+		opt.cleaner = 5;
+
+	if (!opt.secret)
+		opt.secret = F.secret;
+
+	opt.logout = function($) {
+
+		var id = $;
+
+		if (typeof(id) === 'object')
+			id = $.sessionid;
+
+		if (id) {
+			for (var key in opt.sessions) {
+				var session = opt.sessions[key];
+				if (session.sessionid === id) {
+					delete opt.sessions[key];
+					opt.onlogout && opt.onlogout(session);
+					opt.cookie && !$.controller.parent && $.controller.cookie && $.controller.cookie(opt.cookie, '', '-1 year', opt.options);
+					return true;
+				}
+			}
+		}
+	};
+
+	opt.update = function(userid, fn) {
+		var count = 0;
+		for (var key in opt.sessions) {
+			var session = opt.sessions[key];
+			if (session.userid === userid) {
+				count++;
+				fn(session.data, session);
+			}
+		}
+		return count;
+	};
+
+	opt.refresh = function(userid, exceptsessionid) {
+		var count = 0;
+		for (var key in opt.sessions) {
+			var session = opt.sessions[key];
+			if (session.userid === userid && session.sessionid !== exceptsessionid) {
+				count++;
+				delete opt.sessions[key];
+			}
+		}
+		return count;
+	};
+
+	opt.sign = function(sessionid, userid) {
+		return (sessionid + SESSIONSEPARATOR + userid + SESSIONSEPARATOR + Date.now().toString(36)).encrypt(opt.secret);
+	};
+
+	opt.authcookie = function($, sessionid, userid, expiration, options) {
+		if (!options)
+			options = opt.options;
+		var ctrl = $.controller ? $.controller : $;
+		ctrl.cookie && ctrl.parent && $.cookie(opt.cookie, opt.sign(sessionid, userid), expiration, options);
+	};
+
+	if (!opt.expire)
+		opt.expire = '5 minutes';
+
+	var callpending = function(pending, data) {
+		for (var i = 0; i < pending.length; i++) {
+			if (data)
+				pending[i].success(data);
+			else
+				pending[i].invalid();
+		}
+	};
+
+	opt.auth = function($) {
+
+		if (opt.onauthorize && opt.onauthorize($))
+			return;
+
+		var sessionid = opt.cookie ? $.cookie(opt.cookie) : null;
+		if (!sessionid && opt.header)
+			sessionid = $.controller.headers[opt.header];
+
+		if (!sessionid) {
+
+			if (opt.locale)
+				$.controller.language = opt.locale(null, $.controller);
+
+			$.invalid();
+			return;
+		}
+
+		var id = sessionid.decrypt(opt.secret);
+		if (id) {
+
+			id = id.split(SESSIONSEPARATOR);
+
+			if (!id[0] || !id[1] || !id[2])
+				id = null;
+
+			if (id) {
+				var session = opt.sessions[id[0]];
+				if (session && session.data) {
+					if (!opt.strict || session.ua === $.controller.ua) {
+						$.controller.session = session;
+						$.controller.sessionid = session.sessionid;
+						if (!opt.onsession || !opt.onsession(session, $)) {
+							if (opt.locale)
+								$.controller.language = opt.locale(session.data, $.controller);
+							$.success(session.data);
+						}
+					} else {
+
+						if (opt.locale)
+							$.controller.language = opt.locale(null, $.controller);
+
+						$.invalid();
+						sessionid = null;
+					}
+					return;
+				}
+			}
+		}
+
+		if (opt.ddos && opt.blocked[$.controller.ip] > opt.ddos) {
+			opt.onddos && opt.onddos($);
+			$.invalid();
+			return;
+		}
+
+		if (!id) {
+
+			if (opt.ddos) {
+				if (opt.blocked[$.controller.ip])
+					opt.blocked[$.controller.ip]++;
+				else
+					opt.blocked[$.controller.ip] = 1;
+			}
+
+			opt.cookie && $.controller && !$.controller.parent && $.controller.cookie && $.controller.cookie(opt.cookie, '', '-1 year', opt.options);
+			$.invalid();
+			return;
+		}
+
+		var meta = { ip: $.controller.ip, ua: $.controller.ua, sessionid: id[0], userid: id[1] };
+
+		if (opt.pending[meta.sessionid]) {
+			opt.pending[meta.sessionid].push($);
+			return;
+		}
+
+		opt.pending[meta.sessionid] = [];
+		opt.onread(meta, function(err, data) {
+
+			var pending = opt.pending[meta.sessionid];
+			delete opt.pending[meta.sessionid];
+
+			if (!err && data) {
+
+				$.controller.session = opt.sessions[meta.sessionid] = { sessionid: meta.sessionid, userid: meta.userid, data: data, ua: $.controller.ua, expire: NOW.add(opt.expire) };
+				$.controller.sessionid = meta.sessionid;
+
+				if (opt.locale)
+					$.controller.language = opt.locale(data, $.controller);
+
+				if (!opt.onsession || !opt.onsession($.controller.session, $, true))
+					$.success(data);
+
+				if (pending.length)
+					setImmediate(callpending, pending, data);
+
+			} else {
+
+				if (opt.ddos) {
+					if (opt.blocked[$.controller.ip])
+						opt.blocked[$.controller.ip]++;
+					else
+						opt.blocked[$.controller.ip] = 1;
+				}
+
+				opt.cookie && !$.controller.parent && $.controller.cookie && $.controller.cookie(opt.cookie, '', '-1 year', opt.options);
+				$.invalid();
+
+				if (pending.length)
+					setImmediate(callpending, pending);
+			}
+
+		}, $);
+
+	};
+
+	F.def.onAuthorize = opt.auth;
+
+	F.on('service', function(counter) {
+
+		if (counter % opt.cleaner)
+			return;
+
+		var expired = [];
+		var users_expired = {};
+		var users_live = {};
+
+		for (var key in opt.sessions) {
+			var session = opt.sessions[key];
+			if (session.expire < NOW) {
+				expired.push(key);
+				delete opt.sessions[key];
+				users_expired[session.userid] = 1;
+			} else
+				users_live[session.userid] = 1;
+		}
+
+		if (expired.length) {
+			for (var key in users_expired) {
+				if (users_live[key])
+					delete users_expired[key];
+			}
+		}
+
+		if (expired.length && opt.onfree) {
+			var meta = {};
+			meta.sessions = expired;
+			meta.users = expired.length ? Object.keys(users_expired) : null;
+			opt.onfree && opt.onfree(meta);
+		}
+
+		opt.blocked = {};
+
+	});
+
+	return opt;
+};
+
 exports.RESTBuilder = RESTBuilder;
 exports.ErrorBuilder = ErrorBuilder;
 exports.Options = Options;

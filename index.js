@@ -698,7 +698,10 @@ F.resource = function(language, key) {
 };
 
 F.auth = function(fn) {
-	F.def.onAuthorize = fn;
+	if (typeof(fn) === 'object')
+		F.TBuilders.builtinauth(fn);
+	else
+		F.def.onAuthorize = fn;
 };
 
 F.load = async function(types, callback) {
