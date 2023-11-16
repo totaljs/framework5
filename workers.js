@@ -49,7 +49,7 @@ function process_thread() {
 exports.createthread = function(name, data) {
 	if (!name)
 		return process_thread();
-	var filename = name === '~' ? name.substring(1) : F.path.root('workers/' + name + '.js');
+	var filename = name[0] === '~' ? name.substring(1) : F.path.root('workers/' + name + '.js');
 	var worker = new F.Worker.Worker(filename, { workerData: data, cwd: HEADER, argv: ['--worker'] });
 	worker.kill = worker.exit = () => worker.terminate();
 	return worker;
@@ -60,7 +60,7 @@ exports.createfork = function(name) {
 	if (!name)
 		return process_thread();
 
-	var filename = name === '~' ? name.substring(1) : F.path.root('workers/' + name + '.js');
+	var filename = name[0] === '~' ? name.substring(1) : F.path.root('workers/' + name + '.js');
 	var fork = new F.Child.fork(filename, { cwd: HEADER, argv: ['--worker'] });
 	fork.postMessage = fork.send;
 	fork.terminate = () => fork.kill('SIGTERM');
