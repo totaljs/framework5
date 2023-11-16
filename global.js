@@ -34,7 +34,7 @@ global.DB = () => new F.TQueryBuilder.Controller();
 global.CACHE = F.cache;
 global.NEWACTION = F.TBuilders.newaction;
 global.NEWSCHEMA = F.TBuilders.newschema;
-global.ACTION = F.TBuilders.action;
+global.ACTION = global.EXEC = F.TBuilders.action;
 global.TEMPLATE = F.template;
 global.FILESTORAGE = F.filestorage;
 global.WEBSOCKETCLIENT = F.websocketclient;
