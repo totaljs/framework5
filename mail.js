@@ -225,10 +225,12 @@ Message.prototype.send2 = function(callback) {
 	Mailer.send(F.config.smtp, self, callback);
 };
 
-Message.prototype.send = function(smtp, options, callback) {
-	this.$callback2 = callback;
-	Mailer.send(smtp, options, this);
-	return this;
+Message.prototype.send = function(smtp, options, callback, cache) {
+	var self = this;
+	self.$callback2 = callback;
+	options.server = smtp;
+	Mailer.send(options, self, callback, cache);
+	return self;
 };
 
 Mailer.tls = function(obj, opt) {
