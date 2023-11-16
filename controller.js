@@ -36,6 +36,7 @@ function Controller(req, res) {
 	ctrl.url = ctrl.uri.key;
 	ctrl.released = false;
 	ctrl.downloaded = false;
+	ctrl.protocol = req.connection.encrypted || (req.headers['x-forwarded-protocol'] || req.headers['x-forwarded-proto']) === 'https' ? 'https' : 'http';
 
 	for (let path of ctrl.split)
 		ctrl.split2.push(path.toLowerCase());
@@ -776,7 +777,7 @@ Controller.prototype.free = function() {
 
 Controller.prototype.hostname = function(path) {
 	var ctrl = this;
-	return ctrl.headers.host + ctrl.uri.pathname + (path ? path : '');
+	return ctrl.protocol + '://' + ctrl.headers.host + (path ? path : '');
 };
 
 Controller.prototype.$route = function() {
