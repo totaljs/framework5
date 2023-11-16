@@ -1300,7 +1300,7 @@ ActionCaller.prototype.exec = function() {
 		$.params = params;
 
 	if (action.jsinput && type !== '-') {
-		response = action.jsinput.transform(payload, type === '%', self.error);
+		response = action.jsinput.transform(payload, action.partial, self.error);
 		if (response.error) {
 			self.cancel();
 			return;

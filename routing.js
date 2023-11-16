@@ -149,13 +149,16 @@ function Route(url, action, size) {
 
 	t.priority = 100;
 	t.type = t.method === 'WEBSOCKET' || t.method === 'SOCKET' ? 'websocket' : t.method === 'FILE' ? 'file' : 'route';
+	t.partial = t.method === 'PATCH';
 
 	var endpoint = '';
 
 	if (t.method === 'API') {
 		t.method = 'POST';
-		url = url.replace(/(\*|\+|-)?[a-z0-9-_/{}]+/i, function(text) {
-			endpoint = text.trim().substring(1);
+		url = url.replace(/(\*|\+|-|%)?[a-z0-9-_/{}]+/i, function(text) {
+			let tmp = text.trim();
+			endpoint = tmp.substring(1);
+			t.partial = tmp[0] === '%';
 			return text;
 		});
 	}
