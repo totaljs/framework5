@@ -796,12 +796,12 @@ View.prototype.import = function() {
 				}
 
 				if (m.indexOf('+') === -1) {
-					let key = '/' + m;
+					let absolute = m[0] === '/';
+					let key = absolute ? m : ('/' + m);
 					if (REG_CHECKCSS.test(m)) {
-						tmp = '<link rel="stylesheet" href="/' + (F.routes.virtual[key] ? '' : 'css/') + m + '" />';
+						tmp = '<link rel="stylesheet" href="' + (absolute ? m : ('/' + (F.routes.virtual[key] ? '' : 'css/') + m)) + '" />';
 					} else {
-
-						tmp = '<scri' + 'pt src="/' + (F.routes.virtual[key] ? '' : 'js/') + m + '"></scr' + 'ipt>';
+						tmp = '<scri' + 'pt src="' + (absolute ? m : ('/' + (F.routes.virtual[key] ? '' : 'js/') + m)) + '"></scr' + 'ipt>';
 					}
 				} else {
 					let iscss = REG_CHECKCSS.test(m);
