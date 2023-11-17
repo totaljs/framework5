@@ -5870,7 +5870,7 @@ exports.connect = function(opt, callback) {
 	meta.socket1.on('clientError', error);
 };
 
-String.prototype.toJSONSchema = function(name, url) {
+String.prototype.toJSONSchema = String.prototype.parseSchema = function(name, url) {
 
 	var obj = {};
 	var p = (url || CONF.url || 'https://schemas.totaljs.com/');

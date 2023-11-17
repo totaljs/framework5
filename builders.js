@@ -1438,6 +1438,8 @@ exports.action = function(name, payload, controller) {
 exports.newschema = function(name, callback) {
 
 	if (typeof(callback) === 'string') {
+		if (callback[0] === '@')
+			callback = callback.substring(1);
 		F.jsonschemas[name] = F.TUtils.jsonschema(callback, true);
 		return;
 	}
