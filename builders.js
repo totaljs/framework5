@@ -99,7 +99,7 @@ Options.prototype.action = function(schema, payload) {
 Options.prototype.publish = function(value) {
 	var self = this;
 	var name = self.id;
-	if (F.TMS.cache.socket && F.TMS.cache.pcache[name]) {
+	if (F.TTMS.cache.socket && F.TTMS.cache.pcache[name]) {
 
 		var tmp = {};
 		if (tmp) {
@@ -110,7 +110,7 @@ Options.prototype.publish = function(value) {
 		}
 
 		F.stats.performance.publish++;
-		F.TMS.cache.socket.send({ type: 'publish', id: name, data: tmp }, client => client.tmsready && client.$subscribers[name]);
+		F.TTMS.cache.socket.send({ type: 'publish', id: name, data: tmp }, client => client.tmsready && client.$subscribers[name]);
 	}
 	return self;
 };
@@ -1155,7 +1155,7 @@ exports.newaction = function(name, obj) {
 			}
 		}
 
-		F.TMS.newpublish(name, tmsschema);
+		F.TTMS.newpublish(name, tmsschema);
 	}
 
 	F.makesourcemap && F.makesourcemap();
@@ -1437,9 +1437,10 @@ exports.action = function(name, payload, controller) {
 
 exports.newschema = function(name, callback) {
 
+	if (name[0] === '@')
+		name = name.substring(1);
+
 	if (typeof(callback) === 'string') {
-		if (callback[0] === '@')
-			callback = callback.substring(1);
 		F.jsonschemas[name] = F.TUtils.jsonschema(callback, true);
 		return;
 	}
