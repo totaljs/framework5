@@ -612,10 +612,10 @@ F.loadresource = function(name, value) {
 			if (response && (response instanceof Array || typeof(response) === 'object')) {
 				if (response instanceof Array) {
 					for (let item of response)
-						LOADRESOURCE(item.id || item.key || item.code || item.language, item.value || item.name || item.text || item.body);
+						F.loadresource(item.id || item.key || item.code || item.language, item.value || item.name || item.text || item.body);
 				} else {
 					for (let key in response)
-						LOADRESOURCE(key, response[key]);
+						F.loadresource(key, response[key]);
 				}
 			}
 
