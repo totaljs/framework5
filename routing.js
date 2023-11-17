@@ -155,6 +155,7 @@ function Route(url, action, size) {
 
 	if (t.method === 'API') {
 		t.method = 'POST';
+		t.id = t.id.replace(/^(\+|-)/, '');
 		url = url.replace(/(\*|\+|-|%)?[a-z0-9-_/{}]+/i, function(text) {
 			let tmp = text.trim();
 			endpoint = tmp.substring(1);
@@ -215,6 +216,10 @@ function Route(url, action, size) {
 		}
 
 		delete t.actions;
+
+		// Reset auth
+		t.auth = 0;
+
 	} else
 		t.actions = t.actions.join(',');
 
@@ -446,7 +451,7 @@ function compareflags(ctrl, routes, auth) {
 	}
 }
 
-exports.lookup = function(ctrl, auth, skip) {
+exports.lookup = function(ctrl, auth = 0, skip = false) {
 
 	// auth 0: does not matter
 	// auth 1: logged
@@ -593,7 +598,7 @@ exports.lookupcors = function(ctrl) {
 
 };
 
-exports.lookupfile = function(ctrl, auth) {
+exports.lookupfile = function(ctrl, auth = 0) {
 	if (F.routes.files.length) {
 
 		// fixed
@@ -611,7 +616,7 @@ exports.lookupfile = function(ctrl, auth) {
 	}
 };
 
-exports.lookupwebsocket = function(ctrl, auth, skip = false) {
+exports.lookupwebsocket = function(ctrl, auth = 0, skip = false) {
 
 	// auth 0: does not matter
 	// auth 1: logged

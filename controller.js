@@ -806,7 +806,6 @@ Controller.prototype.$route = function() {
 	}
 
 	let route = F.TRouting.lookup(ctrl);
-
 	if (route) {
 
 		ctrl.route = route;
@@ -1018,8 +1017,14 @@ function execute(ctrl) {
 
 				let schema = body.schema.split('/');
 				let endpoint = ctrl.route.api[schema[0]];
-				let params = {};
 				if (endpoint) {
+
+					if ((endpoint.auth === 1 && ctrl.user == null) || (endpoint.auth === 2 && ctrl.user)) {
+						ctrl.fallback(401);
+						return;
+					}
+
+					let params = {};
 					if (endpoint.params) {
 						for (let m of endpoint.params)
 							params[m.name] = schema[m.index] || '';
