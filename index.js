@@ -1339,7 +1339,7 @@ F.componentator = function(name, components, removeprev = true) {
 
 	F.Fs.lstat(filename, function(err) {
 		if (err)
-			F.download(url, filename, F.error('COMPONENTATOR'));
+			F.download(url, filename, err => err ? F.error(err, 'COMPONENTATOR') : null);
 	});
 
 };
@@ -2203,7 +2203,7 @@ F.backup = function(filename, files, callback, filter) {
 			F.Fs.stat(file, function(err, stats) {
 
 				if (err) {
-					F.error(err, 'BACKUP()', filename);
+					F.error(err, 'F.backup()', filename);
 					next();
 					return;
 				}
@@ -2289,7 +2289,7 @@ F.backup = function(filename, files, callback, filter) {
 					counter++;
 					setImmediate(next);
 				}).on('error', function(err) {
-					F.error(err, 'F.backup', file);
+					F.error(err, 'F.backup()', file);
 					setImmediate(next);
 				});
 
