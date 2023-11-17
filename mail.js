@@ -398,12 +398,12 @@ function writeattachmentbytes(chunk) {
 	}
 }
 
-Mailer.try = function(smtp, options, callback) {
+Mailer.try = function(options, callback) {
 	var self = this;
 	if (callback)
-		return self.send(smtp, options, undefined, callback);
+		self.send(options, undefined, callback);
 	else
-		return new Promise((resolve, reject) => self.send(smtp, options, undefined, err => err ? reject(err) : resolve()));
+		return new Promise((resolve, reject) => self.send(options, undefined, err => err ? reject(err) : resolve()));
 };
 
 Mailer.send2 = function(messages, callback) {
