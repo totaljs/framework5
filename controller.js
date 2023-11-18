@@ -58,7 +58,7 @@ function Controller(req, res) {
 
 	ctrl.response = {
 		status: 200,
-		cache: DEBUG,
+		cache: !DEBUG,
 		minify: true,
 		// minifyjson: false
 		// encrypt: false
@@ -892,7 +892,7 @@ function readfile(filename, callback) {
 function notmodified(ctrl, date) {
 	if (ctrl.headers['if-modified-since'] === date) {
 		ctrl.response.status = 304;
-		ctrl.response.headers['cache-control'] = 'public, max-age=11111111';
+		ctrl.response.headers['cache-control'] = 'public, must-revalidate, max-age=' + F.config.$httpmaxage; // 5 min.
 		ctrl.response.headers['last-modified'] = date;
 		ctrl.flush();
 		F.stats.response.notmodified++;
@@ -1228,9 +1228,12 @@ function send_file(ctrl, path, ext) {
 			return;
 		}
 
-		if (httpcache)
-			ctrl.response.headers.expires = F.config.$httpexpire;
-		else if (ctrl.response.headers.expires)
+		if (httpcache) {
+			if (!ctrl.response.headers.expires)
+				ctrl.response.headers.expires = F.config.$httpexpire;
+			if (!ctrl.response.headers['cache-control'])
+				ctrl.response.headers['cache-control'] = 'public, must-revalidate, max-age=' + F.config.$httpmaxage; // 5 minute cache for revalidate (304)
+		} else if (ctrl.response.headers.expires)
 			delete ctrl.response.headers.expires;
 
 		if (!cache)
