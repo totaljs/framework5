@@ -277,7 +277,7 @@ function parseplus(builder) {
 	return c !== '!' && c !== '?' && c !== '+' && c !== '.' && c !== ':';
 }
 
-function prepare(command, dynamicCommand, functions) {
+function prepare(command, dcommand, functions) {
 
 	var a = command.indexOf('.');
 	var b = command.indexOf('(');
@@ -301,10 +301,10 @@ function prepare(command, dynamicCommand, functions) {
 		index = command.length;
 
 	var name = command.substring(0, index);
-	if (name === dynamicCommand)
+	if (name === dcommand)
 		return 'self.safehtml(' + command + ', 1)';
 
-	if (name[0] === '!' && name.substring(1) === dynamicCommand)
+	if (name[0] === '!' && name.substring(1) === dcommand)
 		return 'self.safehtml(' + command.substring(1) + ')';
 
 	switch (name) {
