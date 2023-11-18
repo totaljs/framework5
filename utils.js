@@ -3238,7 +3238,7 @@ SP.decrypt_uid = function(key) {
 	return exports.decrypt_uid(this, key);
 };
 
-SP.safehtml = function() {
+SP.encode = SP.safehtml = function() {
 	var output = '';
 	for (var i = 0, length = this.length; i < length; i++) {
 		var c = this[i];
