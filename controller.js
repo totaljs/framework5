@@ -892,7 +892,8 @@ function readfile(filename, callback) {
 	});
 }
 
-function notmodified(ctrl, date) {
+Controller.prototype.notmodified = function(date) {
+	var ctrl = this;
 	if (ctrl.headers['if-modified-since'] === date) {
 		ctrl.response.status = 304;
 		ctrl.response.headers['cache-control'] = 'public, must-revalidate, max-age=' + F.config.$httpmaxage; // 5 min.
@@ -901,7 +902,17 @@ function notmodified(ctrl, date) {
 		F.stats.response.notmodified++;
 		return true;
 	}
-}
+};
+
+Controller.prototype.httpcache = function(date) {
+	var ctrl = this;
+	if (!ctrl.response.headers.expires)
+		ctrl.response.headers.expires = F.config.$httpexpire;
+	if (!ctrl.response.headers['cache-control'])
+		ctrl.response.headers['cache-control'] = 'public, must-revalidate, max-age=' + F.config.$httpmaxage; // 5 minute cache for revalidate (304)
+	ctrl.response.headers['last-modified'] = date;
+	ctrl.response.headers.etag = '858' + F.config.$httpetag;
+};
 
 function multipart(ctrl) {
 
@@ -1212,7 +1223,7 @@ function send_file(ctrl, path, ext) {
 	var cache = F.temporary.tmp[ctrl.uri.key];
 
 	// HTTP Cache
-	if (ctrl.response.cache && cache && notmodified(ctrl, cache.date))
+	if (ctrl.response.cache && cache && ctrl.notmodified(cache.date))
 		return;
 
 	var accept = ctrl.headers['accept-encoding'];
