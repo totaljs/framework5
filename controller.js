@@ -22,6 +22,8 @@ function Controller(req, res) {
 
 	var ctrl = this;
 
+	req.controller = ctrl;
+
 	ctrl.req = req;
 	ctrl.res = res;
 	ctrl.method = ctrl.req.method;
@@ -764,14 +766,15 @@ Controller.prototype.free = function() {
 	ctrl.payload = null;
 
 	// Potential problem
-	ctrl.body = null;
-	ctrl.params = null;
-	ctrl.query = null;
+	// ctrl.body = null;
+	// ctrl.params = null;
+	// ctrl.query = null;
 
 	if (ctrl.preventclearfiles != true)
 		ctrl.clear();
 
 	// Clear resources
+	ctrl.req.controller = null;
 
 };
 
