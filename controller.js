@@ -58,7 +58,7 @@ function Controller(req, res) {
 
 	ctrl.response = {
 		status: 200,
-		cache: !DEBUG,
+		cache: global.DEBUG != true,
 		minify: true,
 		// minifyjson: false
 		// encrypt: false
@@ -1090,6 +1090,7 @@ function send_html(ctrl, path) {
 			output.body = F.TMinificators.html(output.body);
 
 		if (DEBUG) {
+			ctrl.response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
 			ctrl.response.headers['last-modified'] = output.date;
 			ctrl.response.headers['content-type'] = 'text/html';
 			ctrl.response.value = output.body;
@@ -1235,6 +1236,9 @@ function send_file(ctrl, path, ext) {
 				ctrl.response.headers['cache-control'] = 'public, must-revalidate, max-age=' + F.config.$httpmaxage; // 5 minute cache for revalidate (304)
 		} else if (ctrl.response.headers.expires)
 			delete ctrl.response.headers.expires;
+
+		if (!httpcache)
+			ctrl.response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
 
 		if (!cache)
 			cache = { date: stats.mtime.toUTCString(), size: stats.size };
