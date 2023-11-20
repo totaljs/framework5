@@ -976,14 +976,8 @@ FP.http = function(ctrl, opt) {
 		var date = obj.date ? obj.date.toUTCString() : '';
 		var response = ctrl.response;
 
-		if (!opt.download && ctrl.headers['if-modified-since'] === date) {
-			response.status = 304;
-			response.headers['cache-control'] = 'public, max-age=11111111';
-			response.headers['last-modified'] = date;
-			ctrl.flush();
-			F.stats.response.notmodified++;
+		if (!opt.download && date && ctrl.notmodified(date))
 			return;
-		}
 
 		// Resized image?
 		if (!DEBUG && F.temporary.path[ctrl.uri.key]) {
@@ -1047,7 +1041,10 @@ FP.http = function(ctrl, opt) {
 
 				response.status = 206;
 				response.headers['accept-ranges'] = 'bytes';
-				response.headers['cache-control'] = DEBUG ? 'private, no-cache, no-store, max-age=0' : 'public, max-age=11111111';
+
+				if (!opt.download && !DEBUG && date)
+					ctrl.httpcache(date);
+
 				response.headers['content-length'] = length;
 				response.headers['content-range'] = 'bytes ' + beg + '-' + end + '/' + obj.size;
 				response.headers['content-type'] = obj.type;
@@ -1060,6 +1057,10 @@ FP.http = function(ctrl, opt) {
 
 			} else {
 				var stream = F.Fs.createReadStream(filename, { start: HEADERSIZE });
+
+				if (!opt.download && !DEBUG && date)
+					ctrl.httpcache(date);
+
 				ctrl.stream(obj.type, stream);
 			}
 		}

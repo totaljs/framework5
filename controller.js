@@ -906,10 +906,16 @@ Controller.prototype.notmodified = function(date) {
 
 Controller.prototype.httpcache = function(date) {
 	var ctrl = this;
+
+	if (date instanceof Date)
+		date = date.toUTCString();
+
 	if (!ctrl.response.headers.expires)
 		ctrl.response.headers.expires = F.config.$httpexpire;
+
 	if (!ctrl.response.headers['cache-control'])
 		ctrl.response.headers['cache-control'] = 'public, must-revalidate, max-age=' + F.config.$httpmaxage; // 5 minute cache for revalidate (304)
+
 	ctrl.response.headers['last-modified'] = date;
 	ctrl.response.headers.etag = '858' + F.config.$httpetag;
 };
