@@ -1440,10 +1440,8 @@ exports.newschema = function(name, callback) {
 	if (name[0] === '@')
 		name = name.substring(1);
 
-	if (typeof(callback) === 'string') {
-		F.jsonschemas[name] = F.TUtils.jsonschema(callback, true);
-		return;
-	}
+	if (typeof(callback) === 'string')
+		return F.jsonschemas[name] = F.TUtils.jsonschema(callback, true);
 
 	var $ = {};
 	$.name = name;
@@ -1451,6 +1449,7 @@ exports.newschema = function(name, callback) {
 	$.action = function(aname, meta) {
 		return $.actions[aname] = F.newaction(name + '/' + aname, meta);
 	};
+
 	callback($);
 };
 
