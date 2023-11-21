@@ -299,7 +299,8 @@ function check_date(meta, error, value, errplus, path) {
 	return value;
 }
 
-function read_def(ref, definitions) {
+function readdef(ref, definitions) {
+
 	if (ref[0] === '#') {
 		var tmp = ref.substring(2).split('/');
 		var def = definitions[tmp[0]];
@@ -421,7 +422,7 @@ function check_array(meta, error, value, stop, definitions, path) {
 			var val = value[i];
 
 			if (meta.items.$ref) {
-				var ref = read_def(meta.items.$ref, definitions);
+				var ref = typeof(meta.items.$ref) === 'object' ? meta.items.$ref :readdef(meta.items.$ref, definitions);
 				if (ref) {
 					var newerror = new F.ErrorBuilder();
 					tmp = transform(ref, newerror, val, false, currentpath + '[' + i + ']');
@@ -587,7 +588,7 @@ function check_object(meta, error, value, response, stop, definitions, path) {
 
 					// check ref
 					if (prop.$ref) {
-						var ref = read_def(prop.$ref, definitions);
+						var ref = typeof(prop.$ref) === 'object' ? prop.$ref : readdef(prop.$ref, definitions);
 						if (ref) {
 							var newerror = new F.ErrorBuilder();
 							tmp = transform(ref, newerror, val, false, currentpath);
