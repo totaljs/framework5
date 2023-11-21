@@ -1096,7 +1096,10 @@ function send_html(ctrl, path) {
 	readfile(path, function(err, output) {
 
 		if (err) {
-			F.temporary.notfound[ctrl.uri.key] = 1;
+
+			if (!DEBUG)
+				F.temporary.notfound[ctrl.uri.key] = 1;
+
 			ctrl.fallback(404);
 			return;
 		}
@@ -1146,7 +1149,10 @@ function send_css(ctrl, path) {
 	readfile(path, function(err, output) {
 
 		if (err) {
-			F.temporary.notfound[ctrl.uri.key] = 1;
+
+			if (!DEBUG)
+				F.temporary.notfound[ctrl.uri.key] = 1;
+
 			ctrl.fallback(404);
 			return;
 		}
@@ -1190,7 +1196,10 @@ function send_js(ctrl, path) {
 	readfile(path, function(err, output) {
 
 		if (err) {
-			F.temporary.notfound[ctrl.uri.key] = 1;
+
+			if (!DEBUG)
+				F.temporary.notfound[ctrl.uri.key] = 1;
+
 			ctrl.fallback(404);
 			return;
 		}
@@ -1242,7 +1251,7 @@ function send_file(ctrl, path, ext) {
 
 		if (err) {
 
-			if (ctrl.response.cache)
+			if (!DEBUG && ctrl.response.cache)
 				F.temporary.notfound[ctrl.uri.key] = true;
 
 			ctrl.fallback(404);
