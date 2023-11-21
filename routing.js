@@ -812,11 +812,11 @@ function proxycreate(proxy, ctrl) {
 	ctrl.$proxy = proxy;
 
 	if (uri.socketPath) {
-		uri.path = proxy.copypath == 'none' || proxy.copypath === 'replace' ? ctrl.url.substring(proxy.url.length - 1) : ctrl.uri.pathname;
+		uri.path = (proxy.copypath == 'none' || proxy.copypath === 'replace' ? ctrl.url.substring(proxy.url.length - 1) : ctrl.uri.pathname) + (ctrl.uri.search ? ((proxy.uri.search && proxy.uri.search.length > 1 ? '&' : '?') + ctrl.uri.search) : '');
 	} else {
 
 		if (proxy.copypath === 'none') {
-			uri.path = proxy.uri.path;
+			uri.path = proxy.uri.path + (ctrl.uri.search ? ((proxy.uri.search && proxy.uri.search.length > 1 ? '&' : '?') + ctrl.uri.search) : '');
 		} else if (proxy.copypath === 'replace')
 			uri.path = ctrl.url.substring(proxy.url.length - 1);
 		else if (proxy.copypath === 'extend') {
