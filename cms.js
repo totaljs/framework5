@@ -22,12 +22,20 @@ function expressions_multiple(body) {
 	while (true) {
 
 		index = body.indexOf('CMS_multiple', index + 12);
-
 		if (index === -1)
 			break;
 
-		var b = body.lastIndexOf('<', index);
-		var tag = body.substring(b + 1, body.indexOf(' ', b));
+		var b = findstart(body, index);
+		if (b === -1)
+			break;
+
+		var end = body.indexOf(' ', b);
+		if (end === -1) {
+			index += 13;
+			continue;
+		}
+
+		var tag = body.substring(b + 1, end);
 
 		var e = body.indexOf('</' + tag + '>', index);
 		var size = e + 3 + tag.length;
@@ -53,6 +61,25 @@ function expressions_multiple(body) {
 	return arr;
 }
 
+function findstart(body, index) {
+
+	var notallowed = [';', '.', '>', ':', '\n', '\r', '\t'];
+
+	for (let i = index; i > -1; i--) {
+
+		let c = body[i];
+		if (c === '<')
+			return i;
+
+		if (notallowed.includes(c))
+			break;
+	}
+
+
+	return -1;
+
+}
+
 function expressions(body) {
 
 	var index = 0;
@@ -65,9 +92,17 @@ function expressions(body) {
 		if (index === -1)
 			break;
 
-		var b = body.lastIndexOf('<', index);
-		var tag = body.substring(b + 1, body.indexOf(' ', b));
+		var b = findstart(body, index);
+		if (b === -1)
+			break;
 
+		var end = body.indexOf(' ', b);
+		if (end === -1) {
+			index += 15;
+			continue;
+		}
+
+		var tag = body.substring(b + 1, end);
 		var e = body.indexOf('</' + tag + '>', index);
 		var size = e + 3 + tag.length;
 		var obj = {};
@@ -93,7 +128,7 @@ function trash(body) {
 			if (index === -1)
 				break;
 
-			var b = body.lastIndexOf('<', index);
+			var b = findstart(body, index);
 			if (b === -1)
 				break;
 
