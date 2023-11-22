@@ -247,7 +247,7 @@ function refresh(client) {
 
 		var calls = [];
 		for (let key in Cache.calls)
-			calls.push({ id: key, schema: F.jsonschemas[Cache.calls[key].schema] });
+			calls.push({ id: key, schema: Cache.calls[key].schema });
 
 		var msg = { type: 'meta', name: F.config.name, subscribe: subscribed, publish: published, subscribers: Object.keys(Cache.subscribers), call: calls };
 		if (client)
