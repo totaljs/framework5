@@ -471,7 +471,7 @@ RESTP.promise = function($) {
 				if ($ && $.invalid)
 					$.invalid(err);
 				else
-					reject(err.reject());
+					reject(err);
 			} else
 				resolve(response);
 		});
