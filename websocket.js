@@ -875,7 +875,7 @@ function middleware(ctrl) {
 
 function prepare(ctrl) {
 
-	ctrl.ondata2 = () => websocket.ondata();
+	ctrl.ondata2 = () => ctrl.ondata();
 
 	var compress = (F.config.$wscompress && ctrl.headers['sec-websocket-extensions'] || '').indexOf('permessage-deflate') !== -1;
 	var header = ctrl.route.protocols && ctrl.route.protocols.length ? (compress ? SOCKET_RESPONSE_PROTOCOL_COMPRESS : SOCKET_RESPONSE_PROTOCOL).format(ctrl.sign(ctrl), ctrl.route.protocols.join(', ')) : (compress ? SOCKET_RESPONSE_COMPRESS : SOCKET_RESPONSE).format(ctrl.sign(ctrl));
