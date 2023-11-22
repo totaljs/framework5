@@ -239,15 +239,11 @@ function refresh(client) {
 		var subscribed = [];
 		var published = [];
 
-		for (let key in Cache.pcache) {
-			let schema = F.jsonschemas[Cache.pcache[key]];
-			published.push({ id: key, schema: schema });
-		}
+		for (let key in Cache.pcache)
+			published.push({ id: key, schema: Cache.pcache[key] });
 
-		for (let key in Cache.scache) {
-			let schema = F.jsonschemas[Cache.scache[key]];
-			subscribed.push({ id: key, schema: schema });
-		}
+		for (let key in Cache.scache)
+			subscribed.push({ id: key, schema: Cache.scache[key] });
 
 		var calls = [];
 		for (let key in Cache.calls)
