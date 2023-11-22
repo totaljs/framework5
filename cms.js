@@ -4,7 +4,7 @@
 
 'use strict';
 
-const SKIP_CLASSES = { CMS_hidden: 1, CMS_mv: 1, CMS_mh: 1, CMS_expression: 1, CMS_multiple: 1 };
+const SKIP_CLASSES = { CMS_hidden: 1, CMS_mv: 1, CMS_mh: 1, CMS_expression: 1, CMS_multiple: 1, CMS_keyword: 1, CMS_monospace: 1 };
 const VERSION = 1;
 
 function clean(html) {
