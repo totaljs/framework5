@@ -578,7 +578,7 @@ exports.lookupcors = function(ctrl) {
 	var origin = ctrl.headers.origin;
 
 	if (!F.config.$cors || (F.config.$cors != '*' && F.config.$cors.indexOf(origin) == -1)) {
-		ctrl.system(400, 'Invalid origin (CORS)');
+		ctrl.fallback(400, 'Invalid origin (CORS)');
 		return false;
 	}
 

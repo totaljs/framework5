@@ -97,7 +97,10 @@ global.LDAP = function(opt, callback) {
 };
 
 global.CORS = function(origin) {
-	CONF.$cors = origin || '*';
+	if (origin[0] === '+')
+		CONF.$cors = (CONF.$cors ? ',' : '') + origin.substring(1);
+	else
+		CONF.$cors = origin || '*';
 };
 
 // Utils
