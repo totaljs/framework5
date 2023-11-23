@@ -2305,15 +2305,12 @@ F.restart = function() {
 	process.send && process.send('total:restart');
 };
 
-F.exit = function(signal) {
+F.exit = function(signal = 15) {
 
 	if (F.isexited)
 		return;
 
 	F.isexited = true;
-
-	if (!signal)
-		signal = 'SIGTERM';
 
 	for (let m in F.workers) {
 		let worker = F.workers[m];
