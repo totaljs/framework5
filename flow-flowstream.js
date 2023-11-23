@@ -594,13 +594,22 @@ Instance.prototype.reload = function(data) {
 
 	if (flow.isworkerthread) {
 
-		if (data.proxypath)
+		if (data.proxypath) {
+
+			if (!data.unixsocket) {
+				data.unixsocket = flow.$schema.unixsocket || makeunixsocket(data.id);
+				flow.$schema.unixsocket = data.unixsocket;
+			}
+
 			PROXIES[data.id] = F.proxy(data.proxypath, data.unixsocket);
+		}
 
 		for (let key in data)
 			flow.$schema[key] = data[key];
+
 		self.proxypath = data.proxypath;
 		flow.postMessage2({ TYPE: 'stream/rewrite', data: data });
+
 	} else {
 		for (let key in data)
 			flow.$schema[key] = data[key];
@@ -1430,7 +1439,7 @@ function init_worker(meta, type, callback) {
 	var worker = type === 'worker' ? (new W.Worker(__filename, { workerData: meta })) : Fork(__filename, forkargs, { serialization: 'json', detached: false });
 	var ischild = false;
 
-	meta.unixsocket = F.isWindows ? ('\\\\?\\pipe\\flowstream' + F.directory.makeid() + meta.id + Date.now().toString(36)) : (F.Path.join(F.Os.tmpdir(), 'flowstream_' + F.directory.makeid() + '_' + meta.id + '_' + Date.now().toString(36) + '.socket'));
+	meta.unixsocket = makeunixsocket(meta.id);
 
 	if (PROXIES[meta.id]) {
 		PROXIES[meta.id].remove();
@@ -3246,6 +3255,10 @@ function initrunning() {
 		}
 	});
 
+}
+
+function makeunixsocket(id) {
+	return F.isWindows ? ('\\\\?\\pipe\\flowstream' + F.directory.makeid() + id + Date.now().toString(36)) : (F.Path.join(F.Os.tmpdir(), 'flowstream_' + F.directory.makeid() + '_' + id + '_' + Date.now().toString(36) + '.socket'));
 }
 
 if (process.argv[1].endsWith('flow-flowstream.js')) {
