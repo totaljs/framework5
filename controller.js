@@ -208,9 +208,8 @@ Controller.prototype.html = function(value) {
 
 	ctrl.response.headers['content-type'] = 'text/html';
 
-	if (value != null) {
+	if (value != null)
 		ctrl.response.value = ctrl.response.minify && F.config.$minifyhtml ? F.TMinificators.html(value) : value;
-	}
 
 	ctrl.flush();
 	F.stats.response.html++;
