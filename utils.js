@@ -6353,7 +6353,7 @@ exports.uidr = function() {
 		var c;
 
 		if (i === 9) {
-			c = F.uidc;
+			c = F.internal.uidc;
 		} else {
 			let index = Math.floor(Math.random() * RANDOM_TEXT.length);
 			c = RANDOM_TEXT[index];
