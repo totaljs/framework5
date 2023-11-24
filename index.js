@@ -1,4 +1,4 @@
-// Total.js core
+// Total.js framework
 // The MIT License
 // Copyright 2012-2023 (c) Peter Širka <petersirka@gmail.com>
 
