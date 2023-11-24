@@ -152,9 +152,11 @@ function Route(url, action, size) {
 	t.partial = t.method === 'PATCH';
 
 	var endpoint = '';
+	var isapi = false;
 
 	if (t.method === 'API') {
 		t.method = 'POST';
+		isapi = true;
 		t.id = t.id.replace(/^(\+|-)/, '');
 		url = url.replace(/(\*|\+|-|%)?[a-z0-9-_/{}]+/i, function(text) {
 			let tmp = text.trim();
@@ -185,8 +187,12 @@ function Route(url, action, size) {
 			t.actions.push(text.trim());
 			return '';
 		}).trim();
-	} else
-		t.actions = url.substring(0, index + 3).replace(/\s{2,}/g, ' ').split(/\s|,/);
+	} else {
+		if (isapi)
+			t.actions = [url.replace(/\+|-|%|#/g, '').trim()];
+		else
+			t.actions = url.substring(0, index + 3).replace(/\s{2,}/g, ' ').split(/\s|,/);
+	}
 
 	var parent = null;
 
