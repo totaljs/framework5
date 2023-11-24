@@ -1,3 +1,7 @@
+// Total.js Markdown
+// The MIT License
+// Copyright 2018-2023 (c) Peter Širka <petersirka@gmail.com>
+
 const REG_DASH = /-{2,}/g;
 const REG_TAGS = /<[^>]*>/g;
 const REG_EMPTYCHAR = /\s|\W/;
