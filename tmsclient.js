@@ -1,3 +1,7 @@
+// Total.js TMS Client
+// The MIT License
+// Copyright 2022-2023 (c) Peter Širka <petersirka@gmail.com>
+
 exports.create = function(url, token, callback) {
 
 	if (typeof(token) === 'function') {
