@@ -1,3 +1,7 @@
+// Total.js Tests
+// The MIT License
+// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+
 var Test = { items: [], count: 0 };
 
 Test.start = function(message) {

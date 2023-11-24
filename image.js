@@ -1,3 +1,7 @@
+// Total.js Images
+// The MIT License
+// Copyright 2016-2023 (c) Peter Širka <petersirka@gmail.com>
+
 'use strict';
 
 const D = F.iswindows ? '"' : '\'';
