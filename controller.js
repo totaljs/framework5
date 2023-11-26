@@ -18,6 +18,8 @@ const CHECK_NOCACHE = { zip: 1, rar: 1 };
 const GZIP_FILE = { memLevel: 9 };
 const GZIP_STREAM = { memLevel: 1 };
 
+const NOCACHE = 'private, no-cache, no-store, max-age=0';
+
 function Controller(req, res) {
 
 	var ctrl = this;
@@ -238,7 +240,7 @@ Controller.prototype.json = function(value, beautify, replacer) {
 
 	var response = ctrl.response;
 	response.headers['content-type'] = 'application/json';
-	response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
+	response.headers['cache-control'] = NOCACHE;
 	response.headers.vary = 'Accept-Encoding, Last-Modified, User-Agent';
 	response.headers.expires = '-1';
 	response.value = JSON.stringify(value, beautify ? '\t' : null, replacer);
@@ -254,7 +256,7 @@ Controller.prototype.jsonstring = function(value) {
 
 	var response = ctrl.response;
 	response.headers['content-type'] = 'application/json';
-	response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
+	response.headers['cache-control'] = NOCACHE;
 	response.headers.vary = 'Accept-Encoding, Last-Modified, User-Agent';
 	response.headers.expires = '-1';
 	response.value = value;
@@ -292,7 +294,7 @@ Controller.prototype.invalid = function(value) {
 	}
 
 	response.headers['content-type'] = 'application/json';
-	response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
+	response.headers['cache-control'] = NOCACHE;
 	response.headers.vary = 'Accept-Encoding, Last-Modified, User-Agent';
 	response.value = JSON.stringify(err.output(ctrl.language));
 	response.status = err.status === 408 ? 503 : err.status;
@@ -1112,7 +1114,7 @@ function send_html(ctrl, path) {
 			output.body = F.TMinificators.html(output.body);
 
 		if (DEBUG) {
-			ctrl.response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
+			ctrl.response.headers['cache-control'] = NOCACHE;
 			ctrl.response.headers['last-modified'] = output.date;
 			ctrl.response.headers['content-type'] = 'text/html';
 			ctrl.response.value = output.body;
@@ -1160,6 +1162,7 @@ function send_css(ctrl, path) {
 			output.body = F.TMinificators.css(output.body);
 
 		if (DEBUG) {
+			ctrl.response.headers['cache-control'] = NOCACHE;
 			ctrl.response.headers['last-modified'] = output.date;
 			ctrl.response.headers['content-type'] = 'text/css';
 			ctrl.response.value = output.body;
@@ -1207,6 +1210,7 @@ function send_js(ctrl, path) {
 			output.body = F.TMinificators.js(output.body);
 
 		if (DEBUG) {
+			ctrl.response.headers['cache-control'] = NOCACHE;
 			ctrl.response.headers['last-modified'] = output.date;
 			ctrl.response.headers['content-type'] = 'text/javascript';
 			ctrl.response.value = output.body;
@@ -1266,7 +1270,7 @@ function send_file(ctrl, path, ext) {
 			delete ctrl.response.headers.expires;
 
 		if (!httpcache)
-			ctrl.response.headers['cache-control'] = 'private, no-cache, no-store, max-age=0';
+			ctrl.response.headers['cache-control'] = NOCACHE;
 
 		if (!cache)
 			cache = { date: stats.mtime.toUTCString(), size: stats.size };
