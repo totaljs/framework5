@@ -51,6 +51,7 @@ const REG_KEYWORD2 = /\n/g;
 const REG_KEYWORD3 = /\W|_/g;
 const REG_BASE = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/;
 const REG_BASE2 = /^|,([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/;
+const REG_NUMBER = /^[0-9,.]$/;
 
 const NEWLINE = '\r\n';
 const DIACRITICSMAP = {};
@@ -194,6 +195,12 @@ exports.parseConfig = function(value) {
 				generated.push(key);
 				break;
 			default:
+
+				if (val === 'true' || val === 'false')
+					val = val === 'true';
+				else if (REG_NUMBER.test(val))
+					val = val.parseFloat();
+
 				cfg[key] = val;
 				break;
 		}
