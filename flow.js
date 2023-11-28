@@ -70,6 +70,7 @@ FS.remove = function(id) {
 };
 
 FS.reload = function(flow, restart = false) {
+
 	var prev = FS.instances[flow.id];
 	if (!prev)
 		return false;

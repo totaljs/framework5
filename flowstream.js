@@ -754,7 +754,7 @@ FP.destroy = function() {
 		self.emit('destroy');
 		self.meta = null;
 		self.$events = null;
-		delete F.flows[self.name];
+		delete F.flowstreams[self.name];
 	});
 
 };
