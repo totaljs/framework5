@@ -583,9 +583,11 @@ exports.lookupcors = function(ctrl) {
 
 	var origin = ctrl.headers.origin;
 
-	if (!F.config.$cors || (F.config.$cors != '*' && F.config.$cors.indexOf(origin) == -1)) {
-		ctrl.fallback(400, 'Invalid origin (CORS)');
-		return false;
+	if (!origin.endsWith(ctrl.headers.host)) {
+		if (!F.config.$cors || (F.config.$cors != '*' && !F.config.$cors.includes(origin))) {
+			ctrl.fallback(400, 'Invalid origin (CORS)');
+			return false;
+		}
 	}
 
 	ctrl.response.headers['access-control-allow-origin'] = origin;
