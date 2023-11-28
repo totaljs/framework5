@@ -63,7 +63,7 @@ exports.listen = function(req, res) {
 	// Pending requests
 	F.temporary.pending.push(ctrl);
 
-	if ((F.def.onCORS || F.config.$cors) && ctrl.headers.origin && !ctrl.headers.origin.endsWith(ctrl.headers.host)) {
+	if (ctrl.headers.origin && (F.def.onCORS || F.config.$cors)) {
 		if (F.TRouting.lookupcors(ctrl))
 			ctrl.$route();
 	} else
