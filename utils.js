@@ -2207,7 +2207,16 @@ SP.hash = function(type, salt) {
 	}
 };
 
-SP.sign = function(key) {
+SP.sign = function(key, check) {
+
+	if (check) {
+		let index = this.lastIndexOf('-');
+		if (index === -1)
+			return null;
+		var id = this.substring(0, index);
+		return id.sign(key) === this ? id : null;
+	}
+
 	return this + '-' + (string_hash(this + (key || '')) >>> 0).toString(36);
 };
 
