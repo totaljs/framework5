@@ -486,7 +486,6 @@ function unlink(arr, callback) {
 		if (err instanceof F.TBuilders.ErrorBuilder) {
 			if (!name)
 				name = err[0].name;
-			err = err.toString();
 		} else if (!name && err.name)
 			name = err.name;
 
