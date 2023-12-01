@@ -184,7 +184,7 @@ Options.prototype.done = function(arg) {
 	return function(err, response) {
 		if (err) {
 			err && self.error.push(err);
-			self.callback();
+			self.callback(null);
 		} else {
 			if (self.TYPE === 'auth')
 				self.callback(arg === true ? response : arg);

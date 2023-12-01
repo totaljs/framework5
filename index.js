@@ -483,7 +483,11 @@ function unlink(arr, callback) {
 
 		NOW = new Date();
 
-		if (!name && err.name)
+		if (err instanceof F.TBuilders.ErrorBuilder) {
+			if (!name)
+				name = err[0].name;
+			err = err.toString();
+		} else if (!name && err.name)
 			name = err.name;
 
 		err = err.toString();
@@ -1347,13 +1351,13 @@ F.componentator = function(name, components, removeprev = true) {
 
 };
 
-F.error = function(err, name, uri) {
+F.error = function(err, name, url) {
 
 	if (!arguments.length)
 		return F.errorcallback;
 
 	if (err)
-		F.def.onError(err, name, uri);
+		F.def.onError(err, name, url);
 };
 
 F.errorcallback = function(err) {
