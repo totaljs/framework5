@@ -78,7 +78,7 @@ FS.reload = function(flow, restart = false) {
 	FS.db[flow.id] = flow;
 
 	var instance = FS.instances[flow.id];
-	instance.worker = flow.worker;
+	instance.workertype = flow.worker;
 	instance.proxypath = flow.proxypath;
 
 	if (restart)
