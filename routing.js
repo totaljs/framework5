@@ -250,8 +250,12 @@ function Route(url, action, size) {
 		t.action = null;
 	}
 
+	if (!t.view)
+		t.view = t.params.length ? t.params[0].name : 'index';
+
 	if (t.wildcard)
 		t.priority -= 50;
+
 }
 
 Route.prototype.compare = function(ctrl) {
