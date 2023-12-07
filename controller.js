@@ -598,6 +598,16 @@ Controller.prototype.proxy = function(opt) {
 
 };
 
+Controller.prototype.done = function(arg) {
+	var ctrl = this;
+	return function(err, response) {
+		if (err)
+			ctrl.invalid(err);
+		else
+			self.callback(DEF.onSuccess(arg === true ? response : arg));
+	};
+};
+
 Controller.prototype.success = function(value) {
 	F.TUtils.success.value = value;
 	this.json(F.TUtils.success);
