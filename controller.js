@@ -604,7 +604,7 @@ Controller.prototype.done = function(arg) {
 		if (err)
 			ctrl.invalid(err);
 		else
-			self.callback(DEF.onSuccess(arg === true ? response : arg));
+			ctrl.json(DEF.onSuccess(arg === true ? response : arg));
 	};
 };
 
