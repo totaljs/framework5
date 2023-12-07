@@ -250,8 +250,8 @@ function Route(url, action, size) {
 		t.action = null;
 	}
 
-	if (!t.view)
-		t.view = t.params.length ? t.params[0].name : 'index';
+	if (!t.view && !t.action && t.method !== 'FILE' && t.method !== 'SOCKET')
+		t.view = t.url[0] && t.url[0] !== '/' ? t.url[0] : 'index';
 
 	if (t.wildcard)
 		t.priority -= 50;
