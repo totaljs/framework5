@@ -103,6 +103,76 @@ global.CORS = function(origin) {
 		CONF.$cors = origin || '*';
 };
 
+global.AJAX = function(url, data, callback) {
+
+	if (typeof(data) === 'function') {
+		callback = data;
+		data = null;
+	}
+
+	if (!callback)
+		return new Promise((resolve, reject) => global.AJAX(url, data, (err, response) => err ? reject(err) : resolve(response)));
+
+	var index = url.indexOf(' ');
+	var opt = {};
+
+	if (index !== -1) {
+		opt.method = url.substring(0, index);
+		opt.url = url.substring(index + 1);
+	} else {
+		opt.method = 'GET';
+		opt.url = url;
+	}
+
+	if (data) {
+		opt.type = 'json';
+		opt.body = JSON.stringify(data);
+	}
+
+	opt.callback = function(err, response) {
+
+		if (err) {
+			callback && callback(err, null, response);
+			return;
+		}
+
+		var type = err ? '' : response.headers['content-type'] || '';
+		if (type) {
+			var index = type.lastIndexOf(';');
+			if (index !== -1)
+				type = type.substring(0, index).trim();
+		}
+
+		var value = null;
+
+		switch (type.toLowerCase()) {
+			case 'text/xml':
+			case 'application/xml':
+				value = response.body ? response.body.parseXML(self.$replace ? true : false) : {};
+				break;
+			case 'application/x-www-form-urlencoded':
+				value = response.body ? DEF.parsers.urlencoded(response.body) : {};
+				break;
+			case 'application/json':
+			case 'text/json':
+				value = response.body ? response.body.parseJSON(true) : null;
+				break;
+			default:
+				value = response.body;
+				break;
+		}
+
+		if (response.status >= 400) {
+			err = value;
+			value = null;
+		}
+
+		delete response.body;
+		callback && callback(err, value, response);
+	};
+	F.TUtils.request(opt);
+};
+
 // Utils
 global.U = F.TUtils;
 global.GUID = F.TUtils.guid;
