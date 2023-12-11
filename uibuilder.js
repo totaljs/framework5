@@ -7,6 +7,11 @@ const REG_STRING = /'|"/g;
 
 exports.compile = async function(opt, callback) {
 
+	// opt.schema {String/Object}
+	// |--- opt.schema.origin {String}
+	// opt.local {Boolean}
+	// opt.download {Boolean}
+
 	if (!callback)
 		return new Promise((resolve, reject) => exports.compile(opt, (err, response) => err ? reject(err) : resolve(response)));
 
