@@ -24,7 +24,11 @@ Options.prototype = {
 	},
 
 	get websocket() {
-		return this.controller.parent;
+		return this.controller ? this.controller.parent : null;
+	},
+
+	get sessionid() {
+		return this.controller ? this.controller.sessionid : null;
 	},
 
 	get value() {
@@ -52,15 +56,15 @@ Options.prototype = {
 	},
 
 	get path() {
-		return (this.controller ? this.controller.pathname : EMPTYARRAY);
+		return this.controller ? this.controller.pathname : EMPTYARRAY;
 	},
 
 	get split() {
-		return (this.controller ? this.controller.split : EMPTYARRAY);
+		return this.controller ? this.controller.split : EMPTYARRAY;
 	},
 
 	get split2() {
-		return (this.controller ? this.controller.split2 : EMPTYARRAY);
+		return this.controller ? this.controller.split2 : EMPTYARRAY;
 	},
 
 	get language() {
@@ -149,8 +153,14 @@ Options.prototype.cancel = function() {
 };
 
 Options.prototype.redirect = function(url) {
-	this.redirect(url);
-	this.cancel();
+	var self = this;
+	self.$callback = null;
+	if (self.controller) {
+		self.controller.redirect(url);
+		self.controller.destroyed = true;
+	}
+	self.cancel();
+	return self;
 };
 
 Options.prototype.audit = function(message, type) {
@@ -1559,10 +1569,12 @@ exports.builtinauth = function(opt) {
 		if (!sessionid && opt.header)
 			sessionid = $.controller.headers[opt.header];
 
+		var localize = opt.locale || opt.localize;
+
 		if (!sessionid) {
 
-			if (opt.locale)
-				$.controller.language = opt.locale(null, $.controller);
+			if (localize)
+				$.controller.language = localize(null, $.controller);
 
 			$.invalid();
 			return;
@@ -1583,14 +1595,14 @@ exports.builtinauth = function(opt) {
 						$.controller.session = session;
 						$.controller.sessionid = session.sessionid;
 						if (!opt.onsession || !opt.onsession(session, $)) {
-							if (opt.locale)
-								$.controller.language = opt.locale(session.data, $.controller);
+							if (localize)
+								$.controller.language = localize(session.data, $.controller);
 							$.success(session.data);
 						}
 					} else {
 
-						if (opt.locale)
-							$.controller.language = opt.locale(null, $.controller);
+						if (localize)
+							$.controller.language = localize(null, $.controller);
 
 						$.invalid();
 						sessionid = null;
@@ -1638,8 +1650,8 @@ exports.builtinauth = function(opt) {
 				$.controller.session = opt.sessions[meta.sessionid] = { sessionid: meta.sessionid, userid: meta.userid, data: data, ua: $.controller.ua, expire: NOW.add(opt.expire) };
 				$.controller.sessionid = meta.sessionid;
 
-				if (opt.locale)
-					$.controller.language = opt.locale(data, $.controller);
+				if (localize)
+					$.controller.language = localize(data, $.controller);
 
 				if (!opt.onsession || !opt.onsession($.controller.session, $, true))
 					$.success(data);
