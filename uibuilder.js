@@ -142,7 +142,7 @@ async function getComponents(schema, used, download) {
 					components[com.id] = render;
 				} else {
 					if (render[0] === '/')
-						render = schema.origin + render;
+						render = (schema.origin || '') + render;
 					let html = await Download(render);
 					if (html)
 						components[com.id] = 'base64 ' + Buffer.from(encodeURIComponent(html), 'utf8').toString('base64');
