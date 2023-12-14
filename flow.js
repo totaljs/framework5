@@ -150,12 +150,6 @@ FS.load = function(flow, callback) {
 
 	FS.module.init(flow, flow.worker, function(err, instance) {
 
-		FS.$events.load && FS.emit('load', instance, flow);
-
-		// instance.httprouting();
-		if (callback)
-			instance.ondone = err => callback(err,  err ? null : instance);
-
 		instance.onerror = FS.onerror;
 
 		instance.onsave = function(data) {
@@ -165,6 +159,12 @@ FS.load = function(flow, callback) {
 		};
 
 		FS.instances[id] = instance;
+
+		// instance.httprouting();
+		instance.ondone = function(err) {
+			FS.$events.load && FS.emit('load', instance, flow);
+			callback && callback(err, err ? null : instance);
+		};
 	});
 
 };

@@ -1266,8 +1266,8 @@ FP.load = function(data, callback) {
 			self.use(data.design, function(err) {
 				self.inc(0);
 				err && error.push(err);
-				callback && callback(err);
 				self.clean();
+				callback && callback(err);
 			});
 
 		});
@@ -1320,8 +1320,8 @@ FP.rewrite = function(data, callback) {
 
 				self.inc(0);
 				err && error.push(err);
-				callback && callback(err);
 				self.clean();
+				callback && callback(err);
 			});
 		});
 	});
