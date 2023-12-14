@@ -1063,7 +1063,7 @@ F.console = function() {
 	print('node_modules  : ' + F.config.$nodemodules);
 	print('====================================================\n');
 
-	if (!F.isWorker) {
+	if (!F.isWorker && F.server) {
 
 		var hostname = F.unixsocket ? ('Socket: ' + F.unixsocket) : '{2}://{0}:{1}/'.format(F.config.$ip, F.config.$port, F.isHTTPS ? 'https' : 'http');
 
@@ -2607,9 +2607,9 @@ process.on('message', function(msg, h) {
 
 	let key;
 
-	if (msg === 'total:debug')
+	if (msg === 'total:debug') {
 		F.TUtils.wait(() => F.isloaded, F.console, 10000, 500);
-	else if (msg === 'total:ping')
+	} else if (msg === 'total:ping')
 		setImmediate(ping);
 	else if (msg === 'total:update') {
 		key = '$update';
