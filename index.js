@@ -983,7 +983,7 @@ F.npminstall = function(name, callback) {
 	if (!callback)
 		return new Promise((resolve, reject) => F.npminstall(name, err => err ? reject(err) : resolve()));
 
-	var path = F.config.$node_modules;
+	var path = F.config.$nodemodules;
 	F.path.mkdir(path, true);
 
 	var index = name.lastIndexOf('@');
