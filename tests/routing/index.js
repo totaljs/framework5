@@ -11,7 +11,6 @@ require('../../test');
 // load web server and test app
 F.http();
 
-
 var url = 'http://0.0.0.0:8000';
 var item = 'HELLO';
 var item2 = 'hello2';
@@ -33,8 +32,7 @@ var methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 // Testing ENDPOINTS
 ROUTE('GET /not/existing/path', ($) => $.plain('ok'));
 ROUTE('GET /uPperCase/', ($) => $.success(true));
-ROUTE('GET /middleware/success/', ($) => $.success(true));
-
+ROUTE('GET /middleware/success/ &testmiddleware', ($) => $.success(true));
 
 items.wait(function(item, next) {
 	ROUTE('GET ' + item.url, function($) {
@@ -130,16 +128,7 @@ ON('ready', function() {
 			});
 		});
 
-		// Middleware
-		arr.push(function(next_fn) {
-			RESTBuilder.GET(url + '/middleware/success/').exec(function(err, res) {
-				Test.print('Middleware', err === null && res && res.success === true ? null : 'Expected Success');
-				next_fn();
-			});
-		});
 
-		// Kenania //	
-		
 		arr.async(function() {
 			
 			next();
