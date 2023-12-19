@@ -1526,8 +1526,12 @@ F.middleware = function(name, fn, assign) {
 					}
 				}
 			} else {
+
 				if (a === 'websocket' || a === 'file' || a === 'route')
 					a += 's';
+				else if (a === 'dynamic')
+					a = 'routes';
+
 				let routes = F.routes[a];
 				if (routes) {
 					for (let route of routes) {

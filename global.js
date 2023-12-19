@@ -30,6 +30,7 @@ global.AUDIT = F.audit;
 global.TRANSLATE = F.translate;
 global.TRANSFORM = F.transform;
 global.NEWTRANSFORM = F.newtransform;
+global.MIDDLEWARE = F.middleware;
 global.DATA = new F.TQueryBuilder.Controller(true);
 global.DB = () => new F.TQueryBuilder.Controller();
 global.CACHE = F.cache;
