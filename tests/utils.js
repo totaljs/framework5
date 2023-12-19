@@ -3,7 +3,8 @@
 require('../index');
 require('../test');
 
-var Exec = require('child_process').exec;
+const Exec = F.Exec;
+
 Test.push('String.prototypes', function(next) {
 	var value, response, correct; // input, outpt, correct
 
@@ -287,13 +288,15 @@ json_value (json) :  { "key": "value" }
 	response = value.format(42, 'Jane', 'ExtraValue');
 	Test.print('String.format() - Extra placeholder values', response === correct ? null : 'Incorrect formatting');
 
+	F.config.secret_uid = '123456';
+
 	value = '123';
 	var key = 'mySecretKey';
-	correct = 'x387rdu2x123';
+	correct = 'xuna106x123';
 	response = value.encrypt_uid(key);
 	Test.print('String.encrypt_uid(key)', correct !== response ? 'Incorrect UID encryption' : null);
 
-	value = 'x387rdu2x123';
+	value = 'xuna106x123';
 	var key = 'mySecretKey';
 	correct = '123';
 	response = value.decrypt_uid(key);
@@ -303,7 +306,6 @@ json_value (json) :  { "key": "value" }
 	value = '<p>Hello, "world" & \'universe\'</p>';
 	correct = '&lt;p&gt;Hello, &quot;world&quot; &amp; &apos;universe&apos;&lt;/p&gt;';
 	response = value.encode();
-	console.log(response);
 	Test.print('String.encode()', correct !== response ? 'Basic encoding failed' : null);
 
 	// Test encoding an empty string
@@ -1554,7 +1556,7 @@ Test.push('Date.prototypes', function(next) {
 	timezone = 'Europe/London';
 	response = value.setTimeZone(timezone);
 	correct = new Date('2023-01-01T12:00:00'); // correct result for 'Europe/London'
-	Test.print('Test  2', response.toString() === correct.toString() ? 'Failed to Test Set Timezone' :  null);
+	Test.print('Test 2', response.toString() === correct.toString() ? 'Failed to Test Set Timezone' :  null);
 
 	// Test 1: Difference in seconds
 	var date = new Date('2023-01-01T12:00:00');
