@@ -8,6 +8,8 @@ require('../../test');
 // File routing
 // Removing routess
 
+F.console = NOOP;
+
 // load web server and test app
 F.http();
 
@@ -34,31 +36,22 @@ ROUTE('GET /not/existing/path', ($) => $.plain('ok'));
 ROUTE('GET /uPperCase/', ($) => $.success(true));
 ROUTE('GET /middleware/success/ &testmiddleware', ($) => $.success(true));
 
-items.wait(function(item, next) {
+items.forEach(function(item) {
 	ROUTE('GET ' + item.url, function($) {
 		$.plain(item.res);
 	});
-	next();
+});
 
-}, function() {
-	console.log('Params test routes Registered successfully!');
-
-	// Register methods
-	methods.wait(function(method, next) {
-		ROUTE(method + ' /methods/', function($) {
-			$.success(true);
-		});
-		next();
-	}, function() {
-		console.log('Http Methods route registered successfully');
+// Register methods
+methods.forEach(function(method, next) {
+	ROUTE(method + ' /methods/', function($) {
+		$.success(true);
 	});
-
 });
 
 ON('ready', function() {
 
-
-	Test.push('Http Routes', function(next) {
+	Test.push('HTTP Routes', function(next) {
 		items.wait(function(item, n) {
 			RESTBuilder.GET(url + item.url).exec(function(err, res, output) {
 				res = output.response;
@@ -70,8 +63,7 @@ ON('ready', function() {
 		});
 	});
 
-
-	Test.push('Http Methods', function(next) {
+	Test.push('HTTP Methods', function(next) {
 
 		methods.wait(function(method, n) {
 			RESTBuilder[method](url + '/methods').exec(function(err, response, output) {
@@ -82,7 +74,6 @@ ON('ready', function() {
 			next()
 		});
 	});
-
 
 	Test.push('RESTBuilder', function(next) {
 
@@ -128,13 +119,9 @@ ON('ready', function() {
 			});
 		});
 
-
 		arr.async(function() {
-			
 			next();
 		})
-
-		
 		
 	});
 
@@ -142,5 +129,5 @@ ON('ready', function() {
 		Test.run(function() {
 			process.exit(0);
 		});
-	}, 3000);
+	}, 500);
 });
