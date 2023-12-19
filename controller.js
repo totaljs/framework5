@@ -838,7 +838,7 @@ Controller.prototype.$route = function() {
 
 			ctrl.req.on('data', function(chunk) {
 				ctrl.payloadsize += chunk.length;
-				if ((ctrl.payloadsize / 1024) > ctrl.route.size) {
+				if (ctrl.payloadsize > ctrl.route.size) {
 					if (!ctrl.toolarge) {
 						ctrl.toolarge = true;
 						delete ctrl.payload;
@@ -992,7 +992,7 @@ function multipart(ctrl) {
 	});
 
 	parser.skipcheck = !F.config.$httpchecktypes;
-	parser.limits.total = ctrl.route.size * 1024; // to bytes
+	parser.limits.total = ctrl.route.size;
 }
 
 function authorize(ctrl) {

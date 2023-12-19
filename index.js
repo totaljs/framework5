@@ -344,7 +344,7 @@ function unlink(arr, callback) {
 	CONF.$httpreqlimit = 0; // request limit per ip
 	CONF.$httpcompress = true;
 	CONF.$httpetag = '';
-	CONF.$httpmaxsize = 256; // 256 kB
+	CONF.$httpmaxsize = 256; // kB
 	CONF.$httprangebuffer = 5120; // 5 MB
 	CONF.$httptimeout = 5; // 5 seconds
 	CONF.$httpfiles = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true, xsd: true, xsl: true, xslt: true };
@@ -376,7 +376,7 @@ function unlink(arr, callback) {
 	CONF.$nodemodules = CONF.$nodemodules.substring(0, CONF.$nodemodules.length - (8 + 7));
 	CONF.$npmcache = '/var/www/.npm';
 	CONF.$python = 'python3';
-	CONF.$wsmaxsize = 256; // 256 kB
+	CONF.$wsmaxsize = 256; // kB
 	CONF.$wscompress = true;
 	CONF.$wsencodedecode = false;
 	CONF.$wsmaxlatency = 2000;
@@ -391,7 +391,7 @@ function unlink(arr, callback) {
 	CONF.$tapilogger = false;
 
 	CONF.$tms = false;
-	CONF.$tmsmaxsize = 256;
+	CONF.$tmsmaxsize = 256; // kB
 	CONF.$tmsurl = '/$tms/';
 	CONF.$tmsclearblocked = 60; // in minutes
 

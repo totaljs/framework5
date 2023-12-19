@@ -367,7 +367,7 @@ F.on('$tms', function() {
 	}
 
 	if ((is && endpoint && F.config.$tms) || (endpoint && F.config.$tms && !Cache.route))
-		Cache.route = F.route('SOCKET ' + endpoint, tmscontroller, F.config.$tmsmaxsize);
+		Cache.route = F.route('SOCKET ' + endpoint, tmscontroller, F.config.$tmsmaxsize * 1024);
 
 	Cache.url = endpoint;
 

@@ -66,7 +66,7 @@ exports.create = function() {
 
 		if (route.flags.upload) {
 			m.upload = true;
-			m.limit = route.size / 1024;
+			m.limit = route.size;
 		}
 
 		if (route.api) {

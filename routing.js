@@ -28,17 +28,17 @@ function parseSizeTimeout(route, value) {
 			route.timeout = number * 60 * 60;
 			break;
 		case 'b':
-			route.size = number / 1024;
-			break;
-		case 'kb':
 			route.size = number;
 			break;
+		case 'kb':
+			route.size = number / 1024;
+			break;
 		case 'gb':
-			route.size = (number * 1024) * 1000;
+			route.size = (number * 1024 * 1024) * 1000;
 			break;
 		case 'mb':
 		default:
-			route.size = number * 1024;
+			route.size = number * 1024 * 1024;
 			break;
 	}
 }
@@ -233,11 +233,11 @@ function Route(url, action, size) {
 	if (!t.size) {
 		switch (t.type) {
 			case 'websocket':
-				t.size = F.config.$wsmaxsize;
+				t.size = F.config.$wsmaxsize * 1024;
 				t.connections = [];
 				break;
 			case 'route':
-				t.size = F.config.$httpmaxsize;
+				t.size = F.config.$httpmaxsize * 1024;
 				break;
 		}
 	}
