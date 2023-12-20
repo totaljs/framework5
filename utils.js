@@ -6007,6 +6007,7 @@ String.prototype.toJSONSchema = String.prototype.parseSchema = function(name, ur
 			case 'color':
 			case 'icon':
 			case 'base64':
+			case 'datauri':
 			case 'safestring':
 			case 'search':
 			case 'text':
