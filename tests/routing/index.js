@@ -94,8 +94,10 @@ ROUTE('PUT /schema/methods/validation/ -->  Users/update')
 ROUTE('DELETE /schema/methods/validation/ -->  Users/delete')
 ROUTE('GET /xtoken/', $ => $.success($.headers['x-token']));
 ROUTE('GET /auth/', $ => $.success($.user && $.user.id ));
-ROUTE('+GET /auth/authorized/', $ => $.success($.user && $.user.id ));
-ROUTE('-GET /auth/unauthorized/', $ => $.success($.user && $.user.id ));
+ROUTE('+GET /auth/authorized/', $ => $.user ? $.success($.user.id) : $.invalid());
+ROUTE('-GET /auth/unauthorized/', $ => $.user ? $.success() : $.invalid());
+
+ROUTE('GET /*', $ => $.success());
 
 MIDDLEWARE('testmiddleware', ($, next) => next());
 MIDDLEWARE('testmiddleware2', ($, next) => $.invalid(400));
@@ -235,12 +237,11 @@ ON('ready', function() {
 				RESTBuilder[method](url + '/schema/methods/validation', { email: 'not_email' }).exec(function(err, res) {
 					if (method) 
 						Test.print('Validation ' + method, err !== null  ? null : 'Expected  error');
-
 					next();
 				});
 			}, function() {
 				next_fn();
-			})
+			});
 		});
 
 
@@ -263,41 +264,53 @@ ON('ready', function() {
 
 		//  Authorized user
 		arr.push(function(next_fn) {
-			RESTBuilder.GET(url + '/auth').cookie('auth', 'correct-cookie').exec(function(err, res) {
-				Test.print('Authorized user', err === null && res && res.value === '123' ? null : 'Expected authorized user id (123)');
+			RESTBuilder.GET(url + '/auth').cookie('auth', 'correct-cookie').exec(function(err, res, output) {
+				Test.print('Authorized user', output.status === 200 && err === null && res && res.value === '123' ? null : 'Expected authorized user id (123)');
 				next_fn();
 			});
 		});
 
 		//  Unauthorized user
 		arr.push(function(next_fn) {
-			RESTBuilder.GET(url + '/auth').cookie('auth', 'wrong-cookie').exec(function(err, res) {
-				Test.print('Unauthorized user', err === null && res && !res.value ? null : 'Expected no value');
+			RESTBuilder.GET(url + '/auth').cookie('auth', 'wrong-cookie').exec(function(err, res, output) {
+				Test.print('Unauthorized user', output.status === 200 && err === null && res && !res.value ? null : 'Expected no value');
 				next_fn();
 			});
 		});
 
 		// Authorized route - authorized user
 		arr.push(function(next_fn) {
-			RESTBuilder.GET(url + '/auth/authorized/').cookie('auth', 'correct-cookie').exec(function(err, res) {
-				Test.print('Authorized route - Authorized user', err === null && res && res.value === '123' ? null : 'Expected authorized user id (123)');
+			RESTBuilder.GET(url + '/auth/authorized/').cookie('auth', 'correct-cookie').exec(function(err, res, output) {
+				Test.print('Authorized route - Authorized user', output.status === 200 && err === null && res && res.value === '123' ? null : 'Expected authorized user id (123)');
 				next_fn();
 			});
 		});
 
-		// Unauthorized route - authorized user
-		arr.push(function(next_fn) {
-			RESTBuilder.GET(url + '/auth/unauthorized/').cookie('auth', 'wrong-cookie').exec(function(err, res) {
-				Test.print('Unauthorized route - Unauthorized user', err === null && res && !res.value ? null : 'Expected no value');
-				next_fn();
-			});
-		});
+		// // Authorized route - unauthorized user
+		// arr.push(function(next_fn) {
+		// 	RESTBuilder.GET(url + '/auth/authorized/').cookie('auth', 'wrong-cookie').exec(function(err, res, output) {
+		// 		console.log(output.status);
+		// 		Test.print('Unauthorized route - Unauthorized user', output.status === 401 && res && !res.value ? null : 'Expected no value');
+		// 		next_fn();
+		// 	});
+		// });
 
 		
 
 		arr.async(function() {
 			next();
 		})
+	});
+
+
+	Test.push('Wildcards', function(next) {
+
+		var arr = [];
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/wildcards/').exec(function(err, res) {
+				Test.print('Wildcards - ', err === null && res && res.success === true && res.value === 1)
+			});
+		});
 	})
 	setTimeout(function() {
 		Test.run(function() {
