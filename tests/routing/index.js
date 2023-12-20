@@ -194,17 +194,33 @@ ON('ready', function() {
 
 		// Method data validation
 		arr.push(function(next_fn) {
-			methods.forEach(function(method) {
+			methods.wait(function(method, next) {
 				RESTBuilder[method.name](url + '/schema/methods/validation').exec(function(err, res) {
 					if (method.validate) 
 						Test.print('Validation ' + method.name, err !== null && !res ? null : 'Expected validation error');
 					else 
 						Test.print('No Validation' + method.name, err === null && res && res.success ? null : 'Expected No validation error');
 
-					next_fn();
 				});
+			}, function() {
+				next_fn();
+			});
+		});
+
+		// PATCH / DELETE with validation (invalid)
+		arr.push(function(next_fn) {
+			var methods = ['PATCH', 'DELETE'];
+
+			methods.wait(function(method, next) {
+				RESTBuilder[method](url + '/schema/methods/validation', { email: 'not_email' }).exec(function(err, res) {
+					if (method) 
+						Test.print('Validation ' + method, err !== null && !res ? null : 'Expected  error');
+				});
+			}, function() {
+				next_fn();
 			})
 		});
+
 
 		arr.async(function() {
 			next();
