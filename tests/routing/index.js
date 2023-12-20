@@ -59,7 +59,6 @@ NEWSCHEMA('@Users', function(schema) {
 
 	schema.action('delete', {
 		name: 'Delete specific user',
-		params: '*id:Number',
 		action: $ => $.success(true)
 	});
 
@@ -190,7 +189,7 @@ ON('ready', function() {
 	Test.push('Routes', function(next) {
 		var arr = [];
 
-		var methods = [{ name: 'GET', validate: false }, { name: 'POST', validate: true }, { name: 'PUT', validate: true }, { name: 'PATCH', validate: false }, { name: 'DELETE', validate: false }];
+		var methods = [{ name: 'GET', validate: false }, { name: 'POST', validate: true }, { name: 'PUT', validate: true }, { name: 'PATCH', validate: true }, { name: 'DELETE', validate: false }];
 
 		// Method data validation
 		arr.push(function(next_fn) {
@@ -199,8 +198,9 @@ ON('ready', function() {
 					if (method.validate) 
 						Test.print('Validation ' + method.name, err !== null && !res ? null : 'Expected validation error');
 					else 
-						Test.print('No Validation' + method.name, err === null && res && res.success ? null : 'Expected No validation error');
+						Test.print('No Validation' + method.name, err === null && res  ? null : 'Expected No validation error');
 
+					next();
 				});
 			}, function() {
 				next_fn();
@@ -214,7 +214,9 @@ ON('ready', function() {
 			methods.wait(function(method, next) {
 				RESTBuilder[method](url + '/schema/methods/validation', { email: 'not_email' }).exec(function(err, res) {
 					if (method) 
-						Test.print('Validation ' + method, err !== null && !res ? null : 'Expected  error');
+						Test.print('Validation ' + method, err !== null && !res.success ? null : 'Expected  error');
+
+					next();
 				});
 			}, function() {
 				next_fn();
