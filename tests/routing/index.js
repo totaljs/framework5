@@ -93,7 +93,8 @@ ROUTE('PATCH /schema/methods/validation/  --> Users/update')
 ROUTE('PUT /schema/methods/validation/ -->  Users/update')
 ROUTE('DELETE /schema/methods/validation/ -->  Users/delete')
 ROUTE('GET /xtoken/', $ => $.success($.headers['x-token']));
-ROUTE('+GET /auth/', $ => $.success($.user && $.user.id ));
+// ROUTE('GET /auth/', $ => $.success($.user && $.user.id ));
+ROUTE('GET /auth/', $ => $.success($.user && $.user.id ));
 
 MIDDLEWARE('testmiddleware', ($, next) => next());
 MIDDLEWARE('testmiddleware2', ($, next) => $.invalid(400));
@@ -267,6 +268,15 @@ ON('ready', function() {
 			});
 		});
 
+		//  unauthorized user
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/auth').cookie('auth', 'wrong-cookie').exec(function(err, res) {
+				Test.print('Unauthorized user', err === null && res && !res.value ? null : 'Expected no value');
+				next_fn();
+			});
+		});
+
+		
 		arr.async(function() {
 			next();
 		})
