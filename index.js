@@ -2671,6 +2671,8 @@ process.on('message', function(msg, h) {
 	F.syshash = (__dirname + '-' + F.Os.hostname() + '-' + F.Os.platform() + '-' + F.Os.arch() + '-' + F.Os.release() + '-' + F.Os.tmpdir() + JSON.stringify(process.versions)).md5();
 	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
 
+	CONF.$total5 = F.Path.dirname(require.resolve('./index'));
+
 	F.cache = require('./cache');
 	F.TImages = require('./images');
 	F.path.fs = F.Fs;

@@ -379,7 +379,7 @@ Controller.prototype.fallback = function(code, err) {
 			ctrl.response.status = 503;
 			if (!view) {
 				F.temporary.views.$pause = view = new F.TViewEngine.View();
-				view.compiled = F.TViewEngine.compile('$pause', F.Fs.readFileSync(F.Path.join(F.config.$nodemodules, 'total5/pause.html'), 'utf8'), false);
+				view.compiled = F.TViewEngine.compile('$pause', F.Fs.readFileSync(F.Path.join(F.config.$total5, 'pause.html'), 'utf8'), false);
 			}
 			view.model = F.paused;
 		} else {
@@ -387,7 +387,7 @@ Controller.prototype.fallback = function(code, err) {
 			view = F.temporary.views.$error;
 			if (!view) {
 				F.temporary.views.$error = view = new F.TViewEngine.View();
-				view.compiled = F.TViewEngine.compile('$error', F.Fs.readFileSync(F.Path.join(F.config.$nodemodules, 'total5/error.html'), 'utf8'), false);
+				view.compiled = F.TViewEngine.compile('$error', F.Fs.readFileSync(F.Path.join(F.config.$total5, 'error.html'), 'utf8'), false);
 			}
 			view.model = { code: code, status: F.TUtils.httpstatus(code), error: err ? (DEBUG ? err.toString() : '') : '' };
 		}
