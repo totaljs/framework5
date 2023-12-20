@@ -29,7 +29,21 @@ var items = [
 ];
 
 var methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+var USER = { id: '123', name: 'Peter Sirka', email: 'petersirka@gmail.com', sa: true };
 
+
+// Auth delegate
+AUTH(function($) {
+	var cookie = $.cookie('auth');
+
+	if (!cookie || cookie !== 'correct-cookie') {
+		$.invalid();
+		return;
+	}
+
+	$.success(USER);
+
+})
 // Schemas
 NEWSCHEMA('@Users', function(schema) {
 	schema.action('list', {
@@ -78,6 +92,9 @@ ROUTE('POST /schema/methods/validation/ -->  Users/insert')
 ROUTE('PATCH /schema/methods/validation/  --> Users/update')
 ROUTE('PUT /schema/methods/validation/ -->  Users/update')
 ROUTE('DELETE /schema/methods/validation/ -->  Users/delete')
+ROUTE('GET /xtoken/', $ => $.success($.headers['x-token']));
+ROUTE('+GET /auth/', $ => $.success($.user && $.user.id ));
+
 MIDDLEWARE('testmiddleware', ($, next) => next());
 MIDDLEWARE('testmiddleware2', ($, next) => $.invalid(400));
 
@@ -230,6 +247,30 @@ ON('ready', function() {
 		})
 	})
 
+	Test.push('Auth', function(next) {
+		var arr = [];
+
+		// X-token
+		arr.push(function(next_fn) {
+			var token = 'token123';
+			RESTBuilder.GET(url + '/xtoken').header('x-token', token).exec(function(err, res) {
+				Test.print('X - Token ', err === null && res && res.value === token ? null : 'Expected value to be ' + token);
+				next_fn();
+			});
+		});
+
+		//  Authorized user
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/auth').cookie('auth', 'correct-cookie').exec(function(err, res) {
+				Test.print('Authorized user', err === null && res && res.value === '123' ? null : 'Expected authorized user id (123)');
+				next_fn();
+			});
+		});
+
+		arr.async(function() {
+			next();
+		})
+	})
 	setTimeout(function() {
 		Test.run(function() {
 			process.exit(0);
