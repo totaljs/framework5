@@ -5989,7 +5989,9 @@ String.prototype.toJSONSchema = String.prototype.parseSchema = function(name, ur
 			type = 'object';
 		}
 
-		switch (type.toLowerCase()) {
+		var ltype = type.toLowerCase();
+
+		switch (ltype) {
 			case 'string':
 			case 'uid':
 			case 'guid':
@@ -6014,13 +6016,13 @@ String.prototype.toJSONSchema = String.prototype.parseSchema = function(name, ur
 				tmp = {};
 				if (isarr) {
 					tmp.type = 'array';
-					tmp.items = { type: 'string', subtype: type === 'text' ? undefined : type };
+					tmp.items = { type: 'string', subtype: ltype === 'text' ? undefined : ltype };
 					if (size)
 						tmp.items.maxLength = size;
 				} else {
 					tmp.type = 'string';
-					if (type !== tmp.type)
-						tmp.subtype = type;
+					if (ltype !== tmp.type)
+						tmp.subtype = ltype;
 					if (size)
 						tmp.maxLength = size;
 				}
@@ -6040,11 +6042,11 @@ String.prototype.toJSONSchema = String.prototype.parseSchema = function(name, ur
 				tmp = {};
 				if (isarr) {
 					tmp.type = 'array';
-					tmp.items = { type: 'number', subtype: type === 'number' ? undefined : type };
+					tmp.items = { type: 'number', subtype: type === 'number' ? undefined : ltype };
 				} else {
 					tmp.type = 'number';
-					if (type !== 'number')
-						tmp.subtype = type;
+					if (ltype !== 'number')
+						tmp.subtype = ltype;
 				}
 
 				break;

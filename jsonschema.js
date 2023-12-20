@@ -135,7 +135,7 @@ function check_string(meta, error, value, errplus, path) {
 				break;
 			case 'datauri':
 				value = value.trim();
-				if (value && !value.isBase64()) {
+				if (value && !value.isBase64(true)) {
 					error.push2(errplus + meta.$$ID, path);
 					return;
 				}
