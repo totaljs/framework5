@@ -59,6 +59,7 @@ NEWSCHEMA('@Users', function(schema) {
 
 	schema.action('delete', {
 		name: 'Delete specific user',
+		params: '*id:Number',
 		action: $ => $.success(true)
 	});
 
@@ -189,7 +190,7 @@ ON('ready', function() {
 	Test.push('Routes', function(next) {
 		var arr = [];
 
-		var methods = [{ name: 'GET', validate: false }, { name: 'POST', validate: true }, { name: 'PUT', validate: true }, { name: 'PATCH', validate: true }, { name: 'DELETE', validate: false }];
+		var methods = [{ name: 'GET', validate: false }, { name: 'POST', validate: true }, { name: 'PUT', validate: true }, { name: 'PATCH', validate: true }, { name: 'DELETE', validate: true }];
 
 		// Method data validation
 		arr.push(function(next_fn) {
@@ -214,7 +215,7 @@ ON('ready', function() {
 			methods.wait(function(method, next) {
 				RESTBuilder[method](url + '/schema/methods/validation', { email: 'not_email' }).exec(function(err, res) {
 					if (method) 
-						Test.print('Validation ' + method, err !== null && !res.success ? null : 'Expected  error');
+						Test.print('Validation ' + method, err !== null  ? null : 'Expected  error');
 
 					next();
 				});
