@@ -1,5 +1,4 @@
 /* eslint-disable */
-
 require('../../index');
 require('../../test');
 // HTTP routing
@@ -31,11 +30,54 @@ var items = [
 
 var methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
+// Schemas
+NEWSCHEMA('@Users', function(schema) {
+	schema.action('list', {
+		name: 'Listing action',
+		action: $ => $.success(true)
+	});
+	
+	schema.action('read', {
+		name: 'Read specific user',
+		params: '*id:Number',
+		action: $ => $.success(true)
+	});
+
+
+	schema.action('insert', {
+		name: 'Insert new lement',
+		input: '*name:Name,*email:Email,phone:Phone',
+		action: ($, model) => $.success(model)
+	});
+
+	schema.action('update', {
+		name: 'Insert new lement',
+		params: '*id:Number',
+		input: '*name:Name,*email:Email,phone:Phone',
+		action: ($, model) => $.success(true)
+	});
+
+	schema.action('delete', {
+		name: 'Delete specific user',
+		params: '*id:Number',
+		action: $ => $.success(true)
+	});
+
+
+
+});
+
+
 // Testing ENDPOINTS
 ROUTE('GET /not/existing/path', ($) => $.plain('ok'));
 ROUTE('GET /uPperCase/', ($) => $.success(true));
 ROUTE('GET /middleware/success/ #testmiddleware', ($) => $.success(true));
 ROUTE('GET /middleware/invalid/ #testmiddleware2', ($) => $.success(true));
+ROUTE('GET /schema/methods/validation/  --> Users/list')
+ROUTE('POST /schema/methods/validation/ -->  Users/insert')
+ROUTE('PATCH /schema/methods/validation/  --> Users/update')
+ROUTE('PUT /schema/methods/validation/ -->  Users/update')
+ROUTE('DELETE /schema/methods/validation/ -->  Users/delete')
 MIDDLEWARE('testmiddleware', ($, next) => next());
 MIDDLEWARE('testmiddleware2', ($, next) => $.invalid(400));
 
@@ -134,22 +176,40 @@ ON('ready', function() {
 		// Middleware invalid
 		arr.push(function(next_fn) {
 			RESTBuilder.GET(url + '/middleware/invalid/').exec(function(err, res) {
-				console.log(err, res);
 				Test.print('Middleware - Invalid', err && err.status === 400  ? null : 'Expected an error');
 				next_fn();
 			});
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.async(function() {
+			next();
+		});
+	});
 
+	Test.push('Routes', function(next) {
+		var arr = [];
+
+		var methods = [{ name: 'GET', validate: false }, { name: 'POST', validate: true }, { name: 'PUT', validate: true }, { name: 'PATCH', validate: false }, { name: 'DELETE', validate: false }];
+
+		// Method data validation
+		arr.push(function(next_fn) {
+			methods.forEach(function(method) {
+				RESTBuilder[method.name](url + '/schema/methods/validation').exec(function(err, res) {
+					if (method.validate) 
+						Test.print('Validation ' + method.name, err !== null && !res ? null : 'Expected validation error');
+					else 
+						Test.print('No Validation' + method.name, err === null && res && res.success ? null : 'Expected No validation error');
+
+					next_fn();
+				});
+			})
 		});
 
 		arr.async(function() {
 			next();
-		});
-		
-	});
+		})
+	})
 
 	setTimeout(function() {
 		Test.run(function() {
