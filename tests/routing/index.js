@@ -34,9 +34,12 @@ var methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 // Testing ENDPOINTS
 ROUTE('GET /not/existing/path', ($) => $.plain('ok'));
 ROUTE('GET /uPperCase/', ($) => $.success(true));
-ROUTE('GET /middleware/success/ &testmiddleware', ($) => $.success(true));
+ROUTE('GET /middleware/success/ #testmiddleware', ($) => $.success(true));
+ROUTE('GET /middleware/invalid/ #testmiddleware2', ($) => $.success(true));
+MIDDLEWARE('testmiddleware', ($, next) => next());
+MIDDLEWARE('testmiddleware2', ($, next) => $.invalid(400));
 
-items.forEach(function(item) {
+items.forEach(function(item	) {
 	ROUTE('GET ' + item.url, function($) {
 		$.plain(item.res);
 	});
@@ -119,9 +122,32 @@ ON('ready', function() {
 			});
 		});
 
+		// Middleware success
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/middleware/success/').exec(function(err, res) {
+				console.log(err, res);
+				Test.print('Middleware - Success', err === null && res && res.success === true ? null : 'Expected success response');
+				next_fn();
+			});
+		});
+
+		// Middleware invalid
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/middleware/invalid/').exec(function(err, res) {
+				console.log(err, res);
+				Test.print('Middleware - Invalid', err && err.status === 400  ? null : 'Expected an error');
+				next_fn();
+			});
+		});
+
+
+		arr.push(function(next_fn) {
+
+		});
+
 		arr.async(function() {
 			next();
-		})
+		});
 		
 	});
 
