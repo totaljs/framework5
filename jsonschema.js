@@ -133,6 +133,14 @@ function check_string(meta, error, value, errplus, path) {
 					return;
 				}
 				break;
+			case 'datauri':
+				value = value.trim();
+				if (value && !value.isBase64(true)) {
+					error.push2(errplus + meta.$$ID, path);
+					return;
+				}
+				value = value ? value.parseDataURI() : null;
+				break;
 			case 'color':
 				value = value.trim();
 				if (value && !REG_COLOR.test(value)) {
