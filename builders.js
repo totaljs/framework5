@@ -175,6 +175,16 @@ Options.prototype.success = function(value) {
 		self.callback(DEF.onSuccess(value));
 };
 
+Options.prototype.successful = function(callback) {
+	var self = this;
+	return function(err, a, b, c) {
+		if (err)
+			self.invalid(err);
+		else
+			callback.call(self, a, b, c);
+	};
+};
+
 Options.prototype.callback = function(value) {
 
 	var self = this;
