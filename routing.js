@@ -100,6 +100,7 @@ function Route(url, action, size) {
 	}
 
 	if (t.method === 'FILE') {
+
 		let types = t.url[t.url.length - 1];
 
 		// fixed filename
@@ -117,6 +118,7 @@ function Route(url, action, size) {
 			for (let type of types)
 				t.ext[type] = 1;
 		}
+
 	} else {
 		t.params = [];
 		index = 0;
