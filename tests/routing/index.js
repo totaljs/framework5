@@ -46,6 +46,7 @@ AUTH(function($) {
 })
 // Schemas
 NEWSCHEMA('@Users', function(schema) {
+
 	schema.action('list', {
 		name: 'Listing action',
 		action: $ => $.success(true)
@@ -56,7 +57,6 @@ NEWSCHEMA('@Users', function(schema) {
 		params: '*id:Number',
 		action: $ => $.success(true)
 	});
-
 
 	schema.action('insert', {
 		name: 'Insert new lement',
@@ -76,11 +76,7 @@ NEWSCHEMA('@Users', function(schema) {
 		params: '*id:Number',
 		action: $ => $.success(true)
 	});
-
-
-
 });
-
 
 // Testing ENDPOINTS
 ROUTE('GET /not/existing/path', ($) => $.plain('ok'));
@@ -97,7 +93,8 @@ ROUTE('GET /auth/', $ => $.success($.user && $.user.id ));
 ROUTE('+GET /auth/authorized/', $ => $.user ? $.success($.user.id) : $.invalid());
 ROUTE('-GET /auth/unauthorized/', $ => $.user ? $.success() : $.invalid());
 
-ROUTE('GET /*', $ => $.success());
+ROUTE('GET /wildcards/*', $ => $.success());
+// ROUTE('GET /wildcards/**', $ => $.success());
 
 MIDDLEWARE('testmiddleware', ($, next) => next());
 MIDDLEWARE('testmiddleware2', ($, next) => $.invalid(400));
@@ -307,11 +304,18 @@ ON('ready', function() {
 
 		var arr = [];
 		arr.push(function(next_fn) {
-			RESTBuilder.GET(url + '/wildcards/').exec(function(err, res) {
+			RESTBuilder.GET(url + '/wildcards/test').exec(function(err, res) {
 				Test.print('Wildcards - ', err === null && res && res.success === true && res.value === 1)
+				next_fn();
 			});
 		});
-	})
+
+
+		arr.async(function() {
+			next();
+		});
+	});
+	
 	setTimeout(function() {
 		Test.run(function() {
 			process.exit(0);
