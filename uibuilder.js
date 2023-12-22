@@ -29,7 +29,7 @@ exports.compile = async function(opt, callback) {
 	if (opt.local) {
 		response.components = used;
 	} else {
-		let components = await getComponents(schema, used, opt.download);
+		let components = await getComponents(opt, used);
 		response.components = components;
 	}
 
@@ -60,7 +60,7 @@ exports.download = async function(opt, callback) {
 		return new Promise((resolve, reject) => exports.download(opt, (err, response) => err ? reject(err) : resolve(response)));
 
 	try {
-		let response = await getComponents2(opt.components, opt.origin);
+		let response = await getComponents2(opt);
 		callback(null, response);
 	} catch (e) {
 		callback(e);
@@ -112,8 +112,10 @@ function parseorigin(url) {
 	return origin;
 }
 
-async function getComponents(schema, used, download) {
+async function getComponents(opt, used) {
 
+	var schema = opt.schema;
+	var download = opt.download;
 	var components = {};
 	var arr = [];
 
@@ -175,8 +177,10 @@ async function getComponents(schema, used, download) {
 	return components;
 }
 
-async function getComponents2(list, origin) {
+async function getComponents2(opt) {
 
+	var list = opt.components;
+	var origin = opt.origin;
 	var components = {};
 	var arr = [];
 
