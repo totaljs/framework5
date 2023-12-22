@@ -413,6 +413,10 @@ exports.sort = function() {
 
 		tmp = cache;
 		let key = route.url.join('/');
+
+		if (route.wildcard)
+			key += '/*';
+
 		if (cache[key])
 			cache[key].push(route);
 		else
@@ -494,8 +498,7 @@ exports.lookup = function(ctrl, auth = 0, skip = false) {
 
 	// Dynamic routes
 	if (tmp.D && !(length === 1 && arr[0] === '/')) {
-		for (var i = 0; i < tmp.D.length; i++) {
-			var r = tmp.D[i];
+		for (let r of tmp.D) {
 			if (r.url.length === length || r.wildcard) {
 				if (r.compare(ctrl)) {
 					if (!routes)
@@ -623,10 +626,20 @@ exports.lookupfile = function(ctrl, auth = 0) {
 		let key = '';
 		for (let i = 0; i < ctrl.split2.length - 1; i++)
 			key += (i ? '/' : '') + ctrl.split2[i];
-
 		let routes = F.routes.filescache[key];
 		if (routes)
 			return compareflags(ctrl, routes, auth);
+
+		// Wildcard
+		let length = ctrl.split2.length;
+		routes = [];
+
+		for (let i = 0; i < length; i++) {
+			let url = ctrl.split2.slice(0, length - i).join('/') + '/*';
+			item = F.routes.filescache[url];
+			if (item)
+				return item[0];
+		}
 	}
 };
 
