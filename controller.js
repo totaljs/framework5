@@ -969,6 +969,7 @@ function multipart(ctrl) {
 			if (index !== -1)
 				file.filename = file.filename.substring(index + 1);
 
+			file.ext = F.TUtils.getExtension(file.filename);
 			ctrl.files.push(file);
 		}
 
