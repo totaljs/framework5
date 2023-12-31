@@ -1422,7 +1422,7 @@ HttpFile.prototype.$move = function(filename, callback) {
 		} else {
 			if (!err) {
 				self.path = filename;
-				self.rem = false;
+				self.removable = false;
 			}
 			callback && callback(err);
 		}
