@@ -876,7 +876,7 @@ F.load = async function(types, callback) {
 F.require = function(name) {
 	if (name.startsWith('node:'))
 		return require(name);
-	return NODE_MODULES[name] ? require('node:' + name) : require(F.Path.join(F.config.$nodemodules, name));
+	return NODE_MODULES[name] ? require('node:' + name) : require(name); // TODO: check functionality without absolute path: require(F.Path.join(F.config.$nodemodules, name))
 };
 
 F.import = function(url, callback) {
