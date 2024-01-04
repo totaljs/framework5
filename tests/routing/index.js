@@ -284,17 +284,15 @@ ON('ready', function() {
 			});
 		});
 
-		// // Authorized route - unauthorized user
-		// arr.push(function(next_fn) {
-		// 	RESTBuilder.GET(url + '/auth/authorized/').cookie('auth', 'wrong-cookie').exec(function(err, res, output) {
-		// 		console.log(output.status);
-		// 		Test.print('Unauthorized route - Unauthorized user', output.status === 401 && res && !res.value ? null : 'Expected no value');
-		// 		next_fn();
-		// 	});
-		// });
+		// Authorized route - unauthorized user
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/auth/authorized/').cookie('auth', 'wrong-cookie').exec(function(err, res, output) {
+				Test.print('Unauthorized route - Unauthorized user', output.status === 401 && res && !res.value ? null : 'Expected no value');
+				next_fn();
+			});
+		});
 
-		
-
+	
 		arr.async(function() {
 			next();
 		})
