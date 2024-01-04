@@ -11,6 +11,7 @@ exports.compile = async function(opt, callback) {
 	// |--- opt.schema.origin {String}
 	// opt.local {Boolean}
 	// opt.download {Boolean}
+	// opt.origin {String}
 
 	if (!callback)
 		return new Promise((resolve, reject) => exports.compile(opt, (err, response) => err ? reject(err) : resolve(response)));
@@ -86,17 +87,25 @@ function getInstances(schema) {
 	return response;
 }
 
-async function Download(url) {
+async function Download(url, local = false) {
 	return new Promise(function(resolve) {
-		let opt = {};
-		opt.url = url;
-		opt.method = 'GET';
-		opt.keepalive = true;
-		opt.insecure = true;
-		opt.callback = function(err, response) {
-			resolve(response.status === 200 ? (response.body.isJSON() ? response.body.parseJSON(true) : response.body) : '');
-		};
-		REQUEST(opt);
+
+		if (local && url[0] === '~') {
+			// File on HDD (potential dangerous)
+			F.Fs.readFile(url.substring(1), 'utf8', function(err, response) {
+				resolve(err ? '' : (response.isJSON() ? response.parseJSON(true) : response));
+			});
+		} else {
+			let opt = {};
+			opt.url = url;
+			opt.method = 'GET';
+			opt.keepalive = true;
+			opt.insecure = true;
+			opt.callback = function(err, response) {
+				resolve(response.status === 200 ? (response.body.isJSON() ? response.body.parseJSON(true) : response.body) : '');
+			};
+			REQUEST(opt);
+		}
 	});
 }
 
@@ -128,10 +137,10 @@ async function getComponents(opt, used) {
 			continue;
 
 		let url = com.value;
-		let origin = schema.origin;
+		let origin = opt.origin || schema.origin;
 
 		if (url[0] === '/') {
-			url = schema.origin + url;
+			url = origin + url;
 		} else
 			origin = parseorigin(url);
 
