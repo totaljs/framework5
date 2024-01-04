@@ -7,6 +7,7 @@
 const IMAGES = { jpg: 1, png: 1, gif: 1, svg: 1, jpeg: 1, heic: 1, heif: 1, webp: 1, tiff: 1, bmp: 1 };
 const HEADERSIZE = 2000;
 const MKDIR = { recursive: true };
+const READDIR = { withFileTypes: true };
 const GZIP_FILE = { memLevel: 9 };
 
 const REG_RANGE = /bytes=/;
@@ -435,7 +436,7 @@ FP._readbuffer = function(id, callback) {
 FP.browse = function(callback) {
 	var db = NOSQL(this.logger).find();
 	if (callback)
-		db.$callback = callback;
+		db.main.callback = callback;
 	return db;
 };
 
@@ -743,11 +744,11 @@ FP._clear = function(callback) {
 	return self;
 };
 
-FP.stream = function(onfile, callback, workers) {
+FP.stream = function(onfile, callback, workers = 2) {
 
 	var self = this;
 
-	F.Fs.readdir(self.directory, function(err, response) {
+	F.Fs.readdir(self.directory, READDIR, function(err, response) {
 
 		if (err) {
 			callback();
@@ -758,15 +759,33 @@ FP.stream = function(onfile, callback, workers) {
 
 		response.wait(function(item, next) {
 
-			if (item.length !== 4) {
+			if (!item.isDirectory()) {
 				next();
 				return;
 			}
 
-			F.Fs.readdir(F.Path.join(self.directory, item), function(err, files) {
+			if (item.name.length !== 4) {
+				next();
+				return;
+			}
+
+			F.Fs.readdir(F.Path.join(self.directory, item.name), READDIR, function(err, files) {
 				if (files instanceof Array) {
 					files.wait(function(item, next) {
-						var id = item.substring(0, item.lastIndexOf('.'));
+
+						if (!item.isFile()) {
+							next();
+							return;
+						}
+
+						let index = item.name.lastIndexOf('.');
+
+						if (item.name.substring(index) !== '.file') {
+							next();
+							return;
+						}
+
+						let id = item.name.substring(0, index);
 						self.read(id, function(err, meta) {
 							if (meta) {
 								meta.id = id;

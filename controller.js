@@ -969,6 +969,7 @@ function multipart(ctrl) {
 			if (index !== -1)
 				file.filename = file.filename.substring(index + 1);
 
+			file.ext = F.TUtils.getExtension(file.filename);
 			ctrl.files.push(file);
 		}
 
@@ -1421,7 +1422,7 @@ HttpFile.prototype.$move = function(filename, callback) {
 		} else {
 			if (!err) {
 				self.path = filename;
-				self.rem = false;
+				self.removable = false;
 			}
 			callback && callback(err);
 		}
