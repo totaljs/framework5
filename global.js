@@ -98,10 +98,12 @@ global.LDAP = function(opt, callback) {
 };
 
 global.CORS = function(origin) {
-	if (origin && origin[0] === '+')
-		CONF.$cors = (CONF.$cors ? ',' : '') + origin.substring(1);
-	else
+	if (origin && origin[0] === '+') {
+		if (CONF.$cors !== '*')
+			CONF.$cors = (CONF.$cors ? ',' : '') + origin.substring(1);
+	} else
 		CONF.$cors = origin || '*';
+	F.emit('$cors');
 };
 
 global.AJAX = function(url, data, callback) {

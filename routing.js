@@ -590,10 +590,27 @@ exports.lookupcors = function(ctrl) {
 		return false;
 	}
 
-	var origin = ctrl.headers.origin;
+	let origin = ctrl.headers.origin;
 
-	if (!origin.endsWith(ctrl.headers.host)) {
-		if (!F.config.$cors || (F.config.$cors != '*' && !F.config.$cors.includes(origin))) {
+	if (F.config.$cors !== '*' && !origin.endsWith(ctrl.headers.host)) {
+
+		let resume = false;
+		let cors = F.temporary.cors;
+
+		if (cors) {
+			if (cors.strict.length && cors.strict.includes(origin)) {
+				resume = true;
+			} else if (cors.wildcard.length) {
+				for (let m of cors.wildcard) {
+					if (origin.includes(m)) {
+						resume = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if (!resume) {
 			ctrl.fallback(400, 'Invalid origin (CORS)');
 			return false;
 		}

@@ -602,6 +602,7 @@ F.loadconfig = function(value) {
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = F.config.$insecure ? '0' : '1';
 	F.logger(F.config.$logger == true);
 	F.dir();
+	F.emit('$cors');
 	F.emit('$tms');
 	F.emit('$reconfigure');
 };
@@ -2727,5 +2728,25 @@ require('./markdown');
 
 // Init directories
 F.dir();
+
+// Init CORS
+F.on('$cors', function() {
+
+	var arr = (F.config.$cors || '').toLowerCase().split(',').trim();
+	var wildcard = [];
+	var strict = [];
+
+	for (let i = 0; i < arr.length; i++) {
+		let val = arr[i];
+		if (val !== '*') {
+			if (val[0] === '*' && val.length > 1)
+				wildcard.push(val.substring(1));
+			else
+				strict.push(val);
+		}
+	}
+
+	F.temporary.cors = F.config.$cors === '*' ? null : { wildcard: wildcard, strict: strict };
+});
 
 module.exports = F;
