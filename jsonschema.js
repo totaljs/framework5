@@ -18,7 +18,7 @@ function check_string(meta, error, value, errplus, path) {
 	var type = typeof(value);
 
 	if (type !== 'string')
-		value = value ? (value + '') : null;
+		value = value ? (value + '') : meta.nullable ? null : '';
 
 	if (errplus == null)
 		errplus = '';
