@@ -37,7 +37,7 @@ function check_string(meta, error, value, errplus, path) {
 	}
 
 	if (value == null)
-		return;
+		return null;
 
 	var len = value.length;
 
@@ -563,10 +563,8 @@ function check_object(meta, error, value, response, stop, definitions, path) {
 			case 'boolean':
 			case 'bool':
 				tmp = check_boolean(prop, error, val, null, currentpath);
-				if (tmp != null) {
-					response[key] = tmp;
-					count++;
-				}
+				response[key] = tmp == true;
+				count++;
 				break;
 			case 'date':
 				tmp = check_date(prop, error, val, null, currentpath);
@@ -575,15 +573,12 @@ function check_object(meta, error, value, response, stop, definitions, path) {
 				break;
 			case 'string':
 				tmp = check_string(prop, error, val, null, currentpath);
-				if (tmp != null) {
-
-					if (!tmp && prop.subtype === 'uid')
-						tmp = null;
-
-					response[key] = tmp;
-					count++;
-				}
+				if (tmp == '' && prop.nullable)
+					tmp = null;
+				response[key] = tmp;
+				count++;
 				break;
+
 			case 'object':
 
 				if (prop.properties) {

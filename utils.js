@@ -72,7 +72,7 @@ const REG_TIME = /am|pm/i;
 const REG_XMLKEY = /\[|\]|:|\.|_/g;
 const REG_HEADERPARSER = /(name|filename)=".*?"|content-type:\s[a-z0-9-./+]+/ig;
 const HEADEREND = Buffer.from('\r\n\r\n', 'ascii');
-const JSCHEMAS_NULLABLE = { json: 1, base64: 1, guid: 1, datauri: 1, uid: 1 };
+const JSCHEMAS_NULLABLE = { json: 1, base64: 1, guid: 1, datauri: 1, uid: 1, string2: 1 };
 
 exports.MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 exports.DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -5993,6 +5993,7 @@ String.prototype.toJSONSchema = String.prototype.parseSchema = function(name, ur
 		var ltype = type.toLowerCase();
 
 		switch (ltype) {
+			case 'string2':
 			case 'string':
 			case 'uid':
 			case 'guid':
@@ -6022,6 +6023,7 @@ String.prototype.toJSONSchema = String.prototype.parseSchema = function(name, ur
 						tmp.items.maxLength = size;
 				} else {
 					tmp.type = 'string';
+					tmp.nullable = JSCHEMAS_NULLABLE[ltype];
 					if (ltype !== tmp.type)
 						tmp.subtype = ltype;
 					if (size)
