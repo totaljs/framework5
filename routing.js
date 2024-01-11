@@ -797,7 +797,7 @@ Proxy.prototype.remove = function() {
 exports.proxy = function(url, target) {
 
 	if (!target) {
-		let index = F.routes.proxies.findIndex('url', url.toLowerCase());
+		let index = F.routes.proxies.TfindIndex('url', url.toLowerCase());
 		if (index !== -1)
 			F.routes.proxies.splice(index, 1);
 		return;

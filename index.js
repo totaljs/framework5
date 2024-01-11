@@ -1850,7 +1850,7 @@ F.newjsonschema = function(name, obj) {
 F.newtransform = function(name, action, id) {
 	if (action == null) {
 		let items = F.transformations[name];
-		let index = items.findIndex('id', id);
+		let index = items.TfindIndex('id', id);
 		if (index !== -1) {
 			items.splice(index, 1);
 			if (!items.length)
