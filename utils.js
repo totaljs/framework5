@@ -3297,6 +3297,7 @@ SP.arg = SP.args = function(obj, encode, def) {
 		def = encode;
 	var isfn = typeof(encode) === 'function';
 	return this.replace(REG_ARGS, function(text) {
+
 		// Is double bracket?
 		var l = text[1] === '{' ? 2 : 1;
 		var key = text.substring(l, text.length - l).trim();
