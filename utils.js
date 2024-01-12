@@ -3443,6 +3443,18 @@ SP.isUID = function() {
 	return false;
 };
 
+// Remove the trailing slash
+SP.tslash = function() {
+	var t = this;
+
+	for (var i = t.length - 1; i > 0; i--) {
+		if (t[i] !== '/' || i === 1)
+			return t.substring(0, i + 1);
+	}
+
+	return t;
+};
+
 SP.parseUID = function() {
 	var self = this;
 	var obj = {};
