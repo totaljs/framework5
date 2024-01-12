@@ -597,9 +597,6 @@ F.loadconfig = function(value) {
 	if (smtp)
 		F.config.smtp = smtp;
 
-	if (!F.config.$nodemodules)
-		F.config.$nodemodules = PATH.root('node_modules');
-
 	process.env.NODE_TLS_REJECT_UNAUTHORIZED = F.config.$insecure ? '0' : '1';
 	F.logger(F.config.$logger == true);
 	F.dir();
@@ -1044,7 +1041,7 @@ F.console = function() {
 	var memory = process.memoryUsage();
 	var nodemodules = require.resolve('./index');
 
-	nodemodules = nodemodules.substring(0, CONF.$nodemodules.length - (8 + 7));
+	nodemodules = nodemodules.substring(0, nodemodules.length - (8 + 7));
 
 	print('====================================================');
 	print('PID           : ' + process.pid);
@@ -2697,6 +2694,7 @@ process.on('message', function(msg, h) {
 	CONF.secret_uid = F.syshash.substring(10);
 	CONF.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
 	CONF.$cryptoiv = Buffer.from(F.syshash).slice(0, 16);
+	CONF.$nodemodules = F.Path.join(F.directory, 'node_modules');
 
 	// Methods
 	F.route = F.TRouting.route;
