@@ -2667,7 +2667,9 @@ process.on('message', function(msg, h) {
 	F.TCluster = require('./cluster');
 
 	// Settings
-	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
+	// F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
+	F.directory = F.TUtils.$normalize(process.cwd());
+
 	F.is = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
 	F.isWorker = process.env.PASSENGER_APP_ENV ? false : F.Cluster.isWorker;
 	F.syshash = (__dirname + '-' + F.Os.hostname() + '-' + F.Os.platform() + '-' + F.Os.arch() + '-' + F.Os.release() + '-' + F.Os.tmpdir() + JSON.stringify(process.versions)).md5();
