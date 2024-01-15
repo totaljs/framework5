@@ -203,7 +203,7 @@ Options.prototype.done = function(arg) {
 	var self = this;
 	return function(err, response) {
 		if (err) {
-			err && self.error.push(err);
+			self.error.push(err);
 			self.callback(null);
 		} else {
 			if (self.TYPE === 'auth')
