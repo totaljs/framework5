@@ -210,9 +210,10 @@ function Route(url, action, size) {
 
 		parent = F.routes.routes.findItem('id', t.id);
 
-		var apiroute = { auth: t.auth, params: params, actions: t.actions.join(',') };
+		var apiroute = { auth: t.auth, params: params, actions: t.actions.join(','), action: action };
 
 		t.apiendpoint = arr[0];
+
 		if (parent) {
 			parent.api[arr[0]] = apiroute;
 			t.skip = true;

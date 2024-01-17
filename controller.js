@@ -1035,6 +1035,7 @@ function execute(ctrl) {
 	if (ctrl.route.middleware.length) {
 		middleware(ctrl);
 	} else {
+
 		if (ctrl.route.api) {
 			let body = ctrl.body;
 			if (body && typeof(body) === 'object' && body.schema && typeof(body.schema) === 'string') {
@@ -1061,11 +1062,18 @@ function execute(ctrl) {
 						for (let m of endpoint.params)
 							params[m.name] = schema[m.index] || '';
 					}
+
 					body = body.data;
+
 					if (!body || typeof(body) === 'object') {
 						ctrl.params = params;
 						ctrl.query = query ? query.parseEncoded() : {};
-						F.action(endpoint.actions, body || {}, ctrl).autorespond();
+						let action = endpoint.action;
+						if (action) {
+							ctrl.body = body || {};
+							action(ctrl);
+						} else
+							F.action(endpoint.actions, body || {}, ctrl).autorespond();
 						return;
 					}
 				}
