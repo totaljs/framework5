@@ -1059,8 +1059,19 @@ function execute(ctrl) {
 
 					let params = {};
 					if (endpoint.params) {
-						for (let m of endpoint.params)
+						let err = null;
+						for (let m of endpoint.params) {
 							params[m.name] = schema[m.index] || '';
+							if (!params[m.name]) {
+								if (!err)
+									err = new F.TBuilders.ErrorBuilder();
+								err.push2('params.' + m.name);
+							}
+						}
+						if (err) {
+							ctrl.invalid(err);
+							return;
+						}
 					}
 
 					body = body.data;
