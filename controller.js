@@ -480,7 +480,7 @@ Controller.prototype.stream = function(type, stream, download) {
 	if (CHECK_CHARSET[type])
 		type += '; charset=utf-8';
 
-	response.headers['content-type'] = type;
+	response.headers['content-type'] = type || 'application/octet-stream';
 
 	if (compress)
 		response.headers['content-encoding'] = 'gzip';

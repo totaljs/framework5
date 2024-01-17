@@ -372,8 +372,6 @@ function unlink(arr, callback) {
 	CONF.$imagememory = 0; // disabled because e.g. GM v1.3.32 throws some error about the memory
 	CONF.$stats = true;
 
-	CONF.$nodemodules = require.resolve('./index');
-	CONF.$nodemodules = CONF.$nodemodules.substring(0, CONF.$nodemodules.length - (8 + 7));
 	CONF.$npmcache = '/var/www/.npm';
 	CONF.$python = 'python3';
 	CONF.$wsmaxsize = 256; // kB
@@ -1041,6 +1039,9 @@ F.shell = function(cmd, callback, cwd) {
 F.console = function() {
 
 	var memory = process.memoryUsage();
+	var nodemodules = require.resolve('./index');
+
+	nodemodules = nodemodules.substring(0, nodemodules.length - (8 + 7));
 
 	print('====================================================');
 	print('PID           : ' + process.pid);
@@ -1061,7 +1062,7 @@ F.console = function() {
 	print('====================================================');
 	F.config.$root && print('Root          : ' + F.config.$root);
 	print('Directory     : ' + process.cwd());
-	print('node_modules  : ' + F.config.$nodemodules);
+	print('node_modules  : ' + nodemodules);
 	print('====================================================\n');
 
 	if (!F.isWorker && F.server) {
@@ -1850,7 +1851,7 @@ F.newjsonschema = function(name, obj) {
 F.newtransform = function(name, action, id) {
 	if (action == null) {
 		let items = F.transformations[name];
-		let index = items.findIndex('id', id);
+		let index = items.TfindIndex('id', id);
 		if (index !== -1) {
 			items.splice(index, 1);
 			if (!items.length)
@@ -2666,7 +2667,9 @@ process.on('message', function(msg, h) {
 	F.TCluster = require('./cluster');
 
 	// Settings
-	F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
+	// F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());
+	F.directory = F.TUtils.$normalize(process.cwd());
+
 	F.is = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
 	F.isWorker = process.env.PASSENGER_APP_ENV ? false : F.Cluster.isWorker;
 	F.syshash = (__dirname + '-' + F.Os.hostname() + '-' + F.Os.platform() + '-' + F.Os.arch() + '-' + F.Os.release() + '-' + F.Os.tmpdir() + JSON.stringify(process.versions)).md5();
@@ -2693,6 +2696,7 @@ process.on('message', function(msg, h) {
 	CONF.secret_uid = F.syshash.substring(10);
 	CONF.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
 	CONF.$cryptoiv = Buffer.from(F.syshash).slice(0, 16);
+	CONF.$nodemodules = F.Path.join(F.directory, 'node_modules');
 
 	// Methods
 	F.route = F.TRouting.route;

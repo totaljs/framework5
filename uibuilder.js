@@ -12,6 +12,7 @@ exports.compile = async function(opt, callback) {
 	// opt.local {Boolean}
 	// opt.download {Boolean}
 	// opt.origin {String}
+	// opt.filesystem {Boolean} enables loading components from HDD (default: false)
 
 	if (!callback)
 		return new Promise((resolve, reject) => exports.compile(opt, (err, response) => err ? reject(err) : resolve(response)));
@@ -144,7 +145,7 @@ async function getComponents(opt, used) {
 		} else
 			origin = parseorigin(url);
 
-		let body = await Download(url.format(com.id));
+		let body = await Download(url.format(com.id), opt.filesystem);
 
 		if (typeof(body) === 'string') {
 
@@ -171,7 +172,7 @@ async function getComponents(opt, used) {
 				if (render.substring(0, 7) === 'base64 ') {
 					components[com.id] = render;
 				} else {
-					let html = await Download(render);
+					let html = await Download(render, opt.filesystem);
 					if (html)
 						components[com.id] = 'base64 ' + Buffer.from(encodeURIComponent(html), 'utf8').toString('base64');
 				}
@@ -202,7 +203,7 @@ async function getComponents2(opt) {
 		if (url[0] === '/')
 			url = origin + url;
 
-		let body = await Download(url.format(com.id));
+		let body = await Download(url.format(com.id), opt.filesystem);
 
 		if (typeof(body) === 'string') {
 
@@ -227,7 +228,7 @@ async function getComponents2(opt) {
 			} else {
 				if (render[0] === '/')
 					render = origin + render;
-				let html = await Download(render);
+				let html = await Download(render, opt.filesystem);
 				if (html)
 					components[com.id] = 'base64 ' + Buffer.from(encodeURIComponent(html), 'utf8').toString('base64');
 			}
