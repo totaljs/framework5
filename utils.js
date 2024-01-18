@@ -41,7 +41,7 @@ const REG_TAGS = /<\/?[^>]+(>|$)/g;
 const REG_UA = /[a-z]+/gi;
 const REG_XML = /\w+=".*?"/g;
 const REG_DECODE = /&#?[a-z0-9]+;/g;
-const REG_ARGS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
+const REG_ARGS = /\{{1,2}[a-z0-9_$.-\s]+\}{1,2}/gi;
 const REG_INTEGER = /(^-|\s-)?[0-9]+/g;
 const REG_FLOAT = /(^-|\s-)?[0-9.,]+/g;
 const REG_TERMINAL = /[\w\S]+/g;
