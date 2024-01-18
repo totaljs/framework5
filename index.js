@@ -1917,10 +1917,11 @@ F.audit = function(name, $, message, type) {
 	if ($.controller) {
 		if ($.controller.sessionid)
 			data.sessionid = $.controller.sessionid;
-		data.ua = $.ua;
-		data.ip = $.ip;
-		data.url = $.url;
 	}
+
+	data.ua = $.ua;
+	data.ip = $.ip;
+	data.url = $.url;
 
 	if (type)
 		data.type = type || 'info';
