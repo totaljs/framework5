@@ -132,6 +132,9 @@ FS.init = function(directory, callback) {
 
 FS.load = function(flow, callback) {
 
+	if (!flow.id)
+		flow.id = F.TUtils.random_string(10).toLowerCase();
+
 	// flow.directory {String}
 	// flow.asfiles {Boolean}
 	// flow.worker {String/Boolean}
