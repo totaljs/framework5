@@ -1029,8 +1029,10 @@ function execute(ctrl) {
 		ctrl.params[param.name] = value;
 	}
 
-	if (!ctrl.language && F.def.onLocalize)
+	if (!ctrl.language && F.def.onLocalize) {
 		ctrl.language = F.def.onLocalize(ctrl);
+		ctrl.uri.cache += ctrl.language;
+	}
 
 	if (ctrl.route.middleware.length) {
 		middleware(ctrl);
@@ -1113,12 +1115,17 @@ function auto_view(ctrl) {
 
 function send_html(ctrl, path) {
 
-	if (F.temporary.notfound[ctrl.uri.key]) {
+	if (!ctrl.language && F.def.onLocalize) {
+		ctrl.language = F.def.onLocalize(ctrl);
+		ctrl.uri.cache += ctrl.language;
+	}
+
+	if (F.temporary.notfound[ctrl.uri.cache]) {
 		ctrl.fallback(404);
 		return;
 	}
 
-	let filename = F.temporary.minified[ctrl.uri.key];
+	let filename = F.temporary.minified[ctrl.uri.cache];
 	if (filename) {
 		send_file(ctrl, filename, 'html');
 		return;
@@ -1129,14 +1136,11 @@ function send_html(ctrl, path) {
 		if (err) {
 
 			if (!DEBUG)
-				F.temporary.notfound[ctrl.uri.key] = 1;
+				F.temporary.notfound[ctrl.uri.cache] = 1;
 
 			ctrl.fallback(404);
 			return;
 		}
-
-		if (!ctrl.language && F.def.onLocalize)
-			ctrl.language = F.def.onLocalize(ctrl);
 
 		output.body = F.translate(ctrl.language, output.body);
 
@@ -1150,13 +1154,13 @@ function send_html(ctrl, path) {
 			ctrl.response.value = output.body;
 			ctrl.flush();
 		} else {
-			let filename = F.path.tmp(F.clusterid + (ctrl.language ? (ctrl.language + '-') : '') + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.html');
+			let filename = F.path.tmp(F.clusterid + ctrl.uri.cache.substring(1).replace(REG_FILETMP, '-') + '-min.html');
 			F.Fs.writeFile(filename, output.body, function(err) {
 				if (err) {
-					F.temporary.notfound[ctrl.uri.key] = 1;
+					F.temporary.notfound[ctrl.uri.cache] = 1;
 					ctrl.fallback(404, err.toString());
 				} else {
-					F.temporary.minified[ctrl.uri.key] = filename;
+					F.temporary.minified[ctrl.uri.cache] = filename;
 					send_file(ctrl, filename, 'html');
 				}
 			});
@@ -1166,12 +1170,12 @@ function send_html(ctrl, path) {
 
 function send_css(ctrl, path) {
 
-	if (F.temporary.notfound[ctrl.uri.key]) {
+	if (F.temporary.notfound[ctrl.uri.cache]) {
 		ctrl.fallback(404);
 		return;
 	}
 
-	let filename = F.temporary.minified[ctrl.uri.key];
+	let filename = F.temporary.minified[ctrl.uri.cache];
 	if (filename) {
 		send_file(ctrl, filename, 'css');
 		return;
@@ -1182,7 +1186,7 @@ function send_css(ctrl, path) {
 		if (err) {
 
 			if (!DEBUG)
-				F.temporary.notfound[ctrl.uri.key] = 1;
+				F.temporary.notfound[ctrl.uri.cache] = 1;
 
 			ctrl.fallback(404);
 			return;
@@ -1198,13 +1202,13 @@ function send_css(ctrl, path) {
 			ctrl.response.value = output.body;
 			ctrl.flush();
 		} else {
-			let filename = F.path.tmp(F.clusterid + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.css');
+			let filename = F.path.tmp(F.clusterid + ctrl.uri.cache.substring(1).replace(REG_FILETMP, '-') + '-min.css');
 			F.Fs.writeFile(filename, output.body, function(err) {
 				if (err) {
-					F.temporary.notfound[ctrl.uri.key] = 1;
+					F.temporary.notfound[ctrl.uri.cache] = 1;
 					ctrl.fallback(404, err.toString());
 				} else {
-					F.temporary.minified[ctrl.uri.key] = filename;
+					F.temporary.minified[ctrl.uri.cache] = filename;
 					send_file(ctrl, filename, 'css');
 				}
 			});
@@ -1214,12 +1218,12 @@ function send_css(ctrl, path) {
 
 function send_js(ctrl, path) {
 
-	if (F.temporary.notfound[ctrl.uri.key]) {
+	if (F.temporary.notfound[ctrl.uri.cache]) {
 		ctrl.fallback(404);
 		return;
 	}
 
-	let filename = F.temporary.minified[ctrl.uri.key];
+	let filename = F.temporary.minified[ctrl.uri.cache];
 	if (filename) {
 		send_file(ctrl, filename, 'js');
 		return;
@@ -1230,7 +1234,7 @@ function send_js(ctrl, path) {
 		if (err) {
 
 			if (!DEBUG)
-				F.temporary.notfound[ctrl.uri.key] = 1;
+				F.temporary.notfound[ctrl.uri.cache] = 1;
 
 			ctrl.fallback(404);
 			return;
@@ -1246,13 +1250,13 @@ function send_js(ctrl, path) {
 			ctrl.response.value = output.body;
 			ctrl.flush();
 		} else {
-			let filename = F.path.tmp(F.clusterid + ctrl.uri.key.substring(1).replace(REG_FILETMP, '-') + '-min.js');
+			let filename = F.path.tmp(F.clusterid + ctrl.uri.cache.substring(1).replace(REG_FILETMP, '-') + '-min.js');
 			F.Fs.writeFile(filename, output.body, function(err) {
 				if (err) {
-					F.temporary.notfound[ctrl.uri.key] = 1;
+					F.temporary.notfound[ctrl.uri.cache] = 1;
 					ctrl.fallback(404, err.toString());
 				} else {
-					F.temporary.minified[ctrl.uri.key] = filename;
+					F.temporary.minified[ctrl.uri.cache] = filename;
 					send_file(ctrl, filename, 'js');
 				}
 			});
@@ -1263,12 +1267,12 @@ function send_js(ctrl, path) {
 function send_file(ctrl, path, ext) {
 
 	// Check the file existence
-	if (F.temporary.notfound[ctrl.uri.key]) {
+	if (F.temporary.notfound[ctrl.uri.cache]) {
 		ctrl.fallback(404);
 		return;
 	}
 
-	var cache = F.temporary.tmp[ctrl.uri.key];
+	var cache = F.temporary.tmp[ctrl.uri.cache];
 
 	// HTTP Cache
 	if (ctrl.response.cache && cache && ctrl.notmodified(cache.date))
@@ -1285,7 +1289,7 @@ function send_file(ctrl, path, ext) {
 		if (err) {
 
 			if (!DEBUG && ctrl.response.cache)
-				F.temporary.notfound[ctrl.uri.key] = true;
+				F.temporary.notfound[ctrl.uri.cache] = true;
 
 			ctrl.fallback(404);
 			return;
@@ -1314,7 +1318,7 @@ function send_file(ctrl, path, ext) {
 			type += '; charset=utf-8';
 
 		ctrl.response.headers['content-type'] = type;
-		F.temporary.tmp[ctrl.uri.key] = cache;
+		F.temporary.tmp[ctrl.uri.cache] = cache;
 
 		F.stats.performance.open++;
 

@@ -973,7 +973,7 @@ FP.http = function(ctrl, opt) {
 
 	var self = this;
 
-	if (F.temporary.notfound[ctrl.uri.key]) {
+	if (F.temporary.notfound[ctrl.uri.cache]) {
 		ctrl.fallback(404);
 		return;
 	}
@@ -985,7 +985,7 @@ FP.http = function(ctrl, opt) {
 		fd && F.Fs.close(fd, NOOP);
 
 		if (err || (obj.expire && obj.expire < NOW) || (opt.check && opt.check(obj) == false)) {
-			F.temporary.notfound[ctrl.uri.key] = true;
+			F.temporary.notfound[ctrl.uri.cache] = true;
 			ctrl.fallback(404);
 			return;
 		}
@@ -999,7 +999,7 @@ FP.http = function(ctrl, opt) {
 			return;
 
 		// Resized image?
-		if (!DEBUG && F.temporary.path[ctrl.uri.key]) {
+		if (!DEBUG && F.temporary.path[ctrl.uri.cache]) {
 			ctrl.resume();
 			return;
 		}

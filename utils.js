@@ -6288,7 +6288,8 @@ exports.parseURI2 = function(url) {
 	if (index != -1)
 		url = url.replace(REG_TRAVELSE, '');
 
-	return { key: url.toLowerCase(), pathname: url, search: search, file: index != -1, ext: index == -1 ? '' : url.substring(index + 1), split: split };
+	let key = url.toLowerCase();
+	return { key: key, cache: key, pathname: url, search: search, file: index != -1, ext: index == -1 ? '' : url.substring(index + 1), split: split };
 };
 
 function destroyStreamopen() {
