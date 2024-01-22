@@ -33,6 +33,7 @@ function Controller(req, socket, head) {
 	var ctrl = this;
 
 	ctrl.req = req;
+	ctrl.method = 'SOCKET';
 	ctrl.res = ctrl.socket = socket;
 	ctrl.route = null;
 	ctrl.head = head;

@@ -24,7 +24,7 @@ Options.prototype = {
 	},
 
 	get websocket() {
-		return this.controller ? this.controller.parent : null;
+		return this.controller && this.controller.iswebsocket ? this.controller : null;
 	},
 
 	get sessionid() {
