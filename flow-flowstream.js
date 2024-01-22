@@ -403,6 +403,7 @@ Instance.prototype.kill = Instance.prototype.destroy = function() {
 
 	setTimeout(() => exports.refresh(self.id, 'destroy'), 500);
 	self.flow.$destroyed = true;
+	self.flow.$terminated = true;
 
 	if (self.flow.isworkerthread) {
 
