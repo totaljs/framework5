@@ -1908,10 +1908,6 @@ function MAKEFLOWSTREAM(meta) {
 		return key === '$$ID' || key === '$$REQUIRED' ? undefined : value;
 	}
 
-	flow.remove = function() {
-		flow.proxy.remove();
-	};
-
 	flow.export2 = function() {
 
 		var variables = flow.variables;
@@ -1974,6 +1970,10 @@ function MAKEFLOWSTREAM(meta) {
 
 	flow.save = function() {
 		save();
+	};
+
+	flow.remove = function() {
+		flow.proxy.remove();
 	};
 
 	flow.kill = function(code) {
