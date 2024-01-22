@@ -96,6 +96,10 @@ Instance.prototype.postMessage = function(msg) {
 	this.flow.postMessage && this.flow.postMessage(msg);
 };
 
+Instance.prototype.remove = function() {
+	F.TFlow.remove(this.id);
+};
+
 Instance.prototype.httprequest = function(opt, callback) {
 
 	// opt.route {String} a URL address
@@ -1267,6 +1271,10 @@ function init_current(meta, callback, nested) {
 			}
 		});
 
+		flow.proxy.remove = function() {
+			Parent.postMessage({ TYPE: 'stream/remove' });
+		};
+
 		flow.proxy.kill = function() {
 			Parent.postMessage({ TYPE: 'stream/kill' });
 		};
@@ -1374,6 +1382,10 @@ function init_current(meta, callback, nested) {
 
 		flow.proxy.restart = function() {
 			// nothing
+		};
+
+		flow.proxy.remove = function() {
+			flow.$instance.remove();
 		};
 
 		flow.proxy.kill = function() {
@@ -1526,6 +1538,11 @@ function init_worker(meta, type, callback) {
 			case 'stream/kill':
 				if (!worker.$terminated)
 					worker.$instance.destroy(msg.code || 9);
+				break;
+
+			case 'stream/remove':
+				if (!worker.$terminated)
+					worker.$instance.remove();
 				break;
 
 			case 'stream/send':
@@ -1890,6 +1907,10 @@ function MAKEFLOWSTREAM(meta) {
 	function stringifyskip(key, value) {
 		return key === '$$ID' || key === '$$REQUIRED' ? undefined : value;
 	}
+
+	flow.remove = function() {
+		flow.proxy.remove();
+	};
 
 	flow.export2 = function() {
 
