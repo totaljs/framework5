@@ -738,6 +738,9 @@ RESTP.callback = function(fn) {
 
 	var self = this;
 
+	if (fn instanceof Options)
+		fn = fn.callback();
+
 	if (typeof(fn) === 'function') {
 		setImmediate(execrestbuilder, self, fn);
 		return self;
