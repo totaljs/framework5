@@ -96,10 +96,6 @@ Instance.prototype.postMessage = function(msg) {
 	this.flow.postMessage && this.flow.postMessage(msg);
 };
 
-Instance.prototype.remove = function() {
-	F.TFlow.remove(this.id);
-};
-
 Instance.prototype.httprequest = function(opt, callback) {
 
 	// opt.route {String} a URL address
@@ -398,6 +394,10 @@ Instance.prototype.restart = function() {
 		self.flow.terminate();
 	else
 		self.flow.kill(9);
+};
+
+Instance.prototype.remove = function() {
+	F.TFlow.remove(this.id);
 };
 
 // Destroys the Flow
