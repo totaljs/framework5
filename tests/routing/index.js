@@ -44,7 +44,7 @@ AUTH(function($) {
 
 	$.success(USER);
 
-})
+});
 // Schemas
 NEWSCHEMA('@Users', function(schema) {
 
@@ -95,7 +95,14 @@ ROUTE('+GET /auth/authorized/', $ => $.user ? $.success($.user.id) : $.invalid()
 ROUTE('-GET /auth/unauthorized/', $ => $.user ? $.success() : $.invalid());
 
 ROUTE('GET /wildcards/*', $ => $.success());
+ROUTE('GET /wildcards/second/{id}/{page}/{slog}/*', $ => $.success());
 // ROUTE('GET /wildcards/**', $ => $.success());
+ROUTE('#404', $ => $.json({ status: 404, value: 'Not found'}));
+ROUTE('#503', $ => $.json({ status: 503, value: 'Server error'}));
+ROUTE('#408', $ => $.json({ status: 408, value: 'Request Timeout'}));
+
+ROUTE('GET /internal/503/', $ => $.invalid(503))
+ROUTE('GET /internal/408/', $ => '');
 
 MIDDLEWARE('testmiddleware', ($, next) => next());
 MIDDLEWARE('testmiddleware2', ($, next) => $.invalid(400));
@@ -299,21 +306,85 @@ ON('ready', function() {
 	});
 
 
-	Test.push('Wildcards', function(next) {
+	Test.push('Routing', function(next) {
+		var arr  = [];
 
-		var arr = [];
 		arr.push(function(next_fn) {
-			RESTBuilder.GET(url + '/wildcards/test').exec(function(err, res) {
-				Test.print('Wildcards - ', err === null && res && res.success === true && res.value === 1)
+			RESTBuilder.GET(url + '/not/existing').exec(function(err, res) {
+				Test.print('Internal Routing - 404', err === null && res && res.status === 404 && res.value === 'Not found')
+				next_fn();
+			});
+		});
+
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/internal/503').exec(function(err, res) {
+				Test.print('Internal Routing - 503', err === null && res && res.status === 503 && res.value === 'Server Error')
+				next_fn();
+			});
+		});
+
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/internal/408').exec(function(err, res) {
+				Test.print('Internal Routing - 408', err === null && res && res.status === 408 && res.value === 'Request Timeout')
+				next_fn();
+			});
+		});
+
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/wildcards/wild').exec(function(err, res) {
+				Test.print('Wildcards - *', err === null && res && res.success === true && res.value === 1)
+				next_fn();
+			});
+		});
+
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/wildcards/wild/wild').exec(function(err, res) {
+				Test.print('Wildcards 2 - *', err === null && res && res.success === true && res.value === 1)
+				next_fn();
+			});
+		});
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/wildcards/wild/wild/wild').exec(function(err, res) {
+				Test.print('Wildcards 3 - *', err === null && res && res.success === true && res.value === 1)
+				next_fn();
+			});
+		});
+
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/wildcards/wild/wild/wild/wild').exec(function(err, res) {
+				Test.print('Wildcards 3 - *', err === null && res && res.success === true && res.value === 1)
 				next_fn();
 			});
 		});
 
 
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/wildcards/second/2/43/this-is-slog/wild').exec(function(err, res) {
+				Test.print('Wildcards 4 - *', err === null && res && res.success === true && res.value === 1)
+				next_fn();
+			});
+		});
+
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/wildcards/second/2/43/this-is-slog/wild/wild/wild/').exec(function(err, res) {
+				Test.print('Wildcards 5 - *', err === null && res && res.success === true && res.value === 1)
+				next_fn();
+			});
+		});
+
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/wildcards/second/2/43/t/wild/wild/wild/').exec(function(err, res) {
+				Test.print('Wildcards 6 - *', err === null && res && res.success === true && res.value === 1)
+				next_fn();
+			});
+		});
+
+		
 		arr.async(function() {
 			next();
-		});
+		})
 	});
+
 	
 	setTimeout(function() {
 		Test.run(function() {
