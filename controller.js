@@ -14,6 +14,7 @@ const CHECK_DATA = { POST: 1, PUT: 1, PATCH: 1, DELETE: 1 };
 const CHECK_COMPRESSION = { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'application/xml': true, 'text/xml': true, 'image/svg+xml': true, 'text/x-markdown': true, 'text/html': true };
 const CHECK_CHARSET =  { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'text/x-markdown': true, 'text/html': true };
 const CHECK_NOCACHE = { zip: 1, rar: 1 };
+const CHECH_MIN = /(\.|-|@)min/i;
 
 const GZIP_FILE = { memLevel: 9 };
 const GZIP_STREAM = { memLevel: 1 };
@@ -426,14 +427,23 @@ Controller.prototype.file = function(path, download) {
 	var ext = F.TUtils.getExtension(path);
 
 	if (ext === 'js') {
-		if (response.minify)
+		if (response.minify) {
 			response.minify = F.config.$minifyjs;
+			if (response.minify)
+				response.minify = !CHECH_MIN.test(path);
+		}
 	} else if (ext === 'css') {
-		if (response.minify)
+		if (response.minify) {
 			response.minify = F.config.$minifycss;
+			if (response.minify)
+				response.minify = !CHECH_MIN.test(path);
+		}
 	} else if (ext === 'html') {
-		if (response.minify)
+		if (response.minify) {
 			response.minify = F.config.$minifyhtml;
+			if (response.minify)
+				response.minify = !CHECH_MIN.test(path);
+		}
 	}
 
 	if (response.minify) {
@@ -748,13 +758,22 @@ Controller.prototype.resume = function() {
 
 		switch (ctrl.ext) {
 			case 'js':
-				send_js(ctrl, path);
+				if (CHECH_MIN.test(path))
+					send_file(ctrl, path, ctrl.ext);
+				else
+					send_js(ctrl, path);
 				break;
 			case 'css':
-				send_css(ctrl, path);
+				if (CHECH_MIN.test(path))
+					send_file(ctrl, path, ctrl.ext);
+				else
+					send_css(ctrl, path);
 				break;
 			case 'html':
-				send_html(ctrl, path);
+				if (CHECH_MIN.test(path))
+					send_file(ctrl, path, ctrl.ext);
+				else
+					send_html(ctrl, path);
 				break;
 			default:
 				send_file(ctrl, path, ctrl.ext);

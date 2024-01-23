@@ -654,7 +654,7 @@ exports.lookupfile = function(ctrl, auth = 0) {
 
 		for (let i = 0; i < length; i++) {
 			let url = ctrl.split2.slice(0, length - i).join('/') + '/*';
-			item = F.routes.filescache[url];
+			let item = F.routes.filescache[url];
 			if (item)
 				return item[0];
 		}
