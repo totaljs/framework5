@@ -1090,7 +1090,7 @@ F.console = function() {
 
 F.loadservices = function() {
 
-	F.internal.interval && clearInterval(F.internal.timeouts);
+	F.internal.interval && clearInterval(F.internal.interval);
 
 	// This timer solving timeouts
 	F.internal.interval = setInterval(function() {
@@ -2339,8 +2339,8 @@ F.exit = function(signal = 15) {
 		} catch (e) {}
 	}
 
-	F.internal.timeouts && clearInterval(F.internal.timeouts);
-	F.internal.timeouts = null;
+	F.internal.interval && clearInterval(F.internal.interval);
+	F.internal.interval = null;
 
 	if (F.server) {
 		F.server.setTimeout(1);
