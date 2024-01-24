@@ -299,7 +299,6 @@ ON('ready', function() {
 			});
 		});
 
-	
 		arr.async(function() {
 			next();
 		})
@@ -383,7 +382,24 @@ ON('ready', function() {
 		arr.async(function() {
 			next();
 		})
+
 	});
+
+	Test.push('API - routing', function(next) {
+		var arr = [];
+		var path = '/v1/';
+
+		arr.push(function(next_fn) {
+			RESTBuilder.API(url + path, 'api_basic').exec(function(err, response) {
+				Test.print('API Routing - Basic ', err === null && response.success && response.value === 1 ? null: 'Expected success response');
+				next_fn();
+			})
+		});
+
+		arr.async(function() {
+			next();
+		})
+	})
 
 	
 	setTimeout(function() {
