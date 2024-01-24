@@ -2143,7 +2143,7 @@ F.restore = function(filename, target, callback, filter) {
 		parser.next();
 	});
 
-	CLEANUP(stream, function() {
+	F.cleanup(stream, function() {
 		end = true;
 		parser.end();
 	});
