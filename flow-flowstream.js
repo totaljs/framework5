@@ -322,20 +322,20 @@ function execfn(self, name, id, data) {
 		if (!flow.paused) {
 			if (id[0] === '@') {
 				id = id.substring(1);
-				for (var key in flow.meta.flow) {
-					var com = flow.meta.flow[key];
+				for (let key in flow.meta.flow) {
+					let com = flow.meta.flow[key];
 					if (com.component === id && com[name])
 						com[name](data);
 				}
 			} else if (id[0] === '#') {
 				id = id.substring(1);
-				for (var key in flow.meta.flow) {
-					var com = flow.meta.flow[key];
+				for (let key in flow.meta.flow) {
+					let com = flow.meta.flow[key];
 					if (com.module.name === id && com[name])
 						com[name](data);
 				}
 			} else {
-				var com = flow.meta.flow[id];
+				let com = flow.meta.flow[id];
 				if (com && com[name])
 					com[name](data);
 			}
