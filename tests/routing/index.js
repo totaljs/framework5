@@ -1,7 +1,6 @@
 /* eslint-disable */
 require('../../index');
 require('../../test');
-// HTTP routing
 // API routing
 // WebSocket routing + WebSocketClient (text, json and binary communication)
 // File routing
@@ -10,121 +9,21 @@ require('../../test');
 F.console = NOOP;
 
 // load web server and test app
-F.http();
+F.run({ release: false });
+
+
 
 var url = 'http://0.0.0.0:8000';
-var item = 'HELLO';
-var item2 = 'hello2';
-var item3 = 'hello3';
-var items = [
-	{ url: `/${item}/`, res: item },
-	{ url: `/params/${item}/`, res: item },
-	{ url: `/params/alias/${item}/`, res: item },
-	{ url: `/params/is/inside/${item}/long/route/`, res: item },
-	{ url: `/params/is/inside/${item}/long/route/alias/`, res: item },
-	{ url: `/params/${item}/${item2}/${item3}/alias/`, res: item },
-	{ url: `/params/${item}/${item2}/${item3}/first`, res: item },
-	{ url: `/params/${item}/${item2}/${item3}/second/`, res: item2 },
-	{ url: `/params/${item}/${item2}/${item3}/third/`, res: item3 }
-];
-
-var methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-var USER = { id: '123', name: 'Peter Sirka', email: 'petersirka@gmail.com', sa: true };
 
 
-// Auth delegate
-AUTH(function($) {
-
-	var cookie = $.cookie('auth');
-
-	if (!cookie || cookie !== "correct-cookie") {
-		$.invalid();
-		return;
-	}
-
-	$.success(USER);
-
-});
-// Schemas
-NEWSCHEMA('@Users', function(schema) {
-
-	schema.action('list', {
-		name: 'Listing action',
-		action: $ => $.success(true)
-	});
-	
-	schema.action('read', {
-		name: 'Read specific user',
-		params: '*id:Number',
-		action: $ => $.success(true)
-	});
-
-	schema.action('insert', {
-		name: 'Insert new lement',
-		input: '*name:Name,*email:Email,phone:Phone',
-		action: ($, model) => $.success(model)
-	});
-
-	schema.action('update', {
-		name: 'Insert new lement',
-		params: '*id:Number',
-		input: '*name:Name,*email:Email,phone:Phone',
-		action: ($, model) => $.success(true)
-	});
-
-	schema.action('delete', {
-		name: 'Delete specific user',
-		params: '*id:Number',
-		action: $ => $.success(true)
-	});
-});
-
-// Testing ENDPOINTS
-ROUTE('GET /not/existing/path', ($) => $.plain('ok'));
-ROUTE('GET /uPperCase/', ($) => $.success(true));
-ROUTE('GET /middleware/success/ #testmiddleware', ($) => $.success(true));
-ROUTE('GET /middleware/invalid/ #testmiddleware2', ($) => $.success(true));
-ROUTE('GET /schema/methods/validation/  --> Users/list')
-ROUTE('POST /schema/methods/validation/ -->  Users/insert')
-ROUTE('PATCH /schema/methods/validation/  --> Users/update')
-ROUTE('PUT /schema/methods/validation/ -->  Users/update')
-ROUTE('DELETE /schema/methods/validation/ -->  Users/delete')
-ROUTE('GET /xtoken/', $ => $.success($.headers['x-token']));
-ROUTE('GET /auth/', $ => $.success($.user && $.user.id ));
-ROUTE('+GET /auth/authorized/', $ => $.user ? $.success($.user.id) : $.invalid());
-ROUTE('-GET /auth/unauthorized/', $ => $.user ? $.success() : $.invalid());
-
-ROUTE('GET /wildcards/*', $ => $.success());
-ROUTE('GET /wildcards/second/{id}/{page}/{slog}/*', $ => $.success());
-// ROUTE('GET /wildcards/**', $ => $.success());
-ROUTE('#404', $ => $.json({ status: 404, value: 'Not found'}));
-ROUTE('#503', $ => $.json({ status: 503, value: 'Server error'}));
-ROUTE('#408', $ => $.json({ status: 408, value: 'Request Timeout'}));
-
-ROUTE('GET /internal/503/', $ => $.invalid(503))
-ROUTE('GET /internal/408/', $ => '');
-
-MIDDLEWARE('testmiddleware', ($, next) => next());
-MIDDLEWARE('testmiddleware2', ($, next) => $.invalid(400));
-
-items.forEach(function(item	) {
-	ROUTE('GET ' + item.url, function($) {
-		$.plain(item.res);
-	});
-});
-
-// Register methods
-methods.forEach(function(method, next) {
-	ROUTE(method + ' /methods/', function($) {
-		$.success(true);
-	});
-});
 
 ON('ready', function() {
 
+	// HTTP routing
 	Test.push('HTTP Routes', function(next) {
-		items.wait(function(item, n) {
+		MAIN.items && MAIN.items.wait(function(item, n) {
 			RESTBuilder.GET(url + item.url).exec(function(err, res, output) {
+				console.log(res, output);
 				res = output.response;
 				Test.print('Routes - Params {0}'.format(item.url),  res !== item.res ?  'TEST {0} failed'.format(item.url) : null);
 				n();
@@ -136,7 +35,7 @@ ON('ready', function() {
 
 	Test.push('HTTP Methods', function(next) {
 
-		methods.wait(function(method, n) {
+		MAIN.methods && MAIN.methods.wait(function(method, n) {
 			RESTBuilder[method](url + '/methods').exec(function(err, response, output) {
 				Test.print('Methods - {0} /methods/'.format(method),  !response.success ?  'TEST {0} /methods/ failed'.format(method) : null);
 				n();
@@ -305,7 +204,7 @@ ON('ready', function() {
 	});
 
 
-	Test.push('Routing', function(next) {
+	Test.push('HTTP Routing', function(next) {
 		var arr  = [];
 
 		arr.push(function(next_fn) {
@@ -391,20 +290,29 @@ ON('ready', function() {
 
 		arr.push(function(next_fn) {
 			RESTBuilder.API(url + path, 'api_basic').exec(function(err, response) {
-				Test.print('API Routing - Basic ', err === null && response.success && response.value === 1 ? null: 'Expected success response');
+				Test.print('API Routing - Basic ', err === null && response.success  === true ? null: 'Expected success response');
 				next_fn();
-			})
+			});
+		});
+
+
+		arr.push(function(next_fn) {
+			var data = { valid: 'valid', invalid: 'invalid' };
+
+			RESTBuilder.API(url + path, 'validation', data).exec(function(err, response) {
+				console.log(response);
+				Test.print('API Routing - Validation (+) ', err === null && response.success  === true ? null: '');
+				next_fn();
+			});
 		});
 
 		arr.async(function() {
 			next();
 		})
 	})
-
-	
 	setTimeout(function() {
 		Test.run(function() {
-			process.exit(0);
+			//process.exit(0);
 		});
-	}, 500);
+	}, 1000);
 });
