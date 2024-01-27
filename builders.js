@@ -24,7 +24,7 @@ Options.prototype = {
 	},
 
 	get websocket() {
-		return this.controller ? this.controller.parent : null;
+		return this.controller && this.controller.iswebsocket ? this.controller : null;
 	},
 
 	get sessionid() {
@@ -737,6 +737,9 @@ function execrestbuilder(instance, callback) {
 RESTP.callback = function(fn) {
 
 	var self = this;
+
+	if (fn instanceof Options)
+		fn = fn.callback();
 
 	if (typeof(fn) === 'function') {
 		setImmediate(execrestbuilder, self, fn);

@@ -210,9 +210,10 @@ function Route(url, action, size) {
 
 		parent = F.routes.routes.findItem('id', t.id);
 
-		var apiroute = { auth: t.auth, params: params, actions: t.actions.join(',') };
+		var apiroute = { auth: t.auth, params: params, actions: t.actions.join(','), action: action };
 
 		t.apiendpoint = arr[0];
+
 		if (parent) {
 			parent.api[arr[0]] = apiroute;
 			t.skip = true;
@@ -653,7 +654,7 @@ exports.lookupfile = function(ctrl, auth = 0) {
 
 		for (let i = 0; i < length; i++) {
 			let url = ctrl.split2.slice(0, length - i).join('/') + '/*';
-			item = F.routes.filescache[url];
+			let item = F.routes.filescache[url];
 			if (item)
 				return item[0];
 		}

@@ -1090,7 +1090,7 @@ F.console = function() {
 
 F.loadservices = function() {
 
-	F.internal.interval && clearInterval(F.internal.timeouts);
+	F.internal.interval && clearInterval(F.internal.interval);
 
 	// This timer solving timeouts
 	F.internal.interval = setInterval(function() {
@@ -1917,10 +1917,11 @@ F.audit = function(name, $, message, type) {
 	if ($.controller) {
 		if ($.controller.sessionid)
 			data.sessionid = $.controller.sessionid;
-		data.ua = $.ua;
-		data.ip = $.ip;
-		data.url = $.url;
 	}
+
+	data.ua = $.ua;
+	data.ip = $.ip;
+	data.url = $.url;
 
 	if (type)
 		data.type = type || 'info';
@@ -2142,7 +2143,7 @@ F.restore = function(filename, target, callback, filter) {
 		parser.next();
 	});
 
-	CLEANUP(stream, function() {
+	F.cleanup(stream, function() {
 		end = true;
 		parser.end();
 	});
@@ -2338,8 +2339,8 @@ F.exit = function(signal = 15) {
 		} catch (e) {}
 	}
 
-	F.internal.timeouts && clearInterval(F.internal.timeouts);
-	F.internal.timeouts = null;
+	F.internal.interval && clearInterval(F.internal.interval);
+	F.internal.interval = null;
 
 	if (F.server) {
 		F.server.setTimeout(1);

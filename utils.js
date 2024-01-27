@@ -41,7 +41,7 @@ const REG_TAGS = /<\/?[^>]+(>|$)/g;
 const REG_UA = /[a-z]+/gi;
 const REG_XML = /\w+=".*?"/g;
 const REG_DECODE = /&#?[a-z0-9]+;/g;
-const REG_ARGS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
+const REG_ARGS = /\{{1,2}[a-z0-9_$.-\s]+\}{1,2}/gi;
 const REG_INTEGER = /(^-|\s-)?[0-9]+/g;
 const REG_FLOAT = /(^-|\s-)?[0-9.,]+/g;
 const REG_TERMINAL = /[\w\S]+/g;
@@ -6288,7 +6288,8 @@ exports.parseURI2 = function(url) {
 	if (index != -1)
 		url = url.replace(REG_TRAVELSE, '');
 
-	return { key: url.toLowerCase(), pathname: url, search: search, file: index != -1, ext: index == -1 ? '' : url.substring(index + 1), split: split };
+	let key = url.toLowerCase();
+	return { key: key, cache: key, pathname: url, search: search, file: index != -1, ext: index == -1 ? '' : url.substring(index + 1), split: split };
 };
 
 function destroyStreamopen() {

@@ -322,20 +322,20 @@ function execfn(self, name, id, data) {
 		if (!flow.paused) {
 			if (id[0] === '@') {
 				id = id.substring(1);
-				for (var key in flow.meta.flow) {
-					var com = flow.meta.flow[key];
+				for (let key in flow.meta.flow) {
+					let com = flow.meta.flow[key];
 					if (com.component === id && com[name])
 						com[name](data);
 				}
 			} else if (id[0] === '#') {
 				id = id.substring(1);
-				for (var key in flow.meta.flow) {
-					var com = flow.meta.flow[key];
+				for (let key in flow.meta.flow) {
+					let com = flow.meta.flow[key];
 					if (com.module.name === id && com[name])
 						com[name](data);
 				}
 			} else {
-				var com = flow.meta.flow[id];
+				let com = flow.meta.flow[id];
 				if (com && com[name])
 					com[name](data);
 			}
@@ -396,6 +396,10 @@ Instance.prototype.restart = function() {
 		self.flow.kill(9);
 };
 
+Instance.prototype.remove = function() {
+	F.TFlow.remove(this.id);
+};
+
 // Destroys the Flow
 Instance.prototype.kill = Instance.prototype.destroy = function() {
 
@@ -403,6 +407,7 @@ Instance.prototype.kill = Instance.prototype.destroy = function() {
 
 	setTimeout(() => exports.refresh(self.id, 'destroy'), 500);
 	self.flow.$destroyed = true;
+	self.flow.$terminated = true;
 
 	if (self.flow.isworkerthread) {
 
@@ -1266,6 +1271,10 @@ function init_current(meta, callback, nested) {
 			}
 		});
 
+		flow.proxy.remove = function() {
+			Parent.postMessage({ TYPE: 'stream/remove' });
+		};
+
 		flow.proxy.kill = function() {
 			Parent.postMessage({ TYPE: 'stream/kill' });
 		};
@@ -1373,6 +1382,10 @@ function init_current(meta, callback, nested) {
 
 		flow.proxy.restart = function() {
 			// nothing
+		};
+
+		flow.proxy.remove = function() {
+			flow.$instance.remove();
 		};
 
 		flow.proxy.kill = function() {
@@ -1525,6 +1538,11 @@ function init_worker(meta, type, callback) {
 			case 'stream/kill':
 				if (!worker.$terminated)
 					worker.$instance.destroy(msg.code || 9);
+				break;
+
+			case 'stream/remove':
+				if (!worker.$terminated)
+					worker.$instance.remove();
 				break;
 
 			case 'stream/send':
@@ -1895,39 +1913,31 @@ function MAKEFLOWSTREAM(meta) {
 		var variables = flow.variables;
 		var design = {};
 		var components = {};
-		var sources = JSON.parse(JSON.stringify(flow.sources, stringifyskip));
+		var sources = flow.sources ? JSON.parse(JSON.stringify(flow.sources, stringifyskip)) : {};
 
-		for (var key in flow.meta.components) {
-			var com = flow.meta.components[key];
+		for (let key in flow.meta.components) {
+			let com = flow.meta.components[key];
 			components[key] = com.ui.raw;
 		}
 
-		for (var key in flow.meta.flow) {
+		for (let key in flow.meta.flow) {
 			design[key] = flow.export_instance2(key);
 			delete design[key].template;
 		}
 
 		var data = {};
+		var blacklist = { unixsocket: 1, components: 1, variables2: 1, sources: 1, design: 1, size: 1, directory: 1 };
+
+		for (let key in flow.$schema) {
+			if (!blacklist[key])
+				data[key] = flow.$schema[key];
+		}
+
 		data.paused = flow.paused;
-		data.id = flow.$schema.id;
-		data.reference = flow.$schema.reference;
-		data.author = flow.$schema.author;
-		data.group = flow.$schema.group;
-		data.icon = flow.$schema.icon;
-		data.color = flow.$schema.color;
-		data.version = flow.$schema.version;
-		data.cloning = flow.$schema.cloning;
-		data.readme = flow.$schema.readme;
-		data.url = flow.$schema.url;
-		data.name = flow.$schema.name;
 		data.components = components;
 		data.design = design;
 		data.variables = variables;
 		data.sources = sources;
-		data.proxypath = flow.$schema.proxypath;
-		data.origin = flow.$schema.origin;
-		data.dtcreated = flow.$schema.dtcreated;
-		data.import = flow.$schema.import;
 		return data;
 	};
 
@@ -1952,6 +1962,10 @@ function MAKEFLOWSTREAM(meta) {
 
 	flow.save = function() {
 		save();
+	};
+
+	flow.remove = function() {
+		flow.proxy.remove();
 	};
 
 	flow.kill = function(code) {
@@ -1989,7 +2003,7 @@ function MAKEFLOWSTREAM(meta) {
 	};
 
 	flow.redraw = refresh_components;
-	flow.sources = meta.sources;
+	flow.sources = meta.sources || {};
 	flow.proxy = {};
 
 	flow.proxy.variables = function(data) {

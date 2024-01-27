@@ -208,7 +208,7 @@ exports.newapi('TotalAPI,TAPI', function(opt, next) {
 	req.type = 'json';
 	req.timeout = 60000;
 	req.keepalive = true;
-	req.headers = { 'x-token': opt.token || F.config.secret_totalapi || F.config.$tapisecret || '-', 'x-app': encodeURIComponent(F.config.name) };
+	req.headers = { 'x-token': opt.token || F.config.totalapi || F.config.secret_totalapi || F.config.$tapisecret || '-', 'x-app': encodeURIComponent(F.config.name) };
 	req.custom = true;
 
 	req.callback = function(err, response) {
@@ -279,10 +279,7 @@ exports.newapi('TotalAPI,TAPI', function(opt, next) {
 
 		var writer = F.Fs.createWriteStream(opt.output);
 		response.stream.pipe(writer);
-		F.cleanup(writer, function() {
-			opt.next(null, opt.output);
-		});
-
+		F.cleanup(writer, () => opt.next(null, opt.output));
 	};
 
 	F.TUtils.request(req);
