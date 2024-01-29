@@ -43,6 +43,13 @@ module.exports.watcher = function(callback) {
 	runwatching();
 };
 
+function killapp(pid) {
+	try {
+		process.kill(pid, 'SIGINT');
+	} catch (e) {
+	}
+}
+
 function runapp() {
 	!options && (options = {});
 	if (options.servicemode) {
@@ -388,7 +395,7 @@ function runwatching() {
 				try
 				{
 					skiprestart = true;
-					process.kill(app.pid);
+					killapp(app.pid);
 					if (options.inspector) {
 						setTimeout(restart, 1000);
 						return;
@@ -471,7 +478,7 @@ function runwatching() {
 			}
 
 			skiprestart = true;
-			process.kill(app.pid);
+			killapp(app.pid);
 			app = null;
 			process.exit(0);
 		}
@@ -491,7 +498,7 @@ function runwatching() {
 						F.Fs.unlink(pid, noop);
 						if (app !== null) {
 							skiprestart = true;
-							process.kill(app.pid, 9);
+							killapp(app.pid);
 						}
 						process.exit(0);
 					}
