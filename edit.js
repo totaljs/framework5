@@ -26,8 +26,6 @@ exports.init = function(url) {
 			return;
 		}
 
-		console.log(msg);
-
 		F.action('editor', msg).callback(function(err, response) {
 
 			if (err) {
