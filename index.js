@@ -2675,6 +2675,7 @@ process.on('message', function(msg, h) {
 	F.isWorker = process.env.PASSENGER_APP_ENV ? false : F.Cluster.isWorker;
 	F.syshash = (__dirname + '-' + F.Os.hostname() + '-' + F.Os.platform() + '-' + F.Os.arch() + '-' + F.Os.release() + '-' + F.Os.tmpdir() + JSON.stringify(process.versions)).md5();
 	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
+	F.isWindows = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
 
 	CONF.$total5 = F.Path.dirname(require.resolve('./index'));
 
