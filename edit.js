@@ -1,6 +1,6 @@
 // Total.js Edit
 // The MIT License
-// Copyright 2020-2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2020-2024 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -165,17 +165,7 @@ F.newaction('editor', {
 });
 
 function mkdir(path, callback) {
-	var a = '/';
-	path = path.split('/').trim();
-	path.wait(function(p, next) {
-		a = a + p + '/';
-		F.Fs.lstat(a, function(err) {
-			if (err)
-				F.Fs.mkdir(a, next);
-			else
-				next();
-		});
-	}, callback);
+	F.Fs.mkdir(path, { recursive: true }, callback);
 }
 
 function browse($, model) {
@@ -204,11 +194,11 @@ function browse($, model) {
 
 		$.callback({ files: files, directories: directories });
 
-	}, validator);
+	}, validator, true);
 }
 
 function log($, model) {
-	var filename = F.path.root(model.path);
+	var filename = F.Path.normalize(F.path.root(model.path));
 	F.Fs.stat(filename, function(err, stats) {
 		if (stats) {
 			var start = stats.size - (1024 * 4); // Max. 4 kB
@@ -231,7 +221,7 @@ function clearlog($, model) {
 }
 
 function load($, model) {
-	var filename = F.path.root(model.path);
+	var filename = F.Path.normalize(F.path.root(model.path));
 	F.Fs.readFile(filename, function(err, data) {
 
 		if (err) {
@@ -264,20 +254,20 @@ function save($, model) {
 	// Tries to create a folder
 	var filename = F.path.root(model.path);
 	var name = F.TUtils.getName(model.path);
-	var directory = filename.substring(0, filename.length - name.length);
+	var directory = F.Path.normalize(filename.substring(0, filename.length - name.length));
 
-	F.Fs.mkdir(directory, { recursive: true }, function() {
+	mkdir(directory, function() {
 		decodedata(model, function(err, buffer) {
 			if (err)
 				$.invalid(err);
 			else
-				F.Fs.writeFile(filename, buffer, $.done());
+				F.Fs.writeFile(F.Path.normalize(filename), buffer, $.done());
 		});
 	});
 }
 
 function remove($, model) {
-	var filename = F.path.root(model.path);
+	var filename = F.Path.normalize(F.path.root(model.path));
 	try {
 		var stats = F.Fs.lstatSync(filename);
 		if (stats.isFile()) {
@@ -294,12 +284,12 @@ function remove($, model) {
 }
 
 function info($, model) {
-	var filename = F.path.root(model.path);
+	var filename = F.Path.normalize(F.path.root(model.path));
 	F.Fs.lstat(filename, $.callback);
 }
 
 function download($, model) {
-	var filename = F.path.root(model.path);
+	var filename = F.Path.normalize(F.path.root(model.path));
 	var ext = F.TUtils.getExtension(model.path);
 	F.Fs.lstat(filename, function(err, stats) {
 		if (err || stats.isDirectory() || stats.isSocket()) {
@@ -328,7 +318,7 @@ function download($, model) {
 }
 
 function send($, model) {
-	var filename = F.path.root(model.path);
+	var filename = F.Path.normalize(F.path.root(model.path));
 	F.Fs.fstat(filename, function() {
 		var opt = {};
 		opt.method = 'GET';
@@ -340,7 +330,7 @@ function send($, model) {
 }
 
 function customimport($, model) {
-	var filename = F.path.root(model.path);
+	var filename = F.Path.normalize(F.path.root(model.path));
 	DOWNLOAD(model.data, filename, $.done());
 }
 
@@ -356,8 +346,8 @@ function rename($, model) {
 
 	data = data.response;
 
-	data.newpath = F.path.root(data.newpath);
-	data.oldpath = F.path.root(data.oldpath);
+	data.newpath = F.Path.normalize(F.path.root(data.newpath));
+	data.oldpath = F.Path.normalize(F.path.root(data.oldpath));
 
 	mkdir(F.Path.dirname(data.newpath), function() {
 		F.Fs.rename(data.oldpath, data.newpath, $.done());
@@ -366,7 +356,12 @@ function rename($, model) {
 
 function create($, model) {
 
-	var filename = F.path.root(model.path);
+	// model.path {String}
+	// model.data {Object}
+	// model.data.clone {String}
+	// model.data.folder {Boolean}
+
+	var filename = F.Path.normalize(F.path.root(model.path));
 	var data = (model.data || '{}').parseJSON();
 
 	F.Fs.lstat(filename, function(err) {
@@ -376,14 +371,14 @@ function create($, model) {
 			// we can continue
 			if (data.folder) {
 				if (model.clone)
-					F.Fs.cp(F.path.root(data.clone), filename, { recursive: true, force: true }, $.done());
+					F.Fs.cp(F.Path.normalize(F.path.root(data.clone)), filename, { recursive: true, force: true }, $.done());
 				else
 					mkdir(filename, $.done());
 			} else {
 				var name = F.TUtils.getName(filename);
 				mkdir(filename.substring(0, filename.length - name.length), function() {
 					if (data.clone)
-						F.Fs.copyFile(F.path.root(data.clone), filename, $.done());
+						F.Fs.copyFile(F.Path.normalize(F.path.root(data.clone)), filename, $.done());
 					else
 						F.Fs.writeFile(filename, '', $.done());
 				});
@@ -395,8 +390,8 @@ function create($, model) {
 
 function upload($, model) {
 	var name = F.TUtils.getName(model.path);
-	var filename = F.path.root(model.path);
-	var directory = F.path.root(model.path.substring(0, model.length - name.length));
+	var filename = F.Path.normalize(F.path.root(model.path));
+	var directory = F.Path.normalize(F.path.root(model.path.substring(0, model.length - name.length)));
 	mkdir(directory, function() {
 		decodedata(model, function(err, buffer) {
 			if (err)
@@ -416,7 +411,7 @@ function modify($, model) {
 
 function wiki($) {
 
-	var path = F.path.root();
+	var path = F.Path.normalize(PATH.root());
 
 	F.TUtils.ls(path, function(files) {
 
