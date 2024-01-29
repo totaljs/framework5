@@ -491,7 +491,7 @@ function runwatching() {
 						F.Fs.unlink(pid, noop);
 						if (app !== null) {
 							skiprestart = true;
-							process.kill(app.pid);
+							process.kill(app.pid, 9);
 						}
 						process.exit(0);
 					}
