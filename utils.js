@@ -4786,6 +4786,7 @@ function FileList() {
 	this.onComplete = null;
 	this.onFilter = null;
 	this.advanced = false;
+	this.unified = false;
 }
 
 const FLP = FileList.prototype;
