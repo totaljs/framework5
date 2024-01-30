@@ -56,6 +56,7 @@ global.Mail = F.TMail.Mailer;
 global.RESTBuilder = F.TBuilders.RESTBuilder;
 global.ErrorBuilder = F.TBuilders.ErrorBuilder;
 global.DOWNLOAD = F.download;
+global.OPENCLIENT = (url, id) => require('./openclient').create(url, id);
 
 global.BLOCKED = function($, limit, expire) {
 

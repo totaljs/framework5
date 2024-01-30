@@ -57,6 +57,7 @@ global.DEF = {};
 	F.filestorages = {};
 	F.jsonschemas = {};
 	F.querybuilders = {};
+	F.openclients = {};
 	F.workers = {};
 	F.config = CONF;
 	F.def = DEF;
