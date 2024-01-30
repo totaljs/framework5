@@ -57,6 +57,7 @@ global.RESTBuilder = F.TBuilders.RESTBuilder;
 global.ErrorBuilder = F.TBuilders.ErrorBuilder;
 global.DOWNLOAD = F.download;
 global.OPENCLIENT = (url, id) => require('./openclient').create(url, id);
+global.NEWMACRO = (str, nocompile, isasync) => require('./macros').compile(str, nocompile, isasync);
 
 global.BLOCKED = function($, limit, expire) {
 
