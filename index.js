@@ -58,6 +58,7 @@ global.DEF = {};
 	F.jsonschemas = {};
 	F.querybuilders = {};
 	F.openclients = {};
+	F.nodemodules = {};
 	F.workers = {};
 	F.config = CONF;
 	F.def = DEF;
@@ -875,9 +876,25 @@ F.load = async function(types, callback) {
 };
 
 F.require = function(name) {
+
 	if (name.startsWith('node:'))
 		return require(name);
-	return NODE_MODULES[name] ? require('node:' + name) : require(name); // TODO: check functionality without absolute path: require(F.Path.join(F.config.$nodemodules, name))
+
+	if (NODE_MODULES[name])
+		return require('node:' + name);
+
+	let mod = null;
+
+	try {
+		mod = require(name);
+	} catch (e) {
+		mod = require(F.Path.join(F.config.$nodemodules, name));
+	}
+
+	if (!mod)
+		throw new Error('NPM module "' + name + '" not found');
+
+	return mod;
 };
 
 F.import = function(url, callback) {
