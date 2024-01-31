@@ -47,6 +47,35 @@ ON('ready', function () {
 		});
 	});
 
+	Test.push('Middleware', function(next) {
+		var arr = [];
+		arr.push(function(next) {
+			RESTBuilder.GET(url + '/middleware/success/').exec(function(err, res) {
+				Test.print('Route Middleware - success', err === null && res && res.success === true ? null : 'Expecting success');
+				next();
+			});
+		});
+		
+		arr.push(function(next) {
+			RESTBuilder.GET(url + '/middleware/invalid/').exec(function(err, res, out) {
+				Test.print('Route Middleware - invalid', out.status === 400 ? null : 'Expecting error');
+				next();
+			});
+		});
+		
+		arr.push(function(next) {
+			RESTBuilder.GET(url + '/middleware/fuse/').exec(function(err, res) {
+				Test.print('Route Middleware - F.use', err === null && res && res.success ? null : 'Expecting success');
+				console.timeEnd(subtest_log);
+				next();
+			});
+		});
+
+		arr.async(function () {
+			next();
+		})
+	});
+
 	Test.push('HTTP Routing - Authorization', function (next) {
 		var arr = [];
 
@@ -203,6 +232,20 @@ ON('ready', function () {
 
 	});
 
+	Test.push('Others ', function(next) {
+		var arr = [];
+		arr.push(function(next) {
+			RESTBuilder.GET(url + '/uPperCase/').exec(function(err, res) {
+				Test.print('Sensitive case', err === null && res && res.success === true ? null : 'Uppercase - expecting success');
+				console.timeEnd(subtest_log);
+				next();
+			});
+		});
+
+		arr.async(function() {
+			next();
+		})
+	});
 
 	setTimeout(function () {
 		Test.run(function () {
