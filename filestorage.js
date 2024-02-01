@@ -1073,6 +1073,7 @@ FP.http = function(ctrl, opt) {
 
 				ctrl.res.writeHead(response.status, response.headers);
 				F.Fs.createReadStream(filename, { flags: 'r', mode: '0666', autoClose: true, start: HEADERSIZE + beg, end: end + HEADERSIZE }).pipe(ctrl.res);
+				ctrl.free();
 
 			} else {
 				var stream = F.Fs.createReadStream(filename, { start: HEADERSIZE });

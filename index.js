@@ -57,6 +57,8 @@ global.DEF = {};
 	F.filestorages = {};
 	F.jsonschemas = {};
 	F.querybuilders = {};
+	F.openclients = {};
+	F.nodemodules = {};
 	F.workers = {};
 	F.config = CONF;
 	F.def = DEF;
@@ -340,6 +342,7 @@ function unlink(arr, callback) {
 	// New internal configuration
 	CONF.$root = '';
 	CONF.$cors = ''; // hostnames separated by comma
+	CONF.$api = '/admin/'; // a default API endpoint
 	CONF.$sourcemap = true;
 	CONF.$httpreqlimit = 0; // request limit per ip
 	CONF.$httpcompress = true;
@@ -873,9 +876,25 @@ F.load = async function(types, callback) {
 };
 
 F.require = function(name) {
+
 	if (name.startsWith('node:'))
 		return require(name);
-	return NODE_MODULES[name] ? require('node:' + name) : require(name); // TODO: check functionality without absolute path: require(F.Path.join(F.config.$nodemodules, name))
+
+	if (NODE_MODULES[name])
+		return require('node:' + name);
+
+	let mod = null;
+
+	try {
+		mod = require(name);
+	} catch (e) {
+		mod = require(F.Path.join(F.config.$nodemodules, name));
+	}
+
+	if (!mod)
+		throw new Error('NPM module "' + name + '" not found');
+
+	return mod;
 };
 
 F.import = function(url, callback) {
@@ -2466,7 +2485,7 @@ F.mail = function(email, subject, name, model, language, callback) {
 	// Localization
 	if (typeof(language) === 'string') {
 		if (subject.includes('@('))
-			subject = TRANSLATE(language, subject);
+			subject = F.translate(language, subject);
 	}
 
 	let body = F.view(name, model, view => view.language = language || '');
@@ -2484,9 +2503,9 @@ F.htmlmail = function(email, subject, body, language, callback) {
 	// Localization
 	if (typeof(language) === 'string') {
 		if (subject.includes('@('))
-			subject = TRANSLATE(language, subject);
+			subject = F.translate(language, subject);
 		if (body.includes('@('))
-			body = TRANSLATE(language, body);
+			body = F.translate(language, body);
 	}
 
 	body = body.indexOf('<body>') === -1 ? ('<!DOCTYPE html><html><head><title>' + subject + '</title><meta charset="utf-8" /></head><body style="padding:0;margin:0;font-family:Arial;font-size:14px;font-weight:normal">' + body + '</body></html>') : body;
@@ -2675,6 +2694,7 @@ process.on('message', function(msg, h) {
 	F.isWorker = process.env.PASSENGER_APP_ENV ? false : F.Cluster.isWorker;
 	F.syshash = (__dirname + '-' + F.Os.hostname() + '-' + F.Os.platform() + '-' + F.Os.arch() + '-' + F.Os.release() + '-' + F.Os.tmpdir() + JSON.stringify(process.versions)).md5();
 	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
+	F.isWindows = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
 
 	CONF.$total5 = F.Path.dirname(require.resolve('./index'));
 
