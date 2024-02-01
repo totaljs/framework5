@@ -1039,7 +1039,7 @@ function authorize(ctrl) {
 		execute(ctrl);
 }
 
-function execute(ctrl) {
+function execute(ctrl, skipmiddleware) {
 
 	ctrl.timeout = ctrl.route.timeout || F.config.$httptimeout;
 
@@ -1053,7 +1053,7 @@ function execute(ctrl) {
 		ctrl.uri.cache += ctrl.language;
 	}
 
-	if (ctrl.route.middleware.length) {
+	if (!skipmiddleware && ctrl.route.middleware.length) {
 		middleware(ctrl);
 	} else {
 
@@ -1403,7 +1403,7 @@ function middleware(ctrl) {
 			else
 				run(index + 1);
 		} else
-			ctrl.route.action(ctrl);
+			execute(ctrl, true);
 	};
 	run(0);
 }
