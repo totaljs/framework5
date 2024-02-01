@@ -1,13 +1,13 @@
 {
   "name": "total5",
-  "version": "0.0.1-28",
+  "version": "0.0.1-33",
   "description": "Total.js framework v5",
   "main": "index.js",
   "directories": {
     "test": "test"
   },
   "bin": {
-    "total4": "./bin/total5"
+    "total5": "./bin/total5"
   },
   "scripts": {
     "test": "cd tests && node test-release.js"

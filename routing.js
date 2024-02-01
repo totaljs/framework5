@@ -51,6 +51,9 @@ function Route(url, action, size) {
 		action = null;
 	}
 
+	// Apply a default API endpoint
+	url = url.replace(/\?/g, CONF.$api).replace(/\/{2,}/g, '/');
+
 	var t = this;
 
 	if (url[0] === '#') {
