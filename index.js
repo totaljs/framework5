@@ -2485,7 +2485,7 @@ F.mail = function(email, subject, name, model, language, callback) {
 	// Localization
 	if (typeof(language) === 'string') {
 		if (subject.includes('@('))
-			subject = TRANSLATE(language, subject);
+			subject = F.translate(language, subject);
 	}
 
 	let body = F.view(name, model, view => view.language = language || '');
@@ -2503,9 +2503,9 @@ F.htmlmail = function(email, subject, body, language, callback) {
 	// Localization
 	if (typeof(language) === 'string') {
 		if (subject.includes('@('))
-			subject = TRANSLATE(language, subject);
+			subject = F.translate(language, subject);
 		if (body.includes('@('))
-			body = TRANSLATE(language, body);
+			body = F.translate(language, body);
 	}
 
 	body = body.indexOf('<body>') === -1 ? ('<!DOCTYPE html><html><head><title>' + subject + '</title><meta charset="utf-8" /></head><body style="padding:0;margin:0;font-family:Arial;font-size:14px;font-weight:normal">' + body + '</body></html>') : body;
