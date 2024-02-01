@@ -2,17 +2,18 @@
 
 require('total5');
 
-const ARGS = process.argv;
+const ARGS = process.argv; // TEST: ['-', '-', 'CMD']
 const DIR = process.cwd();
+const DIVIDER = '----------------------------------------';
 
-function done() {
-	console.log('');
+function done(err) {
+	err && console.error('ERROR:', err);
 	console.timeEnd('[Done]');
 }
 
 function load(args) {
 
-	var cmd = args[2].replace(/-{2,}/g, '');
+	var cmd = (args[2] || '').replace(/-{2,}/g, '');
 	var arg = [];
 	for (let i = 3; i < args.length; i++)
 		arg.push(args[i].trim().replace(/"/g, ''));
@@ -25,11 +26,7 @@ function load(args) {
 	if (!cmd)
 		cmd = 'help';
 
-	var divider = '|-----------------------------------------------';
-	console.log(divider);
-	console.log('| Total.js v5');
-	console.log('| Command: [' + cmd.capitalize() + ']');
-	console.log(divider);
+	console.log('* Total.js v5: [' + cmd.capitalize() + ']');
 	console.time('[Done]');
 
 	var fn = FUNC[cmd];
@@ -147,25 +144,98 @@ FUNC.bundle = function(filename) {
 		filename += '.bundle';
 
 	ignore[filename] = 1;
-
-	F.backup(filename, DIR, function() {
-		done();
-	}, path => ignore[path] == null);
-
+	F.backup(filename, DIR, done, path => ignore[path] == null);
 };
 
 FUNC.extract = function(filename) {
-
+	let stats = F.Fs.lstatSync(filename);
+	if (stats.isDirectory())
+		done();
+	else
+		F.restore(filename || 'app.bundle', DIR, done);
 };
 
 FUNC.minify = function(filename) {
 
+	var ext = U.getExtension(filename).toLowerCase();
+	var body = F.Fs.readFileSync(filename, 'utf8');
+
+	switch (ext) {
+		case 'js':
+			body = U.minify_js(body);
+			break;
+		case 'css':
+			body = U.minify_css(body);
+			break;
+		case 'html':
+			body = U.minify_html(body);
+			break;
+	}
+
+	var target = filename.replace('.' + ext, '.min.' + ext);
+	F.Fs.writeFileSync(target, body, 'utf8');
+	console.log(DIVIDER);
+	console.log('Filename  :', filename);
+	console.log('Output    :', target);
+	console.log(DIVIDER);
+	done();
 };
 
 FUNC.server = function(port) {
 
+	CONF.$dirpublic = DIR;
+
+	ROUTE('GET /*', function($) {
+
+		var dir = PATH.public($.url.substring(1));
+		var filename = PATH.join($.url, 'index.html').substring(1);
+
+		PATH.exists(filename, function(e) {
+
+			if (e)
+				return $.file(filename, '');
+
+			F.Fs.readdir(dir, function(err, items) {
+
+				var render = function(controller, directories, files) {
+					controller.html('<!DOCTYPE html><html><head><title>Directory listing: {0}</title><meta charset="utf-8" /><style>body{font-family:Arial;font-size:16px;padding:10px 30px 30px}a{display:block}.directory:last-child{margin-bottom:10px}.directory{padding:2px 10px;background-color:#F8F8F8;margin-bottom:2px;text-decoration:none;color:black;font-weight:bold;font-size:18px}.directory-back{text-decoration:none;font-size:50px;margin:0 0 10px 5px;color:gray}.file{color:gray;text-decoration:none;font-size:14px;padding:3px 10px;border-bottom:1px solid #F0F0F0;}.file span{float:right;font-size:12px;margin:2px 0 0 0;color:#A0A0A0}.file:hover{background-color:#F8F8F8}</style></head><body><div class="directories">{1}</div><div class="files">{2}</div></body></html>'.format(controller.url, directories.join(''), files.join('')));
+				};
+
+				var directories = [];
+				var files = [];
+
+				if ($.url !== '/')
+					directories.push('<a href=".." class="directory-back">..</a>');
+
+				if (err)
+					return render($, directories, files);
+
+				items.wait(function(item, next) {
+					var filename = PATH.join(dir, item);
+					F.Fs.stat(filename, function(err, info) {
+
+						if (err) {
+							next();
+							return;
+						}
+
+						if (info.isFile())
+							files.push('<a href="{1}" class="file">{0}<span>{2}</span></a>'.format(item, $.url + item, info.size.filesize()));
+						else
+							directories.push('<a href="{1}/" class="directory">{0}</a>'.format(item, $.url + item));
+						next();
+					});
+				}, () => render($, directories, files));
+			});
+
+		});
+	});
+
+	F.http({ load: 'none', port: port || 8000 });
 };
 
 FUNC.edit = function(url) {
-
+	if (!url)
+		throw new Error('Invalid URL address');
+	require('../edit').init(url);
 };
