@@ -47,24 +47,24 @@ ON('ready', function () {
 		});
 	});
 
-	Test.push('Middleware', function(next) {
+	Test.push('Middleware', function (next) {
 		var arr = [];
-		arr.push(function(next) {
-			RESTBuilder.GET(url + '/middleware/success/').exec(function(err, res) {
+		arr.push(function (next) {
+			RESTBuilder.GET(url + '/middleware/success/').exec(function (err, res) {
 				Test.print('Route Middleware - success', err === null && res && res.success === true ? null : 'Expecting success');
 				next();
 			});
 		});
-		
-		arr.push(function(next) {
-			RESTBuilder.GET(url + '/middleware/invalid/').exec(function(err, res, out) {
+
+		arr.push(function (next) {
+			RESTBuilder.GET(url + '/middleware/invalid/').exec(function (err, res, out) {
 				Test.print('Route Middleware - invalid', out.status === 400 ? null : 'Expecting error');
 				next();
 			});
 		});
-		
-		arr.push(function(next) {
-			RESTBuilder.GET(url + '/middleware/fuse/').exec(function(err, res) {
+
+		arr.push(function (next) {
+			RESTBuilder.GET(url + '/middleware/fuse/').exec(function (err, res) {
 				Test.print('Route Middleware - F.use', err === null && res && res.success ? null : 'Expecting success');
 				console.timeEnd(subtest_log);
 				next();
@@ -144,6 +144,7 @@ ON('ready', function () {
 			});
 		});
 
+	
 		arr.async(function () {
 			next();
 		})
@@ -178,7 +179,7 @@ ON('ready', function () {
 		});
 
 		arr.push(function (next) {
-			path =  '/wildcards/wild/wild';
+			path = '/wildcards/wild/wild';
 			RESTBuilder.POST(url + path).exec(function (err, res) {
 				Test.print('HTTP Routing - Wildcards ' + path, err === null && res.success && res.value === 1 ? null : 'Assertion failed');
 				next();
@@ -194,7 +195,7 @@ ON('ready', function () {
 		});
 
 		arr.push(function (next) {
-			path =  '/wildcards/second/arg1/arg2/wild';
+			path = '/wildcards/second/arg1/arg2/wild';
 			RESTBuilder.POST(url + path).exec(function (err, res) {
 				Test.print('HTTP Routing - Wildcards ' + path, err === null && res.success && res.value === 5 ? null : 'Assertion failed');
 				next();
@@ -232,24 +233,39 @@ ON('ready', function () {
 
 	});
 
-	Test.push('Others ', function(next) {
+	Test.push('Others ', function (next) {
 		var arr = [];
-		arr.push(function(next) {
-			RESTBuilder.GET(url + '/uPperCase/').exec(function(err, res) {
+		arr.push(function (next) {
+			RESTBuilder.GET(url + '/uPperCase/').exec(function (err, res) {
 				Test.print('Sensitive case', err === null && res && res.success === true ? null : 'Uppercase - expecting success');
 				console.timeEnd(subtest_log);
 				next();
 			});
 		});
 
-		arr.async(function() {
+		arr.push(function (next) {
+			subtest_name = 'Sensitive case';
+			subtest_log = log(subtest_name, 1);
+			console.time(subtest_log);
+
+			RESTBuilder.GET(url + '/uPperCase/').exec(function (err, res) {
+				Test.print('Sensitive case', err === null && res && res.success === true ? null : 'Uppercase - expecting success');
+				console.timeEnd(subtest_log);
+				next();
+			});
+		});
+
+		arr.async(function () {
 			next();
 		})
 	});
 
+
+
+
 	setTimeout(function () {
 		Test.run(function () {
-			//process.exit(0);
+			process.exit(0);
 		});
 	}, 1000);
 });

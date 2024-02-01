@@ -1,2 +1,2 @@
-MIDDLEWARE('testmiddleware', ($, next) => next());
-MIDDLEWARE('testmiddleware2', ($, next) => $.invalid(400));
+MIDDLEWARE('middleware-success', ($, next) => next());
+MIDDLEWARE('middleware-invalid', ($, next) => $.invalid(400));

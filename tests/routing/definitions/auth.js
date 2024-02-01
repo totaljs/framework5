@@ -7,7 +7,5 @@ AUTH(function($) {
 		$.invalid();
 		return;
 	}
-
 	$.success(USER);
-
 });
