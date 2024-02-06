@@ -58,7 +58,8 @@ ON('ready', function () {
 
 		arr.push(function (next) {
 			RESTBuilder.GET(url + '/middleware/invalid/').exec(function (err, res, out) {
-				Test.print('Route Middleware - invalid', out.status === 400 ? null : 'Expecting error');
+				console.log(res);
+				Test.print('Route Middleware - invalid', err === null && res &&  out.status === 400 ? null : 'Expecting error');
 				next();
 			});
 		});
