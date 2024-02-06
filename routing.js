@@ -58,10 +58,10 @@ function Route(url, action, size) {
 
 	if (url[0] === '#') {
 		// internal routing
-		t.url = [url[0].substring(1)];
+		t.url = [url.substring(1)];
 		t.action = action;
 		t.fallback = true;
-		F.routes.fallback[t.url[0]] = t;
+		F.routes.fallback[t.url] = t;
 		return;
 	}
 
