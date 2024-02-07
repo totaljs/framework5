@@ -4,6 +4,7 @@ NEWSCHEMA('APIRoutes', function(schema) {
         name: 'Success action',
         input: 'valid:String',
         action: function($, model) {
+            console.log(model);
 		    $.success(model);
         }
     });

@@ -1,24 +1,24 @@
-NEWACTION('success', {
+NEWACTION('Actions/success', {
 	input: 'valid:String',
 	action: function($, model) {
 		$.success(model);
 	}
 });
 
-NEWACTION('keys', {
+NEWACTION('Actions/keys', {
 	input: 'valid:String',
 	action: function($) {
 		$.success($.keys);
 	}
 });
 
-NEWACTION('one', {
+NEWACTION('Actions/one', {
 	action: function($) {
 		$.success();
 	}
 });
 
-NEWACTION('two', {
+NEWACTION('Actions/two', {
 	action: function($) {
 		$.success();
 	}

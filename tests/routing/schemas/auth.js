@@ -1,5 +1,4 @@
 NEWSCHEMA('Auth', function(schema) {
-
     schema.action('exec', {
         name: 'Execution action',
         action: function($) {
@@ -8,9 +7,6 @@ NEWSCHEMA('Auth', function(schema) {
                 $.success('123');
             else
                 $.success();
-
-
         }
     });
-
 });

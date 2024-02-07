@@ -38,8 +38,8 @@ exports.install = function () {
     ROUTE('GET /uPperCase/', ($) => $.success(true));
 
     // Middleware
-    ROUTE('GET /middleware/success/ #middleware-success        --> Middleware/exec');
-    ROUTE('GET /middleware/invalid/ #middleware-invalid        --> Middleware/exec');
-    ROUTE('GET /middleware/fuse/                               --> Middleware/exec');
+    ROUTE('GET /middleware/success/ #middlewaresuccess        --> Middleware/exec');
+    ROUTE('GET /middleware/invalid/ #middlewareinvalid        --> Middleware/exec');
+    ROUTE('GET /middleware/fuse/                              --> Middleware/exec');
 
 };
