@@ -397,6 +397,11 @@ Controller.prototype.fallback = function(code, err) {
 	}
 };
 
+Controller.prototype.layout = function(name) {
+	var ctrl = this;
+	ctrl.response.layout = name;
+};
+
 Controller.prototype.view = function(name, model) {
 
 	var ctrl = this;
@@ -405,6 +410,7 @@ Controller.prototype.view = function(name, model) {
 		return;
 
 	var view = new F.TViewEngine.View(ctrl);
+	ctrl.response.layout && view.layout(ctrl.response.layout);
 	var output = view.render(name, model);
 	ctrl.html(output);
 };
