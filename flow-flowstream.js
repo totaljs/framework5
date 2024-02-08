@@ -983,7 +983,7 @@ function init_current(meta, callback, nested) {
 
 	// Due to C/C++ modules
 	if (W.workerData || meta.sandbox)
-		CONF.$node_modules = F.path.join(meta.directory, meta.id, 'node_modules');
+		F.config.$node_modules = F.path.join(meta.directory, meta.id, 'node_modules');
 
 	ASFILES = meta.asfiles === true;
 

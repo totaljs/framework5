@@ -354,6 +354,8 @@ function unlink(arr, callback) {
 	CONF.$httpfiles = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true, xsd: true, xsl: true, xslt: true };
 	CONF.$httpchecktypes = true; // for multipart data only
 	CONF.$httpmaxage = 60; // in seconds
+	CONF.$httpmaxkeys = 33;
+	CONF.$httpmaxkey = 25;
 	CONF.$blacklist = '';
 	CONF.$xpoweredby = 'Total.js';
 	CONF.$maxopenfiles = 100;
@@ -383,6 +385,7 @@ function unlink(arr, callback) {
 	CONF.$wsencodedecode = false;
 	CONF.$wsmaxlatency = 2000;
 	CONF.$proxytimeout = 5; // 5 seconds
+	// CONF.$proxyrequest = '';
 	CONF.$cookiesamesite = 'Lax';
 	CONF.$cookiesecure = false;
 	CONF.$csrfexpiration = '30 minutes';
@@ -568,10 +571,12 @@ F.loadconfig = function(value) {
 
 				break;
 			case '$cryptoiv':
-				cfg[key] = val ? Buffer.from(val, 'hex') : null;
+				cfg[key] = val ? Buffer.from(val, (/[A-Z=\/+]/).test(val) ? 'base64' : 'hex') : null;
+				break;
+			case '$root':
+				cfg[key] = val ? F.TUtils.normalize(val) : '';
 				break;
 			case 'mail_from':
-			case '$root':
 				break;
 			case '$port':
 				cfg[key] = +val;
@@ -2448,7 +2453,7 @@ F.dir = function(val) {
 	var dirs = ['public', 'tmp', 'logs', 'databases', 'controllers', 'resources', 'plugins', 'views', 'definitions', 'schemas', 'models', 'flowstreams', 'bundles', 'actions', 'extensions', 'source', 'services', 'updates', 'templates', 'private'];
 
 	for (let dir of dirs) {
-		var cfg = F.config['$dir' + dir];
+		let cfg = F.config['$dir' + dir];
 		F.temporary.directories[dir] = cfg || F.Path.join(F.directory, dir);
 	}
 
@@ -2699,7 +2704,7 @@ process.on('message', function(msg, h) {
 	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
 	F.isWindows = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
 
-	CONF.$total5 = F.Path.dirname(require.resolve('./index'));
+	F.config.$total5 = F.Path.dirname(require.resolve('./index'));
 
 	F.cache = require('./cache');
 	F.TImages = require('./images');
@@ -2717,10 +2722,10 @@ process.on('message', function(msg, h) {
 	};
 
 	// Configuration
-	CONF.secret_uid = F.syshash.substring(10);
-	CONF.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
-	CONF.$cryptoiv = Buffer.from(F.syshash).slice(0, 16);
-	CONF.$nodemodules = F.Path.join(F.directory, 'node_modules');
+	F.config.secret_uid = F.syshash.substring(10);
+	F.config.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
+	F.config.$cryptoiv = Buffer.from(F.syshash).slice(0, 16);
+	F.config.$nodemodules = F.Path.join(F.directory, 'node_modules');
 
 	// Methods
 	F.route = F.TRouting.route;

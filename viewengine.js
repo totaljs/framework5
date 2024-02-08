@@ -328,7 +328,7 @@ function prepare(command, dcommand, functions) {
 			return 'self.csrf()';
 
 		case 'root':
-			var r = CONF.$root;
+			var r = F.config.$root;
 			return '\'' + (r ? r.substring(0, r.length - 1) : r) + '\'';
 
 		case 'CONF':

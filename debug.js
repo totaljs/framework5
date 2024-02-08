@@ -257,12 +257,12 @@ function runwatching() {
 			var index = fn.indexOf('/', 1);
 			var dir = fn.substring(0, index + 1);
 
-			if (dir === CONF.directory_themes) {
+			if (dir === F.config.directory_themes) {
 				index = fn.indexOf('/', index + 1);
 				dir = fn.substring(index, fn.indexOf('/', index + 1) + 1);
 			}
 
-			return CONF.directory_views === dir || CONF.directory_public === dir ? fn : '';
+			return dir === '/views/' || dir === '/public/' ? fn : '';
 		}
 
 		function makestamp() {

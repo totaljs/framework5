@@ -183,11 +183,11 @@ FUNC.minify = function(filename) {
 
 FUNC.server = function(port) {
 
-	CONF.$dirpublic = DIR;
-	CONF.$sourcemap = false;
-	CONF.$minifyjs = false;
-	CONF.$minifycss = false;
-	CONF.$minifyhtml = false;
+	F.config.$dirpublic = DIR;
+	F.config.$sourcemap = false;
+	F.config.$minifyjs = false;
+	F.config.$minifycss = false;
+	F.config.$minifyhtml = false;
 
 	ROUTE('GET /*', function($) {
 
