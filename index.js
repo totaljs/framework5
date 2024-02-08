@@ -184,6 +184,7 @@ global.DEF = {};
 		response: {
 			ddos: 0,
 			html: 0,
+			xml: 0,
 			json: 0,
 			websocket: 0,
 			timeout: 0,
