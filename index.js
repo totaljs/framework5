@@ -743,10 +743,11 @@ F.load = async function(types, callback) {
 		return arr;
 	};
 
-	if (!types.length || types.includes('stats')) {
+	if (types.length && !types.includes('stats')) {
 		F.config.$stats = false;
 		F.config.$sourcemap = false;
-	}
+	} else
+		F.config.$sourcemap = DEBUG;
 
 	if (!types.length || types.includes('env')) {
 		let env = await read(F.path.root('.env'));
@@ -1685,15 +1686,6 @@ F.service = function(count) {
 		}
 	}
 
-	// Exec crons
-	for (let cron of F.crons) {
-		if (cron.check(NOW))
-			cron.exec(NOW);
-	}
-
-	if (count % 10 === 0 && global.gc)
-		setTimeout(cleargc, 1000);
-
 	F.temporary.service.publish = F.stats.performance.publish;
 	F.temporary.service.subscribe = F.stats.performance.subscribe;
 	F.temporary.service.call = F.stats.performance.call;
@@ -1726,6 +1718,16 @@ F.service = function(count) {
 
 	F.usage && F.usage();
 	F.temporary.service.usage = 0;
+
+	if (count % 10 === 0 && global.gc)
+		setTimeout(cleargc, 1000);
+
+	// Exec crons
+	for (let cron of F.crons) {
+		if (cron.check(NOW))
+			cron.exec(NOW);
+	}
+
 };
 
 function cleargc() {
