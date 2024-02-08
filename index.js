@@ -1747,8 +1747,7 @@ F.clear = function(init = true, callback) {
 		dir = dir.replaceAll('/', '\\');
 
 	if (init) {
-
-		if (!F.config.$cleartemp) {
+		if (F.config.$cleartemp) {
 			// clears only JS and CSS files
 			F.TUtils.ls(dir, function(files) {
 				F.path.unlink(files, callback);
