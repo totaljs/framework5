@@ -1438,6 +1438,7 @@ F.merge = function(url) {
 				if (F.temporary.merged[key]) {
 					if (F.temporary.notfound[url]) {
 						ctrl.fallback(404);
+						next();
 						return;
 					}
 				} else {
