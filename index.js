@@ -457,7 +457,7 @@ function unlink(arr, callback) {
 		} else
 			msg.to(email);
 
-		msg.from(F.config.mail_from);
+		msg.from(F.config.mail_from || F.config.smtp.from || F.config.smtp.user);
 		callback && msg.callback(callback);
 
 		if (reply)
