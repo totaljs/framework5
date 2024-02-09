@@ -391,13 +391,13 @@ function prepare(command, dcommand, functions) {
 			return command.indexOf('(') === -1 ? '((repository[\'' + command + '\'] || \'\') + \'\').safehtml()' : 'self.' + command;
 
 		case 'title2':
-			return 'self.$' + command;
+			return 'self.' + command;
 
 		case '!title':
 		case '!description':
 		case '!keywords':
 		case '!author':
-			return '(repository[\'$' + command.substring(1) + '\'] || \'\')';
+			return '(repository[\'' + command.substring(1) + '\'] || \'\')';
 
 		case 'place':
 			return command.indexOf('(') === -1 ? '(repository[\'' + command + '\'] || \'\')' : 'self.' + command;
@@ -638,6 +638,13 @@ View.prototype.title = function(value) {
 	return '';
 };
 
+View.prototype.title2 = function(value) {
+	var current = this.repository.title;
+	if (value)
+		this.repository.title = (current || '') + value.safehtml();
+	return '';
+};
+
 View.prototype.description = function(value) {
 	this.repository.description = value;
 	return '';
@@ -676,7 +683,7 @@ View.prototype.href = function(key, value) {
 
 	if (type === 'string') {
 
-		var cachekey = '$href' + key;
+		var cachekey = 'href_' + key;
 		var str = self.repository[cachekey] || '';
 
 		if (!str) {
@@ -824,7 +831,7 @@ View.prototype.import = function() {
 
 View.prototype.section = function(name, value, replace) {
 
-	var key = '$section_' + name;
+	var key = 'section_' + name;
 	var self = this;
 
 	if (value == null)
