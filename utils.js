@@ -694,8 +694,8 @@ function _request(opt, callback) {
 	if (options.resolve && (opt.unixsocket || (uri.hostname === 'localhost' || uri.hostname.charCodeAt(0) < 64)))
 		options.resolve = false;
 
-	if (!opt.unixsocket && CONF.default_proxy && !proxy && !PROXYBLACKLIST[uri.hostname])
-		proxy = parseProxy(CONF.default_proxy);
+	if (!opt.unixsocket && F.config.$proxyrequest && !proxy && !PROXYBLACKLIST[uri.hostname])
+		proxy = parseProxy(F.config.$proxyrequest);
 
 	if (!opt.unixsocket && proxy && (uri.hostname === 'localhost' || uri.hostname === '127.0.0.1'))
 		proxy = null;
@@ -2558,13 +2558,13 @@ SP.parseEncoded = function() {
 			decodek = false;
 			decodev = false;
 
-			if ((count++) >= CONF.default_request_maxkeys)
+			if ((count++) >= F.config.$httpmaxkeys)
 				break;
 
 		} else {
 
 			if (n === 61) {
-				if ((i - pos) > CONF.default_request_maxkey)
+				if ((i - pos) > F.config.$httpmaxkey)
 					key = '';
 				else {
 					if (pos < i)
@@ -3134,7 +3134,7 @@ SP.parseDateExpiration = function() {
 };
 
 var configurereplace = function(text) {
-	var val = CONF[text.substring(1, text.length - 1)];
+	var val = F.config[text.substring(1, text.length - 1)];
 	return val == null ? '' : val;
 };
 
@@ -3200,7 +3200,7 @@ SP.parseConfig = function(def, onerr) {
 				obj[name] = (/true|on|1|enabled/i).test(value);
 				break;
 			case 'config':
-				obj[name] = CONF[value];
+				obj[name] = F.config[value];
 				break;
 			case 'eval':
 			case 'object':
@@ -3789,7 +3789,7 @@ SP.encrypt = function(key, isUnique, secret) {
 	for (var i = 0; i < str.length; i++)
 		sum += str.charCodeAt(i);
 
-	return (sum + checksum((secret || CONF.secret) + key)) + '-' + str;
+	return (sum + checksum((secret || F.config.secret) + key)) + '-' + str;
 };
 
 SP.decrypt = function(key, secret) {
@@ -3803,7 +3803,7 @@ SP.decrypt = function(key, secret) {
 		return null;
 
 	var hash = this.substring(index + 1);
-	var sum = checksum((secret || CONF.secret) + key);
+	var sum = checksum((secret || F.config.secret) + key);
 	for (var i = 0; i < hash.length; i++)
 		sum += hash.charCodeAt(i);
 
@@ -3921,7 +3921,7 @@ exports.encrypt_uid = function(val, key) {
 	var sum = 0;
 
 	if (!key)
-		key = CONF.secret;
+		key = F.config.secret;
 
 	val = val + '';
 
@@ -3947,7 +3947,7 @@ exports.decrypt_uid = function(val, key) {
 exports.encrypt_crypto = function(type, key, value) {
 	if (!F.temporary.keys[key])
 		F.temporary.keys[key] = Buffer.from(key);
-	var cipher = F.Crypto.createCipheriv(type, F.temporary.keys[key], CONF.default_crypto_iv);
+	var cipher = F.Crypto.createCipheriv(type, F.temporary.keys[key], F.config.$cryptoiv);
 	CONCAT[0] = cipher.update(value);
 	CONCAT[1] = cipher.final();
 	return Buffer.concat(CONCAT);
@@ -3956,7 +3956,7 @@ exports.encrypt_crypto = function(type, key, value) {
 exports.decrypt_crypto = function(type, key, value) {
 	if (!F.temporary.keys[key])
 		F.temporary.keys[key] = Buffer.from(key);
-	var decipher = F.Crypto.createDecipheriv(type, F.temporary.keys[key], CONF.default_crypto_iv);
+	var decipher = F.Crypto.createDecipheriv(type, F.temporary.keys[key], F.config.$cryptoiv);
 	try {
 		CONCAT[0] = decipher.update(value);
 		CONCAT[1] = decipher.final();
@@ -5910,7 +5910,7 @@ exports.connect = function(opt, callback) {
 String.prototype.toJSONSchema = String.prototype.parseSchema = function(name, url) {
 
 	var obj = {};
-	var p = (url || CONF.url || 'https://schemas.totaljs.com/');
+	var p = (url || F.config.url || 'https://schemas.totaljs.com');
 
 	if (p[p.length - 1] !== '/')
 		p += '/';

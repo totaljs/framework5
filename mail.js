@@ -219,17 +219,18 @@ Message.prototype.send2 = function(callback) {
 		return;
 	}
 
-	for (let key in F.temporary.smtp)
-		Mailer.destroy(F.temporary.smtp[key]);
+	for (let key in F.temporary.smtp) {
+		if (!F.config.smtp || F.config.smtp.server !== key)
+			Mailer.destroy(F.temporary.smtp[key]);
+	}
 
 	Mailer.send(F.config.smtp, self, callback);
 };
 
-Message.prototype.send = function(smtp, options, callback, cache) {
+Message.prototype.send = function(options, callback) {
 	var self = this;
 	self.$callback2 = callback;
-	options.server = smtp;
-	Mailer.send(options, self, callback, cache);
+	Mailer.send(options, self, callback);
 	return self;
 };
 
@@ -407,30 +408,13 @@ Mailer.try = function(options, callback) {
 };
 
 Mailer.send2 = function(messages, callback) {
-
-	var opt = F.temporary.mail;
-
-	if (!opt) {
-		var config = CONF.mail_smtp_options;
-		if (config) {
-			if (typeof(config) === 'object')
-				opt = config;
-			else
-				opt = config.toString().parseJSON();
-		}
-
-		if (!opt)
-			opt = {};
-
-		F.temporary.mail = opt;
-	}
-
-	return this.send(CONF.mail_smtp, opt, messages, callback);
+	return this.send(F.config.smtp, messages, callback);
 };
 
-Mailer.send = function(opt, messages, callback, cache) {
+Mailer.send = function(opt, messages, callback) {
 
-	var cached = opt.keepalive != false ? F.temporary.smtp[opt.server] : null;
+	var cache = opt.keepalive;
+	var cached = cache ? F.temporary.smtp[opt.server] : null;
 
 	if (cached) {
 		if (messages instanceof Array) {

@@ -184,6 +184,7 @@ global.DEF = {};
 		response: {
 			ddos: 0,
 			html: 0,
+			xml: 0,
 			json: 0,
 			websocket: 0,
 			timeout: 0,
@@ -353,6 +354,8 @@ function unlink(arr, callback) {
 	CONF.$httpfiles = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true, xsd: true, xsl: true, xslt: true };
 	CONF.$httpchecktypes = true; // for multipart data only
 	CONF.$httpmaxage = 60; // in seconds
+	CONF.$httpmaxkeys = 33;
+	CONF.$httpmaxkey = 25;
 	CONF.$blacklist = '';
 	CONF.$xpoweredby = 'Total.js';
 	CONF.$maxopenfiles = 100;
@@ -382,6 +385,7 @@ function unlink(arr, callback) {
 	CONF.$wsencodedecode = false;
 	CONF.$wsmaxlatency = 2000;
 	CONF.$proxytimeout = 5; // 5 seconds
+	// CONF.$proxyrequest = '';
 	CONF.$cookiesamesite = 'Lax';
 	CONF.$cookiesecure = false;
 	CONF.$csrfexpiration = '30 minutes';
@@ -453,7 +457,7 @@ function unlink(arr, callback) {
 		} else
 			msg.to(email);
 
-		msg.from(F.config.mail_from);
+		msg.from(F.config.mail_from || F.config.smtp.from || F.config.smtp.user);
 		callback && msg.callback(callback);
 
 		if (reply)
@@ -567,10 +571,12 @@ F.loadconfig = function(value) {
 
 				break;
 			case '$cryptoiv':
-				cfg[key] = val ? Buffer.from(val, 'hex') : null;
+				cfg[key] = val ? Buffer.from(val, (/[A-Z=\/+]/).test(val) ? 'base64' : 'hex') : null;
+				break;
+			case '$root':
+				cfg[key] = val ? F.TUtils.normalize(val) : '';
 				break;
 			case 'mail_from':
-			case '$root':
 				break;
 			case '$port':
 				cfg[key] = +val;
@@ -743,10 +749,11 @@ F.load = async function(types, callback) {
 		return arr;
 	};
 
-	if (!types.length || types.includes('stats')) {
+	if (types.length && !types.includes('stats')) {
 		F.config.$stats = false;
 		F.config.$sourcemap = false;
-	}
+	} else
+		F.config.$sourcemap = DEBUG;
 
 	if (!types.length || types.includes('env')) {
 		let env = await read(F.path.root('.env'));
@@ -1437,6 +1444,7 @@ F.merge = function(url) {
 				if (F.temporary.merged[key]) {
 					if (F.temporary.notfound[url]) {
 						ctrl.fallback(404);
+						next();
 						return;
 					}
 				} else {
@@ -1685,15 +1693,6 @@ F.service = function(count) {
 		}
 	}
 
-	// Exec crons
-	for (let cron of F.crons) {
-		if (cron.check(NOW))
-			cron.exec(NOW);
-	}
-
-	if (count % 10 === 0 && global.gc)
-		setTimeout(cleargc, 1000);
-
 	F.temporary.service.publish = F.stats.performance.publish;
 	F.temporary.service.subscribe = F.stats.performance.subscribe;
 	F.temporary.service.call = F.stats.performance.call;
@@ -1726,6 +1725,16 @@ F.service = function(count) {
 
 	F.usage && F.usage();
 	F.temporary.service.usage = 0;
+
+	if (count % 10 === 0 && global.gc)
+		setTimeout(cleargc, 1000);
+
+	// Exec crons
+	for (let cron of F.crons) {
+		if (cron.check(NOW))
+			cron.exec(NOW);
+	}
+
 };
 
 function cleargc() {
@@ -1747,8 +1756,7 @@ F.clear = function(init = true, callback) {
 		dir = dir.replaceAll('/', '\\');
 
 	if (init) {
-
-		if (!F.config.$cleartemp) {
+		if (F.config.$cleartemp) {
 			// clears only JS and CSS files
 			F.TUtils.ls(dir, function(files) {
 				F.path.unlink(files, callback);
@@ -2445,7 +2453,7 @@ F.dir = function(val) {
 	var dirs = ['public', 'tmp', 'logs', 'databases', 'controllers', 'resources', 'plugins', 'views', 'definitions', 'schemas', 'models', 'flowstreams', 'bundles', 'actions', 'extensions', 'source', 'services', 'updates', 'templates', 'private'];
 
 	for (let dir of dirs) {
-		var cfg = F.config['$dir' + dir];
+		let cfg = F.config['$dir' + dir];
 		F.temporary.directories[dir] = cfg || F.Path.join(F.directory, dir);
 	}
 
@@ -2696,7 +2704,7 @@ process.on('message', function(msg, h) {
 	F.isLE = F.Os.endianness ? F.Os.endianness() === 'LE' : true;
 	F.isWindows = F.Os.platform().substring(0, 3).toLowerCase() === 'win';
 
-	CONF.$total5 = F.Path.dirname(require.resolve('./index'));
+	F.config.$total5 = F.Path.dirname(require.resolve('./index'));
 
 	F.cache = require('./cache');
 	F.TImages = require('./images');
@@ -2714,10 +2722,10 @@ process.on('message', function(msg, h) {
 	};
 
 	// Configuration
-	CONF.secret_uid = F.syshash.substring(10);
-	CONF.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
-	CONF.$cryptoiv = Buffer.from(F.syshash).slice(0, 16);
-	CONF.$nodemodules = F.Path.join(F.directory, 'node_modules');
+	F.config.secret_uid = F.syshash.substring(10);
+	F.config.$httpexpire = NOW.add('y', 1).toUTCString(); // must be refreshed every hour
+	F.config.$cryptoiv = Buffer.from(F.syshash).slice(0, 16);
+	F.config.$nodemodules = F.Path.join(F.directory, 'node_modules');
 
 	// Methods
 	F.route = F.TRouting.route;

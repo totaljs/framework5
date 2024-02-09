@@ -218,6 +218,21 @@ Controller.prototype.html = function(value) {
 	F.stats.response.html++;
 };
 
+Controller.prototype.xml = function(value) {
+	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
+	if (value != null)
+		ctrl.response.value = value;
+
+	ctrl.response.headers['content-type'] = 'text/xml';
+	ctrl.flush();
+
+	F.stats.response.xml++;
+};
+
 Controller.prototype.text = Controller.prototype.plain = function(value) {
 	var ctrl = this;
 
@@ -397,6 +412,11 @@ Controller.prototype.fallback = function(code, err) {
 	}
 };
 
+Controller.prototype.layout = function(name) {
+	var ctrl = this;
+	ctrl.response.layout = name;
+};
+
 Controller.prototype.view = function(name, model) {
 
 	var ctrl = this;
@@ -405,9 +425,14 @@ Controller.prototype.view = function(name, model) {
 		return;
 
 	var view = new F.TViewEngine.View(ctrl);
-	var output = view.render(name, model);
-	ctrl.html(output);
+	ctrl.response.layout && view.layout(ctrl.response.layout);
+	setImmediate(renderview, view, name, model);
+	return view;
 };
+
+function renderview(view, name, model) {
+	view.controller.html(view.render(name, model));
+}
 
 Controller.prototype.file = function(path, download) {
 
