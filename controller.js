@@ -426,9 +426,13 @@ Controller.prototype.view = function(name, model) {
 
 	var view = new F.TViewEngine.View(ctrl);
 	ctrl.response.layout && view.layout(ctrl.response.layout);
-	var output = view.render(name, model);
-	ctrl.html(output);
+	setImmediate(renderview, view, name, model);
+	return view;
 };
+
+function renderview(view, name, model) {
+	view.controller.html(view.render(name, model));
+}
 
 Controller.prototype.file = function(path, download) {
 
