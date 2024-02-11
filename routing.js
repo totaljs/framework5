@@ -52,7 +52,7 @@ function Route(url, action, size) {
 	}
 
 	// Apply a default API endpoint
-	url = url.replace(/\?/g, CONF.$api).replace(/\/{2,}/g, '/');
+	url = url.replace(/\?/g, F.config.$api).replace(/\/{2,}/g, '/');
 
 	var t = this;
 

@@ -83,6 +83,10 @@ function Instance(instance, id) {
 
 Instance.prototype = {
 
+	get stats() {
+		return this.worker ? this.worker.stats : this.flow.stats;
+	},
+
 	get worker() {
 		return this.flow;
 	},
@@ -983,7 +987,7 @@ function init_current(meta, callback, nested) {
 
 	// Due to C/C++ modules
 	if (W.workerData || meta.sandbox)
-		CONF.$node_modules = F.path.join(meta.directory, meta.id, 'node_modules');
+		F.config.$node_modules = F.path.join(meta.directory, meta.id, 'node_modules');
 
 	ASFILES = meta.asfiles === true;
 
@@ -1422,8 +1426,8 @@ function init_current(meta, callback, nested) {
 
 		flow.proxy.error = function(err, source, instance) {
 
-			var instanceid = '';
-			var componentid = '';
+			let instanceid = '';
+			let componentid = '';
 
 			if (instance) {
 				if (source === 'instance_message') {
@@ -1444,6 +1448,9 @@ function init_current(meta, callback, nested) {
 				}
 			}
 
+			let tmp = { TYPE: 'flow/error', error: err.toString(), source: source, id: instanceid, component: componentid, ts: new Date() };
+			flow.$socket && flow.$socket.send(tmp);
+			flow.$client && flow.$client.send(tmp);
 			flow.$instance.onerror && flow.$instance.onerror(err, source, instanceid, componentid);
 		};
 

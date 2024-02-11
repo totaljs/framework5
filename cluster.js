@@ -120,7 +120,7 @@ function master(opt) {
 	main.version = {};
 	main.version.node = process.version;
 	main.version.total = F.version_header;
-	main.version.app = CONF.version;
+	main.version.app = F.config.version;
 
 	setInterval(function() {
 
