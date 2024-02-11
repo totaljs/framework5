@@ -6,5 +6,4 @@ NEWSCHEMA('Middleware', function(schema) {
             $.success();
         }
     });
-
 });

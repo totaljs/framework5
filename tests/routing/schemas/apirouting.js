@@ -4,15 +4,14 @@ NEWSCHEMA('APIRoutes', function(schema) {
         name: 'Success action',
         input: 'valid:String',
         action: function($, model) {
-            console.log(model);
 		    $.success(model);
         }
     });
 
     schema.action('keys', {
         name: 'Get keys',
-        action: function($) {
-		    $.success($.keys);
+        action: function($,  model) {
+		    $.success(Object.keys(model));
         }
     });
 
