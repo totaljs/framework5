@@ -1513,16 +1513,22 @@ exports.builtinauth = function(opt) {
 		if (typeof(id) === 'object')
 			id = $.sessionid;
 
+		var ctrl = $.controller;
+
+		if (ctrl && !id)
+			id = ctrl.sessionid;
+
 		if (id) {
 			for (var key in opt.sessions) {
 				var session = opt.sessions[key];
 				if (session.sessionid === id) {
 					delete opt.sessions[key];
 					opt.onlogout && opt.onlogout(session);
-					opt.cookie && !$.controller.parent && $.controller.cookie && $.controller.cookie(opt.cookie, '', '-1 year', opt.options);
+					opt.cookie && ctrl && !ctrl.parent && ctrl.cookie && ctrl.cookie(opt.cookie, '', '-1 year', opt.options);
 					return true;
 				}
 			}
+			opt.onremove && opt.onremove(id);
 		}
 	};
 

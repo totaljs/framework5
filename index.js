@@ -20,7 +20,7 @@ Object.freeze(EMPTYOBJECT);
 Object.freeze(EMPTYARRAY);
 
 // Globals
-global.F = {};
+global.F = global.Total = {};
 global.DEBUG = true;
 global.CONF = {};
 global.REPO = {};
