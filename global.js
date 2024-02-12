@@ -134,6 +134,8 @@ global.AJAX = function(url, data, callback) {
 		opt.body = JSON.stringify(data);
 	}
 
+	opt.headers = { 'X-Requested-With': 'XMLHttpRequest' };
+
 	opt.callback = function(err, response) {
 
 		if (err) {
