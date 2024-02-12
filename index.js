@@ -1212,7 +1212,7 @@ F.http = function(opt) {
 			if (F.isWindows && unixsocket.indexOf(SOCKETWINDOWS) === -1)
 				unixsocket = F.Path.join(SOCKETWINDOWS, unixsocket);
 
-			F.unixsocket = unixsocket;
+			F.config.$unixsocket = F.unixsocket = unixsocket;
 
 			var listen = function(count) {
 				F.server.listen(unixsocket, function() {
