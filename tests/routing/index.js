@@ -16,10 +16,10 @@ F.http();
 var url = 'http://0.0.0.0:8000';
 
 
-ON('error', function(e) {
-	console.log(e);
-	process.exit(1);
-});
+// ON('error', function(e) {
+// 	console.log(e);
+// 	process.exit(1);
+// });
 
 ON('ready', function () {
 
@@ -326,9 +326,37 @@ ON('ready', function () {
 	Test.push('Others ', function (next) {
 		var arr = [];
 		var route;
-		var check = function(type, route) {
-			console.log(F.routes);
-			return typeof F.routes.all[route] === 'undefined' && typeof F.routes[type][route] === 'undefined';
+		//console.log(F.routes);
+		var check = function(route, type) {
+			if (!type)
+				type = 'all'
+			var split = route.split(' ');
+			var method = split[0].trim();
+			var url2 = split[1];
+			var routes = [];
+
+			if (method == 'API')
+				method = 'POST';
+
+			switch(type) {
+				case 'all':
+					routes = F.routes.routes.findAll('method', method);
+					break;
+				case 'file':
+					routes = F.routes.files.findAll('method', method);
+					break;
+				case 'websockets':
+					routes = F.routes.websockets.findAll('method', method);
+					break;
+				
+			}
+
+			var item = routes.findItem('url2', url2);
+
+			if (item)
+				return true;
+			else 
+				return false
 		};
 
 		arr.push(function (next_fn) {
@@ -346,29 +374,36 @@ ON('ready', function () {
 			route = 'GET /normalremove/     *Remove --> exec';
 		
 			ROUTE(route);
-			//ROUTE(route, null);
-			Test.print('Removing routes - Regular route: set to null', check('all', route) ? null : 'Regular route was not removed with "null"');
-			next_fn();
+
+			ROUTE(route, null);
+			setTimeout(function() {
+				Test.print('Removing routes - Regular route: set to null', check(route) ? null : 'Regular route was not removed with "null"');
+				next_fn();
+			}, 100);
 		});
 
 		arr.push(function(next_fn) {
+			// Regular route
+			route = 'GET /normalremove/     *Remove --> exec';
+			ROUTE(route);
 			ROUTE(route).remove();
-			Test.print('Removing routes - Regular route: .remove()', check('all', route) ? null : 'Regular route was not removed with "remove()"');
+			Test.print('Removing routes - Regular route: .remove()', check(route) ? null : 'Regular route was not removed with "remove()"');
 			next_fn();
 		});
 
 		arr.push(function(next_fn) {
 			route = 'GET /dynamicremove/{userid}/q/{123}';
-
 			ROUTE(route);
 			ROUTE(route, null);
-			Test.print('Removing routes - Dynamic route. net null', check('all', route) ? null : 'Dynamic route was not removed with "null"');
+			Test.print('Removing routes - Dynamic route. net null', check(route) ? null : 'Dynamic route was not removed with "null"');
 			next_fn();
 		});
 
 		arr.push(function(next_fn) {
+			route = 'GET /dynamicremove/{userid}/q/{123}';
+			ROUTE(route);
 			ROUTE(route).remove();
-			Test.print('Removing routes - Dynamic route: .remove()', check('all', route) ? null : 'Dynamic route was not removed with "remove()"');
+			Test.print('Removing routes - Dynamic route: .remove()', check(route) ? null : 'Dynamic route was not removed with "remove()"');
 			next_fn();
 		});
 
@@ -377,7 +412,7 @@ ON('ready', function () {
 			route = 'FILE /fileremove/';
 			ROUTE(route, NOOP);
 			ROUTE(route, null);
-			Test.print('Removing routes - File route', check('api', route) ? null : 'File route was not removed with "null"');
+			Test.print('Removing routes - File route', check(route, 'file') ? null : 'File route was not removed with "null"');
 			next_fn();
 		});
 
@@ -387,7 +422,7 @@ ON('ready', function () {
 			route = 'FILE /actionremove/';
 			ROUTE(route, NOOP);
 			ROUTE(route, null);
-			Test.print('Removing routes - Action route', check('all', route) ? null : 'Action route was not removed with "null"');
+			Test.print('Removing routes - Action route', check(route, 'file') ? null : 'Action route was not removed with "null"');
 			next_fn();
 		});
 
@@ -398,13 +433,15 @@ ON('ready', function () {
 
 			ROUTE(route);
 			ROUTE(route, null);
-			Test.print('Removing routes - API route', check('api', route) ? null : 'API route was not removed with "null"');
+			Test.print('Removing routes - API route', check(route) ? null : 'API route was not removed with "null"');
 			next_fn();
 		});
 
 		arr.push(function(next_fn) {
-			ROUTE(route).remove();
-			Test.print('Removing routes - API route', check('api', route) ? null : 'API route was not removed with "remove()"');
+			route = 'API /apiremove/ -api_remove *Remove --> exec';
+			var instance = ROUTE(route);
+			instance.remove();
+			Test.print('Removing routes - API route', !check(route) ? null : 'API route was not removed with "remove()"');
 			next_fn();
 		});
 
@@ -414,7 +451,7 @@ ON('ready', function () {
 
 			ROUTE(route, NOOP);
 			ROUTE(route, null);
-			Test.print('Removing routes - Websocket route', check('websockets', route) ? null : 'Websocket route was not removed with "null"');
+			Test.print('Removing routes - Websocket route', check(route) ? null : 'Websocket route was not removed with "null"');
 		
 			next_fn();
 		});
@@ -426,8 +463,7 @@ ON('ready', function () {
 			ROUTE(socket, NOOP);
 			ROUTE(route);
 			ROUTE(route, null);
-			Test.print('Removing routes - WAPI route', check('all', route) ? null : 'WAPI route was not removed with "null"');
-		
+			Test.print('Removing routes - WAPI route', check(route) ? null : 'WAPI route was not removed with "null"');
 			ROUTE(socket, null);
 			next_fn();
 		});

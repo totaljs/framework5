@@ -1,0 +1,43 @@
+{
+	"pid": 11809,
+	"date": "2024-02-12T16:27:21.045Z",
+	"stats": [
+		{
+			"id": "",
+			"version": {
+				"node": "v18.18.0",
+				"total": "5",
+				"build": 5000,
+				"app": "1.0.0"
+			},
+			"pid": 11809,
+			"mode": "debug",
+			"overload": 0,
+			"date": "2024-02-12T17:32:22.429Z",
+			"memory": 9.15,
+			"rm": 0,
+			"fm": 0,
+			"wm": 0,
+			"em": 0,
+			"mm": 0,
+			"om": 0,
+			"dm": 0,
+			"um": 0,
+			"pm": 0,
+			"sm": 0,
+			"cm": 0,
+			"dbrm": 0,
+			"dbwm": 0,
+			"usage": 0,
+			"requests": 0,
+			"pending": 0,
+			"external": 0,
+			"errors": 2,
+			"timeouts": 0,
+			"online": 0,
+			"download": 0,
+			"upload": 0,
+			"lasterror": "2024-02-12T16:27:21.347Z TypeError: F.kill is not a function\n    at Object.<anonymous> (/Users/mac/Desktop/framework5/tests/server/index.js:25:6)\n    at EventEmitter2.emit (/Users/mac/Desktop/framework5/utils.js:4989:7)\n    at F.load (/Users/mac/Desktop/framework5/index.js:881:4)"
+		}
+	]
+}

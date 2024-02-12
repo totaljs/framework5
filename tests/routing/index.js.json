@@ -1,0 +1,44 @@
+{
+	"pid": 78989,
+	"date": "2024-02-11T19:44:24.849Z",
+	"stats": [
+		{
+			"id": "",
+			"version": {
+				"node": "v18.18.0",
+				"total": "5",
+				"build": 5000,
+				"app": "1.0.0"
+			},
+			"pid": 78989,
+			"mode": "debug",
+			"overload": 0,
+			"date": "2024-02-11T19:46:25.010Z",
+			"memory": 11.19,
+			"rm": 0,
+			"fm": 0,
+			"wm": 0,
+			"em": 0,
+			"mm": 0,
+			"om": 0,
+			"dm": 0,
+			"um": 0,
+			"pm": 0,
+			"sm": 0,
+			"cm": 0,
+			"dbrm": 0,
+			"dbwm": 0,
+			"usage": 0,
+			"requests": 0,
+			"pending": 0,
+			"external": 0,
+			"errors": 3,
+			"timeouts": 1,
+			"online": 0,
+			"download": 0,
+			"upload": 0,
+			"lasterror": "2024-02-11T19:44:36.533Z TypeError: Cannot read properties of undefined (reading 'upload')\n    at exports.create [as sourcemap] (/Users/mac/Desktop/framework5/sourcemap.js:67:19)\n    at Timeout._onTimeout (/Users/mac/Desktop/framework5/sourcemap.js:159:99)\n    at listOnTimeout (node:internal/timers:569:17)\n    at process.processTimers (node:internal/timers:512:7)",
+			"lasttimeout": "2024-02-11T19:44:34.982Z /internal/408/"
+		}
+	]
+}

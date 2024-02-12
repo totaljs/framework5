@@ -8,7 +8,7 @@ F.http();
 
 ON('ready', function() {
 
-	Test.push('A test name', function(next) {
+	Test.push('Test Web Proxy', function(next) {
 		// Test.print('String.slug()', [error]);
 		Test.print('String.slug()');
 		next();
