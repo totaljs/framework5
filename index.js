@@ -1340,7 +1340,12 @@ F.logger = function(enable) {
 };
 
 
-F.componentator = function(name, components, removeprev = true) {
+F.componentator = function(name, components, removeprev = true, attrs = '') {
+
+	if (typeof(removeprev) === 'string') {
+		attrs = removeprev;
+		removeprev = true;
+	}
 
 	var meta = {};
 
@@ -1349,7 +1354,7 @@ F.componentator = function(name, components, removeprev = true) {
 
 	F.$events.componentator && F.emit('componentator', meta);
 
-	var url = 'https://componentator.com/download.js?id=' + meta.components;
+	var url = 'https://componentator.com/download.js?id=' + meta.components + (attrs ? ('&' + attrs) : '');
 	var nameid = meta.name.slug();
 	var relative = 'ui-' + (removeprev ? (nameid + '-') : '') + url.makeid() + '.min.js';
 	var filename = F.path.public(relative);
