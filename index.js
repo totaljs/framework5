@@ -1339,7 +1339,6 @@ F.logger = function(enable) {
 	};
 };
 
-
 F.componentator = function(name, components, removeprev = true, attrs = '') {
 
 	if (typeof(removeprev) === 'string') {
