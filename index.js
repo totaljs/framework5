@@ -1892,11 +1892,22 @@ F.newtransform = function(name, action, id) {
 		let obj = {};
 		obj.id = id;
 		obj.action = action;
-
+		obj.remove = function() {
+			let arr = F.transformations[name];
+			if (arr) {
+				let index = arr.indexOf(obj);
+				if (index !== -1) {
+					arr.splice(index, 1);
+					if (!arr.length)
+						delete F.transformations[name];
+				}
+			}
+		};
 		if (F.transformations[name])
 			F.transformations[name].push(obj);
 		else
 			F.transformations[name] = [obj];
+		return obj;
 	}
 };
 
