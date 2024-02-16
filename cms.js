@@ -271,8 +271,7 @@ function tidy(body) {
 		var arr = text.substring(is ? 8 : 7, text.length - 1).split(' ');
 		var builder = '';
 
-		for (var i = 0; i < arr.length; i++) {
-			var cls = arr[i];
+		for (let cls of arr) {
 			if (cls[0] === 'C' && cls[1] === 'M' && cls[2] === 'S' && !SKIP_CLASSES[cls])
 				continue;
 			builder += (builder ? ' ' : '') + cls;
@@ -283,58 +282,39 @@ function tidy(body) {
 	}).replace(/<div\s>/g, '<div>');
 }
 
-exports.compile = function(html, widgets, used) {
+exports.widgets = function(html) {
 
-	var arr = html.match(/data-cms=".*?"/g) || EMPTYARRAY;
-	var response = new CMSRender();
-	var indexer = 0;
-	var index;
-	var beg;
-	var end;
+	let arr = html.match(/data-cms=".*?"/g) || EMPTYARRAY;
+	let response = [];
+	let indexer = 0;
+	let index;
+	let beg;
+	let end;
 
-	response.css = [];
-	response.js = [];
-	response.widgets = [];
-	response.cache = {};
-	response.tangular = [];
-
-	if (!used) {
-		for (var widget of widgets) {
-			if (widget.css)
-				response.css.push(F.TUtils.minify_css(widget.css));
-			if (widget.js)
-				response.js.push(F.TUtils.minify_js(widget.js));
-			if (widget.ui) {
-				widget.ui.css && response.css.push(F.TUtils.minify_css(widget.ui.css));
-				widget.ui.js && response.js.push(F.TUtils.minify_js(widget.ui.js));
-			}
-		}
-	}
-
-	for (var attr of arr) {
+	for (let attr of arr) {
 
 		if (html.indexOf(attr) === -1)
 			continue;
 
-		var w = attr.substring(10);
-		var index = w.indexOf('__');
-		var id = w.substring(0, index);
+		let w = attr.substring(10);
+		index = w.indexOf('__');
+		let id = w.substring(0, index);
 
 		index = html.lastIndexOf('<', html.indexOf(attr));
 		beg = '<div';
 		end = '</div>';
 
-		var pos = index + 1;
-		var count = 0;
-		var counter = 0;
+		let pos = index + 1;
+		let count = 0;
+		let counter = 0;
 
 		while (true) {
 
 			if (counter++ > 100)
 				break;
 
-			var a = html.indexOf(beg, pos);
-			var b = html.indexOf(end, pos);
+			let a = html.indexOf(beg, pos);
+			let b = html.indexOf(end, pos);
 
 			if (a !== -1 && a < b) {
 				count++;
@@ -355,8 +335,114 @@ exports.compile = function(html, widgets, used) {
 			}
 		}
 
-		var widget = widgets instanceof Array ? widgets.findItem('id', id) : widgets[id];
-		var body = html.substring(index, pos);
+		let body = html.substring(index, pos);
+		html = html.replace(body, clean(body));
+		index = body.indexOf('>');
+		body = body.substring(0, index + 1) + '~BEG~' + body.substring(index + 1);
+		index = body.lastIndexOf('<');
+		body = body.substring(0, index) + '~END~' + body.substring(index);
+
+		index = w.indexOf('__');
+
+		let config = decodeURIComponent(w.substring(index + 2, w.length - 1)).parseJSON(true);
+		let opt = {};
+
+		opt.id = id;
+		opt.indexer = indexer;
+		opt.body = tidy(clean(body));
+		opt.html = body.substring(body.lastIndexOf('~BEG~') + 5, body.lastIndexOf('~END~'));
+		opt.config = config || EMPTYOBJECT;
+		opt.beg = opt.body.substring(0, opt.body.indexOf('>') + 1);
+		opt.end = opt.body.substring(opt.body.lastIndexOf('<'));
+
+		index = opt.beg.indexOf('data-cms-id="');
+
+		if (index === -1)
+			opt.uid = opt.beg.makeid();
+		else
+			opt.uid = opt.beg.substring(index + 13, opt.beg.indexOf('"', index + 14));
+
+		response.push(opt);
+		indexer++;
+	}
+
+	return response;
+};
+
+exports.compile = function(html, widgets, used) {
+
+	let arr = html.match(/data-cms=".*?"/g) || EMPTYARRAY;
+	let response = new CMSRender();
+	let indexer = 0;
+	let index;
+	let beg;
+	let end;
+
+	response.css = [];
+	response.js = [];
+	response.widgets = [];
+	response.cache = {};
+	response.tangular = [];
+
+	if (!used) {
+		for (let widget of widgets) {
+			if (widget.css)
+				response.css.push(F.TUtils.minify_css(widget.css));
+			if (widget.js)
+				response.js.push(F.TUtils.minify_js(widget.js));
+			if (widget.ui) {
+				widget.ui.css && response.css.push(F.TUtils.minify_css(widget.ui.css));
+				widget.ui.js && response.js.push(F.TUtils.minify_js(widget.ui.js));
+			}
+		}
+	}
+
+	for (let attr of arr) {
+
+		if (html.indexOf(attr) === -1)
+			continue;
+
+		let w = attr.substring(10);
+		index = w.indexOf('__');
+		let id = w.substring(0, index);
+
+		index = html.lastIndexOf('<', html.indexOf(attr));
+		beg = '<div';
+		end = '</div>';
+
+		let pos = index + 1;
+		let count = 0;
+		let counter = 0;
+
+		while (true) {
+
+			if (counter++ > 100)
+				break;
+
+			let a = html.indexOf(beg, pos);
+			let b = html.indexOf(end, pos);
+
+			if (a !== -1 && a < b) {
+				count++;
+				pos = html.indexOf('>', a);
+				continue;
+			}
+
+			if (a === -1 || b < a) {
+
+				pos = b + 6;
+
+				if (count) {
+					count--;
+					continue;
+				}
+
+				break;
+			}
+		}
+
+		let widget = widgets instanceof Array ? widgets.findItem('id', id) : widgets[id];
+		let body = html.substring(index, pos);
 
 		// Widget not found
 		if (!widget) {
@@ -391,9 +477,9 @@ exports.compile = function(html, widgets, used) {
 		body = body.substring(0, index) + '~END~' + body.substring(index);
 
 		index = w.indexOf('__');
-		var config = decodeURIComponent(w.substring(index + 2, w.length - 1)).parseJSON(true);
 
-		var opt = {};
+		let config = decodeURIComponent(w.substring(index + 2, w.length - 1)).parseJSON(true);
+		let opt = {};
 		opt.id = id;
 		opt.indexer = indexer;
 		opt.body = tidy(clean(body));
@@ -423,17 +509,17 @@ exports.compile = function(html, widgets, used) {
 		if (index === -1)
 			break;
 
-		var beg = html.lastIndexOf('<script', index);
-		var end = html.indexOf('</script>', index);
-		var endhead = html.indexOf('>', index);
-		var head = html.substring(beg, endhead);
-		var name = head.match(/name=".*?"/i)[0];
-		var template = html.substring(html.indexOf('>', endhead) + 1, end);
+		let begindex = html.lastIndexOf('<script', index);
+		let endindex = html.indexOf('</script>', index);
+		let endhead = html.indexOf('>', index);
+		let head = html.substring(begindex, endhead);
+		let name = head.match(/name=".*?"/i)[0];
+		let template = html.substring(html.indexOf('>', endhead) + 1, endindex);
 
 		name = name.substring(6, name.length - 1);
-		html = html.replace(html.substring(beg, end + 9), '~WIDGET#' + response.tangular.length + '~');
+		html = html.replace(html.substring(begindex, endindex + 9), '~WIDGET#' + response.tangular.length + '~');
 		response.tangular.push({ id: HASH(name).toString(36), name: name, type: 'nav', template: Tangular.compile(template) });
-		index = beg;
+		index = begindex;
 
 	}
 
@@ -446,26 +532,26 @@ exports.compile = function(html, widgets, used) {
 		if (index === -1)
 			break;
 
-		var beg = html.lastIndexOf('<script', index);
-		var end = html.indexOf('</script>', index);
-		var endhead = html.indexOf('>', index);
-		var template = html.substring(html.indexOf('>', endhead) + 1, end);
-		html = html.replace(html.substring(beg, end + 9), '~WIDGET#' + response.tangular.length + '~');
+		let begindex = html.lastIndexOf('<script', index);
+		let endindex = html.indexOf('</script>', index);
+		let endhead = html.indexOf('>', index);
+		let template = html.substring(html.indexOf('>', endhead) + 1, endindex);
+		html = html.replace(html.substring(begindex, endindex + 9), '~WIDGET#' + response.tangular.length + '~');
 		response.tangular.push({ type: 'breadcrumb', template: Tangular.compile(template) });
-		index = beg;
+		index = begindex;
 	}
 
 	response.html = tidy(trash(layout(html, '~WIDGETLAYOUT~')));
 	response.multiple = expressions_multiple(response.html);
 
-	for (var item of response.multiple)
+	for (let item of response.multiple)
 		response.html = response.html.replace(item.html, item.replace);
 
 	response.expressions = expressions(response.html);
 	response.widgets.reverse();
 
-	var builder = [];
-	var text = [];
+	let builder = [];
+	let text = [];
 
 	while (true) {
 
@@ -473,8 +559,8 @@ exports.compile = function(html, widgets, used) {
 
 		if (beg !== -1) {
 			end = response.html.indexOf('~', beg + 6) + 1;
-			var h = response.html.substring(0, beg);
-			var windex = response.html.substring(beg + 7, end - 1);
+			let h = response.html.substring(0, beg);
+			let windex = response.html.substring(beg + 7, end - 1);
 			if (windex[0] === '#') {
 				response.html = response.html.substring(end);
 				builder.push('text[{0}]+tangular[{1}]'.format(text.push(h) - 1, windex.substring(1)));
