@@ -1914,8 +1914,8 @@ F.newtransform = function(name, action, id) {
 function transform(items, opt, index) {
 	var t = items[index];
 	if (t) {
+		opt.next = () => transform(items, opt, index + 1);
 		t.action(opt, opt.value);
-		t.next = () => transform(items, opt, index + 1);
 	} else
 		opt.$callback(opt.error.items.length ? opt.error : null, opt.value);
 }
