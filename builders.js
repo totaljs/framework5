@@ -1153,10 +1153,7 @@ exports.newaction = function(name, obj) {
 	if (obj.route) {
 		if (obj.route.indexOf('-->') === -1)
 			obj.route = obj.route + '  ' + (obj.input ? '+' : '-') + obj.$url + ' --> ' + name;
-		var flags = null;
-		if (obj.encrypt)
-			flags = '@encrypt';
-		obj.route = F.route(obj.route, flags || []);
+		obj.route = F.route(obj.route + (obj.encrypt ? ' @encrypt' : ''));
 	}
 
 	if (obj.permissions && typeof(obj.permissions) === 'string')
@@ -1267,6 +1264,9 @@ ActionCaller.prototype.exec = function() {
 		} else {
 			$.response[$.id] = response;
 			meta.response && self.finish && self.finish(response);
+			var key = '@' + $.id;
+			if (F.$events[key])
+				F.emit(key, $, response);
 			self.exec();
 		}
 	};
@@ -1338,8 +1338,10 @@ ActionCaller.prototype.exec = function() {
 ActionCaller.prototype.finish = function(value) {
 	var self = this;
 	self.finish = null;
-	self.options.callback(self.error.length ? self.error : null, value === undefined ? self.$.response : value);
-	self.options.callback = null;
+	if (self.options.callback) {
+		self.options.callback(self.error.length ? self.error : null, value === undefined ? self.$.response : value);
+		self.options.callback = null;
+	}
 };
 
 ActionCaller.prototype.cancel = function() {

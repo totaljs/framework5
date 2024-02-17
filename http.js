@@ -20,6 +20,8 @@ exports.listen = function(req, res) {
 	// res.write();
 	// res.end()
 
+	F.stats.request.request++;
+
 	// Not supported
 	if (req.method === 'HEAD') {
 		F.stats.request.blocked++;

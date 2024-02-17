@@ -1339,8 +1339,12 @@ F.logger = function(enable) {
 	};
 };
 
+F.componentator = function(name, components, removeprev = true, attrs = '') {
 
-F.componentator = function(name, components, removeprev = true) {
+	if (typeof(removeprev) === 'string') {
+		attrs = removeprev;
+		removeprev = true;
+	}
 
 	var meta = {};
 
@@ -1349,7 +1353,7 @@ F.componentator = function(name, components, removeprev = true) {
 
 	F.$events.componentator && F.emit('componentator', meta);
 
-	var url = 'https://componentator.com/download.js?id=' + meta.components;
+	var url = 'https://componentator.com/download.js?id=' + meta.components + (attrs ? ('&' + attrs) : '');
 	var nameid = meta.name.slug();
 	var relative = 'ui-' + (removeprev ? (nameid + '-') : '') + url.makeid() + '.min.js';
 	var filename = F.path.public(relative);
@@ -1888,19 +1892,30 @@ F.newtransform = function(name, action, id) {
 		let obj = {};
 		obj.id = id;
 		obj.action = action;
-
+		obj.remove = function() {
+			let arr = F.transformations[name];
+			if (arr) {
+				let index = arr.indexOf(obj);
+				if (index !== -1) {
+					arr.splice(index, 1);
+					if (!arr.length)
+						delete F.transformations[name];
+				}
+			}
+		};
 		if (F.transformations[name])
 			F.transformations[name].push(obj);
 		else
 			F.transformations[name] = [obj];
+		return obj;
 	}
 };
 
 function transform(items, opt, index) {
 	var t = items[index];
 	if (t) {
+		opt.next = () => transform(items, opt, index + 1);
 		t.action(opt, opt.value);
-		t.next = () => transform(items, opt, index + 1);
 	} else
 		opt.$callback(opt.error.items.length ? opt.error : null, opt.value);
 }
