@@ -226,6 +226,7 @@ global.DEF = {};
 	F.path.plugins = path => path ? F.path.$join(F.temporary.directories.plugins, path) : F.temporary.directories.plugins;
 	F.path.templates = path => path ? F.path.$join(F.temporary.directories.templates, path) : F.temporary.directories.templates;
 	F.path.flowstreams = path => path ? F.path.$join(F.temporary.directories.flowstreams, path) : F.temporary.directories.flowstreams;
+	F.path.modules = path => path ? F.path.$join(F.temporary.directories.modules, path) : F.temporary.directories.modules;
 	F.path.directory = (type, path) => path ? F.path.$join(F.temporary.directories[type], path) : F.temporary.directories[type];
 	F.path.tmp = F.path.temp = path => path ? F.path.$join(F.temporary.directories.tmp, path) : F.temporary.directories.tmp;
 	F.path.exists = (path, callback) => callback ? (F.Fs.lstat(path, (err, stats) => callback(err ? false : true, stats ? stats.size : 0, stats ? stats.isFile() : false))) : new Promise(resolve => F.path.exists(path, resolve));
@@ -2465,7 +2466,7 @@ F.dir = function(val) {
 	if (val)
 		F.directory = val;
 
-	var dirs = ['public', 'tmp', 'logs', 'databases', 'controllers', 'resources', 'plugins', 'views', 'definitions', 'schemas', 'models', 'flowstreams', 'bundles', 'actions', 'extensions', 'source', 'services', 'updates', 'templates', 'private'];
+	var dirs = ['public', 'tmp', 'logs', 'databases', 'controllers', 'resources', 'plugins', 'modules', 'views', 'definitions', 'schemas', 'models', 'flowstreams', 'bundles', 'actions', 'extensions', 'source', 'services', 'updates', 'templates', 'private'];
 
 	for (let dir of dirs) {
 		let cfg = F.config['$dir' + dir];
