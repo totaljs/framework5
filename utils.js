@@ -3547,7 +3547,7 @@ SP.parseUID = function() {
 	return obj;
 };
 
-String.prototype.parseEnv = function() {
+SP.parseEnv = function() {
 
 	var arr = this.split(REG_ENVLINES);
 	var obj = {};
@@ -5907,7 +5907,7 @@ exports.connect = function(opt, callback) {
 	meta.socket1.on('clientError', error);
 };
 
-String.prototype.toJSONSchema = String.prototype.parseSchema = function(name, url) {
+SP.toJSONSchema = SP.parseSchema = function(name, url) {
 
 	var obj = {};
 	var p = (url || F.config.url || 'https://schemas.totaljs.com');
