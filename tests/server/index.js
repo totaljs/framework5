@@ -1,5 +1,4 @@
 /* eslint-disable */
-
 require('../../index');
 require('../../test');
 
@@ -13,29 +12,31 @@ var opt = {};
 
 Test.push('Test Server', function(next) {
 	var arr = [];
-	// arr.push(function(next_fn) {
-	// 	opt.ip = '192.168.1.100';
-	// 	opt.port =  5000;
+	arr.push(function(next_fn) {
+		opt.ip = '192.168.1.100';
+		opt.port =  5000;
 
-	// 	F.run(opt)
-	// 	ON('ready', function() {
-	// 		var port = CONF.$port;
-	// 		var ip = CONF.$ip;
-	// 		Test.print('IP + PORT: ', port == opt.port && ip == opt.ip ? null : 'Expected IP: {0} and PORT: {0}'.format(opt.ip, opt.port));
-	// 		next_fn();
-	// 	});
+		Total.load('Workers', function() {
 
-	// });
+			var child = NEWTHREAD('~./workers/child', { ip: opt.ip, port: opt.port });
+			child.on('message', function(message) {
+				console.log(message);
+				RESTBuilder.GET('http://{0}:{1}/exit/'.format(opt.ip, opt.port)).exec(function(err, response) {
+					console.log(err, response);
+					next_fn();
+				})
+			});
+		});
+	});
 
 	arr.push(function(next_fn) {
-
 		opt = {};
 		opt.unixsocket = PATH.root('test.socket');
 		opt.unixsocket777 = true;
 
-		F.http(opt)
+		F.run(opt);
 		ON('ready', function() {
-			Test.print('UnixSocket  :', CONF.$unixsocket === opt.unixsocket ? null : 'Expected valid Unixsocket');
+			Test.print('UnixSocket  :', Total.unixsocket === opt.unixsocket ? null : 'Expected valid Unixsocket');
 			next_fn();
 		});
 	});
