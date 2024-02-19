@@ -1601,7 +1601,6 @@ FP.initcomponent = function(key, component) {
 	instance.middleware = newmiddleware;
 	instance.transform = newtransform;
 	instance.replace = variables;
-	instance.instances = self.meta.flow;
 	instance.components = self.meta.components;
 
 	self.onconnect && self.onconnect(instance);
