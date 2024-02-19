@@ -86,6 +86,9 @@ exports.create = function() {
 					let action = F.actions[name];
 					if (action) {
 						tmp.input = action.input;
+						tmp.name = action.name;
+						tmp.summary = action.summary;
+						tmp.public = action.public;
 
 						if (tmp.input && tmp.input[0] === '@')
 							tmp.input = stringify(F.jsonschemas[tmp.input.substring(1)]);
