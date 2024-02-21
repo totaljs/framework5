@@ -23,12 +23,14 @@ Test.push('Test Server', function(next) {
 		var options = {};
 		options.unixsocket = PATH.root('test.socket');
 		options.unixsocket777 = true;
-		Total.run(options);
-		ON('ready', function() {
-			console.log(Total.unixsocket);
-			Test.print('UnixSocket  :', Total.unixsocket == options.unixsocket ? null : 'Expected valid Unixsocket');
-			next_fn();
+		Total.load('Workers', function() {
+			var child2 = NEWTHREAD('~./workers/child2', options);
+			child2.on('message', function(message) {
+				Test.print('UnixSocket  :', message.unixsocket == options.unixsocket ? null : 'Expected valid Unixsocket');
+				next_fn();
+			});
 		});
+
 	});
 	arr.async(function() {
 		next();
