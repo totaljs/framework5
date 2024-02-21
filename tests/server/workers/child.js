@@ -1,13 +1,18 @@
 require('../../../index');
-require('../../../test');
 var worker = NEWTHREAD();
 
 var opt = worker.data;
 F.http(opt);
 
-ROUTE('GET /exit/', $ => success());
+ROUTE('GET /exit/', function($) {
+    $.success();
+    setTimeout(function() {
+        process.exit(0);
+    }, 500);
+});
 
 ON('ready', function() {
-    console.log('FROM child process: ', worker.data);
-    worker.postMessage({ ready: true });
+    setTimeout(function() {
+        worker.postMessage({ ready: true });
+    }, 3000);
 });

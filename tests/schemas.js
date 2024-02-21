@@ -4,7 +4,6 @@ require('../index');
 require('../test');
 
 // NEWACTION()
-
 // NEWSCHEMA()
 // ACTION()
 // JSON schema types defined in the ACTIONS
