@@ -80,7 +80,7 @@ function Route(url, action, size) {
 	if (t.url2[0] === '@') {
 		// @TODO: missing WAPI implementation
 		t.skip = true;
-		console.log('This "{0}" kind of routes are not supported yet'.formaT(t.url2));
+		console.log('This "{0}" kind of routes are not supported yet'.format(t.url2));
 		return;
 	}
 
