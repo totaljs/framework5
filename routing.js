@@ -817,7 +817,7 @@ exports.lookupproxy = function(ctrl) {
 		var u = ctrl.uri.key.substring(0, proxy.url.length);
 		if (u[u.length - 1] !== '/')
 			u += '/';
-		if (u === proxy.url && (!proxy.check || proxy.check(ctrl))) {
+		if (u === proxy.url && (!proxy.$check || proxy.$check(ctrl))) {
 			F.stats.response.proxy++;
 			proxycreate(proxy, ctrl);
 			return true;
