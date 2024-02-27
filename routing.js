@@ -817,7 +817,7 @@ exports.lookupproxy = function(ctrl) {
 		var u = ctrl.uri.key.substring(0, proxy.url.length);
 		if (u[u.length - 1] !== '/')
 			u += '/';
-		if (u === proxy.url && (!proxy.check || proxy.check(ctrl))) {
+		if (u === proxy.url && (!proxy.$check || proxy.$check(ctrl))) {
 			F.stats.response.proxy++;
 			proxycreate(proxy, ctrl);
 			return true;
@@ -855,7 +855,7 @@ function proxycreate(proxy, ctrl) {
 
 	var tmp;
 
-	uri.method = ctrl.method;
+	uri.method = ctrl.method === 'SOCKET' ? 'GET' : ctrl.method;
 	uri.headers = ctrl.headers;
 	ctrl.$proxy = proxy;
 
@@ -897,7 +897,7 @@ function proxycreate(proxy, ctrl) {
 	if (ctrl.res.headersSent || ctrl.destroyed)
 		return;
 
-	var get = uri.method === 'GET' || uri.method === 'HEAD' || uri.method === 'OPTIONS';
+	var get = (ctrl.method === 'GET' || ctrl.method === 'HEAD' || ctrl.method === 'OPTIONS');
 	var kind = secured ? F.Https : F.Http;
 	var request = get && !ctrl.iswebsocket ? kind.get(uri, proxycreatecallback) : kind.request(uri, proxycreatecallback);
 

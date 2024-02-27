@@ -395,6 +395,7 @@ function unlink(arr, callback) {
 	CONF.$tapiurl = 'eu';
 	CONF.$tapimail = false;
 	CONF.$tapilogger = false;
+	CONF.$imprint = true;
 
 	CONF.$tms = false;
 	CONF.$tmsmaxsize = 256; // kB
@@ -1065,6 +1066,9 @@ F.shell = function(cmd, callback, cwd) {
 
 F.console = function() {
 
+	if (!F.config.$imprint)
+		return;
+
 	var memory = process.memoryUsage();
 	var nodemodules = require.resolve('./index');
 
@@ -1203,7 +1207,6 @@ F.http = function(opt) {
 		F.server.on('upgrade', F.TWebSocket.listen);
 
 		var unixsocket = opt.unixsocket || F.config.$unixsocket;
-
 		if (unixsocket) {
 
 			try {
