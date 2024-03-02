@@ -115,7 +115,7 @@ exports.client = function(url, token, callback) {
 		token = undefined;
 	}
 
-	var client = new F.TWebSocket.WebSocketClient();
+	var client = F.TWebSocket.createclient();
 	var publishers = {};
 	var subscribers = {};
 	var callbacks = {};
