@@ -865,10 +865,14 @@ function authorize(ctrl) {
 
 function middleware(ctrl) {
 	var run = function(index) {
-		var fn = ctrl.route.middleware[index];
-		if (fn)
-			fn(ctrl, () => run(index + 1));
-		else
+		let key = ctrl.route.middleware[index];
+		if (key) {
+			let fn = F.routes.middleware[key];
+			if (fn)
+				fn(ctrl, () => run(index + 1));
+			else
+				prepare(ctrl);
+		} else
 			prepare(ctrl);
 	};
 	run(0);
