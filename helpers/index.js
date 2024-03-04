@@ -29,4 +29,4 @@ options.servicemode = process.argv.includes('--service') || process.argv.include
 // options.cluster = 'auto';
 // options.limit = 10; // max 10. threads (works only with "auto" scaling)
 
-F.run(options);
+Total.run(options);

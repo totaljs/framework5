@@ -4,6 +4,8 @@
 
 'use strict';
 
+const REG_BINARY = /image|document|sheet|excel|msword|video|audio|zip|pdf/;
+
 var cache = {};
 
 // Registers a new API type
@@ -238,6 +240,11 @@ exports.newapi('TotalAPI,TAPI', function(opt, next) {
 				if (opt.output === 'base64') {
 					output = output.toString('base64');
 				} else if (opt.output !== 'binary' && opt.output !== 'buffer') {
+					var type = response.headers['content-type'];
+					if (REG_BINARY.test(type)) {
+						next(null, output);
+						return;
+					}
 					output = output.toString('utf8');
 					if (!opt.output || opt.output === 'json')
 						output = output.parseJSON(true);

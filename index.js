@@ -787,7 +787,7 @@ F.load = async function(types, callback) {
 		}
 	}
 
-	let loader = ['modules', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'middleware'];
+	let loader = ['modules', 'actions', 'schemas', 'models', 'definitions', 'controllers', 'middleware', 'sources'];
 	var files = [];
 	var tmp;
 
