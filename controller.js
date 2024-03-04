@@ -1420,7 +1420,7 @@ function send_file(ctrl, path, ext) {
 
 function middleware(ctrl) {
 	var run = function(index) {
-		var name = ctrl.route.middleware[index];
+		let name = ctrl.route.middleware[index];
 		if (name) {
 			let fn = F.routes.middleware[name];
 			if (fn)
