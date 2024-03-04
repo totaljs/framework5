@@ -1,0 +1,43 @@
+{
+	"pid": 67904,
+	"date": "2024-03-04T08:55:28.419Z",
+	"stats": [
+		{
+			"id": "",
+			"version": {
+				"node": "v20.8.0",
+				"total": "5",
+				"build": 5000,
+				"app": "1.0.0"
+			},
+			"pid": 67904,
+			"mode": "debug",
+			"overload": 0,
+			"date": "2024-03-04T09:06:29.429Z",
+			"memory": 8.49,
+			"rm": 1,
+			"fm": 0,
+			"wm": 0,
+			"em": 0,
+			"mm": 0,
+			"om": 0,
+			"dm": 0,
+			"um": 0,
+			"pm": 0,
+			"sm": 0,
+			"cm": 0,
+			"dbrm": 0,
+			"dbwm": 0,
+			"usage": 0,
+			"requests": 3,
+			"pending": 0,
+			"external": 0,
+			"errors": 2,
+			"timeouts": 0,
+			"online": 0,
+			"download": 0,
+			"upload": 0,
+			"lasterror": "2024-03-04T08:55:31.008Z TypeError: MAIN.client2.publish is not a function\n    at Object.fn (/Users/mac/Desktop/framework5/tests/routing/tms.js:30:22)\n    at Array.<anonymous> (/Users/mac/Desktop/framework5/test.js:38:8)\n    at AP.wait (/Users/mac/Desktop/framework5/utils.js:4655:9)\n    at Test.run (/Users/mac/Desktop/framework5/test.js:36:13)\n    at Timeout._onTimeout (/Users/mac/Desktop/framework5/tests/routing/tms.js:36:14)\n    at listOnTimeout (node:internal/timers:573:17)\n    at process.processTimers (node:internal/timers:514:7)"
+		}
+	]
+}

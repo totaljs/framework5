@@ -1,15 +1,12 @@
 exports.install = function() {
-
 	ROUTE('SOCKET  /', main);
 	ROUTE('SOCKET  /reconnect/', reconnect);
 	ROUTE('+SOCKET /authorized/', simple);
 	ROUTE('-SOCKET /unauthorized/', simple);
-	ROUTE('SOCKET  /middleware/', simple, ['#middleware-socket']);
-
+	ROUTE('SOCKET  /middleware/ #middlewaresocket', simple);
 };
 
 function reconnect() {
-
 	var self = this;
 	var disconnect_after = 1000;
 
@@ -18,7 +15,6 @@ function reconnect() {
 			client.close();
 		}, disconnect_after);
 	});
-
 	self.on('message', function(client, message) {
 		if (message.type === 'ping')
 			client.send({ type: 'ping' });
@@ -27,7 +23,6 @@ function reconnect() {
 }
 
 function simple() {
-
 	var self = this;
 
 	self.on('message', function(client, message) {

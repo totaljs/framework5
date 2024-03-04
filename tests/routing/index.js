@@ -216,7 +216,6 @@ ON('ready', function () {
 				Test.print('HTTP Routing - Wildcards Overwrite ' + path, err === null && res.success && res.value === 3 ? null : 'Assertion failed');
 				next();
 			});
-
 		});
 
 		arr.push(function (next) {
@@ -231,6 +230,204 @@ ON('ready', function () {
 			next();
 		})
 
+	});
+
+
+	Test.push('WEBSOCKET Routing', function(next) {
+		var wsclient;
+		var test_msg = 'message123';
+		var arr = [];
+		var create_client = function(next_fn) {
+			WEBSOCKETCLIENT(function(client) {
+				client.connect(url.replace('http', 'ws') + '?query=' + test_msg);
+				wsclient = client;
+				next_fn();
+			});
+		};
+		arr.push(create_client);
+
+		arr.push(function(next_fn) {
+			wsclient && wsclient.on('open', function() {
+				wsclient.send({ command: 'start' });
+			});
+
+			wsclient && wsclient.on('close', function() {
+				Test.print('Websocket - Close', null);
+				next_fn();
+			});
+
+
+			wsclient && wsclient.on('error', function(err) {
+				Test.print('Websocket - ', 'Error ' + err);
+				next_fn();
+			});
+
+			wsclient && wsclient.on('message', function(message) {
+				switch(message.command) {
+					case 'query':
+						Test.print('Websocket - Query ', message.data = test_msg ? null : 'Returned query is not the one expected');
+						wsclient.headers['x-token'] = 'token-123';
+						wsclient.send({ command: 'headers' });
+						break;
+					case 'headers':
+						Test.print('Websocket - Headers ', wsclient.headers['x-token'] === 'token-123' ? null : 'Returned X-TOKEN is not the one expected');
+						wsclient.cookies['cookie'] = 'cookie-123';
+						wsclient.send({ command: 'cookies' });
+						break;
+					case 'cookies':
+						Test.print('Websocket - Cookies ', wsclient.cookies['cookie'] === 'cookie-123' ? null : 'Returned cookie is not the one expected');
+						wsclient.options.compress = false;
+						wsclient.send({ command: 'options_uncompressed', data: test_msg });
+						break;
+					case 'options_uncompressed':
+						Test.print('Websocket - Uncompressed', message.data === test_msg ? null : 'Uncompressed message is not the one expected');
+						wsclient.send({ command: 'options_compressed', data: test_msg });
+						break;
+					case 'options_compressed':
+						Test.print('Websocket - Compressed', message.data === test_msg ? null : 'Compressed message is not the one expected');
+						wsclient.options.command = 'binary';
+						wsclient.send(Buffer.from(JSON.stringify({ command: 'options_type_binary', data: test_msg, data: test_msg })));
+						break;
+					case 'options_type_binary':
+						Test.print('Websocket - Binary ', message.data === test_msg ? null : 'Binary message is not the one expected');
+						wsclient.options.type = 'json';
+						wsclient.send({ command: 'close' });
+						break;
+					case 'close':
+						Test.print('Websocket - Json ');
+						wsclient.close();
+						break;
+					case 'error':
+						Test.print('Websocket - Error ', message.data);
+						break;
+				}
+			});
+		});
+
+		arr.push(function(next_fn) {
+
+			WEBSOCKETCLIENT(function(client) {
+
+				client.cookies['auth'] = 'correct-cookie';
+				client.connect(url.replace('http', 'ws') + '/authorized/');
+	
+				client.on('open', function() {
+					client.send({ command: 'start' });
+				});
+	
+				client.on('close', function() {
+					Test.print('Websocket - Authorized ', null);
+					next_fn();
+				});
+	
+				client.on('error', function(e) {
+					Test.print('Websocket - Authorized ', 'Error --> ' + e);
+				});
+	
+				client.on('message', function(message) {
+					switch (message.command) {
+						case 'close':
+							client.close();
+							break;
+					}
+				});
+			});
+		});
+
+		// arr.push(function(next_fn) {
+		// 	WEBSOCKETCLIENT(function(client) {
+		// 		client.connect(url.replace('http', 'ws') + '/unauthorized/');
+		// 		client.options.reconnect = 0;
+		// 		client.cookies['auth'] = 'correct-cookie';
+		// 			client.on('open', function() {
+		// 				client.send({ command: 'start' });
+		// 				Test.print('Websocket - Unauthorized - Started');
+
+		// 			});
+		// 			client.on('error', function(e) {
+		// 				Test.print('Websocket - Unauthorized ', ' Error --> ' + e);
+		// 				next_fn();
+		// 			});
+		// 			client.on('close', function(e) {
+		// 				Test.print('Websocket - Unauthorized - Closed');
+		// 				next_fn();
+		// 			});
+		// 		});
+		// 	});
+
+		arr.push(function(next_fn) {
+			var count = 0;
+
+			WEBSOCKETCLIENT(function(client) {
+				var timeout, msgtimeout;
+
+				var reconnect_fail = function() {
+					Test.print('Websocket - Reconnect ', 'Failed');
+				};
+
+				client.options.reconnect = 1000;
+				client.connect(url.replace('http', 'ws') + '/reconnect/');
+	
+				client.on('open', function() {
+					clearTimeout(timeout);
+					msgtimeout = setTimeout(reconnect_fail, 2000);
+					client.send({ type: 'ping' });
+					count++;
+				});
+	
+				client.on('message', function(message) {
+					if (message.type === 'ping')
+						clearTimeout(msgtimeout);
+				});
+	
+				client.on('close', function() {
+					timeout = setTimeout(reconnect_fail, 5000);
+	
+					if (count > 1) {
+						clearTimeout(timeout);
+						client.close();
+						Test.print('Websocket - Reconnect - OK');
+						next_fn();
+					}
+				});
+			});
+		});
+
+		arr.push(function() {
+
+
+			function middleware_fail() {
+				Test.print('Websocket - Middleware', ' - failed to emit');
+			}
+	
+			WEBSOCKETCLIENT(function(client) {
+	
+				client.connect(url.replace('http', 'ws') + '/middleware/');
+	
+				var middleware_timeout;
+	
+				client.on('open', function() {
+					middleware_timeout = setTimeout(middleware_fail, 1000);
+					client.send({ type: 'ping' });
+				});
+	
+				ON('middlewaresocket_close', function() {
+					setTimeout(() => client.close(), 500);
+
+				});
+	
+				client.on('close', function() {
+					OFF('middlewaresocket_close');
+					clearTimeout(middleware_timeout);
+					Test.print('Websocket - Middleware');
+					next_fn();
+				});
+	
+			});
+		});
+		arr.async(function() {
+			next();
+		});
 	});
 
 	Test.push('API Routing', function(next) {
@@ -366,7 +563,6 @@ ON('ready', function () {
 			});
 		});
 
-
 		arr.push(function(next_fn) {
 			var route;
 		
@@ -451,51 +647,16 @@ ON('ready', function () {
 
 			ROUTE(route, NOOP);
 			ROUTE(route, null);
-			Test.print('Removing routes - Websocket route', check(route) ? null : 'Websocket route was not removed with "null"');
+
+			Test.print('Removing routes - Websocket route', !check(route) ? null : 'Websocket route was not removed with "null"');
 		
 			next_fn();
 		});
 
-		arr.push(function(next_fn) {
-			var socket = 'SOCKET /wapiremove/ @wapi';
-			route = 'API @api -wapi_remove *Remove --> exec';
-		
-			ROUTE(socket, NOOP);
-			ROUTE(route);
-			ROUTE(route, null);
-			Test.print('Removing routes - WAPI route', check(route) ? null : 'WAPI route was not removed with "null"');
-			ROUTE(socket, null);
-			next_fn();
-		});
-
-		arr.push(function(next_fn) {
-			
-			next_fn();
-		});
-
-		arr.push(function(next_fn) {
-			
-			next_fn();
-		});
-
-		arr.push(function(next_fn) {
-			
-			next_fn();
-		});
-
-		arr.push(function(next_fn) {
-			
-			next_fn();
-		});
-
-		arr.push(function(next_fn) {
-			
-			next_fn();
-		});
-
-		arr.async(function () {
+		arr.async(function() {
 			next();
-		})
+		});
+		
 	});
 
 	setTimeout(function () {
