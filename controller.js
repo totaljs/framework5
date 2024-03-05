@@ -11,8 +11,8 @@ const REG_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Min
 const REG_ENCODINGCLEANER = /[;\s]charset=utf-8/g;
 
 const CHECK_DATA = { POST: 1, PUT: 1, PATCH: 1, DELETE: 1 };
-const CHECK_COMPRESSION = { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'application/xml': true, 'text/xml': true, 'image/svg+xml': true, 'text/x-markdown': true, 'text/html': true };
-const CHECK_CHARSET =  { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'text/x-markdown': true, 'text/html': true };
+const CHECK_COMPRESSION = { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'application/xml': true, 'text/xml': true, 'image/svg+xml': true, 'text/x-markdown': true, 'text/html': true, 'application/x-ipynb+json': true, 'application/x-ijsnb+json': true };
+const CHECK_CHARSET =  { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'text/x-markdown': true, 'text/html': true, 'application/x-ijsnb+json': true, 'application/x-ipynb+json': true };
 const CHECK_NOCACHE = { zip: 1, rar: 1 };
 const CHECK_MIN = /(\.|-|@)min/i;
 

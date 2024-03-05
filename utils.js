@@ -296,6 +296,8 @@ var CONTENTTYPES = {
 	ico: 'image/x-icon',
 	ics: 'text/calendar',
 	ifb: 'text/calendar',
+	ipynb: 'application/x-ipynb+json',
+	ijsnb: 'application/x-ijsnb+json',
 	jpe: 'image/jpeg',
 	jpeg: 'image/jpeg',
 	jpg: 'image/jpeg',
