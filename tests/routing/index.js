@@ -334,26 +334,26 @@ ON('ready', function () {
 			});
 		});
 
-		// arr.push(function(next_fn) {
-		// 	WEBSOCKETCLIENT(function(client) {
-		// 		client.connect(url.replace('http', 'ws') + '/unauthorized/');
-		// 		client.options.reconnect = 0;
-		// 		client.cookies['auth'] = 'correct-cookie';
-		// 			client.on('open', function() {
-		// 				client.send({ command: 'start' });
-		// 				Test.print('Websocket - Unauthorized - Started');
+		arr.push(function(next_fn) {
+			WEBSOCKETCLIENT(function(client) {
+				client.connect(url.replace('http', 'ws') + '/unauthorized/');
+				client.options.reconnect = 0;
+				client.cookies['auth'] = 'correct-cookie';
+					client.on('open', function() {
+						client.send({ command: 'start' });
+						Test.print('Websocket - Unauthorized - Started');
 
-		// 			});
-		// 			client.on('error', function(e) {
-		// 				Test.print('Websocket - Unauthorized ', ' Error --> ' + e);
-		// 				next_fn();
-		// 			});
-		// 			client.on('close', function(e) {
-		// 				Test.print('Websocket - Unauthorized - Closed');
-		// 				next_fn();
-		// 			});
-		// 		});
-		// 	});
+					});
+					client.on('error', function(e) {
+						Test.print('Websocket - Unauthorized ');
+						next_fn();
+					});
+					client.on('close', function(e) {
+						Test.print('Websocket - Unauthorized - Closed');
+						next_fn();
+					});
+				});
+			});
 
 		arr.push(function(next_fn) {
 			var count = 0;
@@ -393,7 +393,7 @@ ON('ready', function () {
 			});
 		});
 
-		arr.push(function() {
+		arr.push(function(next_fn) {
 
 
 			function middleware_fail() {
@@ -413,7 +413,6 @@ ON('ready', function () {
 	
 				ON('middlewaresocket_close', function() {
 					setTimeout(() => client.close(), 500);
-
 				});
 	
 				client.on('close', function() {
@@ -422,9 +421,85 @@ ON('ready', function () {
 					Test.print('Websocket - Middleware');
 					next_fn();
 				});
-	
 			});
 		});
+		arr.async(function() {
+			next();
+		});
+	});
+
+	Test.push('Localization', function(next) {
+		var arr = [];
+		var regex = /<h1>(.*?)<\/h1>/;
+
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/localization/en/').exec(function(err, res, output) {
+				Test.print('English - ', output.response.match(regex)[1] === 'Hello world!' ? null : 'Expecting \'Hello world!\'');
+				next_fn();
+			});
+		});
+
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/localization/sk/').exec(function(err, res, output) {
+				Test.print('Slovak - ', output.response.match(regex)[1] === 'Ahoj svet!' ? null : 'Expecting \'Ahoj svet!\'');
+				next_fn();
+			});
+		});
+
+		arr.push(function(next_fn) {
+			RESTBuilder.GET(url + '/localization/?lang=sk').exec(function(err, res, output) {
+				Test.print('Query string lang - ', output.response.match(regex)[1] === 'Ahoj svet!' ? null : 'Expecting \'Ahoj svet!\'');
+				next_fn();
+			});
+		});
+
+
+		arr.async(function() {
+			next();
+		});
+	});
+
+	Test.push('Upload', function(next) {
+		var arr = [];
+		var filename = 'symbols.txt';
+		arr.push(function(next_fn) {
+			Total.Fs.readFile(filename, function(err, buffer) {
+				if (err) throw err
+				RESTBuilder.POST(url + '/upload/', { value: 'value' }).file(filename.split('.')[0], PATH.root(filename)).exec(function(err, res) {
+					Test.print(err === null && res.success && res.value.files[0] === buffer.toString() && res.value.value === 'value' ? null : 'Recieved file content is not the same');
+					next_fn();
+				});
+			});
+		});
+
+
+		arr.push(function(next_fn) {
+			var filenames = ['symbols.txt', 'important.txt'];
+			var buffers = [];
+
+			filenames.wait(function(file, next) {
+				// Get buffers from files
+				Total.Fs.readFile(file, function(err, data) {
+					if (err) throw err;
+
+					buffers.push(data);
+					next();
+				});
+			}, function() {
+				var builder = RESTBuilder.POST(url + '/upload/', { value: 'value' });
+
+				// Append files to builder
+				for (var i = 0; i < buffers.length; i++)
+					builder = builder.file(filenames[i].split('.')[0], PATH.root(filenames[i]));
+
+				builder.exec(function(err, res) {
+					for (var i = 0; i < buffers.length; i++)
+						Test.print('Multiple files', err === null && res.success && res.value.files[i] === buffers[i].toString() ? null : ' - Recieved content of files are not the same');
+					next();
+				});
+			});
+		});
+
 		arr.async(function() {
 			next();
 		});

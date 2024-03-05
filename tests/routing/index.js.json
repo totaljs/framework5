@@ -1,6 +1,6 @@
 {
-	"pid": 6830,
-	"date": "2024-03-04T19:00:02.901Z",
+	"pid": 33766,
+	"date": "2024-03-05T15:24:29.119Z",
 	"stats": [
 		{
 			"id": "",
@@ -10,15 +10,15 @@
 				"build": 5000,
 				"app": "1.0.0"
 			},
-			"pid": 6830,
+			"pid": 33766,
 			"mode": "debug",
 			"overload": 0,
-			"date": "2024-03-04T19:02:03.082Z",
-			"memory": 8.55,
-			"rm": 0,
+			"date": "2024-03-05T15:25:29.288Z",
+			"memory": 8.69,
+			"rm": 34,
 			"fm": 0,
-			"wm": 0,
-			"em": 0,
+			"wm": 21,
+			"em": 34,
 			"mm": 0,
 			"om": 0,
 			"dm": 0,
@@ -29,16 +29,16 @@
 			"dbrm": 0,
 			"dbwm": 0,
 			"usage": 0,
-			"requests": 33,
+			"requests": 34,
 			"pending": 0,
 			"external": 0,
-			"errors": 2,
-			"timeouts": 1,
-			"online": 1,
+			"errors": 3,
+			"timeouts": 2,
+			"online": 0,
 			"download": 0,
 			"upload": 0,
-			"lasterror": "2024-03-04T19:00:18.171Z TypeError: fn is not a function\n    at run (/Users/mac/Desktop/framework5/websocket.js:870:4)\n    at middleware (/Users/mac/Desktop/framework5/websocket.js:874:2)\n    at execute (/Users/mac/Desktop/framework5/websocket.js:974:3)\n    at opt.$callback (/Users/mac/Desktop/framework5/websocket.js:851:6)\n    at Options.invalid (/Users/mac/Desktop/framework5/builders.js:220:7)\n    at Object.onAuthorize (/Users/mac/Desktop/framework5/tests/routing/definitions/auth.js:7:5)\n    at authorize (/Users/mac/Desktop/framework5/websocket.js:856:9)\n    at exports.listen (/Users/mac/Desktop/framework5/websocket.js:1154:2)\n    at Server.emit (node:events:514:28)\n    at onParserExecuteCommon (node:_http_server:942:14)",
-			"lasttimeout": "2024-03-04T19:00:13.059Z /internal/408/"
+			"lasterror": "2024-03-05T15:24:54.271Z TypeError: Cannot read properties of null (reading '1')\n    at /Users/mac/Desktop/framework5/tests/routing/index.js:437:58\n    at Object.restbuilder_callback [as callback] (/Users/mac/Desktop/framework5/builders.js:999:3)\n    at IncomingMessage.request_process_end (/Users/mac/Desktop/framework5/utils.js:1285:11)\n    at IncomingMessage.emit (node:events:526:35)\n    at endReadableNT (node:internal/streams/readable:1408:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)",
+			"lasttimeout": "2024-03-05T15:24:54.267Z /localization/en/"
 		}
 	]
 }
