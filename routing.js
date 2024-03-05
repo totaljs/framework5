@@ -65,6 +65,8 @@ function Route(url, action, size) {
 		return;
 	}
 
+	t.flags = {};
+
 	var index = url.indexOf(' ');
 
 	t.method = url.substring(0, index).toUpperCase();
@@ -135,7 +137,6 @@ function Route(url, action, size) {
 		t.size = size || 0;
 	}
 
-	t.flags = {};
 	t.middleware = [];
 
 	index = t.url.indexOf('*');
