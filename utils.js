@@ -88,6 +88,26 @@ const REG_UTF8 = /[\u3400-\u9FBF]/;
 
 exports.success = { success: true };
 exports.noop = function() {};
+exports.toError = function(err) {
+
+	if (err instanceof Error)
+		return err;
+
+	if (err instanceof F.TBuilders.ErrorBuilder)
+		return new Error(err.toString());
+
+	switch (typeof(err)) {
+		case 'string':
+		case 'number':
+			return new Error(err + '');
+		default:
+			if (err instanceof Array)
+				err = err[0];
+			break;
+	}
+
+	return new Error((err ? (err.error || err.err || err.name) : '') || 'Unknown error');
+};
 
 exports.parseConfig = function(value) {
 
@@ -300,7 +320,6 @@ var CONTENTTYPES = {
 	ijsnb: 'application/x-ijsnb+json',
 	jpg: 'image/jpeg',
 	jpeg: 'image/jpeg',
-	jpe: 'image/jpeg',
 	js: 'text/javascript',
 	json: 'application/json',
 	ui: 'application/json', // UI builder
