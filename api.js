@@ -55,8 +55,13 @@ APICallProto.promise = function($) {
 				if ($ && $.invalid) {
 					$.invalid(err);
 				} else {
-					err.name = 'API(' + t.options.name + ' --> ' + t.options.schema + ')';
-					reject(err);
+					if (typeof(err) === 'object') {
+						if (err instanceof Array)
+							err = err[0].error || err[0].message;
+						else
+							err = err.error || err.message || err.name;
+					}
+					reject(new Error(err));
 				}
 			} else
 				resolve(response);
