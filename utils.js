@@ -298,9 +298,9 @@ var CONTENTTYPES = {
 	ifb: 'text/calendar',
 	ipynb: 'application/x-ipynb+json',
 	ijsnb: 'application/x-ijsnb+json',
-	jpe: 'image/jpeg',
-	jpeg: 'image/jpeg',
 	jpg: 'image/jpeg',
+	jpeg: 'image/jpeg',
+	jpe: 'image/jpeg',
 	js: 'text/javascript',
 	json: 'application/json',
 	ui: 'application/json', // UI builder
