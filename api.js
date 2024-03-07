@@ -54,15 +54,8 @@ APICallProto.promise = function($) {
 			if (err) {
 				if ($ && $.invalid) {
 					$.invalid(err);
-				} else {
-					if (typeof(err) === 'object') {
-						if (err instanceof Array)
-							err = err[0].error || err[0].message;
-						else
-							err = err.error || err.message || err.name;
-					}
-					reject(new Error(err));
-				}
+				} else
+					reject(F.TUtils.toError(err));
 			} else
 				resolve(response);
 		};

@@ -491,7 +491,7 @@ RESTP.promise = function($) {
 				if ($ && $.invalid)
 					$.invalid(err);
 				else
-					reject(err);
+					reject(F.TUtils.toError(err));
 			} else
 				resolve(response);
 		});
