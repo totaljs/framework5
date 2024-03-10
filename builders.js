@@ -170,7 +170,7 @@ Options.prototype.audit = function(message, type) {
 Options.prototype.success = function(value) {
 	var self = this;
 	if (self.TYPE === 'auth')
-		self.callback(value);
+		self.callback(value || EMPTYOBJECT);
 	else
 		self.callback(DEF.onSuccess(value));
 };
@@ -491,7 +491,7 @@ RESTP.promise = function($) {
 				if ($ && $.invalid)
 					$.invalid(err);
 				else
-					reject(err);
+					reject(F.TUtils.toError(err));
 			} else
 				resolve(response);
 		});

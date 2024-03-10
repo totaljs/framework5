@@ -2543,6 +2543,17 @@ F.readfile = function(path, type = null) {
 	return new Promise(resolve => F.Fs.readFile(path, type, (err, response) => err ? resolve(null) : resolve(response)));
 };
 
+F.datauri = function(path) {
+	return new Promise(resolve => F.Fs.readFile(path, 'base64', function(err, response) {
+		if (err) {
+			resolve(null);
+		} else {
+			var ext = F.TUtils.getExtension(path);
+			resolve('data:' + F.TUtils.getContentType(ext) + ';base64,' + response);
+		}
+	}));
+};
+
 F.loadstats = function() {
 
 	var main = {};

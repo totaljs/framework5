@@ -88,6 +88,26 @@ const REG_UTF8 = /[\u3400-\u9FBF]/;
 
 exports.success = { success: true };
 exports.noop = function() {};
+exports.toError = function(err) {
+
+	if (err instanceof Error)
+		return err;
+
+	if (err instanceof F.TBuilders.ErrorBuilder)
+		return new Error(err.toString());
+
+	switch (typeof(err)) {
+		case 'string':
+		case 'number':
+			return new Error(err + '');
+		default:
+			if (err instanceof Array)
+				err = err[0];
+			break;
+	}
+
+	return new Error((err ? (err.error || err.err || err.name) : '') || 'Unknown error');
+};
 
 exports.parseConfig = function(value) {
 
@@ -298,9 +318,8 @@ var CONTENTTYPES = {
 	ifb: 'text/calendar',
 	ipynb: 'application/x-ipynb+json',
 	ijsnb: 'application/x-ijsnb+json',
-	jpe: 'image/jpeg',
-	jpeg: 'image/jpeg',
 	jpg: 'image/jpeg',
+	jpeg: 'image/jpeg',
 	js: 'text/javascript',
 	json: 'application/json',
 	ui: 'application/json', // UI builder
@@ -6310,9 +6329,10 @@ exports.destroystream = function(stream) {
 
 	if (stream instanceof F.Fs.ReadStream) {
 		stream.destroy();
-		typeof(stream.close) === 'function' && stream.on('open', destroyStreamopen);
-	} else if (stream instanceof F.Stream)
-		typeof(stream.destroy) === 'function' && stream.destroy();
+		if (typeof(stream.close) === 'function')
+			stream.on('open', destroyStreamopen);
+	} else if (stream instanceof F.Stream && typeof(stream.destroy) === 'function')
+		stream.destroy();
 
 	if (stream.$totalfd) {
 		F.Fs.close(stream.$totalfd, NOOP);
@@ -6343,7 +6363,8 @@ exports.onfinished = function(stream, fn) {
 		stream.$onFinishedQueue = fn;
 
 	var callback = function() {
-		!stream.$onFinished && (stream.$onFinished = true);
+		if (!stream.$onFinished)
+			stream.$onFinished = true;
 		if (stream.$onFinishedQueue instanceof Array) {
 			while (stream.$onFinishedQueue.length)
 				stream.$onFinishedQueue.shift()();
@@ -6354,36 +6375,31 @@ exports.onfinished = function(stream, fn) {
 		}
 	};
 
-	if (isFinished(stream)) {
-		setImmediate(callback);
-	} else {
-
-		if (stream.socket) {
-			if (!stream.socket.$totalstream) {
-				stream.socket.$totalstream = stream;
-				if (stream.socket.prependListener) {
-					stream.socket.prependListener('error', callback);
-					stream.socket.prependListener('close', callback);
-				} else {
-					stream.socket.on('error', callback);
-					stream.socket.on('close', callback);
-				}
+	if (stream.socket) {
+		if (!stream.socket.$totalstream) {
+			stream.socket.$totalstream = stream;
+			if (stream.socket.prependListener) {
+				stream.socket.prependListener('error', callback);
+				stream.socket.prependListener('close', callback);
+			} else {
+				stream.socket.on('error', callback);
+				stream.socket.on('close', callback);
 			}
 		}
+	}
 
-		if (stream.prependListener) {
-			stream.prependListener('error', callback);
-			stream.prependListener('end', callback);
-			stream.prependListener('close', callback);
-			stream.prependListener('aborted', callback);
-			stream.prependListener('finish', callback);
-		} else {
-			stream.on('error', callback);
-			stream.on('end', callback);
-			stream.on('close', callback);
-			stream.on('aborted', callback);
-			stream.on('finish', callback);
-		}
+	if (stream.prependListener) {
+		stream.prependListener('error', callback);
+		stream.prependListener('end', callback);
+		stream.prependListener('close', callback);
+		stream.prependListener('aborted', callback);
+		stream.prependListener('finish', callback);
+	} else {
+		stream.on('error', callback);
+		stream.on('end', callback);
+		stream.on('close', callback);
+		stream.on('aborted', callback);
+		stream.on('finish', callback);
 	}
 };
 
@@ -6410,23 +6426,3 @@ exports.uidr = function() {
 
 	return builder + RANDOM_STRING[sum] + 'r'; // "r" version
 };
-
-function isFinished(stream) {
-
-	// Response & Request
-	if (stream.socket) {
-		if (stream.writable && (!stream.socket._writableState || stream.socket._writableState.finished || stream.socket._writableState.destroyed))
-			return true;
-		if (stream.readable && (!stream.socket._readableState|| stream.socket._writableState.ended || stream.socket._readableState.destroyed))
-			return true;
-		return false;
-	}
-
-	if (stream._readableState && (stream._readableState.ended || stream._readableState.destroyed))
-		return true;
-
-	if (stream._writableState && (stream._writableState.finished || stream._writableState.destroyed))
-		return true;
-
-	return false;
-}
