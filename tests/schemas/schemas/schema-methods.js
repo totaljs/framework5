@@ -1,33 +1,50 @@
-NEWSCHEMA('Schema/Methods', function(schema) {
-
-	schema.define('value', 'String');
-
-	schema.setQuery(function($, model) {
-		$.success(model);
+NEWSCHEMA('Methods', function(schema) {
+	schema.action('query', {
+		name: 'Query action',
+		action: function($) {
+			$.success([]);
+		}
 	});
 
-	schema.setRead(function($, model) {
-		$.success(model);
+	schema.action('read', {
+		name: 'Read action',
+		params: 'id:UID',
+		action: function($) {
+			$.success([]);
+		}
 	});
 
-	schema.setInsert(function($, model) {
-		$.success(model);
+	schema.action('insert', {
+		name: 'Insert action',
+		input: 'value:String',
+		action: function($, model) {
+			$.success(model);
+		}
 	});
 
-	schema.setUpdate(function($, model) {
-		$.success(model);
+	schema.action('update', {
+		name: 'Update action',
+		input: 'value:String',
+		params: 'id:UID',
+		action: function($, model) {
+			$.success(model);
+		}
 	});
 
-	schema.setPatch(function($, model) {
-		$.success(model);
-	});
 
-	schema.setRemove(function($, model) {
-		$.success(model);
+	schema.action('patch', {
+		name: 'Patch action',
+		input: 'value:String',
+		params: 'id:UID',
+		action: function($, model) {
+			$.success(model);
+		}
 	});
-
-	schema.addWorkflow('workflow', function($, model) {
-		$.success(model);
+	schema.action('remove', {
+		name: 'Remove action',
+		params: 'id:UID',
+		action: function($) {
+			$.success();
+		}
 	});
-
 });

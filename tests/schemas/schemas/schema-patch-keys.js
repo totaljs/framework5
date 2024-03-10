@@ -1,10 +1,10 @@
-NEWSCHEMA('Schema/PatchKeys', function(schema) {
+NEWSCHEMA('PatchKeys', function(schema) {
 
-	schema.define('valid', 'String');
-	schema.define('valid_required', 'String', true);
-
-	schema.addWorkflow('exec', function($, model) {
-		$.success({ keys: $.keys, model: model });
-	});
-
+    schema.action('exec', {
+        name: 'Patch keys operation',
+        input: 'valid:String,*valid_required:String',
+        action: function($, model) {
+            $.success({ keys: $.keys, model: model });
+        }
+    })
 });

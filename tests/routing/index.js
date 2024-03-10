@@ -9,7 +9,7 @@ require('../../test');
 F.console = NOOP;
 
 // load web server and test app
-F.http();
+F.run({ release: false });
 
 
 
@@ -466,7 +466,7 @@ ON('ready', function () {
 			Total.Fs.readFile(filename, function(err, buffer) {
 				if (err) throw err
 				RESTBuilder.POST(url + '/upload/', { value: 'value' }).file(filename.split('.')[0], PATH.root(filename)).exec(function(err, res) {
-					Test.print(err === null && res.success && res.value.files[0] === buffer.toString() && res.value.value === 'value' ? null : 'Recieved file content is not the same');
+					Test.print('UPload single file', err === null && res.success && res.value.files[0] === buffer.toString() && res.value.value === 'value' ? null : 'Recieved file content is not the same');
 					next_fn();
 				});
 			});
@@ -477,13 +477,13 @@ ON('ready', function () {
 			var filenames = ['symbols.txt', 'important.txt'];
 			var buffers = [];
 
-			filenames.wait(function(file, next) {
+			filenames.wait(function(file, next_func) {
 				// Get buffers from files
 				Total.Fs.readFile(file, function(err, data) {
 					if (err) throw err;
 
 					buffers.push(data);
-					next();
+					next_func();
 				});
 			}, function() {
 				var builder = RESTBuilder.POST(url + '/upload/', { value: 'value' });
@@ -494,7 +494,7 @@ ON('ready', function () {
 
 				builder.exec(function(err, res) {
 					for (var i = 0; i < buffers.length; i++)
-						Test.print('Multiple files', err === null && res.success && res.value.files[i] === buffers[i].toString() ? null : ' - Recieved content of files are not the same');
+						Test.print('Multiple files: ' + filenames[i], err === null && res.success && res.value.files[i] === buffers[i].toString() ? null : ' - Recieved content of files are not the same');
 					next();
 				});
 			});

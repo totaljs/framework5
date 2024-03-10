@@ -1,6 +1,4 @@
-NEWSCHEMA('Schema/Chaining', function(schema) {
-
-	schema.define('value', 'Object', true);
+NEWSCHEMA('Chaining', function(schema) {
 
 	schema.action('one', {
 		name: 'Action number one',
@@ -17,6 +15,4 @@ NEWSCHEMA('Schema/Chaining', function(schema) {
 			$.success(model.value.two);
 		}
 	});
-
-	
 });

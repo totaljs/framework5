@@ -1,0 +1,206 @@
+{
+	"routes": [
+		{
+			"method": "GET",
+			"url": "/schema/methods/query/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/methods/read/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/methods/insert/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/methods/update/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/methods/patch/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/methods/remove/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/methods/query/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/methods/read/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/methods/insert/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/methods/update/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/methods/patch/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/methods/remove/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/methods/validation/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/methods/validation/"
+		},
+		{
+			"method": "PUT",
+			"url": "/schema/methods/validation/"
+		},
+		{
+			"method": "PATCH",
+			"url": "/schema/methods/validation/"
+		},
+		{
+			"method": "DELETE",
+			"url": "/schema/methods/validation/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/formatting/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/required/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/notrequired/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/chaining/one/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/chaining/two/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/extensions/query/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/extensions/read/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/extensions/insert/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/extensions/patch/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/extensions/update/"
+		},
+		{
+			"method": "GET",
+			"url": "/schema/extensions/remove/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/filters/"
+		},
+		{
+			"method": "POST",
+			"url": "/schema/verify/"
+		},
+		{
+			"method": "PATCH",
+			"url": "/schema/patchkeys/"
+		}
+	],
+	"actions": [
+		{
+			"name": "Actions/query"
+		},
+		{
+			"name": "Actions/read",
+			"params": "id:UID"
+		},
+		{
+			"name": "Actions/insert",
+			"input": "name:String,email:Email,age:Number"
+		},
+		{
+			"name": "Actions/update",
+			"params": "id:UID",
+			"input": "name:String,email:Email,age:Number"
+		},
+		{
+			"name": "Actions/remove",
+			"params": "id:UID"
+		},
+		{
+			"name": "Chaining/one",
+			"input": "value:Object"
+		},
+		{
+			"name": "Chaining/two",
+			"input": "value:Object"
+		},
+		{
+			"name": "Formatting/exec",
+			"input": "number:Number,number_float,string_name:Name,string_capitalize:Capitalize,string_capitalize2:Capitalize2,string_lowecase:Lowercase,string_uppercase:Uppercase"
+		},
+		{
+			"name": "Validation/exec",
+			"input": "email:Email"
+		},
+		{
+			"name": "Methods/query"
+		},
+		{
+			"name": "Methods/read",
+			"params": "id:UID"
+		},
+		{
+			"name": "Methods/insert",
+			"input": "value:String"
+		},
+		{
+			"name": "Methods/update",
+			"params": "id:UID",
+			"input": "value:String"
+		},
+		{
+			"name": "Methods/patch",
+			"params": "id:UID",
+			"input": "value:String"
+		},
+		{
+			"name": "Methods/remove",
+			"params": "id:UID"
+		},
+		{
+			"name": "Notrequired/exec",
+			"input": "number:Number,email:Email,phone:Phone,boolean:Boolean,uid:UID,base64,Base64,url:URL,object:Object,date:Date,json:JSON"
+		},
+		{
+			"name": "PatchKeys/exec",
+			"input": "valid:String,*valid_required:String"
+		},
+		{
+			"name": "Required/exec",
+			"input": "number:Number,email:Email,phone:Phone,boolean:Boolean,uid:UID,base64,Base64,url:URL,object:Object,date:Date,json:JSON"
+		},
+		{
+			"name": "Verify/verify"
+		}
+	]
+}
