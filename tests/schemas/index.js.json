@@ -1,6 +1,6 @@
 {
-	"pid": 28240,
-	"date": "2024-03-09T16:28:52.927Z",
+	"pid": 20453,
+	"date": "2024-03-11T08:02:52.862Z",
 	"stats": [
 		{
 			"id": "",
@@ -10,18 +10,18 @@
 				"build": 5000,
 				"app": "1.0.0"
 			},
-			"pid": 28240,
+			"pid": 20453,
 			"mode": "debug",
 			"overload": 0,
-			"date": "2024-03-10T01:16:34.604Z",
-			"memory": 7.68,
-			"rm": 0,
+			"date": "2024-03-11T08:03:52.990Z",
+			"memory": 7.38,
+			"rm": 12,
 			"fm": 0,
 			"wm": 0,
-			"em": 0,
+			"em": 12,
 			"mm": 0,
 			"om": 0,
-			"dm": 0,
+			"dm": 0.001,
 			"um": 0,
 			"pm": 0,
 			"sm": 0,
@@ -29,13 +29,13 @@
 			"dbrm": 0,
 			"dbwm": 0,
 			"usage": 0,
-			"requests": 6,
+			"requests": 12,
 			"pending": 0,
 			"external": 0,
 			"errors": 0,
 			"timeouts": 0,
 			"online": 0,
-			"download": 0,
+			"download": 0.001,
 			"upload": 0
 		}
 	]
