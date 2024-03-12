@@ -102,6 +102,35 @@ ON('ready', function () {
 				next_fn();
 			});
 		});
+
+
+		arr.push(function(next_fn) {
+
+			var data = {
+				number: { i: 123, o: 123 },
+				number_float: { i: 123.456789, o: 123.456789 },
+				string: { i: 'HeLlO..@#$%%^&*!@#$%^&*(_+(123', o: 'HeLlO..@#$%%^&*!@#$%^&*(_+(123' },
+				string_name: { i: 'firsť? lást123@$#', o: 'Firsť Lást' },
+				string_capitalize: { i: 'camel časé1', o: 'Camel Časé1' },
+				string_capitalize2: { i: 'only first', o: 'Only first' },
+				string_lowercase: { i: 'LoWEr cAse', o: 'lower case' },
+				string_uppercase: { i: 'UPper CaSe', o: 'UPPER CASE' }
+			};
+	
+			// Assemble body object
+			var body = {};
+			for (var key in data) {
+				body[key] = data[key].i;
+			}
+	
+			RESTBuilder.POST(url + '/schema/formatting/', body).exec(function(err, res) {
+				console.log(err, res);
+				for (var key in data)
+					Test.print('Schema formatting - ', res[key] === data[key].o ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
+				next_fn();
+			});
+
+		});
 		arr.push(function (next_fn) {
 
 			prefill_undefined(valid);
