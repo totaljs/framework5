@@ -56,23 +56,52 @@ ON('ready', function () {
 		});
 
 
+		// Method data validation
 		// arr.push(function(next_fn) {
-		// 	var methods = [{ name: 'GET', validate: false }, { name: 'POST', validate: true }, { name: 'PUT', validate: true }, { name: 'PATCH', validate: false }, { name: 'DELETE', validate: false }];
-		// 	methods.wait(function(method, func) {
-		// 		RESTBuilder[method.name](url + '/schema/methods/validation/').exec(function(err, res) {
-		// 			console.log(err, res);
-		// 			if (method.validate)
-		// 				Test.print('Schema data validation - ' + method.name, err !== null && !res.success ? null : ' - Method ' + method.name + ' should validate data');
-		// 			else
-		// 				Test.print('Schema data validation - ' + method.name, err === null && res.success ? null : ' - Method ' + method.name + ' shouldn\'t validate data');
+		// 	var methods = [{ name: 'GET', validate: false }, { name: 'POST', validate: true }, { name: 'PUT', validate: true }, { name: 'PATCH', validate: true }, { name: 'DELETE', validate: true }];
+		// 	methods.wait(function(method, next) {
+		// 		RESTBuilder[method.name](url + '/schema/methods/validation').exec(function(err, res) {
+		// 			if (method.validate) 
+		// 				Test.print('Schema data validation - Should validate ' + method.name, err !== null && !res ? null : 'Should Validate');
+		// 			else 
+		// 				Test.print('Schema data validation - Should not validate ' + method.name, err === null && res  ? null : 'Should not validate');
 
-		// 			func();
+		// 			next();
 		// 		});
 		// 	}, function() {
 		// 		next_fn();
 		// 	});
 		// });
 
+		// PATCH / DELETE with validation (invalid)
+		arr.push(function(next_fn) {
+			var methods = ['PATCH', 'DELETE'];
+
+			methods.wait(function(method, next) {
+				RESTBuilder[method](url + '/schema/methods/validation', { email: 'not_email' }).exec(function(err, res) {
+					if (method) 
+						Test.print('Validation - Invalid' + method, err !== null  ? null : 'Expected  error');
+					next();
+				});
+			}, function() {
+				next_fn();
+			});
+		});
+
+		// PATCH / DELETE with validation (valid)
+		arr.push(function(next_fn) {
+			var methods = ['PATCH', 'DELETE'];
+
+			methods.wait(function(method, next) {
+				RESTBuilder[method](url + '/schema/methods/validation', { email: 'abc@abc.com' }).exec(function(err, res) {
+					if (method) 
+						Test.print('Validation - Valid' + method, err === null && res.success ? null : 'Expected  error');
+					next();
+				});
+			}, function() {
+				next_fn();
+			});
+		});
 		arr.push(function (next_fn) {
 
 			prefill_undefined(valid);
