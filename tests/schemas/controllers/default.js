@@ -29,18 +29,10 @@ exports.install = function() {
 	ROUTE('POST      /schema/notrequired/        --> *Notrequired/exec');
 
 	// Chaining
-	ROUTE('POST      /schema/chaining/one/       --> *Chaining/one (response) two');
-	ROUTE('POST      /schema/chaining/two/       --> *Chaining/one two (response)');
-
-	// Extension
-	ROUTE('GET      /schema/extensions/query/    --> *Extensions/query');
-	ROUTE('GET      /schema/extensions/read/     --> *Extensions/read');
-	ROUTE('GET      /schema/extensions/insert/   --> *Extensions/insert');
-	ROUTE('GET      /schema/extensions/patch/    --> *Extensions/patch');
-	ROUTE('GET      /schema/extensions/update/   --> *Extensions/update');
-	ROUTE('GET      /schema/extensions/remove/   --> *Extensions/remove');
-	// Filters
-	ROUTE('POST     /schema/filters/             --> *Filters/exec');
+	ROUTE('POST      /schema/chaining/one/       --> *Chaining/one (response) Chaining/two');
+	ROUTE('POST      /schema/chaining/two/       --> *Chaining/one Chaining/two (response)');
+	
+	
 	// Verify
 	ROUTE('POST     /schema/verify/              --> *Verify/exec');
 	// PATCH $.keys

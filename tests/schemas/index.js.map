@@ -89,34 +89,6 @@
 			"url": "/schema/chaining/two/"
 		},
 		{
-			"method": "GET",
-			"url": "/schema/extensions/query/"
-		},
-		{
-			"method": "GET",
-			"url": "/schema/extensions/read/"
-		},
-		{
-			"method": "GET",
-			"url": "/schema/extensions/insert/"
-		},
-		{
-			"method": "GET",
-			"url": "/schema/extensions/patch/"
-		},
-		{
-			"method": "GET",
-			"url": "/schema/extensions/update/"
-		},
-		{
-			"method": "GET",
-			"url": "/schema/extensions/remove/"
-		},
-		{
-			"method": "POST",
-			"url": "/schema/filters/"
-		},
-		{
 			"method": "POST",
 			"url": "/schema/verify/"
 		},
@@ -189,7 +161,7 @@
 		},
 		{
 			"name": "Notrequired/exec",
-			"input": "number:Number,email:Email,phone:Phone,boolean:Boolean,uid:UID,base64,Base64,url:URL,object:Object,date:Date,json:JSON"
+			"input": "number:Number,email:Email,phone:Phone,boolean:Boolean,uid:UID,base64:Base64,url:URL,object:Object,date:Date,json:JSON"
 		},
 		{
 			"name": "PatchKeys/exec",
@@ -200,7 +172,7 @@
 			"input": "*number:Number,*email:Email,*phone:Phone,*boolean:Boolean,*uid:UID,*base64:Base64,*url:URL,*object:Object,*date:Date,*json:JSON"
 		},
 		{
-			"name": "Verify/verify"
+			"name": "Verify/exec"
 		}
 	]
 }

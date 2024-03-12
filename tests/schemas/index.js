@@ -12,8 +12,8 @@ F.console = NOOP;
 var url = 'http://0.0.0.0:8000';
 // load web server and test app
 F.http();
-ON('ready', function() {
-	Test.push('NEWSCHEMA()', function(next) {
+ON('ready', function () {
+	Test.push('NEWSCHEMA()', function (next) {
 		// Test.print('String.slug()', [error]);
 
 		var arr = [];
@@ -24,12 +24,16 @@ ON('ready', function() {
 			{ email: 'abc.abc@abc.abc', url: 'http://totaljs.com' },
 			{ url: 'https://totaljs.com' }
 		];
-	
+
 		var invalid = [
 			{ number: 'abc', email: 'ca@.sk', phone: 'notphone', boolean: '', uid: 'AV232CS@', url: 'url', date: 'today', json: null, base64: '' },
 			{ number: 'one', email: '@', phone: '12345667', boolean: '', json: '', base64: '' }
 		];
 
+		var fields = [
+			{ number: 123, email: 'ca@gmail.sk', phone: '+413233443344', boolean: false, uid: UID(), url: 'https://totaljs.com', date: NOW, json: '{"key":"value"}', base64: 'c3VwZXJ1c2Vy' },
+			{ number: 1, email: 'slovakia@gmail.sk', phone: '+41543454323', boolean: false, uid: UID(), url: 'https://totaljs.com/community', date: NOW, json: '{"anotherkey":"anothervalue"}', base64: 'c3VwZXJ1c2Vy' },
+		];
 		function prefill_undefined(arr) {
 			// Prefill missing fields in rows if 'undefined' based on index 0 row
 			for (var i = 0; i < arr.length; i++) {
@@ -40,70 +44,103 @@ ON('ready', function() {
 			}
 		};
 
-		arr.push(function(next_fn) {
-			methods.wait(function(item, fn) {
-				RESTBuilder.GET(url + '/schema/methods/' + item).exec(function(err, res, output) {
+		arr.push(function (next_fn) {
+			methods.wait(function (item, fn) {
+				RESTBuilder.GET(url + '/schema/methods/' + item).exec(function (err, res, output) {
 					Test.print('Methods (GET) ' + item, err === null && res.success ? null : item + ' Failed');
 					fn();
 				});
-			}, function() {
+			}, function () {
 				next_fn();
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 
 			prefill_undefined(valid);
 
-			valid.wait(function(item, func) {
-				RESTBuilder.POST(url + '/schema/required/', item).exec(function(err) {
+			valid.wait(function (item, func) {
+				RESTBuilder.POST(url + '/schema/required/', item).exec(function (err) {
 					var items = [];
 					if (err && err.items && err.items.length)
 						items = err.items.map(i => i.name + '(' + item[i.name] + ')');
-						Test.print('Schema required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
+					Test.print('Schema required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
 					func();
 				});
-			}, function() {
+			}, function () {
 				next_fn();
 			});
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 
 			prefill_undefined(invalid);
-			invalid.wait(function(item, func) {
-				RESTBuilder.POST(url + '/schema/required/', item).exec(function(err) {
+			invalid.wait(function (item, func) {
+				RESTBuilder.POST(url + '/schema/required/', item).exec(function (err) {
 					// Remap
 					var errors = [];
 					if (err && err.items && err.items.length) {
 						for (var i = 0; i < err.items.length; i++)
 							errors.push(err.items[i].name);
 					}
-	
+
 					// Check
 					var keys = Object.keys(item);
 					keys.wait(function (i, cb) {
 						Test.print('Schema required (invalid): {0}({1})'.format(i, item[i]), errors.includes(i) ? null : 'field was accepted --> ' + i + '(' + item[i] + ')');
 						cb();
-					}, function() {
+					}, function () {
 						func();
 					});
 				});
-			}, function() {
+			}, function () {
+				next_fn();
+			});
+		});
+
+		var data = { value: { one: 'one', two: 'two' } };
+
+		arr.push(function(next_fn) {
+			RESTBuilder.POST(url + '/schema/chaining/one', data).exec(function(err, res) {
+				Test.print('Schema chaining: one ', err === null && res.success && res.value === data.value.one ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
+				next_fn();
+			});
+		});
+
+		arr.push(function(next_fn) {
+			RESTBuilder.POST(url + '/schema/chaining/two', data).exec(function(err, res) {
+				Test.print('Schema chaining: two ', err === null && res.success && res.value === data.value.two ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
 				next_fn();
 			});
 		});
 
 
-		arr.async(function() {
+		arr.push(function(next_fn) {
+			var data = { countryid: 'sk' };
+			RESTBuilder.POST(url + '/schema/verify/', data).exec(function(err, res) {
+				Test.print('Schena Verify/Check ', err === null && res.success && res.value === data.countryid ? null : 'Schema verify is not as expected');
+				next_fn();
+			});
+
+		});
+
+		arr.push(function(next_fn) {
+			var data = { countryid: 'hu' };
+			RESTBuilder.POST(url + '/schema/verify/', data).exec(function(err, res) {
+				Test.print('Schema verify',  err !== null  ? null : 'Schema verify returned value (It shouldn\'t)');
+				next_fn();
+			});
+		});
+
+
+		arr.async(function () {
 			next();
 		});
-		
-		Test.print('Test');
-		next();
 	});
-	setTimeout(function() {
-		Test.run();
+	setTimeout(function () {
+		Test.run(function() {
+			process.exit(1);
+		});
 	}, 100);
 });
