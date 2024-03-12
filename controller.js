@@ -27,6 +27,7 @@ function Controller(req, res) {
 
 	req.controller = ctrl;
 
+	ctrl.timeout = F.config.$httptimeout;
 	ctrl.req = req;
 	ctrl.res = res;
 	ctrl.method = ctrl.req.method;
@@ -1066,7 +1067,8 @@ function authorize(ctrl) {
 
 function execute(ctrl, skipmiddleware) {
 
-	ctrl.timeout = ctrl.route.timeout || F.config.$httptimeout;
+	if (ctrl.route.timeout)
+		ctrl.timeout = ctrl.route.timeout;
 
 	for (let param of ctrl.route.params) {
 		let value = ctrl.split[param.index];
