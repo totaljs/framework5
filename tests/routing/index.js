@@ -11,15 +11,13 @@ F.console = NOOP;
 // load web server and test app
 F.run({ release: false });
 
-
-
 var url = 'http://0.0.0.0:8000';
 
 
-// ON('error', function(e) {
-// 	console.log(e);
-// 	process.exit(1);
-// });
+ON('error', function(e) {
+	console.log(e);
+	//process.exit(1);
+});
 
 ON('ready', function () {
 

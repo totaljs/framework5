@@ -31,11 +31,6 @@ exports.install = function() {
 	// Chaining
 	ROUTE('POST      /schema/chaining/one/       --> *Chaining/one (response) Chaining/two');
 	ROUTE('POST      /schema/chaining/two/       --> *Chaining/one Chaining/two (response)');
-	
-	
 	// Verify
 	ROUTE('POST     /schema/verify/              --> *Verify/exec');
-	// PATCH $.keys
-
-    ROUTE('PATCH      /schema/patchkeys/         --> *PatchKeys/exec');
 }

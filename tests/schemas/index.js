@@ -55,6 +55,24 @@ ON('ready', function () {
 			});
 		});
 
+
+		// arr.push(function(next_fn) {
+		// 	var methods = [{ name: 'GET', validate: false }, { name: 'POST', validate: true }, { name: 'PUT', validate: true }, { name: 'PATCH', validate: false }, { name: 'DELETE', validate: false }];
+		// 	methods.wait(function(method, func) {
+		// 		RESTBuilder[method.name](url + '/schema/methods/validation/').exec(function(err, res) {
+		// 			console.log(err, res);
+		// 			if (method.validate)
+		// 				Test.print('Schema data validation - ' + method.name, err !== null && !res.success ? null : ' - Method ' + method.name + ' should validate data');
+		// 			else
+		// 				Test.print('Schema data validation - ' + method.name, err === null && res.success ? null : ' - Method ' + method.name + ' shouldn\'t validate data');
+
+		// 			func();
+		// 		});
+		// 	}, function() {
+		// 		next_fn();
+		// 	});
+		// });
+
 		arr.push(function (next_fn) {
 
 			prefill_undefined(valid);
@@ -132,6 +150,9 @@ ON('ready', function () {
 				next_fn();
 			});
 		});
+
+
+
 
 
 		arr.async(function () {

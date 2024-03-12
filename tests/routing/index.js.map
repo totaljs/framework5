@@ -1,0 +1,358 @@
+{
+	"routes": [
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_basic",
+			"input": "valid:String",
+			"name": "Success action"
+		},
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_validation",
+			"input": "valid:String",
+			"name": "Success action"
+		},
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_novalidation",
+			"input": "valid:String",
+			"name": "Success action"
+		},
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_patch",
+			"input": "valid:String",
+			"name": "Success action"
+		},
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_keys",
+			"name": "Get keys"
+		},
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_keys_multi",
+			"name": "Get one"
+		},
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_action_basic",
+			"input": "valid:String"
+		},
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_action_validation",
+			"input": "valid:String"
+		},
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_action_novalidation",
+			"input": "valid:String"
+		},
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_action_patch",
+			"input": "valid:String"
+		},
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_action_keys",
+			"input": "valid:String"
+		},
+		{
+			"method": "API",
+			"url": "/v1/",
+			"id": "api_action_keys_multi"
+		},
+		{},
+		{},
+		{},
+		{},
+		{
+			"method": "GET",
+			"url": "/internal/503/"
+		},
+		{
+			"method": "GET",
+			"url": "/internal/408/"
+		},
+		{
+			"method": "GET",
+			"url": "/HELLO/"
+		},
+		{
+			"method": "GET",
+			"url": "/params/HELLO/"
+		},
+		{
+			"method": "GET",
+			"url": "/params/alias/HELLO/"
+		},
+		{
+			"method": "GET",
+			"url": "/params/is/inside/HELLO/long/route/"
+		},
+		{
+			"method": "GET",
+			"url": "/params/is/inside/HELLO/long/route/alias/"
+		},
+		{
+			"method": "GET",
+			"url": "/params/HELLO/hello2/hello3/alias/"
+		},
+		{
+			"method": "GET",
+			"url": "/params/HELLO/hello2/hello3/first"
+		},
+		{
+			"method": "GET",
+			"url": "/params/HELLO/hello2/hello3/second/"
+		},
+		{
+			"method": "GET",
+			"url": "/params/HELLO/hello2/hello3/third/"
+		},
+		{
+			"method": "GET",
+			"url": "/localization"
+		},
+		{
+			"method": "GET",
+			"url": "/localization/sk/"
+		},
+		{
+			"method": "GET",
+			"url": "/localization/en/"
+		},
+		{
+			"method": "GET",
+			"url": "/methods/"
+		},
+		{
+			"method": "POST",
+			"url": "/methods/"
+		},
+		{
+			"method": "PATCH",
+			"url": "/methods/"
+		},
+		{
+			"method": "PUT",
+			"url": "/methods/"
+		},
+		{
+			"method": "DELETE",
+			"url": "/methods/"
+		},
+		{
+			"method": "GET",
+			"url": "/methods/wrong/"
+		},
+		{
+			"method": "GET",
+			"url": "/{id}/",
+			"params": "id:string"
+		},
+		{
+			"method": "GET",
+			"url": "/params/{id}/",
+			"params": "id:string"
+		},
+		{
+			"method": "GET",
+			"url": "/params/alias/{id}/",
+			"params": "id:string"
+		},
+		{
+			"method": "GET",
+			"url": "/params/is/inside/{id}/long/route/",
+			"params": "id:string"
+		},
+		{
+			"method": "GET",
+			"url": "/params/is/inside/{id}/long/route/alias/",
+			"params": "id:string"
+		},
+		{
+			"method": "GET",
+			"url": "/params/{id}/{id2}/{id3}/alias/",
+			"params": "id:string,id2:string,id3:string"
+		},
+		{
+			"method": "GET",
+			"url": "/params/{id}/{id2}/{id3}/first/",
+			"params": "id:string,id2:string,id3:string"
+		},
+		{
+			"method": "GET",
+			"url": "/params/{id}/{id2}/{id3}/second/",
+			"params": "id:string,id2:string,id3:string"
+		},
+		{
+			"method": "GET",
+			"url": "/params/{id}/{id2}/{id3}/third/",
+			"params": "id:string,id2:string,id3:string"
+		},
+		{
+			"method": "POST",
+			"url": "/wildcards/overwrite/"
+		},
+		{
+			"method": "POST",
+			"url": "/wildcards/overwrite/overwrite/"
+		},
+		{
+			"method": "GET",
+			"url": "/params/{id}/{id2}/{id3}/third/wild/",
+			"params": "id:string,id2:string,id3:string"
+		},
+		{
+			"method": "GET",
+			"url": "/xtoken/"
+		},
+		{
+			"method": "GET",
+			"url": "/auth/"
+		},
+		{
+			"method": "GET",
+			"url": "/auth/authorized/",
+			"auth": 1
+		},
+		{
+			"method": "GET",
+			"url": "/auth/unauthorized/",
+			"auth": 2
+		},
+		{
+			"method": "GET",
+			"url": "/uPperCase/"
+		},
+		{
+			"method": "GET",
+			"url": "/middleware/success/"
+		},
+		{
+			"method": "GET",
+			"url": "/middleware/invalid/"
+		},
+		{
+			"method": "GET",
+			"url": "/middleware/fuse/"
+		},
+		{
+			"method": "POST",
+			"url": "/upload/"
+		},
+		{
+			"method": "POST",
+			"url": "/wildcards/*"
+		},
+		{
+			"method": "POST",
+			"url": "/wildcards/second/{id}/{id2}/*",
+			"params": "id:string,id2:string"
+		},
+		{
+			"method": "SOCKET",
+			"url": "/"
+		},
+		{
+			"method": "SOCKET",
+			"url": "/reconnect/"
+		},
+		{
+			"method": "SOCKET",
+			"url": "/authorized/",
+			"auth": 1
+		},
+		{
+			"method": "SOCKET",
+			"url": "/unauthorized/",
+			"auth": 2
+		},
+		{
+			"method": "SOCKET",
+			"url": "/middleware/"
+		}
+	],
+	"actions": [
+		{
+			"name": "Actions/success",
+			"input": "valid:String"
+		},
+		{
+			"name": "Actions/keys",
+			"input": "valid:String"
+		},
+		{
+			"name": "Actions/one"
+		},
+		{
+			"name": "Actions/two"
+		},
+		{
+			"name": "APIRoutes/success",
+			"input": "valid:String"
+		},
+		{
+			"name": "APIRoutes/keys"
+		},
+		{
+			"name": "APIRoutes/one"
+		},
+		{
+			"name": "APIRoutes/two"
+		},
+		{
+			"name": "Auth/exec"
+		},
+		{
+			"name": "Headers/xtoken"
+		},
+		{
+			"name": "Methods/exec"
+		},
+		{
+			"name": "Middleware/exec"
+		},
+		{
+			"name": "Params/alias"
+		},
+		{
+			"name": "Params/params"
+		},
+		{
+			"name": "Params/params2"
+		},
+		{
+			"name": "Params/params3"
+		},
+		{
+			"name": "Wildcards/one"
+		},
+		{
+			"name": "Wildcards/two"
+		},
+		{
+			"name": "Wildcards/three"
+		},
+		{
+			"name": "Wildcards/four"
+		},
+		{
+			"name": "Wildcards/five"
+		}
+	]
+}

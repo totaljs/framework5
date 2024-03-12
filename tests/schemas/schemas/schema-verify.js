@@ -3,7 +3,6 @@ NEWSCHEMA('Verify', function(schema) {
 		name: 'Verification action',
 		action: function($, model) {
 			var countries = ['en', 'sk', 'cz', 'ru'];
-	
 			// Asynchronous simulation
 			setTimeout(function() {
 				var result = countries.find(i => i === model.countryid);
@@ -12,7 +11,6 @@ NEWSCHEMA('Verify', function(schema) {
 				else
 					$.invalid(400);
 			}, 100);
-	
 		}
 	});
 });
