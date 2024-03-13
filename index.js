@@ -344,7 +344,7 @@ function unlink(arr, callback) {
 	// New internal configuration
 	CONF.$root = '';
 	CONF.$cors = ''; // hostnames separated by comma
-	CONF.$api = '/admin/'; // a default API endpoint
+	CONF.$api = '/api/'; // a default API endpoint
 	CONF.$sourcemap = true;
 	CONF.$httpreqlimit = 0; // request limit per ip
 	CONF.$httpcompress = true;
