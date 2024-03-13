@@ -432,6 +432,9 @@ String.prototype.markdown = function(opt, nested) {
 	if (!opt)
 		opt = {};
 
+	if (opt.bookmarks == null)
+		opt.bookmarks = true;
+
 	var lines = str.split('\n');
 	var builder = [];
 	var ul = [];
@@ -440,13 +443,10 @@ String.prototype.markdown = function(opt, nested) {
 	var isblock = false;
 	var ishead = 0;
 	var isprevblock = false;
-	var headline = '<{0} id="{3}" class="markdown-line" data-index="{1}">{2}</{0}>';
+	var headline = '<{0}' + (opt.bookmarks ? ' id="{3}"' : '') + ' class="markdown-line" data-index="{1}">{2}</{0}>';
 	var line;
 	var tmp;
 	var prefix = opt.prefix || '';
-
-	if (opt.bookmarks == null)
-		opt.bookmarks = true;
 
 	if (opt.wrap == null)
 		opt.wrap = true;
