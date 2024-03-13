@@ -1566,7 +1566,9 @@ exports.builtinauth = function(opt) {
 		if (!options)
 			options = opt.options;
 		var ctrl = $.controller ? $.controller : $;
-		ctrl.cookie && !ctrl.parent && $.cookie(opt.cookie, opt.sign(sessionid, userid), expiration, options);
+		var token = opt.sign(sessionid, userid);
+		ctrl.cookie && !ctrl.parent && $.cookie(opt.cookie, token, expiration, options);
+		return token;
 	};
 
 	if (!opt.expire)
