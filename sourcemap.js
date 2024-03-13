@@ -64,7 +64,7 @@ exports.create = function() {
 		if (route.timeout)
 			m.timeout = route.timeout;
 
-		if (route.flags.upload) {
+		if (route.flags && route.flags.upload) {
 			m.upload = true;
 			m.limit = route.size;
 		}

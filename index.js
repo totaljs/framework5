@@ -726,6 +726,9 @@ F.auth = function(fn) {
 
 F.load = async function(types, callback) {
 
+	if (!types)
+		types = '';
+
 	var beg = Date.now();
 
 	F.dir();

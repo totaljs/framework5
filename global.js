@@ -10,6 +10,7 @@ global.OFF = (name, fn) => F.off(name, fn);
 global.ROUTE = F.TRouting.route;
 global.PROXY = F.TRouting.proxy;
 global.print = console.log;
+global.LOAD = F.load;
 global.LOADCONFIG = F.loadconfig;
 global.LOADRESOURCE = F.loadresource;
 global.SHELL = F.shell;
