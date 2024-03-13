@@ -424,6 +424,8 @@ String.prototype.markdown = function(opt, nested) {
 	// opt.urlify = true;
 	// opt.keywords = true;
 	// opt.emptynewline = true;
+	// opt.bookmarks = true;
+	// opt.prefix = '';
 
 	var str = this;
 
