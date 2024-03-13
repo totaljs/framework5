@@ -166,7 +166,8 @@ function Route(url, action, size) {
 		t.id = t.id.replace(/^(\+|-)/, '');
 		url = url.replace(/(\*|\+|-|%)?[a-z0-9-_/{}]+/i, function(text) {
 			let tmp = text.trim();
-			endpoint = tmp.substring(1);
+			let c = tmp[0];
+			endpoint = c === '%' || c === '+' || c === '*' || c === '-' ? tmp.substring(1) : tmp;
 			t.partial = tmp[0] === '%';
 			return text;
 		});
