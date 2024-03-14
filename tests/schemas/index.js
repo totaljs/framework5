@@ -74,37 +74,37 @@ ON('ready', function () {
 		// });
 
 		// PATCH / DELETE with validation (invalid)
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 			var methods = ['PATCH', 'DELETE'];
 
-			methods.wait(function(method, next) {
-				RESTBuilder[method](url + '/schema/methods/validation', { email: 'not_email' }).exec(function(err, res) {
-					if (method) 
-						Test.print('Validation - Invalid' + method, err !== null  ? null : 'Expected  error');
+			methods.wait(function (method, next) {
+				RESTBuilder[method](url + '/schema/methods/validation', { email: 'not_email' }).exec(function (err, res) {
+					if (method)
+						Test.print('Validation - Invalid' + method, err !== null ? null : 'Expected  error');
 					next();
 				});
-			}, function() {
+			}, function () {
 				next_fn();
 			});
 		});
 
 		// PATCH / DELETE with validation (valid)
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 			var methods = ['PATCH', 'DELETE'];
 
-			methods.wait(function(method, next) {
-				RESTBuilder[method](url + '/schema/methods/validation', { email: 'abc@abc.com' }).exec(function(err, res) {
-					if (method) 
+			methods.wait(function (method, next) {
+				RESTBuilder[method](url + '/schema/methods/validation', { email: 'abc@abc.com' }).exec(function (err, res) {
+					if (method)
 						Test.print('Validation - Valid' + method, err === null && res.success ? null : 'Expected  error');
 					next();
 				});
-			}, function() {
+			}, function () {
 				next_fn();
 			});
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 
 			var data = {
 				number: { i: 123, o: 123 },
@@ -116,14 +116,14 @@ ON('ready', function () {
 				string_lowercase: { i: 'LoWEr cAse', o: 'lower case' },
 				string_uppercase: { i: 'UPper CaSe', o: 'UPPER CASE' }
 			};
-	
+
 			// Assemble body object
 			var body = {};
 			for (var key in data) {
 				body[key] = data[key].i;
 			}
-	
-			RESTBuilder.POST(url + '/schema/formatting/', body).exec(function(err, res) {
+
+			RESTBuilder.POST(url + '/schema/formatting/', body).exec(function (err, res) {
 				for (var key in data)
 					Test.print('Schema formatting - ' + res[key], res[key] === data[key].o ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
 				next_fn();
@@ -175,34 +175,34 @@ ON('ready', function () {
 		});
 
 		var data = { value: { one: 'one', two: 'two' } };
-		arr.push(function(next_fn) {
-			RESTBuilder.POST(url + '/schema/chaining/one', data).exec(function(err, res) {
+		arr.push(function (next_fn) {
+			RESTBuilder.POST(url + '/schema/chaining/one', data).exec(function (err, res) {
 				Test.print('Schema chaining: one ', err === null && res.success && res.value === data.value.one ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
 				next_fn();
 			});
 		});
 
-		arr.push(function(next_fn) {
-			RESTBuilder.POST(url + '/schema/chaining/two', data).exec(function(err, res) {
+		arr.push(function (next_fn) {
+			RESTBuilder.POST(url + '/schema/chaining/two', data).exec(function (err, res) {
 				Test.print('Schema chaining: two ', err === null && res.success && res.value === data.value.two ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
 				next_fn();
 			});
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 			var data = { countryid: 'sk' };
-			RESTBuilder.POST(url + '/schema/verify/', data).exec(function(err, res) {
+			RESTBuilder.POST(url + '/schema/verify/', data).exec(function (err, res) {
 				Test.print('Schema Verify/Check ', err === null && res.success && res.value === data.countryid ? null : 'Schema verify is not as expected');
 				next_fn();
 			});
 
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 			var data = { countryid: 'hu' };
-			RESTBuilder.POST(url + '/schema/verify/', data).exec(function(err, res) {
-				Test.print('Schema verify',  err !== null  ? null : 'Schema verify returned value (It shouldn\'t)');
+			RESTBuilder.POST(url + '/schema/verify/', data).exec(function (err, res) {
+				Test.print('Schema verify', err !== null ? null : 'Schema verify returned value (It shouldn\'t)');
 				next_fn();
 			});
 		});
@@ -277,37 +277,37 @@ ON('ready', function () {
 		// });
 
 		// PATCH / DELETE with validation (invalid)
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 			var methods = ['PATCH', 'DELETE'];
 
-			methods.wait(function(method, next) {
-				RESTBuilder[method](url + '/actions/methods/validation', { email: 'not_email' }).exec(function(err, res) {
-					if (method) 
-						Test.print('New Action Validation - Invalid' + method, err !== null  ? null : 'Expected  error');
+			methods.wait(function (method, next) {
+				RESTBuilder[method](url + '/actions/methods/validation', { email: 'not_email' }).exec(function (err, res) {
+					if (method)
+						Test.print('New Action Validation - Invalid' + method, err !== null ? null : 'Expected  error');
 					next();
 				});
-			}, function() {
+			}, function () {
 				next_fn();
 			});
 		});
 
 		// PATCH / DELETE with validation (valid)
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 			var methods = ['PATCH', 'DELETE'];
 
-			methods.wait(function(method, next) {
-				RESTBuilder[method](url + '/actions/methods/validation', { email: 'abc@abc.com' }).exec(function(err, res) {
-					if (method) 
+			methods.wait(function (method, next) {
+				RESTBuilder[method](url + '/actions/methods/validation', { email: 'abc@abc.com' }).exec(function (err, res) {
+					if (method)
 						Test.print('New Action Validation - Valid' + method, err === null && res.success ? null : 'Expected  error');
 					next();
 				});
-			}, function() {
+			}, function () {
 				next_fn();
 			});
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 
 			var data = {
 				number: { i: 123, o: 123 },
@@ -319,14 +319,14 @@ ON('ready', function () {
 				string_lowercase: { i: 'LoWEr cAse', o: 'lower case' },
 				string_uppercase: { i: 'UPper CaSe', o: 'UPPER CASE' }
 			};
-	
+
 			// Assemble body object
 			var body = {};
 			for (var key in data) {
 				body[key] = data[key].i;
 			}
-	
-			RESTBuilder.POST(url + '/actions/formatting/', body).exec(function(err, res) {
+
+			RESTBuilder.POST(url + '/actions/formatting/', body).exec(function (err, res) {
 				for (var key in data)
 					Test.print('New Action formatting - ' + res[key], res[key] === data[key].o ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
 				next_fn();
@@ -378,34 +378,34 @@ ON('ready', function () {
 		});
 
 		var data = { value: { one: 'one', two: 'two' } };
-		arr.push(function(next_fn) {
-			RESTBuilder.POST(url + '/actions/chaining/one', data).exec(function(err, res) {
+		arr.push(function (next_fn) {
+			RESTBuilder.POST(url + '/actions/chaining/one', data).exec(function (err, res) {
 				Test.print('New Action chaining: one ', err === null && res.success && res.value === data.value.one ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
 				next_fn();
 			});
 		});
 
-		arr.push(function(next_fn) {
-			RESTBuilder.POST(url + '/actions/chaining/two', data).exec(function(err, res) {
+		arr.push(function (next_fn) {
+			RESTBuilder.POST(url + '/actions/chaining/two', data).exec(function (err, res) {
 				Test.print('New Action chaining: two ', err === null && res.success && res.value === data.value.two ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
 				next_fn();
 			});
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 			var data = { countryid: 'sk' };
-			RESTBuilder.POST(url + '/actions/verify/', data).exec(function(err, res) {
+			RESTBuilder.POST(url + '/actions/verify/', data).exec(function (err, res) {
 				Test.print('New Action Verify/Check ', err === null && res.success && res.value === data.countryid ? null : 'Action verify is not as expected');
 				next_fn();
 			});
 
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 			var data = { countryid: 'hu' };
-			RESTBuilder.POST(url + '/actions/verify/', data).exec(function(err, res) {
-				Test.print('New Action verify',  err !== null  ? null : 'Action verify returned value (It shouldn\'t)');
+			RESTBuilder.POST(url + '/actions/verify/', data).exec(function (err, res) {
+				Test.print('New Action verify', err !== null ? null : 'Action verify returned value (It shouldn\'t)');
 				next_fn();
 			});
 		});
@@ -475,22 +475,22 @@ ON('ready', function () {
 		// 	});
 		// });
 
-		arr.push(function(next_fn) {
-			ACTION('Validation/exec', { email: 'not_email' }).callback(function(err, res) {
-				Test.print('Action Validation/exec - Invalid', err !== null  ? null : 'Expected  error');
+		arr.push(function (next_fn) {
+			ACTION('Validation/exec', { email: 'not_email' }).callback(function (err, res) {
+				Test.print('Action Validation/exec - Invalid', err !== null ? null : 'Expected  error');
 				next_fn();
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 
-			ACTION('Validation/exec', { email: 'abc@abc.com' }).callback(function(err, res) {
+			ACTION('Validation/exec', { email: 'abc@abc.com' }).callback(function (err, res) {
 				Test.print('Action Validation - Valid', err === null && res.success ? null : 'Expected  error');
 				next_fn();
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 
 			var data = {
 				number: { i: 123, o: 123 },
@@ -502,17 +502,17 @@ ON('ready', function () {
 				string_lowercase: { i: 'LoWEr cAse', o: 'lower case' },
 				string_uppercase: { i: 'UPper CaSe', o: 'UPPER CASE' }
 			};
-	
+
 			// Assemble body object
 			var body = {};
 			for (var key in data) {
 				body[key] = data[key].i;
 			}
-	
-			ACTION('Formatting/exec', body).callback(function(err, res) {
+
+			ACTION('Formatting/exec', body).callback(function (err, res) {
 				for (var key in data)
 					Test.print('Action Formatting/exec -' + res[key], res[key] === data[key].o ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
-					
+
 				next_fn();
 			});
 		});
@@ -559,33 +559,33 @@ ON('ready', function () {
 		});
 
 		var data = { value: { one: 'one', two: 'two' } };
-		arr.push(function(next_fn) {
-			ACTION('Chaining/one', data).callback(function(err, res) {
+		arr.push(function (next_fn) {
+			ACTION('Chaining/one', data).callback(function (err, res) {
 				Test.print('Action Chaining/one ', err === null && res.success && res.value === data.value.one ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
 				next_fn();
 			});
 		});
 
-		arr.push(function(next_fn) {
-			ACTION('Chaining/two', data).callback(function(err, res) {
+		arr.push(function (next_fn) {
+			ACTION('Chaining/two', data).callback(function (err, res) {
 				Test.print('Action Chaining/two ', err === null && res.success && res.value === data.value.two ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
 				next_fn();
 			});
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 			var data = { countryid: 'sk' };
-			ACTION('Verify/exec', data).callback(function(err, res) {
+			ACTION('Verify/exec', data).callback(function (err, res) {
 				Test.print('Action Verify/exec ', err === null && res.success && res.value === data.countryid ? null : 'Action verify is not as expected');
 				next_fn();
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function (next_fn) {
 			var data = { countryid: 'hu' };
-			ACTION('Verify/exec', data).callback(function(err, res) {
-				Test.print('Action Verify/exec',  err !== null  ? null : 'Action verify returned value (It shouldn\'t)');
+			ACTION('Verify/exec', data).callback(function (err, res) {
+				Test.print('Action Verify/exec', err !== null ? null : 'Action verify returned value (It shouldn\'t)');
 				next_fn();
 			});
 		});
@@ -595,7 +595,7 @@ ON('ready', function () {
 		});
 	});
 	setTimeout(function () {
-		Test.run(function() {
+		Test.run(function () {
 			process.exit(1);
 		});
 	}, 100);
