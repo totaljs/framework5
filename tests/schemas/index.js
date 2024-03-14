@@ -250,7 +250,7 @@ ON('ready', function () {
 		arr.push(function (next_fn) {
 			methods.wait(function (item, fn) {
 				RESTBuilder.GET(url + '/actions/methods/' + item).exec(function (err, res, output) {
-					Test.print('Action Methods (GET) ' + item, err === null && res.success ? null : item + ' Failed');
+					Test.print('New Action Methods (GET) ' + item, err === null && res.success ? null : item + ' Failed');
 					fn();
 				});
 			}, function () {
@@ -283,7 +283,7 @@ ON('ready', function () {
 			methods.wait(function(method, next) {
 				RESTBuilder[method](url + '/actions/methods/validation', { email: 'not_email' }).exec(function(err, res) {
 					if (method) 
-						Test.print('Action Validation - Invalid' + method, err !== null  ? null : 'Expected  error');
+						Test.print('New Action Validation - Invalid' + method, err !== null  ? null : 'Expected  error');
 					next();
 				});
 			}, function() {
@@ -298,7 +298,7 @@ ON('ready', function () {
 			methods.wait(function(method, next) {
 				RESTBuilder[method](url + '/actions/methods/validation', { email: 'abc@abc.com' }).exec(function(err, res) {
 					if (method) 
-						Test.print('Action Validation - Valid' + method, err === null && res.success ? null : 'Expected  error');
+						Test.print('New Action Validation - Valid' + method, err === null && res.success ? null : 'Expected  error');
 					next();
 				});
 			}, function() {
@@ -328,7 +328,7 @@ ON('ready', function () {
 	
 			RESTBuilder.POST(url + '/actions/formatting/', body).exec(function(err, res) {
 				for (var key in data)
-					Test.print('Action formatting - ' + res[key], res[key] === data[key].o ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
+					Test.print('New Action formatting - ' + res[key], res[key] === data[key].o ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
 				next_fn();
 			});
 
@@ -342,7 +342,7 @@ ON('ready', function () {
 					var items = [];
 					if (err && err.items && err.items.length)
 						items = err.items.map(i => i.name + '(' + item[i.name] + ')');
-					Test.print('Action required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
+					Test.print('New Action required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
 					func();
 				});
 			}, function () {
@@ -366,7 +366,7 @@ ON('ready', function () {
 					// Check
 					var keys = Object.keys(item);
 					keys.wait(function (i, cb) {
-						Test.print('Action required (invalid): {0}({1})'.format(i, item[i]), errors.includes(i) ? null : 'field was accepted --> ' + i + '(' + item[i] + ')');
+						Test.print('New Action required (invalid): {0}({1})'.format(i, item[i]), errors.includes(i) ? null : 'field was accepted --> ' + i + '(' + item[i] + ')');
 						cb();
 					}, function () {
 						func();
@@ -380,14 +380,14 @@ ON('ready', function () {
 		var data = { value: { one: 'one', two: 'two' } };
 		arr.push(function(next_fn) {
 			RESTBuilder.POST(url + '/actions/chaining/one', data).exec(function(err, res) {
-				Test.print('Action chaining: one ', err === null && res.success && res.value === data.value.one ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
+				Test.print('New Action chaining: one ', err === null && res.success && res.value === data.value.one ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
 				next_fn();
 			});
 		});
 
 		arr.push(function(next_fn) {
 			RESTBuilder.POST(url + '/actions/chaining/two', data).exec(function(err, res) {
-				Test.print('Action chaining: two ', err === null && res.success && res.value === data.value.two ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
+				Test.print('New Action chaining: two ', err === null && res.success && res.value === data.value.two ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
 				next_fn();
 			});
 		});
@@ -396,7 +396,7 @@ ON('ready', function () {
 		arr.push(function(next_fn) {
 			var data = { countryid: 'sk' };
 			RESTBuilder.POST(url + '/actions/verify/', data).exec(function(err, res) {
-				Test.print('Action Verify/Check ', err === null && res.success && res.value === data.countryid ? null : 'Action verify is not as expected');
+				Test.print('New Action Verify/Check ', err === null && res.success && res.value === data.countryid ? null : 'Action verify is not as expected');
 				next_fn();
 			});
 
@@ -405,14 +405,10 @@ ON('ready', function () {
 		arr.push(function(next_fn) {
 			var data = { countryid: 'hu' };
 			RESTBuilder.POST(url + '/actions/verify/', data).exec(function(err, res) {
-				Test.print('Action verify',  err !== null  ? null : 'Action verify returned value (It shouldn\'t)');
+				Test.print('New Action verify',  err !== null  ? null : 'Action verify returned value (It shouldn\'t)');
 				next_fn();
 			});
 		});
-
-
-
-
 
 		arr.async(function () {
 			next();
@@ -452,8 +448,8 @@ ON('ready', function () {
 
 		arr.push(function (next_fn) {
 			methods.wait(function (item, fn) {
-				ACTION('GET /actions/methods/', function (err, res) {
-					Test.print('Action Methods (GET) ' + item, err === null && res.success ? null : item + ' Failed');
+				ACTION('Methods/' + item).callback(function (err, res) {
+					Test.print('Action Method/' + item, err === null && res.success ? null : item + ' Failed');
 					fn();
 				});
 			}, function () {
@@ -479,32 +475,17 @@ ON('ready', function () {
 		// 	});
 		// });
 
-		// PATCH / DELETE with validation (invalid)
 		arr.push(function(next_fn) {
-			var methods = ['PATCH', 'DELETE'];
-
-			methods.wait(function(method, next) {
-				ACTION(method + ' /actions/methods/validation', { email: 'not_email' }, function(err, res) {
-					if (method) 
-						Test.print('Action Validation - Invalid' + method, err !== null  ? null : 'Expected  error');
-					next();
-				});
-			}, function() {
+			ACTION('Validation/exec', { email: 'not_email' }).callback(function(err, res) {
+				Test.print('Action Validation/exec - Invalid', err !== null  ? null : 'Expected  error');
 				next_fn();
 			});
 		});
 
-		// PATCH / DELETE with validation (valid)
 		arr.push(function(next_fn) {
-			var methods = ['PATCH', 'DELETE'];
 
-			methods.wait(function(method, next) {
-				ACTION(method + ' /actions/methods/validation', { email: 'abc@abc.com' }, function(err, res) {
-					if (method) 
-						Test.print('Action Validation - Valid' + method, err === null && res.success ? null : 'Expected  error');
-					next();
-				});
-			}, function() {
+			ACTION('Validation/exec', { email: 'abc@abc.com' }).callback(function(err, res) {
+				Test.print('Action Validation - Valid', err === null && res.success ? null : 'Expected  error');
 				next_fn();
 			});
 		});
@@ -528,23 +509,21 @@ ON('ready', function () {
 				body[key] = data[key].i;
 			}
 	
-			ACTION('POST /actions/formatting/', body, function(err, res) {
+			ACTION('Formatting/exec', body).callback(function(err, res) {
 				for (var key in data)
-					Test.print('Action formatting - ' + res[key], res[key] === data[key].o ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
+					Test.print('Action Formatting/exec -' + res[key], res[key] === data[key].o ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
+					
 				next_fn();
 			});
-
 		});
 		arr.push(function (next_fn) {
-
 			prefill_undefined(valid);
-
 			valid.wait(function (item, func) {
-				ACTION('POST /actions/required/', item, function (err) {
+				ACTION('Required/exec', item).callback(function (err) {
 					var items = [];
 					if (err && err.items && err.items.length)
 						items = err.items.map(i => i.name + '(' + item[i.name] + ')');
-					Test.print('Action required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
+					Test.print('Action Required/exec (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
 					func();
 				});
 			}, function () {
@@ -557,7 +536,7 @@ ON('ready', function () {
 
 			prefill_undefined(invalid);
 			invalid.wait(function (item, func) {
-				ACTION('POST /actions/required/', item, function (err) {
+				ACTION('Required/exec', item).callback(function (err) {
 					// Remap
 					var errors = [];
 					if (err && err.items && err.items.length) {
@@ -568,7 +547,7 @@ ON('ready', function () {
 					// Check
 					var keys = Object.keys(item);
 					keys.wait(function (i, cb) {
-						Test.print('Action required (invalid): {0}({1})'.format(i, item[i]), errors.includes(i) ? null : 'field was accepted --> ' + i + '(' + item[i] + ')');
+						Test.print('Action Required/exec (invalid): {0}({1})'.format(i, item[i]), errors.includes(i) ? null : 'field was accepted --> ' + i + '(' + item[i] + ')');
 						cb();
 					}, function () {
 						func();
@@ -581,15 +560,15 @@ ON('ready', function () {
 
 		var data = { value: { one: 'one', two: 'two' } };
 		arr.push(function(next_fn) {
-			ACTION('POST /actions/chaining/one', data, function(err, res) {
-				Test.print('Action chaining: one ', err === null && res.success && res.value === data.value.one ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
+			ACTION('Chaining/one', data).callback(function(err, res) {
+				Test.print('Action Chaining/one ', err === null && res.success && res.value === data.value.one ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
 				next_fn();
 			});
 		});
 
 		arr.push(function(next_fn) {
-			ACTION('POST /actions/chaining/two', data, function(err, res) {
-				Test.print('Action chaining: two ', err === null && res.success && res.value === data.value.two ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
+			ACTION('Chaining/two', data).callback(function(err, res) {
+				Test.print('Action Chaining/two ', err === null && res.success && res.value === data.value.two ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
 				next_fn();
 			});
 		});
@@ -597,17 +576,16 @@ ON('ready', function () {
 
 		arr.push(function(next_fn) {
 			var data = { countryid: 'sk' };
-			ACTION('POST /actions/verify/', data, function(err, res) {
-				Test.print('Action Verify/Check ', err === null && res.success && res.value === data.countryid ? null : 'Action verify is not as expected');
+			ACTION('Verify/exec', data).callback(function(err, res) {
+				Test.print('Action Verify/exec ', err === null && res.success && res.value === data.countryid ? null : 'Action verify is not as expected');
 				next_fn();
 			});
-
 		});
 
 		arr.push(function(next_fn) {
 			var data = { countryid: 'hu' };
-			ACTION('POST /actions/verify/', data, function(err, res) {
-				Test.print('Action verify',  err !== null  ? null : 'Action verify returned value (It shouldn\'t)');
+			ACTION('Verify/exec', data).callback(function(err, res) {
+				Test.print('Action Verify/exec',  err !== null  ? null : 'Action verify returned value (It shouldn\'t)');
 				next_fn();
 			});
 		});
