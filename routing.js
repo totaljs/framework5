@@ -770,6 +770,7 @@ Proxy.prototype.copy = function(type) {
 };
 
 Proxy.prototype.after = function(callback) {
+	// callback(response)
 	var t = this;
 	t.$after = callback;
 	return t;
@@ -783,11 +784,13 @@ Proxy.prototype.timeout = function(timeout) {
 
 Proxy.prototype.check = function(callback) {
 	var t = this;
+	// callback(ctrl)
 	t.$check = callback;
 	return t;
 };
 
 Proxy.prototype.before = function(callback) {
+	// callback(uri, ctrl)
 	var t = this;
 	t.$before = callback;
 	return t;
@@ -891,7 +894,7 @@ function proxycreate(proxy, ctrl) {
 
 	delete uri.headers.host;
 
-	proxy.before && proxy.before(uri, ctrl);
+	proxy.$before && proxy.$before(uri, ctrl);
 	F.stats.performance.external++;
 	F.stats.request.external++;
 
@@ -988,7 +991,7 @@ function proxycreatecallback(response) {
 		let ctrl = self.$controller;
 		ctrl.released = true;
 		ctrl.destroyed = true;
-		ctrl.$proxy.after && self.$proxy.after(response);
+		ctrl.$proxy.$after && self.$proxy.$after(response);
 		ctrl.res.writeHead && ctrl.res.writeHead(response.statusCode, response.headers);
 		response.pipe(ctrl.res, PROXY_OPTIONS);
 	}
