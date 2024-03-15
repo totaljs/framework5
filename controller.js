@@ -350,13 +350,10 @@ Controller.prototype.flush = function() {
 					ctrl.fallback(400, err.toString());
 				} else {
 					response.headers['content-encoding'] = 'gzip';
-					try {
-						ctrl.res.writeHead(response.status, response.headers);
-						ctrl.res.end(buffer, 'utf8');
-						F.stats.performance.upload += buffer.length / 1024 / 1024;
-					} finally {
-						ctrl.free();
-					}
+					ctrl.res.writeHead(response.status, response.headers);
+					ctrl.res.end(buffer, 'utf8');
+					F.stats.performance.upload += buffer.length / 1024 / 1024;
+					ctrl.free();
 				}
 			});
 			return;
