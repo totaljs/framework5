@@ -352,8 +352,8 @@ Controller.prototype.flush = function() {
 					response.headers['content-encoding'] = 'gzip';
 					ctrl.res.writeHead(response.status, response.headers);
 					ctrl.res.end(buffer, 'utf8');
-					ctrl.free();
 					F.stats.performance.upload += buffer.length / 1024 / 1024;
+					ctrl.free();
 				}
 			});
 			return;
@@ -363,9 +363,12 @@ Controller.prototype.flush = function() {
 	if (CHECK_CHARSET[type])
 		response.headers['content-type'] += '; charset=utf-8';
 
-	ctrl.res.writeHead(response.status, response.headers);
-	ctrl.res.end(buffer);
-	ctrl.free();
+	try {
+		ctrl.res.writeHead(response.status, response.headers);
+		ctrl.res.end(buffer);
+	} finally {
+		ctrl.free();
+	}
 };
 
 Controller.prototype.fallback = function(code, err) {

@@ -1158,7 +1158,7 @@ F.loadservices = function() {
 		while (true) {
 			let ctrl = F.temporary.pending[index];
 			if (ctrl) {
-				if (ctrl.destroyed) {
+				if (ctrl.destroyed || ctrl.res.headersSent || ctrl.res.writableEnded) {
 					F.temporary.pending.splice(index, 1);
 				} else if (ctrl.timeout <= 0) {
 

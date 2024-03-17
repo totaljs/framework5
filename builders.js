@@ -96,6 +96,13 @@ Options.prototype = {
 	}
 };
 
+Options.prototype.unauthorized = function() {
+	var args = [this];
+	for (let i = 0; i < arguments.length; i++)
+		args.push(arguments[i]);
+	return F.unauthorized.apply(global, args);
+};
+
 Options.prototype.action = function(schema, payload) {
 	return F.action(schema, payload, this.controller);
 };
