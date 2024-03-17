@@ -7,7 +7,7 @@ F.run({ release: false, port: 8000 });
 
 var url = 'http://localhost:8000';
 ROUTE('GET /', ($) => $.success());
-PROXY('/cl/', 'https://api.muald.com/cl', false);
+PROXY('/cl/', 'https://api.muald.com/cl');
 
 ON('ready', function() {
 

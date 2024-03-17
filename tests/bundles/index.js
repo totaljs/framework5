@@ -1,5 +1,4 @@
 /* eslint-disable */
-
 require('../../index');
 require('../../test');
 
