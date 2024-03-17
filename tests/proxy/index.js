@@ -7,10 +7,8 @@ F.run({ release: false, port: 8000 });
 
 var url = 'http://localhost:8000';
 ROUTE('GET /', ($) => $.success());
-PROXY('/cl/', 'https://api.muald.com/cl');
-
+PROXY('/cl/', 'https://api.muald.com/cl').before(function() {});
 ON('ready', function() {
-
 	Test.push('Test Web Proxy', function(next) {
 		// Test.print('String.slug()', [error]);
 
