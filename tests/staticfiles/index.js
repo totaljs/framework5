@@ -14,11 +14,19 @@ ON('ready', function() {
 	Test.push('A test name', function(next) {
 		// Test.print('String.slug()', [error]);
 		Test.print('String.slug()');
-		next();
+		var arr = [];
+		arr.push(function(next_fn) {
+
+		});
+
+		arr.async(function() {
+			next();
+		});
 	});
 
-	Test.run(function() {
-		process.exit(0);
-	});
-
+	setTimeout(function() {
+		Test.run(function() {
+			process.exit(0);
+		});
+	}, 500);
 });
