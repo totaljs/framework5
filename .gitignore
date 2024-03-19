@@ -2,3 +2,6 @@
 .DS_Store
 /tests/.DS_Store
 /.gitignore
+*.pid
+*.map
+*.js.json
