@@ -11,7 +11,7 @@ Test.start = function(message) {
 		console.log('');
 
 	console.log(divider);
-	console.log('| ' + message.padRight(divider.length - 4) + ' |');
+	console.log('> ' + message.padRight(divider.length - 4) + ' <');
 	console.log(divider);
 };
 
@@ -41,7 +41,10 @@ Test.run = function(callback) {
 		console.log('Tests:', Test.count);
 		console.timeEnd('Time');
 		console.log('');
-		callback && callback();
+		if (callback)
+			callback();
+		else
+			process.exit(0);
 	});
 };
 
