@@ -7,6 +7,7 @@ require('../../test');
 // File routing
 // Removing routess
 
+CONF.$imprint = false;
 F.console = NOOP;
 
 // load web server and test app

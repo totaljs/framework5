@@ -3,6 +3,7 @@ require('../../index');
 require('../../test');
 
 // load web server and test app
+CONF.$imprint = false;
 F.run({ release: false, port: 8000 });
 
 var url = 'http://localhost:8000';

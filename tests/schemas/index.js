@@ -8,6 +8,7 @@ require('../../test');
 // ACTION()
 // JSON schema types defined in the ACTIONS
 
+CONF.$imprint = false;
 F.console = NOOP;
 var url = 'http://0.0.0.0:8000';
 

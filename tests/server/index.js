@@ -2,6 +2,8 @@
 require('../../index');
 require('../../test');
 
+CONF.$imprint = false;
+
 Test.push('Test Server', function(next) {
 
 	var arr = [];

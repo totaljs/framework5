@@ -7,6 +7,7 @@ require('../../test');
 // Removing files
 
 // load web server and test app
+CONF.$imprint = false;
 F.http();
 
 var url = 'http://localhost:8000/';
