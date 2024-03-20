@@ -18,7 +18,6 @@ ON('ready', function() {
 		var arr = [];
 		var correct = '<h1>Hello world!</h1>';
 		arr.push(function(resume) {
-			
 			RESTBuilder.GET(url + '/localize.html').exec(function(err, response, output) {
 				Test.print('Localize - default lang', err === null && output.response ===  correct ? null : 'Expected ' + correct);
 				resume();
@@ -65,9 +64,5 @@ ON('ready', function() {
 		arr.async(next);
 	});
 
-	setTimeout(function() {
-		Test.run(function() {
-			process.exit(0);
-		});
-	}, 500);
+	setTimeout(Test.run, 500);
 });

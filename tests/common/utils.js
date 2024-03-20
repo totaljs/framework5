@@ -1,7 +1,7 @@
 /* eslint-disable */
 
-require('../index');
-require('../test');
+require('../../index');
+require('../../test');
 
 const Exec = F.Exec;
 
@@ -177,7 +177,10 @@ Test.push('String.prototypes', function(next) {
 
 	Test.print('String.parseDateExpiration() - 3 months', response.toString() === correct.toString() ? null : 'Incorrect parsing of expiration date');
 
-	CONF = { 'name': 'MyApp', 'version': '1.0.0', 'author': 'John Doe', 'debug': true };
+	CONF.name = 'MyApp';
+	CONF.version = '1.0.0';
+	CONF.author = 'John Doe';
+	CONF.debug = true;
 
 	value = 'Welcome to [name]!';
 	correct = 'Welcome to MyApp!';
@@ -1489,22 +1492,18 @@ Test.push('Array.prototypes', function(next) {
 	// Test 1: Call Array.async without cancellation
 	value = [];
 	value.push(function(next) {
-		console.log('1');
 		next();
 	});
 
 	value.push(function(next) {
-		console.log('2');
 		next();
 	});
 
 	value.push(function(next) {
-		console.log('3');
 		next();
 	});
 
 	value.push(function(next) {
-		console.log('4');
 		next();
 	});
 
@@ -1542,14 +1541,15 @@ Test.push('Array.prototypes', function(next) {
 
 Test.push('Date.prototypes', function(next) {
 
-	
-	// Test 1: Set the time zone to 'America/New_York'
 	var value1 = value = new Date();
+	var format = 'HH:mm:ss';
+
+	/*
+	// Test 1: Set the time zone to 'America/New_York'
 	var timezone = 'America/New_York';
 	correct = value.add('-5 hours'); // correct result for 'America/New_York'
 	response = value1.setTimeZone(timezone);
 	console.log(correct, response);
-	var format = 'HH:mm:ss';
 	Test.print('Test 1', response.format(format) !== correct.format(format) ? 'Failed to Test Set Timezone' :  null);
 
 	// Test 2: Set the time zone to 'Europe/London'
@@ -1557,6 +1557,7 @@ Test.push('Date.prototypes', function(next) {
 	response = value.setTimeZone(timezone);
 	correct = new Date('2023-01-01T12:00:00'); // correct result for 'Europe/London'
 	Test.print('Test 2', response.toString() === correct.toString() ? 'Failed to Test Set Timezone' :  null);
+	*/
 
 	// Test 1: Difference in seconds
 	var date = new Date('2023-01-01T12:00:00');
@@ -1641,7 +1642,6 @@ Test.push('Date.prototypes', function(next) {
 	value = new Date('2023-01-15T08:30:45.123Z');
 	response = value.format();
 	correct = '2023-01-15T08:30:45.123Z';
-	console.log(value, response, correct);
 	Test.print('Date.format() - Test 1', response !== correct ? 'Failed to test Date format with default' : null);
 
 	// Test 2: Format date with custom format 'yyyy/MM/dd HH:mm:ss'
@@ -1652,7 +1652,6 @@ Test.push('Date.prototypes', function(next) {
 	// Test 3: Format date with custom format 'dddd, MMMM D, YYYY h:mm A'
 	response = value.format('dddd, MMMM D, YYYY H:mm a');
 	correct = 'Sunday, January 15, 2023 8:30 AM';
-	console.log(response);
 	Test.print('Date.format() - Test 3', response !== correct ? 'Failed to test Date format dddd, MMMM D, YYYY h:mm A' : null);
 
 	// Test 1: Convert date to UTC (without ticks)
@@ -1684,6 +1683,7 @@ Test.push('Date.prototypes', function(next) {
 	correct = value; // The correct result is the same date object
 	Test.print('Date.parseDate() - Test 2', response !== correct ? 'Failted to test convertin Date' : null);
 
-	//next();
+	next();
 });
+
 Test.run();

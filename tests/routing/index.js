@@ -1,6 +1,7 @@
 /* eslint-disable */
 require('../../index');
 require('../../test');
+
 // API routing
 // WebSocket routing + WebSocketClient (text, json and binary communication)
 // File routing
@@ -13,7 +14,6 @@ F.run({ release: false });
 
 var url = 'http://0.0.0.0:8000';
 
-
 ON('error', function(e) {
 	console.log(e);
 	//process.exit(1);
@@ -22,28 +22,24 @@ ON('error', function(e) {
 ON('ready', function () {
 
 	Test.push('HTTP Routing - Basics', function (next) {
-		MAIN.items && MAIN.items.wait(function (item, n) {
+		MAIN.items && MAIN.items.wait(function (item, resume) {
 			RESTBuilder.GET(url + item.url).exec(function (err, res, output) {
 				res = output.response;
 				Test.print('Routes - Params {0}'.format(item.url), res !== item.res ? 'TEST {0} failed'.format(item.url) : null);
-				n();
+				resume();
 			});
-		}, function () {
-			next();
-		});
+		}, next);
 	});
 
 
 	Test.push('HTTP METHODS', function (next) {
 		var methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-		methods.wait(function (method, next_fn) {
+		methods.wait(function (method, resume) {
 			RESTBuilder[method](url + '/methods/').exec(function (err, response) {
 				Test.print('HTTP Routing -  methods ({0})'.format(method), err === null && response.success ? null : method + ' method failed');
-				next_fn();
+				resume();
 			});
-		}, function () {
-			next();
-		});
+		}, next);
 	});
 
 	Test.push('Middleware', function (next) {
@@ -71,82 +67,76 @@ ON('ready', function () {
 		// 	});
 		// });
 
-		arr.async(function () {
-			next();
-		})
+		arr.async(next);
 	});
 
 	Test.push('HTTP Routing - Authorization', function (next) {
 		var arr = [];
 
-		arr.push(function (next_fn) {
+		arr.push(function (resume) {
 			var token = 'token123';
 			RESTBuilder.GET(url + '/xtoken').header('x-token', token).exec(function (err, res) {
 				Test.print('X - Token ', err === null && res && res.value === token ? null : 'Expected value to be ' + token);
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function (next_fn) {
+		arr.push(function (resume) {
 			RESTBuilder.GET(url + '/auth').cookie('auth', 'correct-cookie').exec(function (err, res, output) {
 				Test.print('Authorized user', output.status === 200 && err === null && res && res.value === '123' ? null : 'Expected authorized user id (123)');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function (next_fn) {
+		arr.push(function (resume) {
 			RESTBuilder.GET(url + '/auth').cookie('auth', 'wrong-cookie').exec(function (err, res, output) {
 				Test.print('Unauthorized user', output.status === 200 && err === null && res && !res.value ? null : 'Expected no value');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function (next_fn) {
+		arr.push(function (resume) {
 			RESTBuilder.GET(url + '/auth/authorized/').cookie('auth', 'correct-cookie').exec(function (err, res, output) {
 				Test.print('Authorized route - Authorized user', output.status === 200 && err === null && res && res.value === '123' ? null : 'Expected authorized user id (123)');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function (next_fn) {
+		arr.push(function (resume) {
 			RESTBuilder.GET(url + '/auth/authorized/').cookie('auth', 'wrong-cookie').exec(function (err, res, output) {
 				Test.print('Unauthorized route - Unauthorized user', output.status === 401 && res && !res.value ? null : 'Expected no value');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.async(function () {
-			next();
-		})
+		arr.async(next)
 	});
 
 	Test.push('HTTP Routing - Internal routing', function (next) {
 		var arr = [];
 
-		arr.push(function (next_fn) {
+		arr.push(function (resume) {
 			RESTBuilder.GET(url + '/not/existing').exec(function (err, res) {
 				Test.print('Internal Routing - 404', err === null  && res.status === 404 && res.value === 'Not found' ? null : 'Expected 404 error code');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function (next_fn) {
+		arr.push(function (resume) {
 			RESTBuilder.GET(url + '/internal/503').exec(function (err, res) {
 				Test.print('Internal Routing - 503', err === null && res && res.status === 503 && res.value === 'Server Error');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function (next_fn) {
+		arr.push(function (resume) {
 			RESTBuilder.GET(url + '/internal/408').exec(function (err, res) {
 				Test.print('Internal Routing - 408', err === null  && res.status === 408 && res.value === 'Request Timeout' ? null : 'Expected 408 error code');
-				next_fn();
+				resume();
 			});
 		});
 	
-		arr.async(function () {
-			next();
-		})
+		arr.async(next)
 	});
 
 	Test.push('HTTP Routing - wildcard', function (next) {
@@ -224,9 +214,7 @@ ON('ready', function () {
 			});
 		});
 
-		arr.async(function () {
-			next();
-		})
+		arr.async(next)
 
 	});
 
@@ -235,29 +223,29 @@ ON('ready', function () {
 		var wsclient;
 		var test_msg = 'message123';
 		var arr = [];
-		var create_client = function(next_fn) {
+		var create_client = function(resume) {
 			WEBSOCKETCLIENT(function(client) {
 				client.connect(url.replace('http', 'ws') + '?query=' + test_msg);
 				wsclient = client;
-				next_fn();
+				resume();
 			});
 		};
 		arr.push(create_client);
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			wsclient && wsclient.on('open', function() {
 				wsclient.send({ command: 'start' });
 			});
 
 			wsclient && wsclient.on('close', function() {
 				Test.print('Websocket - Close', null);
-				next_fn();
+				resume();
 			});
 
 
 			wsclient && wsclient.on('error', function(err) {
 				Test.print('Websocket - ', 'Error ' + err);
-				next_fn();
+				resume();
 			});
 
 			wsclient && wsclient.on('message', function(message) {
@@ -302,7 +290,7 @@ ON('ready', function () {
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 
 			WEBSOCKETCLIENT(function(client) {
 
@@ -315,7 +303,7 @@ ON('ready', function () {
 	
 				client.on('close', function() {
 					Test.print('Websocket - Authorized ', null);
-					next_fn();
+					resume();
 				});
 	
 				client.on('error', function(e) {
@@ -332,7 +320,7 @@ ON('ready', function () {
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			WEBSOCKETCLIENT(function(client) {
 				client.connect(url.replace('http', 'ws') + '/unauthorized/');
 				client.options.reconnect = 0;
@@ -344,16 +332,16 @@ ON('ready', function () {
 					});
 					client.on('error', function(e) {
 						Test.print('Websocket - Unauthorized ');
-						next_fn();
+						resume();
 					});
 					client.on('close', function(e) {
 						Test.print('Websocket - Unauthorized - Closed');
-						next_fn();
+						resume();
 					});
 				});
 			});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			var count = 0;
 
 			WEBSOCKETCLIENT(function(client) {
@@ -385,13 +373,13 @@ ON('ready', function () {
 						clearTimeout(timeout);
 						client.close();
 						Test.print('Websocket - Reconnect - OK');
-						next_fn();
+						resume();
 					}
 				});
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 
 
 			function middleware_fail() {
@@ -417,7 +405,7 @@ ON('ready', function () {
 					OFF('middlewaresocket_close');
 					clearTimeout(middleware_timeout);
 					Test.print('Websocket - Middleware');
-					next_fn();
+					resume();
 				});
 			});
 		});
@@ -430,24 +418,24 @@ ON('ready', function () {
 		var arr = [];
 		var regex = /<h1>(.*?)<\/h1>/;
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			RESTBuilder.GET(url + '/localization/en/').exec(function(err, res, output) {
 				Test.print('English - ', output.response.match(regex)[1] === 'Hello world!' ? null : 'Expecting \'Hello world!\'');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			RESTBuilder.GET(url + '/localization/sk/').exec(function(err, res, output) {
 				Test.print('Slovak - ', output.response.match(regex)[1] === 'Ahoj svet!' ? null : 'Expecting \'Ahoj svet!\'');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			RESTBuilder.GET(url + '/localization/?lang=sk').exec(function(err, res, output) {
 				Test.print('Query string lang - ', output.response.match(regex)[1] === 'Ahoj svet!' ? null : 'Expecting \'Ahoj svet!\'');
-				next_fn();
+				resume();
 			});
 		});
 
@@ -460,28 +448,28 @@ ON('ready', function () {
 	Test.push('Upload', function(next) {
 		var arr = [];
 		var filename = 'symbols.txt';
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			Total.Fs.readFile(filename, function(err, buffer) {
 				if (err) throw err
 				RESTBuilder.POST(url + '/upload/', { value: 'value' }).file(filename.split('.')[0], PATH.root(filename)).exec(function(err, res) {
 					Test.print('UPload single file', err === null && res.success && res.value.files[0] === buffer.toString() && res.value.value === 'value' ? null : 'Recieved file content is not the same');
-					next_fn();
+					resume();
 				});
 			});
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			var filenames = ['symbols.txt', 'important.txt'];
 			var buffers = [];
 
-			filenames.wait(function(file, next_func) {
+			filenames.wait(function(file, resume) {
 				// Get buffers from files
 				Total.Fs.readFile(file, function(err, data) {
-					if (err) throw err;
-
+					if (err)
+						throw err;
 					buffers.push(data);
-					next_func();
+					resume();
 				});
 			}, function() {
 				var builder = RESTBuilder.POST(url + '/upload/', { value: 'value' });
@@ -507,58 +495,58 @@ ON('ready', function () {
 		var arr = [];
 		var path = '/v1/';
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			RESTBuilder.API(url + path, 'api_basic').exec(function(err, response) {
 				Test.print('API Routing - Basic ', err === null && response.success  === true ? null: 'Expected success response');
-				next_fn();
+				resume();
 			});
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			var data = { valid: 'valid', invalid: 'invalid' };
 
 			RESTBuilder.API(url + path, 'api_validation', data).exec(function(err, response) {
 				Test.print('API Routing - Validation (+) ', err === null && response.success  === true ? null: '');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			var data = { valid: 'valid', invalid: 'invalid' };
 			RESTBuilder.API(url + path, 'api_novalidation', data).exec(function(err, response) {
 				Test.print('API Routing - Validation (-) ', err === null && response.success  === true ? null: '');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			var data = { valid: 'valid', invalid: 'invalid' };
 			RESTBuilder.API(url + path, 'api_patch', data).exec(function(err, response) {
 				Test.print('API Routing - Patch validation (%)', err === null && response.success && response.value.valid === data.valid ? null : 'Validation error');
 				Test.print('API Routing - Patch validation (%)', response.value.invalid !== data.invalid ? null : 'Invalid data returned');
-				next_fn();
+				resume();
 			});
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			var data = { valid: 'valid', invalid: 'invalid' };
 		
 			RESTBuilder.API(url + path, 'api_keys', data).exec(function(err, response) {
 				Test.print('API Routing - Patch Keys', err === null && response.success ? null : 'Expected success response');
 				Test.print('API Routing - Patch Keys', response.value.includes('valid') ? null : 'Valid key not found');
 				Test.print('API Routing - Patch Keys', response.value.includes('invalid') ? null : 'Invalid key found');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			var data = { valid: 'valid', invalid: 'invalid' };
 		
 			RESTBuilder.API(url + path, 'api_keys_multi', data).exec(function(err, response) {
 				Test.print('API Routing - Patch Keys (multioperation)', !err && response && response.value && response.value.includes(data.valid) && response.value.includes(data.invalid) ? null : 'PATCH - Multiple operation keys failed');
-				next_fn();
+				resume();
 			});
 		});
 
@@ -572,19 +560,19 @@ ON('ready', function () {
 		var arr = [];
 		var path = '/v1/';
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			RESTBuilder.API(url + path, 'api_action_basic').exec(function(err, response) {
 				Test.print('API Routing - Basic', err === null && response.success ? null : 'Expected success response');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			var data = { valid: 'valid', invalid: 'invalid' };
 			RESTBuilder.API(url + path, 'api_action_validation', data).exec(function(err, response) {
 				Test.print('API Routing - Validation (+)', err === null && response.success && response.value && response.value.valid === data.valid ? null : 'Validation error');
 				Test.print('API Routing - Validation (+)', response.value.invalid !== data.invalid ? null : 'Invalid data returned');
-				next_fn();
+				resume();
 			});
 		});
 
@@ -629,14 +617,14 @@ ON('ready', function () {
 				return false
 		};
 
-		arr.push(function (next_fn) {
+		arr.push(function (resume) {
 			RESTBuilder.GET(url + '/uPperCase/').exec(function (err, res) {
 				Test.print('Sensitive case', err === null && res && res.success === true ? null : 'Uppercase - expecting success');
-				next_fn();
+				resume();
 			});
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			var route;
 		
 			// Regular route
@@ -647,74 +635,74 @@ ON('ready', function () {
 			ROUTE(route, null);
 			setTimeout(function() {
 				Test.print('Removing routes - Regular route: set to null', check(route) ? null : 'Regular route was not removed with "null"');
-				next_fn();
+				resume();
 			}, 100);
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			// Regular route
 			route = 'GET /normalremove/     *Remove --> exec';
 			ROUTE(route);
 			ROUTE(route).remove();
 			Test.print('Removing routes - Regular route: .remove()', check(route) ? null : 'Regular route was not removed with "remove()"');
-			next_fn();
+			resume();
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			route = 'GET /dynamicremove/{userid}/q/{123}';
 			ROUTE(route);
 			ROUTE(route, null);
 			Test.print('Removing routes - Dynamic route. net null', check(route) ? null : 'Dynamic route was not removed with "null"');
-			next_fn();
+			resume();
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			route = 'GET /dynamicremove/{userid}/q/{123}';
 			ROUTE(route);
 			ROUTE(route).remove();
 			Test.print('Removing routes - Dynamic route: .remove()', check(route) ? null : 'Dynamic route was not removed with "remove()"');
-			next_fn();
+			resume();
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			route = 'FILE /fileremove/';
 			ROUTE(route, NOOP);
 			ROUTE(route, null);
 			Test.print('Removing routes - File route', check(route, 'file') ? null : 'File route was not removed with "null"');
-			next_fn();
+			resume();
 		});
 
 
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			route = 'FILE /actionremove/';
 			ROUTE(route, NOOP);
 			ROUTE(route, null);
 			Test.print('Removing routes - Action route', check(route, 'file') ? null : 'Action route was not removed with "null"');
-			next_fn();
+			resume();
 		});
 
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			// API route
 			route = 'API /apiremove/ -api_remove *Remove --> exec';
 
 			ROUTE(route);
 			ROUTE(route, null);
 			Test.print('Removing routes - API route', check(route) ? null : 'API route was not removed with "null"');
-			next_fn();
+			resume();
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			route = 'API /apiremove/ -api_remove *Remove --> exec';
 			var instance = ROUTE(route);
 			instance.remove();
 			Test.print('Removing routes - API route', !check(route) ? null : 'API route was not removed with "remove()"');
-			next_fn();
+			resume();
 		});
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			// Websocket
 			route = 'SOCKET /socketremove/';
 
@@ -723,18 +711,12 @@ ON('ready', function () {
 
 			Test.print('Removing routes - Websocket route', !check(route) ? null : 'Websocket route was not removed with "null"');
 		
-			next_fn();
+			resume();
 		});
 
-		arr.async(function() {
-			next();
-		});
+		arr.async(next);
 		
 	});
 
-	setTimeout(function () {
-		Test.run(function () {
-			process.exit(0);
-		});
-	}, 1000);
+	setTimeout(Test.run, 1000);
 });

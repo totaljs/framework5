@@ -16,7 +16,6 @@ F.http();
 var url = 'http://0.0.0.0:8000';
 
 
-
 ON('ready', function() {
 
 	// HTTP routing
