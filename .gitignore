@@ -5,3 +5,4 @@
 *.pid
 *.map
 *.js.json
+*.socket
