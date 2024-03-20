@@ -10,7 +10,7 @@
     "total5": "./bin/total5"
   },
   "scripts": {
-    "test": "cd tests && node test-release.js"
+    "test": "cd tests && node run.js"
   },
   "repository": {
     "type": "git",
