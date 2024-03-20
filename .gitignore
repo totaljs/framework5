@@ -6,3 +6,4 @@
 *.map
 *.js.json
 *.socket
+/tests/nosql/databases/
