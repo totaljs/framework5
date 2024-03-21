@@ -13,41 +13,36 @@ F.http();
 var url = 'http://localhost:8000/';
 var filename = 'openreports.bundle';
 var bundle_link = 'https://raw.githubusercontent.com/totaljs/flow/master/--bundles--/app.bundle';
+
 ON('ready', function() {
 
 	Test.push('Bundles', function(next) {
 		// Test.print('String.slug()', [error]);
 		var arr = [];
 
-		arr.push(function(next_fn) {
+		arr.push(function(resume) {
 			RESTBuilder.GET(url).exec(function(err, response) {
 				console.log(err, response);
 				Test.print('From local', err === null ? null : 'App is not successfully started ');
 				PATH.unlink(PATH.root('bundles/' + filename), function() {
 					F.restart();
-					next_fn()
+					resume()
 				});
 			});
 		});
 
-		arr.push(function(next_fn) {
-			next_fn();
+		arr.push(function(resume) {
+			resume();
 		});
 
-		arr.push(function(next_fn) {
-			next_fn();
+		arr.push(function(resume) {
+			resume();
 		});
 
 		arr.async(function() {
-
 			next();
 		});
 	});
 
-	setTimeout(function(){
-		Test.run(function() {
-			//process.exit(0);
-		});
-
-	}, 600);
+	setTimeout(() => Test.run(), 600);
 });
