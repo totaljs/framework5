@@ -12,5 +12,4 @@ exports.install = function() {
 	ROUTE('API    /v1/    %api_action_patch           -->    Actions/success');
 	ROUTE('API    /v1/    %api_action_keys            -->    Actions/keys');
 	ROUTE('API    /v1/    %api_action_keys_multi      -->    Actions/one two keys (response)');
-
-}
+};
