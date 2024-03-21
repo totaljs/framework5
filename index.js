@@ -38,6 +38,7 @@ global.DEF = {};
 	F.clusterid = '';
 	F.is5 = F.version = 5000;
 	F.isBundle = false;
+	F.isLoaded = false;
 	F.version_header = '5';
 	F.version_node = process.version + '';
 	F.EMPTYOBJECT = EMPTYOBJECT;
@@ -879,7 +880,7 @@ F.load = async function(types, callback) {
 	F.loadservices();
 	F.stats.compilation = Date.now() - beg;
 	F.stats.compiled = files.length;
-	F.isloaded = true;
+	F.isLoaded = true;
 	DEBUG && F.TSourceMap.refresh();
 	callback && callback();
 
@@ -1197,6 +1198,11 @@ F.http = function(opt) {
 	// config, env, modules, controllers, actions, schemas, models, definitions, sources, middleware, resources, plugins, stats
 	// none - loads only web server
 
+	if (F.isLoaded) {
+		F.httpload(opt);
+		return;
+	}
+
 	if (opt.config) {
 		let cfg = [];
 		for (let key in opt.config)
@@ -1204,80 +1210,90 @@ F.http = function(opt) {
 		F.loadconfig(cfg);
 	}
 
-	F.load(opt.load || opt.type || '', function() {
+	F.load(opt.load || opt.type || '', () => F.httpload(opt));
+};
 
-		F.server = F.Http.createServer(F.THttp.listen);
-		F.server.on('upgrade', F.TWebSocket.listen);
+F.httpload = function(opt) {
 
-		var unixsocket = opt.unixsocket || F.config.$unixsocket;
-		if (unixsocket) {
+	if (F.server) {
+		F.server.close(function() {
+			F.server = null;
+			F.httpload(opt);
+		});
+		return;
+	}
 
-			try {
-				F.Fs.unlinkSync(unixsocket);
-			} catch (e) {}
+	F.server = F.Http.createServer(F.THttp.listen);
+	F.server.on('upgrade', F.TWebSocket.listen);
 
-			if (F.isWindows && unixsocket.indexOf(SOCKETWINDOWS) === -1)
-				unixsocket = F.Path.join(SOCKETWINDOWS, unixsocket);
+	var unixsocket = opt.unixsocket || F.config.$unixsocket;
+	if (unixsocket) {
 
-			F.config.$unixsocket = F.unixsocket = unixsocket;
+		try {
+			F.Fs.unlinkSync(unixsocket);
+		} catch (e) {}
 
-			var listen = function(count) {
-				F.server.listen(unixsocket, function() {
+		if (F.isWindows && unixsocket.indexOf(SOCKETWINDOWS) === -1)
+			unixsocket = F.Path.join(SOCKETWINDOWS, unixsocket);
 
-					// Check if the socket exists
-					if (F.isWindows)
-						return;
+		F.config.$unixsocket = F.unixsocket = unixsocket;
 
-					F.Fs.lstat(unixsocket, function(err) {
+		var listen = function(count) {
+			F.server.listen(unixsocket, function() {
 
-						if (count > 9)
-							throw new Error('HTTP server can not listen the path "{0}"'.format(unixsocket));
+				// Check if the socket exists
+				if (F.isWindows)
+					return;
 
-						if (err)
-							setTimeout(listen, 500, count + 1);
-						else if (opt.unixsocket777)
-							F.Fs.chmodSync(unixsocket, 0o777);
-					});
+				F.Fs.lstat(unixsocket, function(err) {
 
+					if (count > 9)
+						throw new Error('HTTP server can not listen the path "{0}"'.format(unixsocket));
+
+					if (err)
+						setTimeout(listen, 500, count + 1);
+					else if (opt.unixsocket777)
+						F.Fs.chmodSync(unixsocket, 0o777);
 				});
-			};
 
-			listen(1);
+			});
+		};
 
-		} else {
+		listen(1);
 
-			if (opt.port)
-				F.config.$port = opt.port;
+	} else {
 
-			if (F.config.$port === 'auto') {
-				let port = process.env.PORT;
-				if (!port) {
-					for (let arg of process.argv) {
-						if ((/^\d{3,5}$/).test(arg)) {
-							port = arg;
-							break;
-						}
+		if (opt.port)
+			F.config.$port = opt.port;
+
+		if (F.config.$port === 'auto') {
+			let port = process.env.PORT;
+			if (!port) {
+				for (let arg of process.argv) {
+					if ((/^\d{3,5}$/).test(arg)) {
+						port = arg;
+						break;
 					}
 				}
-				if (port)
-					port = +port;
-				if (isNaN(port))
-					port = 8000;
-				F.config.$port = port;
 			}
-
-			if (opt.ip)
-				F.config.$ip = opt.ip;
-
-			F.server.listen(F.config.$port, F.config.$ip);
+			if (port)
+				port = +port;
+			if (isNaN(port))
+				port = 8000;
+			F.config.$port = port;
 		}
 
-		F.config.$performance && F.server.on('connection', httptuningperformance);
+		if (opt.ip)
+			F.config.$ip = opt.ip;
 
-		if (!process.connected && F.console)
-			F.console();
+		F.server.listen(F.config.$port, F.config.$ip);
+	}
 
-	});
+	F.config.$performance && F.server.on('connection', httptuningperformance);
+
+	if (!process.connected && F.console)
+		F.console();
+
 };
 
 F.logger = function(enable) {
@@ -2675,7 +2691,7 @@ process.on('message', function(msg, h) {
 	let key;
 
 	if (msg === 'total:debug') {
-		F.TUtils.wait(() => F.isloaded, F.console, 10000, 500);
+		F.TUtils.wait(() => F.isLoaded, F.console, 10000, 500);
 	} else if (msg === 'total:ping')
 		setImmediate(ping);
 	else if (msg === 'total:update') {
@@ -2748,7 +2764,7 @@ process.on('message', function(msg, h) {
 
 	F.on2 = F.on;
 	F.on = function(name, fn) {
-		if (name === 'ready' && F.isloaded)
+		if (name === 'ready' && F.isLoaded)
 			fn();
 		else
 			F.on2(name, fn);
