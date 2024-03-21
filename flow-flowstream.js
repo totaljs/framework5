@@ -2701,6 +2701,13 @@ function MAKEFLOWSTREAM(meta) {
 	flow.proxy.refreshmeta = function() {
 		flow.origin = flow.$schema.origin;
 		flow.proxypath = flow.$schema.proxypath || '';
+
+		if (flow.proxypath) {
+			if (!F.server)
+				F.httpload({ unixsocket: flow.$schema.unixsocket });
+		} else if (F.server)
+			F.server.close();
+
 		flow.cloning = flow.$schema.cloning != false;
 		flow.proxy.send(makemeta(), 0);
 	};
