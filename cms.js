@@ -75,9 +75,7 @@ function findstart(body, index) {
 			break;
 	}
 
-
 	return -1;
-
 }
 
 function expressions(body) {
