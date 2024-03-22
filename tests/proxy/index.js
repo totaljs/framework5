@@ -10,7 +10,7 @@ var url = 'http://localhost:8000';
 var token_before = GUID(35);
 var token_after = GUID(35);
 
-ROUTE('GET /', ($) => $.success());
+ROUTE('GET /', $ => $.success());
 
 PROXY('/cl/before/', 'https://flowstream.totalavengers.com/cl').before(function(uri, $) {
 	$.headers['x-token'] = token_before;
@@ -20,11 +20,9 @@ PROXY('/cl/after/', 'https://flowstream.totalavengers.com/cl').after(function(re
 	Test.print('After - Response code : ' + ( response ? response.statusCode : 'Null '), response ? null : 'Expected appended token in response');
 });
 
-
 PROXY('/cl/check/for_app/', 'https://flowstream.totalavengers.com/cl').check(function($) {
 	return true;
 });
-
 
 PROXY('/cl/check/for_proxy/', 'https://flowstream.totalavengers.com/cl').check(function($) {
 	return false;

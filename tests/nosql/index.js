@@ -117,9 +117,8 @@ Test.push('Nosql', function(next) {
             resume();
         });
     });
-    arr.async(function() {
-        next()
-    });
+
+    arr.async(next);
 });
 
 Test.run();
