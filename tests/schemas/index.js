@@ -129,6 +129,7 @@ ON('ready', function () {
 			});
 
 		});
+
 		arr.push(function (resume) {
 
 			prefill_undefined(valid);
@@ -143,7 +144,6 @@ ON('ready', function () {
 				});
 			}, resume);
 		});
-
 
 		arr.push(function(resume) {
 			prefill_undefined(invalid);
@@ -312,6 +312,7 @@ ON('ready', function () {
 			});
 
 		});
+
 		arr.push(function (resume) {
 			prefill_undefined(valid);
 			valid.wait(function (item, func) {
@@ -324,7 +325,6 @@ ON('ready', function () {
 				});
 			}, resume);
 		});
-
 
 		arr.push(function (resume) {
 
@@ -481,6 +481,7 @@ ON('ready', function () {
 				resume();
 			});
 		});
+
 		arr.push(function (resume) {
 			prefill_undefined(valid);
 			valid.wait(function (item, resume2) {
@@ -493,7 +494,6 @@ ON('ready', function () {
 				});
 			}, resume);
 		});
-
 
 		arr.push(function (resume) {
 
@@ -518,6 +518,7 @@ ON('ready', function () {
 		});
 
 		var data = { value: { one: 'one', two: 'two' } };
+
 		arr.push(function (resume) {
 			ACTION('Chaining/one', data).callback(function (err, res) {
 				Test.print('Action Chaining/one ', err === null && res.success && res.value === data.value.one ? null : ' Chaining failed - expecting \'{0}\' got \'{1}\' instead'.format(data.value.one, res.value));
@@ -550,5 +551,6 @@ ON('ready', function () {
 
 		arr.async(next);
 	});
+
 	setTimeout(Test.run, 100);
 });

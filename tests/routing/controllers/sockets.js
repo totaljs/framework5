@@ -15,6 +15,7 @@ function reconnect() {
 			client.close();
 		}, disconnect_after);
 	});
+
 	self.on('message', function(client, message) {
 		if (message.type === 'ping')
 			client.send({ type: 'ping' });

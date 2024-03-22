@@ -42,6 +42,4 @@ Test.push('Test Server', function(next) {
 	arr.async(next);
 });
 
-Test.run(function() {
-	process.exit(0);
-});
+Test.run();
