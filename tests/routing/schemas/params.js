@@ -1,4 +1,4 @@
-PNEWSCHEMA('Params', function(schema) {
+NEWSCHEMA('Params', function(schema) {
 
 	schema.action('alias', {
         name: 'Alias action',
