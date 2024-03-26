@@ -637,6 +637,16 @@ Controller.prototype.proxy = function(opt) {
 
 };
 
+Controller.prototype.successful = function(callback) {
+	var ctrl = this;
+	return function(err, a, b, c) {
+		if (err)
+			ctrl.invalid(err);
+		else
+			callback.call(ctrl, a, b, c);
+	};
+};
+
 Controller.prototype.done = function(arg) {
 	var ctrl = this;
 	return function(err, response) {
