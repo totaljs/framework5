@@ -230,6 +230,7 @@ exports.client = function(url, token, callback) {
 			client.send({ type: 'subscribers', subscribers: keys });
 	};
 
+	return client;
 };
 
 function refresh(client) {
