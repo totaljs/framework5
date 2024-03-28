@@ -260,6 +260,10 @@ function makefilter(db, opt, callback) {
 			}
 			isread = true;
 			break;
+		case 'command':
+			if (opt.command === 'clean')
+				db.clean(callback);
+			break;
 	}
 
 	if (opt.debug)

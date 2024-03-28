@@ -761,6 +761,14 @@ NoSQLWrapper.prototype.find = function() {
 	return DATA.find('nosql/' + this.filename);
 };
 
+NoSQLWrapper.prototype.clean = function() {
+	return DATA.command('nosql/' + this.filename, 'clean');
+};
+
+NoSQLWrapper.prototype.drop = function() {
+	return DATA.drop('nosql/' + this.filename);
+};
+
 NoSQLWrapper.prototype.read = function() {
 	return DATA.read('nosql/' + this.filename);
 };
