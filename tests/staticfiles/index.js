@@ -42,14 +42,14 @@ ON('ready', function() {
 
 		arr.push(function(resume) {
 			RESTBuilder.GET(url + '/merge1.js').exec(function(err, response, output) {
-				Test.print('Merge - Two files', err === null && output.response !== null ? null : 'Expected ' + correct);
+				Test.print('Merge JS - Two files', err === null && output.response !== null ? null : 'Expected ' + correct);
 				resume();
 			});
 		});
 
 		arr.push(function(resume) {
 			RESTBuilder.GET(url + '/merge2.js').exec(function(err, response, output) {
-				Test.print('Merge - With Url', err === null && output.response !== null ? null : 'Expected ' + correct);
+				Test.print('Merge JS - With Url', err === null && output.response !== null ? null : 'Expected ' + correct);
 				resume();
 			});
 		});
@@ -57,7 +57,28 @@ ON('ready', function() {
 
 		// arr.push(function(next_fn) {
 		// 	RESTBuilder.GET(url + '/merge3.js').exec(function(err, response, output) {
-		// 		Test.print('Merge - All', err === null && output.response !== null ? null : 'Expected ' + correct);
+		// 		Test.print('Merge JS - All', err === null && output.response !== null ? null : 'Expected ' + correct);
+		// 		next_fn();
+		// 	});
+		// });
+
+		arr.push(function(resume) {
+			RESTBuilder.GET(url + '/merge1.css').exec(function(err, response, output) {
+				Test.print('Merge CSS- Two files', err === null && output.response !== null ? null : 'Expected ' + correct);
+				resume();
+			});
+		});
+
+		arr.push(function(resume) {
+			RESTBuilder.GET(url + '/merge2.css').exec(function(err, response, output) {
+				Test.print('Merge CSS - With Url', err === null && output.response !== null ? null : 'Expected ' + correct);
+				resume();
+			});
+		});
+
+		// arr.push(function(next_fn) {
+		// 	RESTBuilder.GET(url + '/merge3.css').exec(function(err, response, output) {
+		// 		Test.print('Merge CSS - All', err === null && output.response !== null ? null : 'Expected ' + correct);
 		// 		next_fn();
 		// 	});
 		// });

@@ -7,42 +7,51 @@ require('../../test');
 // Removing files
 
 // load web server and test app
-CONF.$imprint = false;
-F.http();
+CONF.$imprint = true;
 
 var url = 'http://localhost:8000/';
-var filename = 'openreports.bundle';
+var filename = 'myapp.bundle';
 var bundle_link = 'https://raw.githubusercontent.com/totaljs/flow/master/--bundles--/app.bundle';
 
-ON('ready', function() {
 
-	Test.push('Bundles', function(next) {
-		// Test.print('String.slug()', [error]);
-		var arr = [];
+Test.push('Bundles', function(next) {
+	var arr = [];
+	arr.push(function(resume) {
 
-		arr.push(function(resume) {
-			RESTBuilder.GET(url).exec(function(err, response) {
-				console.log(err, response);
-				Test.print('From local', err === null ? null : 'App is not successfully started ');
-				PATH.unlink(PATH.root('bundles/' + filename), function() {
-					F.restart();
-					resume()
-				});
+		RESTBuilder.GET(url).exec(function(err, response) {
+			console.log(err, response);
+			Test.print('From local', err === null ? null : 'App is not successfully started');
+			Total.Path.unlink(PATH.root('bundles/' + filename), function() {
+				Test.print('From local', err === null ? null : 'App is not successfully started');
+				F.restart();
+				resume();
 			});
-		});
-
-		arr.push(function(resume) {
-			resume();
-		});
-
-		arr.push(function(resume) {
-			resume();
-		});
-
-		arr.async(function() {
-			next();
 		});
 	});
 
-	setTimeout(() => Test.run(), 600);
+	arr.push(function(resume) {
+		var file = `exports.install = function() {
+
+ROUTE('GET /bundle/merge/', function($) {
+$.plain('bundle is merged');
+});`;
+		var filename = Total.Path.controllers('--merge.js');
+		console.log(filename);
+		Total.Fs.writeFile(filename, file, function(err) {
+			if (err)
+				throw err;
+
+		});
+		resume();
+	});
+
+	arr.push(function(resume) {
+		resume();
+	});
+
+	arr.async(function() {
+		next();
+	});
 });
+
+setTimeout(() => Test.run(), 600);
