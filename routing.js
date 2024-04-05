@@ -762,9 +762,25 @@ Proxy.prototype.copy = function(type) {
 
 	// @type {String} none|replace|extend
 
+	// "none":
+	// PROXY('/cl/', 'https://yourdomain.com');
+	// GET /cl/?q=search             --> https://yourdomain.com/?q=search');
+	// GET /cl/something/?q=search   --> https://yourdomain.com/?q=search');
+
+	// "replace":
+	// PROXY('/cl/', 'https://yourdomain.com');
+	// GET /cl/?q=search             --> https://yourdomain.com/');
+	// GET /cl/something/?q=search   --> https://yourdomain.com/something/');
+
+	// "extend":
+	// PROXY('/cl/', 'https://yourdomain.com');
+	// GET /cl/?q=search             --> https://yourdomain.com/?q=search');
+	// GET /cl/something/?q=search   --> https://yourdomain.com/something/?q=search');
+
 	var t = this;
 	if (type === 'replace' && t.target.pathname.length > 1)
 		type = 'extend';
+
 	t.copypath = type;
 	return t;
 };
@@ -870,9 +886,9 @@ function proxycreate(proxy, ctrl) {
 
 		if (proxy.copypath === 'none') {
 			uri.path = proxy.uri.path + (ctrl.uri.search ? ((proxy.uri.search && proxy.uri.search.length > 1 ? '&' : '?') + ctrl.uri.search) : '');
-		} else if (proxy.copypath === 'replace')
+		} else if (proxy.copypath === 'replace') {
 			uri.path = ctrl.url.substring(proxy.url.length - 1);
-		else if (proxy.copypath === 'extend') {
+		} else if (proxy.copypath === 'extend') {
 			tmp = ctrl.uri.pathname.substring(proxy.url.length) + (ctrl.uri.search ? ('?' + ctrl.uri.search) : '');
 			uri.path = proxy.path + (tmp ? ((tmp[0] === '/' ? '' : '/') + tmp) : '') + (proxy.query ? (ctrl.uri.search ? ('&' + proxy.query) : ('?' + proxy.query)) : '');
 		} else {
