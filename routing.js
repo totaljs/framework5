@@ -77,6 +77,8 @@ function Route(url, action, size) {
 		return;
 	}
 
+	t.timeout = 0;
+	t.size = 0;
 	t.flags = {};
 
 	var index = url.indexOf(' ');
