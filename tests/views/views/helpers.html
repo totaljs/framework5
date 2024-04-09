@@ -1,0 +1,6 @@
+@{layout('')}
+@{custom('Peter', 25)}
+@{helpers.custom('Peter', 25)}
+@{if helpers.isTrue(true)}
+    Helpers in condition. The helper <code>isTrue</code> won't work without <code>helpers</code> keyword.
+@{fi}

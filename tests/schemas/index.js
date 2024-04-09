@@ -145,9 +145,7 @@ ON('ready', function () {
 		});
 
 		arr.push(function (resume) {
-
 			prefill_undefined(valid);
-
 			valid.wait(function (item, func) {
 				RESTBuilder.POST(url + '/schema/required/', item).exec(function (err) {
 					var items = [];

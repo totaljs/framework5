@@ -1,0 +1,5 @@
+@{layout('')}
+@{repository.tag = 'Hello <b>World</b>'}
+
+<div>ESCAPED: @{repository.tag}</div>
+<div>RAW: @{!repository.tag}</div>

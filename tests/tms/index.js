@@ -17,6 +17,7 @@ ON('ready', function() {
 		});
 		next();
 	});
+
 	Test.push('TMS - ', function(next) {
 		MAIN.client1 && MAIN.client1.publish('users_create', { name: 'Peter Sirka', email: 'petersirka@gmail.com' });
 		next();

@@ -1,0 +1,13 @@
+@{layout('')}
+@{foreach m in { name: 'Peter', age: 32 }}
+    <div>property: @{m.key}, value: @{m.value}</div>
+@{end}
+
+<br />
+<br />
+
+@{foreach property in model}
+    <div>@{index}</div>
+    <div>@{property.key}</div>
+    <div>@{property.value}</div>
+@{end}
