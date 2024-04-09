@@ -855,6 +855,10 @@ View.prototype.url = function(hostname = false) {
 	return hostname ? (self.controller ? self.controller.hostname(self.controller.url) : '') : (self.controller ? self.controller.url : '');
 };
 
+View.prototype.set = function() {
+	return '';
+};
+
 View.prototype.render = function(name, model, ispartial = false) {
 
 	var self = this;
