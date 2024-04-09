@@ -19,26 +19,38 @@ function parseSizeTimeout(route, value) {
 
 	switch (type) {
 		case 's':
-			route.timeout = number;
+			if (route.timeout < number)
+				route.timeout = number;
 			break;
 		case 'm':
-			route.timeout = number * 60;
+			number = number * 60;
+			if (route.timeout < number)
+				route.timeout = number;
 			break;
 		case 'h':
-			route.timeout = number * 60 * 60;
+			number = number * 60 * 60;
+			if (route.timeout < number)
+				route.timeout = number;
 			break;
 		case 'b':
-			route.size = number;
+			if (route.size < number)
+				route.size = number;
 			break;
 		case 'kb':
-			route.size = number / 1024;
+			number = number / 1024;
+			if (route.size < number)
+				route.size = number;
 			break;
 		case 'gb':
-			route.size = (number * 1024 * 1024) * 1000;
+			number = (number * 1024 * 1024) * 1000;
+			if (route.size < number)
+				route.size = number;
 			break;
 		case 'mb':
 		default:
-			route.size = number * 1024 * 1024;
+			number = number * 1024 * 1024;
+			if (route.size < number)
+				route.size = number;
 			break;
 	}
 }
@@ -65,6 +77,8 @@ function Route(url, action, size) {
 		return;
 	}
 
+	t.timeout = 0;
+	t.size = 0;
 	t.flags = {};
 
 	var index = url.indexOf(' ');
@@ -215,7 +229,7 @@ function Route(url, action, size) {
 
 		parent = F.routes.routes.findItem('id', t.id);
 
-		var apiroute = { auth: t.auth, params: params, actions: t.actions.join(','), action: action };
+		var apiroute = { auth: t.auth, params: params, actions: t.actions.join(','), action: action, timeout: t.timeout };
 
 		t.apiendpoint = arr[0];
 

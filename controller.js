@@ -1138,6 +1138,10 @@ function execute(ctrl, skipmiddleware) {
 					body = body.data;
 
 					if (!body || typeof(body) === 'object') {
+
+						if (endpoint.timeout)
+							ctrl.timeout = endpoint.timeout;
+
 						ctrl.params = params;
 						ctrl.query = query ? query.parseEncoded() : {};
 						let action = endpoint.action;
@@ -1149,6 +1153,7 @@ function execute(ctrl, skipmiddleware) {
 						return;
 					}
 				}
+
 				ctrl.fallback(400, 'Invalid data');
 			}
 		} else {
