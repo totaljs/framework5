@@ -1136,6 +1136,9 @@ F.loadservices = function() {
 		for (let key in F.flowstreams)
 			F.flowstreams[key].service(F.internal.ticks);
 
+		if (F.internal.ticks == 6 || F.internal.ticks == 12)
+			F.TWebSocket.ping();
+
 		// 1 minute
 		if (F.internal.ticks == 12) {
 			F.internal.ticks = 0;
@@ -1143,9 +1146,6 @@ F.loadservices = function() {
 			F.service(F.internal.counter);
 			F.$events.service && F.emit('service', F.internal.counter);
 		}
-
-		if (F.internal.ticks == 6 || F.internal.ticks == 12)
-			F.TWebSocket.ping();
 
 		F.TFlow.ping();
 
