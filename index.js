@@ -910,6 +910,23 @@ F.require = function(name) {
 	return mod;
 };
 
+F.runscript = function(filename) {
+	F.Fs.readFile(filename || PATH.root('debug.js'), function(err, data) {
+		if (data) {
+			var scr = data.toString('utf8').trim();
+			var fn;
+			if (data) {
+				try {
+					fn = new Function('require', scr);
+				} catch (e) {
+					console.error(e);
+				}
+				fn && fn(require);
+			}
+		}
+	});
+};
+
 F.import = function(url, callback) {
 
 	if (callback == null)
