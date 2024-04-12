@@ -1260,7 +1260,6 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 
 	self.req.on('response', function(res) {
 
-		print(res.statusCode);
 		self.$events.error && self.emit('error', new Error('Unexpected server response (' + res.statusCode + ')'));
 
 		if (self.options.reconnectserver) {
