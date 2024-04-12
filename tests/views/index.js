@@ -94,16 +94,15 @@ ON('ready', function() {
 
 	Test.push('Views - Common', function(next) {
 		var arr = [];
-		// arr.push(function(resume) {
-			// input = url + '/view/common?cmd=escaping';
-			// correct = '<ul><li>A</li><li>B</li><li>C</li></ul>';
-			// RESTBuilder.GET(input).exec(function(err, res, output) {
-				// response = output.response;
-				// console.log(response);
-				// Test.print('Escaping', err == null && response == correct ? null : 'Expected ' + correct);
-				// resume();
-			// });
-		// });
+		arr.push(function(resume) {
+			input = url + '/view/common?cmd=escaping';
+			correct = '<div>ESCAPED: Hello &lt;b&gt;World&lt;/b&gt;</div><div>RAW: Hello <b>World</b></div>';
+			RESTBuilder.GET(input).exec(function(err, res, output) {
+				response = output.response;
+				Test.print('Escaping', err == null && response == correct ? null : 'Expected ' + correct);
+				resume();
+			});
+		});
 
 		arr.push(function(resume) {
 			input = url + '/view/common?cmd=conditions';
@@ -145,23 +144,32 @@ ON('ready', function() {
 			});
 		});
 
-		// arr.push(function(resume) {
-			// input = url + '/view/common?cmd=assignment';
-			// correct = '<html><h1>Homepage</h1><br /> <div>THIS IS FOOTER FROM THE VIEW</div></html>';
-			// RESTBuilder.GET(input).exec(function(err, res, output) {
-				// response = output.response;
-				// Test.print('Assignment', err == null && response == correct ? null : 'Expected ' + correct);
-				// resume();
-			// });
-		// });
-
 		arr.push(function(resume) {
-			input = url + '/view/common?cmd=helpers';
-			correct = '<html><h1>Homepage</h1><br /> <div>THIS IS FOOTER FROM THE VIEW</div></html>';
+			input = url + '/view/common?cmd=assignment';
+			correct = '<h1>Peter</h1>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
 				response = output.response;
-				console.log(response);
 				Test.print('Assignment', err == null && response == correct ? null : 'Expected ' + correct);
+				resume();
+			});
+		});
+
+		arr.push(function(resume) {
+			input = url + '/view/common?cmd=config';
+			correct = '<div>CONF.name: Total.js</div><div>CONF[\'manager-url\']: postgresql://user:password@localhost:5432/database</div>';
+			RESTBuilder.GET(input).exec(function(err, res, output) {
+				response = output.response;
+				Test.print('Config', err == null && response == correct ? null : 'Expected ' + correct);
+				resume();
+			});
+		});
+
+		arr.push(function(resume) {
+			input = url + '/view/common?cmd=static';
+			correct = '<script src="/js/ui.js"></script><link rel="stylesheet" href="/css/ui.css" />';
+			RESTBuilder.GET(input).exec(function(err, res, output) {
+				response = output.response;
+				Test.print('Config', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
 		});

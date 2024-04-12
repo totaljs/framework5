@@ -69,11 +69,17 @@ function common_page($) {
 		case 'looping-object':
 			view = 'looping-object';
 			break;
+		case 'static':
+			view = 'static';
+			break;
 		case 'assignment':
 			view = 'assignment';
 			break;
-		case 'helpers':
-			view = 'helpers';
+		case 'config':
+			view = 'config';
+			break;
+		case 'text':
+			view = 'text';
 			break;
 		case 'sections':
 			$.layout('sections-layout');
