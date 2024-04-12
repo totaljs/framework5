@@ -5,6 +5,7 @@
 'use strict';
 
 global.ON = (name, fn) => F.on(name, fn);
+global.ONCE = (name, fn) => F.once(name, fn);
 global.EMIT = (name, a, b, c, d, e, f, g) => F.emit(name, a, b, c, d, e, f, g);
 global.OFF = (name, fn) => F.off(name, fn);
 global.ROUTE = F.TRouting.route;
