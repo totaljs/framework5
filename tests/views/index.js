@@ -169,7 +169,7 @@ ON('ready', function() {
 			correct = '<script src="/js/ui.js"></script><link rel="stylesheet" href="/css/ui.css" />';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
 				response = output.response;
-				Test.print('Config', err == null && response == correct ? null : 'Expected ' + correct);
+				Test.print('Static ', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
 		});
