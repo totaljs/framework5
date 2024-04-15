@@ -278,7 +278,7 @@ HTMLElement.prototype.stringifycache = function() {
 	var tmp = [];
 
 	for (var key in self.cache.css)
-		tmp.push(key + ':' + self.cache.css[key]);
+		self.cache.css[key] && tmp.push(key + ':' + self.cache.css[key]);
 
 	if (tmp.length)
 		self.attrs.style = tmp.join(';');
