@@ -278,7 +278,7 @@ HTMLElement.prototype.stringifycache = function() {
 	var tmp = [];
 
 	for (var key in self.cache.css)
-		tmp.push(key + ':' + self.cache.css[key]);
+		self.cache.css[key] && tmp.push(key + ':' + self.cache.css[key]);
 
 	if (tmp.length)
 		self.attrs.style = tmp.join(';');
@@ -353,7 +353,7 @@ HTMLElement.prototype.css = function(key, value) {
 	var self = this;
 	self.parsecache();
 	if (typeof(key) === 'object') {
-		for (var k of key) {
+		for (var k of Object.keys(key)) {
 			value = key[k];
 			if (value)
 				self.cache.css[k] = value;
