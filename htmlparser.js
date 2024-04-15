@@ -353,7 +353,7 @@ HTMLElement.prototype.css = function(key, value) {
 	var self = this;
 	self.parsecache();
 	if (typeof(key) === 'object') {
-		for (var k in key) {
+		for (var k of Object.keys(key)) {
 			value = key[k];
 			if (value)
 				self.cache.css[k] = value;
