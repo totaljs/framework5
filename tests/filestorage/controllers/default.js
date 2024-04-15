@@ -30,7 +30,7 @@ function upload($) {
 	}, function() {
 
 		// Returns JSON with list of uploaded and stored files
-		$.json(output.length > 1 ? output : output[0]);
+		$.json(output.length > 1 ? output 	: output[0]);
 
 	});
 }

@@ -10,20 +10,19 @@ ON('ready', function() {
 	Test.push('FileStorage - ', function(next) {
 		var arr = [];
 		var filestorage = FILESTORAGE(CONF.fs);
-
-		// arr.push(function(resume) {
-		//RESTBuilder.POST(url + '/upload').file('logo', 'logo.svg', 'https://www.totaljs.com/download/IYsqOb1cr61f.svg').exec(function(err, response) {
-		// Test.print('FS - upload', err === null && response ? null : 'Failed to upload file');
-		// resume();
-		// });
-		// });
-
+		var download;
+		arr.push(function(resume) {
+			RESTBuilder.POST(url + '/upload').file('logo', 'logo.svg', 'https://www.totaljs.com/download/IYsqOb1cr61f.svg').exec(function(err, response) {
+				download = url + '/downloads/IhOzP81cV61f.svg';
+				Test.print('FS - upload', err === null && response ? null : 'Failed to upload file');
+				resume();
+			});
+		});
 
 		arr.push(function(resume) {
 			var filename = 'smallfile.txt';
 			var id = UID();
 			filestorage.save(id, filename, PATH.root(filename), function(err, response) {
-				console.log(response);
 				Test.print('FS - save - file', err === null && response ? null : 'Failed to save file');
 				resume();
 			});
@@ -52,6 +51,14 @@ ON('ready', function() {
 				resume();
 			});
 		});
+
+
+		arr.push(function(resume) {
+			RESTBuilder.GET(download).exec(function(err, file, output) {
+				console.log(file, output);
+				resume();
+			});
+		});
 		arr.async(next);
 	});
 
@@ -59,5 +66,5 @@ ON('ready', function() {
 		Test.run(function() {
 			console.log('DONE');
 		});
-	}, 5000);
+	}, 2000);
 });
