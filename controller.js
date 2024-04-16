@@ -657,6 +657,10 @@ Controller.prototype.done = function(arg) {
 	};
 };
 
+Controller.prototype.transform = function(name, value, callback) {
+	return F.transform(name, value, callback, this);
+};
+
 Controller.prototype.success = function(value) {
 	F.TUtils.success.value = value;
 	this.json(F.TUtils.success);

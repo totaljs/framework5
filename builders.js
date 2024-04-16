@@ -103,6 +103,10 @@ Options.prototype.unauthorized = function() {
 	return F.unauthorized.apply(global, args);
 };
 
+Options.prototype.transform = function(name, value, callback) {
+	return F.transform(name, value, callback, this.controller);
+};
+
 Options.prototype.action = function(schema, payload) {
 	return F.action(schema, payload, this.controller);
 };
