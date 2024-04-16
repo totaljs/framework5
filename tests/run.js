@@ -5,6 +5,7 @@ var tests = [];
 // tests.push('bundles/index.js');
 // tests.push('common/cron.js');
 tests.push('common/utils.js');
+tests.push('common/htmlparser.js');
 tests.push('minificators/index.js');
 tests.push('nosql/index.js');
 tests.push('proxy/index.js');

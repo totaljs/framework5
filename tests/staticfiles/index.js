@@ -11,6 +11,12 @@ require('../../test');
 // load web server and test app
 CONF.$imprint = false;
 F.http();
+function componentator(name, components, rmprev) {
+	var id = UID();
+	REPO[name] = '/' + name + '-' + id + '.js';
+	MERGE(REPO[name], 'https://componentator.com/download.js?id=' + components);
+};
+
 
 var url = 'http://localhost:8000';
 ON('ready', function() {
@@ -54,14 +60,6 @@ ON('ready', function() {
 			});
 		});
 
-
-		// arr.push(function(next_fn) {
-		// 	RESTBuilder.GET(url + '/merge3.js').exec(function(err, response, output) {
-		// 		Test.print('Merge JS - All', err === null && output.response !== null ? null : 'Expected ' + correct);
-		// 		next_fn();
-		// 	});
-		// });
-
 		arr.push(function(resume) {
 			RESTBuilder.GET(url + '/merge1.css').exec(function(err, response, output) {
 				Test.print('Merge CSS- Two files', err === null && output.response !== null ? null : 'Expected ' + correct);
@@ -76,15 +74,9 @@ ON('ready', function() {
 			});
 		});
 
-		// arr.push(function(next_fn) {
-		// 	RESTBuilder.GET(url + '/merge3.css').exec(function(err, response, output) {
-		// 		Test.print('Merge CSS - All', err === null && output.response !== null ? null : 'Expected ' + correct);
-		// 		next_fn();
-		// 	});
-		// });
-
 		arr.async(next);
 	});
+
 
 	setTimeout(Test.run, 500);
 });

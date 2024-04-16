@@ -30,29 +30,27 @@ Test.push('Minifactors', function(next) {
 		});
 	});
 
-	// arr.push(function(resume) {
-	// correct = 'var arr=[1,2,3,4,5,6,7,8];arr.wait(function(item){console.log(item)},function(){console.log(data)});';
-	// Total.Fs.readFile(PATH.public('script_multiline_string.js'), function(err, data) {
-	// if (data)
-	// value = data.toString();
-	// var response = U.minify_js(value);
+	arr.push(function(resume) {
+		correct = 'var arr=[1,2,3,4,5,6,7,8];arr.wait(function(item){console.log(item)},function(){console.log(data)});';
+		Total.Fs.readFile(PATH.public('script_multiline_string.js'), function(err, data) {
+			if (data)
+				value = data.toString();
+			var response = U.minify_js(value);
+			Test.print('Minify - JS (Multiline String)', response !== null && response === correct ? null : 'Something went rong');
+			resume();
+		});
+	});
 
-	// Test.print('Minify - JS (Multiline String)', response !== null && response === correct ? null : 'Something went rong');
-	// resume();
-	// });
-	// });
-
-	// arr.push(function(resume) {
-	// correct = 'const REG_HTML_2=/\s{2,}/g;const REG_HTML_4=/\n\s{2,}./g;const REG_HTML_5=/>\n\s{1,}</g;var arr=[1,2,3,4,5,6,7,8];arr.wait(function(item){console.log(item)},function(){console.log(data)});';
-	// Total.Fs.readFile(PATH.public('script_regex.js'), function(err, data) {
-	// if (data)
-	// value = data.toString();
-	// var response = U.minify_js(value);
-	// console.log(response);
-	// Test.print(' Minify - JS (Regular expression)', response !== null && response === correct ? null : 'Something went rong');
-	// resume();
-	// });
-	// });
+	arr.push(function(resume) {
+		correct = 'const REG_HTML_2=/\s{2,}/g;const REG_HTML_4=/\n\s{2,}./g;const REG_HTML_5=/>\n\s{1,}</g;var arr=[1,2,3,4,5,6,7,8];arr.wait(function(item){console.log(item)},function(){console.log(data)});';
+		Total.Fs.readFile(PATH.public('script_regex.js'), function(err, data) {
+			if (data)
+				value = data.toString();
+			var response = U.minify_js(value);
+			Test.print(' Minify - JS (Regular expression)', response !== null && response === correct ? null : 'Something went rong');
+			resume();
+		});
+	});
 
 	arr.push(function(resume) {
 		correct = 'var arr=[1,2,3,4,5,6,7,8],a,b,cd;arr.wait(function(item){console.log(item)},function(){console.log(data)});';
@@ -60,7 +58,6 @@ Test.push('Minifactors', function(next) {
 			if (data)
 				value = data.toString();
 			var response = U.minify_js(value);
-			console.log(response);
 			Test.print(' Minify - JS (Multiple Variable)', response !== null && response === correct ? null : 'Something went rong');
 			resume();
 		});
@@ -144,7 +141,6 @@ Test.push('Minifactors', function(next) {
 		Total.Fs.readFile(PATH.public('index2.html'), function(err, data) {
 			if (data)
 				value = data.toString();
-
 			var response = U.minify_js(value);
 			Test.print(' Minify - HTML (with comments)', response !== null && response === correct ? null : 'Something went rong');
 			resume();
