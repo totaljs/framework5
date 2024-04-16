@@ -11,10 +11,12 @@ ON('ready', function() {
 		var arr = [];
 		var filestorage = FILESTORAGE(CONF.fs);
 		var download;
+		var id;
 		arr.push(function(resume) {
 			RESTBuilder.POST(url + '/upload').file('logo', 'logo.svg', 'https://www.totaljs.com/download/IYsqOb1cr61f.svg').exec(function(err, response) {
 				Test.print('FS - upload', err === null && response ? null : 'Failed to upload file');
 				download = url + response.url;
+				id = response.id;
 				resume();
 			});
 		});
@@ -55,10 +57,25 @@ ON('ready', function() {
 
 		arr.push(function(resume) {
 			RESTBuilder.GET(download).callback(function(err, file, output) {
-				console.log(file, output);
+				Test.print('FS - Download', err === null && file ? null : 'Failed to download file');
 				resume();
 			});
 		});
+
+		arr.push(function(resume) {
+			RESTBuilder.GET(download).callback(function(err, file, output) {
+				Test.print('FS - Download', err === null && file ? null : 'Failed to download file');
+				resume();
+			});
+		});
+
+		arr.push(function(resume) {
+			filestorage.remove(id, function(err) {
+				Test.print('FS - save - file', err === null ? null : 'Failed to remove file');
+				resume();
+			});
+		});
+
 		arr.async(next);
 	});
 
