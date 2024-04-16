@@ -8,7 +8,6 @@ Test.push('Test Server', function(next) {
 
 	var arr = [];
 
-	// IP+PORT
 	arr.push(function(resume) {
 		var options = {};
 		options.ip = '127.0.0.1';
@@ -24,7 +23,6 @@ Test.push('Test Server', function(next) {
 		});
 	});
 
-	// Unixsocket
 	arr.push(function(resume) {
 		var options = {};
 		options.unixsocket = PATH.root('test.socket');
