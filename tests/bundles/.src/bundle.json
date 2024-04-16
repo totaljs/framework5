@@ -1,0 +1,19 @@
+{
+	"version": 1,
+	"created": "2024-04-16T17:56:19.711Z",
+	"total": "v5",
+	"node": "v16.20.2",
+	"files": [
+		"/controllers/default.js",
+		"/index.js",
+		"/index.js.map",
+		"/app/myapp.bundle",
+		"/app/controllers/default.js"
+	],
+	"skip": false,
+	"directories": [
+		"/controllers/",
+		"/app/",
+		"/app/controllers/"
+	]
+}
