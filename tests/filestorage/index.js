@@ -13,8 +13,8 @@ ON('ready', function() {
 		var download;
 		arr.push(function(resume) {
 			RESTBuilder.POST(url + '/upload').file('logo', 'logo.svg', 'https://www.totaljs.com/download/IYsqOb1cr61f.svg').exec(function(err, response) {
-				download = url + '/downloads/IhOzP81cV61f.svg';
 				Test.print('FS - upload', err === null && response ? null : 'Failed to upload file');
+				download = url + response.url;
 				resume();
 			});
 		});
@@ -54,7 +54,7 @@ ON('ready', function() {
 
 
 		arr.push(function(resume) {
-			RESTBuilder.GET(download).exec(function(err, file, output) {
+			RESTBuilder.GET(download).callback(function(err, file, output) {
 				console.log(file, output);
 				resume();
 			});
