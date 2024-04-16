@@ -54,7 +54,6 @@ ON('ready', function() {
 			});
 		});
 
-
 		arr.push(function(resume) {
 			RESTBuilder.GET(download).callback(function(err, file, output) {
 				Test.print('FS - Download', err === null && file ? null : 'Failed to download file');
