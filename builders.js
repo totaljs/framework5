@@ -937,10 +937,13 @@ function restbuilder_callback(err, response) {
 				break;
 			case 'application/json':
 			case 'text/json':
+			case 'text/plain':
 				output.value = response.body ? response.body.parseJSON(true) : null;
 				break;
 			default:
-				output.value = response.body && response.body.isJSON() ? response.body.parseJSON(true) : null;
+				if (response.body instanceof Buffer && response.body.length)
+					response.body = response.body.toString('utf8');
+				output.value = response.body ? (response.body.isJSON() ? response.body.parseJSON(true) : response.body) : null;
 				break;
 		}
 	}
