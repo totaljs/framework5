@@ -42,7 +42,6 @@ PROXY('/cl/check/for_proxy/', 'https://flowstream.totalavengers.com/cl').check(f
 
 ON('ready', function() {
 	Test.push('Test Web Proxy', function(next) {
-		// Test.print('String.slug()', [error]);
 
 		var arr = [];
 		var correct;
