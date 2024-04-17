@@ -305,7 +305,7 @@ exports.newsubscribe = function(name, schema, callback) {
 	else
 		delete Cache.scache[name];
 
-	exports.subscribe(name, callback);
+	callback && exports.subscribe(name, callback);
 	exports.refresh();
 
 };
@@ -321,7 +321,7 @@ exports.subscribe = function(name, callback, client) {
 	if (client) {
 		var arr = Cache.swatchers[name];
 		if (arr) {
-			for (let fn of Cache.arr)
+			for (let fn of arr)
 				fn(callback, client);
 		}
 	} else {
