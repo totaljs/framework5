@@ -249,6 +249,28 @@ Controller.prototype.text = Controller.prototype.plain = function(value) {
 	F.stats.response.text++;
 };
 
+Controller.prototype.respond = function(value, a, b) {
+	var ctrl = this;
+	var output = ctrl.response.output;
+	switch (output) {
+		case 'html':
+		case 'plain':
+		case 'text':
+		case 'xml':
+		case 'json':
+		case 'redirect':
+		case 'jsonstring':
+		case 'empty':
+		case 'file':
+			ctrl[output](value, a, b);
+			break;
+		default:
+			ctrl.json(value, a, b);
+			break;
+	}
+	return ctrl;
+};
+
 Controller.prototype.json = function(value, beautify, replacer) {
 	var ctrl = this;
 
