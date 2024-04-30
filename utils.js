@@ -2415,6 +2415,10 @@ SP.streamer = function(beg, end, callback, skip) {
 
 };
 
+SP.parseXML2 = function() {
+	return require('./htmlparser').parseHTML(this, false, null, true);
+};
+
 SP.parseXML = function(replace) {
 
 	var xml = this;
