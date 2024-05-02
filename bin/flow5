@@ -1,16 +1,12 @@
 #! /usr/bin/env node
 
 require('total5');
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = 1;
 
 const ARGS = process.argv; // TEST: ['-', '-', 'CMD']
 const DIR = process.cwd();
 const Paths = {};
 const KeyToPath = {};
-
-function done(err) {
-	err && console.error('ERROR:', err);
-	console.timeEnd('[Done]');
-}
 
 function load(args) {
 
@@ -36,8 +32,10 @@ function load(args) {
 setTimeout(load, 10, ARGS);
 
 FUNC.help = function() {
-	console.log('filename|URL_address [PORT_NUMBER]   : it starts Flow with the web server on port "8000"');
-	done();
+	console.log('flow5 [path or URL address] [PORT_NUMBER]');
+	console.log('flow5 path/to/flowschema.json');
+	console.log('flow5 flow1.json flow2.json flowN.json 8001');
+	console.log('flow5 https://yourdomain.com/flowschema.json');
 };
 
 FUNC.server = function(paths, port) {
