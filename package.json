@@ -7,7 +7,8 @@
     "test": "test"
   },
   "bin": {
-    "total5": "./bin/total5"
+    "total5": "./bin/total5",
+    "flow5": "./bin/flow"
   },
   "scripts": {
     "test": "cd tests && node run.js"
