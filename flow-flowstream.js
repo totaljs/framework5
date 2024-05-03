@@ -2956,6 +2956,7 @@ TMS.connect = function(fs, sourceid, callback) {
 	callback && setImmediate(callback);
 };
 
+// In the Flow will be the "Publish" mentioned in the "Subscribe" group
 const TEMPLATE_PUBLISH = `<script total>
 
 	exports.name = '{0}';
@@ -2989,6 +2990,7 @@ const TEMPLATE_PUBLISH = `<script total>
 	</header>
 </body>`;
 
+// In the Flow will be the "Subscribe" mentioned in the "Publish" group
 const TEMPLATE_SUBSCRIBE = `<script total>
 
 	exports.name = '{0}';
