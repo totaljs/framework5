@@ -93,7 +93,7 @@ function run() {
 		unexpectedexit = false;
 	});
 
-	EMIT('watcher', app);
+	F.emit('watcher', app);
 }
 
 function init() {

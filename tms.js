@@ -211,7 +211,7 @@ exports.client = function(url, token, callback) {
 
 	client.subscribe = function(name, callback) {
 		timeout && clearTimeout(timeout);
-		timeout = setTimeout(sync_subscribers, 50, true);
+		timeout = setTimeout(sync_subscribers, 30, true);
 		if (subscribers[name])
 			subscribers[name].push(callback);
 		else

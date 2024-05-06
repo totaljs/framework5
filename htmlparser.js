@@ -46,20 +46,22 @@ function parseRule(selector, output) {
 
 	selector = selector.replace(/\[\d+\]/, text => cache[+text.substring(1, text.length - 1)]);
 
-	var match = selector.match(/[#|.][a-z-_0-9]+/i);
-	if (match) {
-		for (var m of match) {
-			var val = m.substring(1);
-			rule.attrs.push({ id: m[0] === '#' ? 'id' : 'class', value: val });
-		}
-		selector = selector.replace(match, '');
-	}
-
+	// attribute search
 	match = selector.match(/\[.*?\]/i);
 	if (match) {
 		for (var m of match) {
 			var index = m.indexOf('=');
 			rule.attrs.push({ id: m.substring(1, index).trim(), value: m.substring(index + 2, m.length - 2).trim() });
+		}
+		selector = selector.replace(match, '');
+	}
+
+	// #id or .class
+	var match = selector.match(/[#|.][a-z-_0-9]+/i);
+	if (match) {
+		for (var m of match) {
+			var val = m.substring(1);
+			rule.attrs.push({ id: m[0] === '#' ? 'id' : 'class', value: val });
 		}
 		selector = selector.replace(match, '');
 	}
@@ -134,6 +136,13 @@ function extendarr(output) {
 		return this;
 	};
 
+	output.toString = output.html = function(formatted) {
+		var builder = [];
+		for (var item of this)
+			builder.push(item.toString(formatted));
+		return builder.join(formatted ? '\n' : '');
+	};
+
 	return output;
 }
 
@@ -160,9 +169,7 @@ HTMLElement.prototype.find = function(selector, reverse) {
 				skip = true;
 
 			if (rule.attrs.length && !skip) {
-
 				for (var attr of rule.attrs) {
-
 					switch (attr.id) {
 
 						case 'class':
@@ -383,7 +390,7 @@ HTMLElement.prototype.remove = function() {
 HTMLElement.prototype.append = function(str) {
 
 	var self = this;
-	var dom = parseHTML(str);
+	var dom = parseHTML(str, null, null, self.xml);
 
 	for (var item of dom.children)
 		self.children.push(item);
@@ -394,7 +401,7 @@ HTMLElement.prototype.append = function(str) {
 HTMLElement.prototype.prepend = function(str) {
 
 	var self = this;
-	var dom = parseHTML(str);
+	var dom = parseHTML(str, null, null, self.xml);
 
 	for (var item of dom.children)
 		self.children.unshift(item);
@@ -462,17 +469,18 @@ function removeComments(html) {
 			break;
 
 		var comment = html.substring(beg, end + 3);
-		html = html.replacer(comment, '');
+		html = html.replaceAll(comment, '');
 		beg = html.indexOf(tagBeg, beg);
 	}
 
 	return html;
 }
 
-function parseHTML(html, trim, onerror) {
+function parseHTML(html, trim, onerror, isxml) {
 
 	var makeText = function(parent, str) {
 		var obj = new HTMLElement();
+		obj.xml = isxml;
 		obj.tagName = 'TEXT';
 		obj.children = [];
 		obj.attrs = {};
@@ -482,7 +490,7 @@ function parseHTML(html, trim, onerror) {
 	};
 
 	var parseAttrs = function(str) {
-		var attrs = str.match(/[a-z-0-9]+(=("|').*?("|'))?/g);
+		var attrs = str.match(/[a-z-0-9A-Z\:]+(=("|').*?("|'))?/g);
 		var obj = {};
 		if (attrs) {
 			for (var m of attrs) {
@@ -532,8 +540,10 @@ function parseHTML(html, trim, onerror) {
 		var node = str.substring(beg + 1, end);
 		var dom = new HTMLElement();
 
-		// Doctype?
-		if (node[0] === '!')
+		dom.xml = isxml;
+
+		// Doctype or xml?
+		if (node[0] === '!' || node[0] === '?')
 			return str.substring(end + 1);
 
 		if (node[node.length - 1] === '/') {
@@ -565,15 +575,17 @@ function parseHTML(html, trim, onerror) {
 		str = str.substring(end + 1);
 
 		// Unpair tags
-		switch (dom.tagName) {
-			case 'BR':
-			case 'HR':
-			case 'IMG':
-			case 'META':
-			case 'LINK':
-			case 'INPUT':
-				dom.unpair = true;
-				return str;
+		if (!isxml) {
+			switch (dom.tagName) {
+				case 'BR':
+				case 'HR':
+				case 'IMG':
+				case 'META':
+				case 'LINK':
+				case 'INPUT':
+					dom.unpair = true;
+					return str;
+			}
 		}
 
 		var pos = 0;
@@ -614,8 +626,7 @@ function parseHTML(html, trim, onerror) {
 		}
 
 		var inner = str.substring(0, pos - tagEnd.length);
-
-		if (inner.indexOf('<') === -1 || (/script|style|template/).test(tag)) {
+		if (inner.indexOf('<') === -1 || (/\<(script|style|template)/).test(tag)) {
 			if (trim)
 				inner = inner.trim();
 			if (inner)
@@ -640,6 +651,7 @@ function parseHTML(html, trim, onerror) {
 	html = removeComments(html);
 
 	var dom = new HTMLElement();
+	dom.xml = isxml;
 
 	while (html)
 		html = parseElements(html, dom);

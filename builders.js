@@ -225,10 +225,19 @@ Options.prototype.done = function(arg) {
 	};
 };
 
+Options.prototype.output = function(name) {
+	// @name {String} json, html, xml, text, redirect, binary, jsonstring, empty, file
+	var self = this;
+	if (self.controller)
+		self.controller.response.output = name;
+	return self;
+};
+
 Options.prototype.invalid = function(error, path, index) {
 	var self = this;
 	self.error.push(error, path, index);
 	self.$callback(true);
+	return self;
 };
 
 Options.prototype.cookie = function(name, value, expire, options) {
@@ -1426,20 +1435,18 @@ ActionCaller.prototype.promise = function($) {
 
 ActionCaller.prototype.autorespond = function() {
 	var self = this;
-	self.options.callback = function(err, response) {
+	self.options.callback = function(err, response, a, b) {
 		if (err)
 			self.controller.invalid(err);
 		else
-			self.controller.json(response);
+			self.controller.respond(response, a, b);
 	};
 	return self;
 };
 
 ActionCaller.prototype.controller = function(ctrl) {
-
 	if (ctrl instanceof Options)
 		ctrl = ctrl.controller;
-
 	this.options.controller = ctrl;
 	return this;
 };

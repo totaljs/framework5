@@ -23,6 +23,7 @@ global.LOCALIZE = F.localize;
 global.AUTH = F.auth;
 global.CLEANUP = F.cleanup;
 global.NEWDB = F.newdb;
+global.IMPORT = F.import;
 global.REQUIRE = F.require;
 global.CRON = F.cron;
 global.UID = F.uid;

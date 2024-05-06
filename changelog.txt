@@ -1,3 +1,11 @@
 ========================
-0.0.0
+0.0.3
 ========================
+
+- extended icon validator by adding support for `tic` keyword
+
+========================
+0.0.2
+========================
+
+- first release

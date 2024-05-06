@@ -1,0 +1,142 @@
+#! /usr/bin/env node
+
+require('total5');
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = 1;
+
+const ARGS = process.argv; // TEST: ['-', '-', 'CMD']
+const DIR = process.cwd();
+const Paths = {};
+const KeyToPath = {};
+
+function load(args) {
+
+	var paths = [];
+	var port = 8000;
+
+	for (let i = 2; i < args.length; i++) {
+		var arg = args[i];
+		if ((/^\d+$/).test(arg))
+			port = +arg;
+		else
+			paths.push(arg.trim().replace(/"/g, ''));
+	}
+
+	console.log('[Total.js v5 Flow Engine]');
+
+	if (paths.length)
+		FUNC.server(paths, port);
+	else
+		FUNC.help();
+}
+
+setTimeout(load, 10, ARGS);
+
+FUNC.help = function() {
+	console.log('flow5 [path or URL address] [PORT_NUMBER]');
+	console.log('flow5 path/to/flowschema.json');
+	console.log('flow5 flow1.json flow2.json flowN.json 8001');
+	console.log('flow5 https://yourdomain.com/flowschema.json');
+};
+
+FUNC.server = function(paths, port) {
+
+	F.config.$imprint = false;
+	F.config.$dirpublic = DIR;
+	F.config.$sourcemap = false;
+	F.config.$minifyjs = false;
+	F.config.$minifycss = false;
+	F.config.$minifyhtml = false;
+
+	var notify = $ => Flow.notify($, $.params.id);
+	var count = 0;
+
+	ROUTE('GET  /notify/{id}/', notify);
+	ROUTE('POST /notify/{id}/ <1MB', notify);
+
+	ROUTE('SOCKET /flowstreams/{id}/ <8MB', function($) {
+		$.autodestroy();
+		Flow.socket($.params.id, $);
+	});
+
+	Flow.on('save', function(schema) {
+
+		// var cache = Paths[schema.id];
+		var path = KeyToPath[schema.id];
+		var cache = Paths[path];
+
+		// Check HTTPS/HTTP source
+		if (!cache)
+			return;
+
+		if (cache.components && cache.design) {
+			// single file
+			Total.Fs.writeFile(path, JSON.stringify(schema, null, '\t'), NOOP);
+		} else {
+			// Multi-flow
+			if (cache[schema.id]) {
+				cache[schema.id] = schema;
+				Total.Fs.writeFile(path, JSON.stringify(cache, null, '\t'), NOOP);
+			}
+		}
+
+	});
+
+	console.error('|--- http://127.0.0.1:' + port);
+
+	paths.wait(async function(path, next) {
+
+		var meta = null;
+
+		if ((/^http(s):\/\//).test(path)) {
+			meta = await RESTBuilder.GET(path).promise();
+		} else {
+			meta = await F.readfile(path, 'utf8');
+			meta = meta.parseJSON(true);
+			Paths[path] = meta;
+		}
+
+		if (!meta) {
+			console.error('ERROR:', 'invalid meta -', path);
+			next();
+			return;
+		}
+
+		if (meta.components && meta.design) {
+			var tmp = {};
+			tmp[meta.id] = meta;
+			meta = tmp;
+		}
+
+		Object.keys(meta).wait(function(key, resume, index) {
+
+			if (key === 'variables') {
+				resume();
+				return;
+			}
+
+			KeyToPath[key] = path;
+
+			var flowstream = meta[key];
+
+			if (!flowstream.id)
+				flowstream.id = path.makeid() + (index ? index : '');
+
+			Flow.load(flowstream, function(err) {
+
+				if (err)
+					console.error('ERROR:', err);
+				else {
+					console.log('|--- {0}:'.format(flowstream.name || flowstream.id), 'https://flow.totaljs.com/?socket=' + encodeURIComponent('http://127.0.0.1:{0}/flowstreams/{1}/'.format(port, flowstream.id)));
+					count++;
+				}
+
+				resume();
+			});
+
+		}, next);
+
+	}, function() {
+		count && F.http({ load: 'none', port: port });
+	});
+
+};
