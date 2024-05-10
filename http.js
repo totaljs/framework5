@@ -65,6 +65,19 @@ exports.listen = function(req, res) {
 	// Pending requests
 	F.temporary.pending.push(ctrl);
 
+	if (F.$events.request) {
+
+		/*
+			@Path: Framework
+			@Event: ON('request', function(ctrl) { ... }); #ctrl {Controller};
+			The event captures all incoming requests. The next processing can be canceled via the `ctrl.cancel()` method.
+		*/
+		F.emit('request', ctrl);
+
+		if (ctrl.iscanceled)
+			return;
+	}
+
 	if (ctrl.headers.origin && (F.def.onCORS || F.config.$cors)) {
 		if (F.TRouting.lookupcors(ctrl))
 			ctrl.$route();
