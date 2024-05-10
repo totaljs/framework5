@@ -188,6 +188,10 @@ Controller.prototype.callback = function(err, value) {
 
 };
 
+Controller.prototype.cancel = function() {
+	this.iscanceled = true;
+};
+
 Controller.prototype.csrf = function() {
 	return F.def.onCSRFcreate(this);
 };
@@ -1170,12 +1174,22 @@ function execute(ctrl, skipmiddleware) {
 
 						ctrl.params = params;
 						ctrl.query = query ? query.parseEncoded() : {};
+
+						if (body)
+							ctrl.body = body;
+
+						if (F.$events.controller) {
+							F.emit('controller', ctrl);
+							if (ctrl.iscanceled)
+								return;
+						}
+
 						let action = endpoint.action;
-						if (action) {
-							ctrl.body = body || {};
+						if (action)
 							action(ctrl);
-						} else
-							F.action(endpoint.actions, body || {}, ctrl).autorespond();
+						else
+							F.action(endpoint.actions, ctrl.body, ctrl).autorespond();
+
 						return;
 					}
 				}
@@ -1183,16 +1197,31 @@ function execute(ctrl, skipmiddleware) {
 				ctrl.fallback(400, 'Invalid data');
 			}
 		} else {
+
+			if (F.$events.controller) {
+				/*
+					@Path: Framework
+					@Event: ON('controller', function(ctrl) { ... }); #ctrl {Controller};
+					The event captures all processed controllers on HTTP requests. The next processing can be canceled via the `ctrl.cancel()` method.
+				*/
+				F.emit('controller', ctrl);
+				if (ctrl.iscanceled)
+					return;
+			}
+
 			if (ctrl.route.actions) {
 				F.action(ctrl.route.actions, ctrl.body, ctrl).autorespond();
 			} else {
+
 				if (ctrl.route.view) {
 					ctrl.view(ctrl.route.view);
 					return;
 				}
+
 				let action = ctrl.route.action;
 				if (!action)
 					action = auto_view;
+
 				action(ctrl);
 			}
 		}

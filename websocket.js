@@ -110,7 +110,19 @@ Controller.prototype.upgrade = function(websocket) {
 	ctrl.socket.on('end', websocket_close);
 	ctrl.parent.add(ctrl);
 	websocket.online++;
-	F.$events.websocket_begin && F.emit('websocket_begin', ctrl.parent, ctrl);
+
+	// Deprecated:
+	// F.$events.websocket_begin && F.emit('websocket_begin', ctrl.parent, ctrl);
+
+	if (F.$events.websocket) {
+		/*
+			@Path: Framework
+			@Event: ON('websocket', function(ctrl) { ... }); #ctrl {Controller};
+			The event captures all incoming WebSocket connections. The next processing __can't be__ canceled via the `ctrl.cancel()` method.
+		*/
+		F.emit('websocket', ctrl);
+	}
+
 	ctrl.parent.$events.open && ctrl.parent.emit('open', ctrl);
 };
 
