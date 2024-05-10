@@ -3,6 +3,7 @@
 ========================
 
 - extended icon validator by adding support for `tic` keyword
+- added new events `ON('request')`, `ON('controller')` and `ON('websocket')`
 
 ========================
 0.0.2
