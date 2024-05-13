@@ -1467,6 +1467,9 @@ function init_worker(meta, type, callback) {
 
 	var forkargs = [F.directory, '--fork'];
 
+	if (F.config.$insecure)
+		forkargs.push('--insecure');
+
 	if (meta.memory)
 		forkargs.push('--max-old-space-size=' + meta.memory);
 
@@ -3323,7 +3326,12 @@ function makeunixsocket(id) {
 
 if (process.argv[1].endsWith('flow-flowstream.js')) {
 
-	isFLOWSTREAMWORKER = W.workerData || process.argv.indexOf('--fork') !== -1;
+	isFLOWSTREAMWORKER = W.workerData || process.argv.includes('--fork');
+
+	if (process.argv.includes('--insecure')) {
+		process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';
+		F.config.$insecure = true;
+	}
 
 	// Runs the worker
 	if (W.workerData) {
