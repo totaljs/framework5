@@ -5,6 +5,7 @@
 - extended icon validator by adding support for `tic` keyword
 - added new events `ON('request')`, `ON('controller')` and `ON('websocket')`
 - fixed applying the `$insecure` option in the FlowStream
+- fixed routing for unexpected content-type
 
 ========================
 0.0.2

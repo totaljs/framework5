@@ -885,6 +885,7 @@ Controller.prototype.hostname = function(path) {
 Controller.prototype.$route = function() {
 
 	var ctrl = this;
+
 	if (ctrl.isfile) {
 
 		if (F.routes.files.length) {
@@ -947,7 +948,6 @@ Controller.prototype.$route = function() {
 
 				ctrl.payload = Buffer.concat(ctrl.payload);
 				F.stats.performance.download += ctrl.payload.length / 1024 / 1024;
-
 				switch (ctrl.datatype) {
 					case 'json':
 						ctrl.body = F.def.parsers.json(ctrl.payload.toString('utf8'));
@@ -1141,6 +1141,7 @@ function execute(ctrl, skipmiddleware) {
 
 				let schema = body.schema.split('/');
 				let endpoint = ctrl.route.api[schema[0]];
+
 				if (endpoint) {
 
 					if ((endpoint.auth === 1 && ctrl.user == null) || (endpoint.auth === 2 && ctrl.user)) {
@@ -1194,8 +1195,10 @@ function execute(ctrl, skipmiddleware) {
 					}
 				}
 
-				ctrl.fallback(400, 'Invalid data');
 			}
+
+			ctrl.fallback(400, 'Invalid data');
+
 		} else {
 
 			if (F.$events.controller) {
