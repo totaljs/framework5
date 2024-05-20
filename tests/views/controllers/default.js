@@ -72,6 +72,9 @@ function common_page($) {
 		case 'static':
 			view = 'static';
 			break;
+		case 'import':
+			view = 'import';
+			break;
 		case 'assignment':
 			view = 'assignment';
 			break;

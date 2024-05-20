@@ -174,6 +174,16 @@ ON('ready', function() {
 			});
 		});
 
+		arr.push(function(resume) {
+			input = url + '/view/common?cmd=import';
+
+			RESTBuilder.GET(input).exec(function(err, res, output) {
+				response = output.response;
+				Test.print('Import And Merge ', err == null && response.indexOf('-min.js') > -1 && response.indexOf('-min.css') > -1  ? null : 'Expected ' + correct);
+				resume();
+			});
+		});
+
 		arr.async(next);
 	});
 
