@@ -991,6 +991,29 @@ function readfile(filename, callback) {
 	});
 }
 
+/*
+	@Path: Controller
+	@Method: instance.authorize([callback]); #callback {Function(err, session)} optional;
+	The method performs "manual" authorization. If the user is logged in, then `session {Object}` is not null, otherwise `null`. If you don't use the `callback` argument, then the method returns `Promise`.
+*/
+Controller.prototype.authorize = function(callback) {
+
+	var ctrl = this;
+
+	if (!callback)
+		return new Promise((resolve, reject) => ctrl.authorize((err, response) => resolve(response)));
+
+	if (F.def.onAuthorize) {
+		var opt = new F.TBuilders.Options(ctrl);
+		opt.TYPE = 'auth';
+		opt.query = ctrl.query;
+		opt.next = opt.callback;
+		opt.$callback = (err, response) => callback(null, response);
+		F.def.onAuthorize(opt);
+	} else
+		callback();
+}
+
 Controller.prototype.notmodified = function(date) {
 	var ctrl = this;
 	if (ctrl.headers['if-modified-since'] === date) {
