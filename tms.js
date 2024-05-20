@@ -101,7 +101,7 @@ function tmscontroller($) {
 				}
 			} else {
 				msg.error = true;
-				msg.data = new ErrorBuilder.push(404).output();
+				msg.data = new ErrorBuilder().push(404).output();
 				client.send(msg);
 			}
 		}
