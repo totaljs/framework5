@@ -1000,23 +1000,15 @@ Controller.prototype.authorize = function(callback) {
 
 	var ctrl = this;
 
-	if (!callback) {
-		return new Promise(function(resolve, reject) {
-			ctrl.authorize(function(err, response) {
-				if (err)
-					reject(err);
-				else
-					resolve(response);
-			});
-		});
-	}
+	if (!callback)
+		return new Promise((resolve, reject) => ctrl.authorize((err, response) => resolve(response)));
 
 	if (F.def.onAuthorize) {
 		var opt = new F.TBuilders.Options(ctrl);
 		opt.TYPE = 'auth';
 		opt.query = ctrl.query;
 		opt.next = opt.callback;
-		opt.$callback = callback;
+		opt.$callback = (err, response) => callback(null, response);
 		F.def.onAuthorize(opt);
 	} else
 		callback();
