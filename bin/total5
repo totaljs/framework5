@@ -93,10 +93,13 @@ FUNC.translate = function(filename) {
 		var dictionary = {};
 
 		for (let filename of files) {
-			let body = F.Fs.readFileSync(filename, 'utf8');
-			let dict = translate(body);
-			for (let key in dict)
-				dictionary[key] = dict[key];
+			let ext = U.getExtension(filename);
+			if (ext === 'js' || ext === 'html') {
+				let body = F.Fs.readFileSync(filename, 'utf8');
+				let dict = translate(body);
+				for (let key in dict)
+					dictionary[key] = dict[key];
+			}
 		}
 
 		let builder = [];
