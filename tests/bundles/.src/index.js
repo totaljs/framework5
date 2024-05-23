@@ -40,7 +40,7 @@ Test.push('Bundles', function(next) {
 	arr.push(function(resume) {
 		RESTBuilder.GET(url + 'ui.js').callback(function(err, res, output) {
 			console.log(res, output);
-			//Test.print('Test endpoint', err == null ? null : 'Failed to write merge file');
+			Test.print('Test endpoint', err == null ? null : 'Failed to write merge file');
 
 			resume();
 		});
@@ -53,9 +53,9 @@ Test.push('Bundles', function(next) {
 		// });
 	// });
 
-	// arr.async(function() {
-		// next();
-	// });
+	arr.async(function() {
+		next();
+	});
 });
 
 setTimeout(() => Test.run(), 1000);
