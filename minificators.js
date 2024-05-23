@@ -301,7 +301,7 @@ exports.htmlremovecomments = function(value) {
 	return value;
 };
 
-exports.merge = async function(filename, filenames, minify = true) {
+exports.merge = async function(filename, filenames, minify) {
 
 	// @filename {String/Boolean}
 
@@ -423,6 +423,7 @@ async function mergedownload(url, minify = true) {
 }
 
 async function mergefile(filename, minify) {
+
 	return new Promise(function(resolve) {
 
 		F.Fs.readFile(filename, 'utf8', function(err, response) {
@@ -444,6 +445,9 @@ async function mergefile(filename, minify) {
 					ext = ext.substring(0, index);
 				ext = ext.toLowerCase();
 			}
+
+			if (minify === undefined)
+				minify = !!F.config['$minify' + ext];
 
 			var output = { ext: ext };
 

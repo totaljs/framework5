@@ -1452,11 +1452,15 @@ F.merge = function(url) {
 				}
 
 				if (link[0] !== '~' && link[0] !== '_') {
-					let ext = F.TUtils.getExtension(link);
-					if (ext === 'js')
-						link = F.path.public('/js/' + link);
-					else
-						link = F.path.public('/css/' + link);
+					if (link[0] === '/') {
+						link = F.path.public(link);
+					} else {
+						let ext = F.TUtils.getExtension(link);
+						if (ext === 'js')
+							link = F.path.public('/js/' + link);
+						else
+							link = F.path.public('/css/' + link);
+					}
 					arr.push(link);
 				} else
 					arr.push(F.path.route(link, 'public'));

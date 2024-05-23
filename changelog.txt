@@ -7,6 +7,11 @@
 - fixed applying the `$insecure` option in the FlowStream
 - fixed routing for unexpected content-type
 - added `controller.authorize([callback])` method
+- improved `translate` command in `total5` command-line tool
+- fixed link generator for email and phone numbers in `Markdown`
+- fixed auto-restarting app in the `debug` mode with bundles
+- fixed global settings for JS/CSS/HTML minificator
+- improved merging files
 
 ========================
 0.0.2
