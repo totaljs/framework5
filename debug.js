@@ -1,6 +1,6 @@
 // Debug module (Watcher)
 // The MIT License
-// Copyright 2012-2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2012-2024 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -76,7 +76,7 @@ function runwatching() {
 	const REG_PUBLIC = /\/public\//i;
 	const REG_INDEX = new RegExp(FILENAME.replace(/\.js$/, '') + '_.*?\\.js$');
 	const REG_EXTENSION = /\.(js|ts|resource|package|bundle|build|flow|url)$/i;
-	const REG_RELOAD = /\.(js|ts|css|html|htm|jpg|png|gif|ico|svg|resource)$/i;
+	const REG_RELOAD = /\.(js|ts|css|html|htm|jpg|png|gif|ico|svg|webp|resource)$/i;
 	const isRELOAD = !!options.livereload;
 	const SPEED = isRELOAD ? 1000 : 1500;
 	const ARGV = F.TUtils.clone(process.argv);
@@ -124,8 +124,8 @@ function runwatching() {
 			F.Path.join(directory, 'middleware'),
 			F.Path.join(directory, 'bundles'),
 			F.Path.join(directory, 'flowstreams'),
-			F.Path.join(directory, '/startup/'),
-			F.Path.join(directory, '/plugins/')
+			F.Path.join(directory, 'startup'),
+			F.Path.join(directory, 'plugins')
 		];
 
 		const SRC = F.Path.join(directory, '.src');
@@ -186,7 +186,7 @@ function runwatching() {
 			}
 		}
 
-		if (skipbundle) {
+		if (!skipbundle) {
 			try {
 				F.Fs.statSync(F.path.root('bundles'));
 				isbundle = true;
@@ -200,14 +200,19 @@ function runwatching() {
 
 		function onFilter(path, isdir) {
 			var p = path.substring(directory.length);
+
 			if (isbundle)
 				return isdir ? SRC !== path : !ignore[p];
+
 			if (isRELOAD)
 				return isdir ? true : REG_RELOAD.test(path);
+
 			if (isdir)
 				return true;
+
 			if (!REG_PUBLIC.test(path) && REG_EXTENSION.test(path))
 				return true;
+
 			return false;
 		}
 
