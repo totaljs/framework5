@@ -95,6 +95,7 @@ function text() {
 
 	self.on('message', function(client, message) {
 
+		console.log(message);
 		// Convert
 		switch (message.type) {
 			case 'Buffer':

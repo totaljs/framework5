@@ -1,21 +1,29 @@
 {
 	"version": 1,
-	"created": "2024-05-20T19:43:54.426Z",
+	"created": "2024-05-23T11:41:07.462Z",
 	"total": "v5",
 	"node": "v20.8.0",
 	"files": [
+		"/.DS_Store",
+		"/controllers/.DS_Store",
 		"/controllers/default.js",
+		"/definitions/worker.js",
 		"/index.js",
-		"/app/myapp.bundle",
+		"/index.js.map",
+		"/run.js",
+		"/run.js.json",
+		"/run.js.map",
+		"/app/.DS_Store",
+		"/app/controllers/.DS_Store",
 		"/app/controllers/default.js",
-		"/public/js/ui.js"
+		"/app/definitions/worker.js"
 	],
 	"skip": false,
 	"directories": [
 		"/controllers/",
+		"/definitions/",
 		"/app/",
-		"/public/",
 		"/app/controllers/",
-		"/public/js/"
+		"/app/definitions/"
 	]
 }
