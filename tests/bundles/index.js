@@ -9,9 +9,12 @@ var worker = NEWTHREAD();
 
 // load web server and test app
 CONF.$imprint = true;
-F.run({ release: false, port: 3000 });
+F.run({ release: true, port: 3000 });
 ON('ready', function() {
+	DEBUG = true;
+	setTimeout( function() {
 	worker.postMessage({ ready: true });
+	}, 3000);
 });
 
 
