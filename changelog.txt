@@ -12,6 +12,7 @@
 - fixed auto-restarting app in the `debug` mode with bundles
 - fixed global settings for JS/CSS/HTML minificator
 - improved merging files
+- fixed middleware with `_` underscore character in routes
 
 ========================
 0.0.2

@@ -188,7 +188,7 @@ function Route(url, action, size) {
 	}
 
 	// Parse flags
-	url = url.replace(/(@|#)+[a-z0-9]+/gi, function(text) {
+	url = url.replace(/(@|#)+[a-z0-9_]+/gi, function(text) {
 		let tmp = text.trim();
 		if (tmp[0] === '#') {
 			t.middleware.push(tmp.substring(1));
