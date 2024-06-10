@@ -49,6 +49,7 @@ global.MODS = F.modules;
 global.PLUGINS = F.plugins;
 global.DECRYPT = F.decrypt;
 global.ENCRYPT = F.encrypt;
+global.BACKUP = F.backup;
 global.DECRYPTREQ = F.decryptreq;
 global.ENCRYPTREQ = F.encryptreq;
 global.PATH = F.path;
