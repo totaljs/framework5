@@ -26,6 +26,7 @@ global.CLEANUP = F.cleanup;
 global.NEWDB = F.newdb;
 global.IMPORT = F.import;
 global.REQUIRE = F.require;
+global.RESTORE = F.restore;
 global.CRON = F.cron;
 global.UID = F.uid;
 global.SUCCESS = value => DEF.onSuccess(value);
