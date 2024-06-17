@@ -618,7 +618,7 @@ exports.lookupcors = function(ctrl) {
 		let cors = F.temporary.cors;
 
 		if (cors) {
-			if (cors.strict.length && cors.strict.includes(origin)) {
+			if (cors.strict[origin]) {
 				resume = true;
 			} else if (cors.wildcard.length) {
 				for (let m of cors.wildcard) {

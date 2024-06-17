@@ -108,7 +108,7 @@ global.LDAP = function(opt, callback) {
 global.CORS = function(origin) {
 	if (origin && origin[0] === '+') {
 		if (F.config.$cors !== '*')
-			F.config.$cors = (F.config.$cors ? ',' : '') + origin.substring(1);
+			F.config.$cors += (F.config.$cors ? ',' : '') + origin.substring(1);
 	} else
 		F.config.$cors = origin || '*';
 	F.emit('$cors');

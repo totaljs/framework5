@@ -2835,9 +2835,9 @@ F.dir();
 // Init CORS
 F.on('$cors', function() {
 
-	var arr = (F.config.$cors || '').toLowerCase().split(',').trim();
+	var arr = (F.config.$cors || '').toLowerCase().split(/,|;|\|/).trim();
 	var wildcard = [];
-	var strict = [];
+	var strict = {};
 
 	for (let i = 0; i < arr.length; i++) {
 		let val = arr[i];
@@ -2845,7 +2845,7 @@ F.on('$cors', function() {
 			if (val[0] === '*' && val.length > 1)
 				wildcard.push(val.substring(1));
 			else
-				strict.push(val);
+				strict[val] = 1;
 		}
 	}
 
