@@ -15,6 +15,7 @@
 - fixed middleware with `_` underscore character in routes
 - fixed `CORS()` method
 - improved `CORS` checker
+- added support for inheriting inline schemas in the form e.g. `id:String,@address,@products`
 
 ========================
 0.0.2

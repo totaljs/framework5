@@ -5968,6 +5968,17 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 		var arr = prop[i].split(':').trim();
 		var tmp = null;
 
+		if (arr[0][0] === '@') {
+			let ext = F.jsonschemas[arr[0].substring(1)];
+			if (ext) {
+				for (let m of ext.required)
+					required.push(m);
+				for (let m in ext.properties)
+					obj.properties[m] = ext.properties[m];
+			}
+			continue;
+		}
+
 		if (arr[0][0] === '!' || arr[0][0] === '*') {
 			// required
 			arr[0] = arr[0].substring(1);
