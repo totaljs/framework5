@@ -16,6 +16,8 @@
 - fixed `CORS()` method
 - improved `CORS` checker
 - added support for inheriting inline schemas in the form e.g. `id:String,@address,@products`
+- added `ctrl.image(opt)` method
+- extended `ctrl.filefs()` method by returing `opt` object
 
 ========================
 0.0.2

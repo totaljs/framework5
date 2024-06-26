@@ -222,11 +222,6 @@ ImageProto.measure = function(callback) {
 	return self;
 };
 
-ImageProto.$$measure = function() {
-	var self = this;
-	return callback => self.measure(callback);
-};
-
 ImageProto.save = function(filename, callback, writer) {
 
 	var self = this;
@@ -284,13 +279,6 @@ ImageProto.save = function(filename, callback, writer) {
 	return self;
 };
 
-ImageProto.$$save = function(filename, writer) {
-	var self = this;
-	return function(callback) {
-		self.save(filename, callback, writer);
-	};
-};
-
 ImageProto.pipe = function(stream, type, options) {
 
 	var self = this;
@@ -327,7 +315,7 @@ ImageProto.pipe = function(stream, type, options) {
 	return self;
 };
 
-ImageProto.stream = function(type, writer) {
+ImageProto.writer = function(type, writer) {
 
 	var self = this;
 
@@ -426,13 +414,6 @@ ImageProto.identify = function(callback) {
 	});
 
 	return self;
-};
-
-ImageProto.$$identify = function() {
-	var self = this;
-	return function(callback) {
-		self.identify(callback);
-	};
 };
 
 ImageProto.push = function(key, value, priority, encode) {

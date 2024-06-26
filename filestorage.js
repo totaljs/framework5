@@ -1018,14 +1018,13 @@ FP.http = function(ctrl, opt) {
 
 		response.headers['x-size'] = obj.size;
 
-		if (opt.image) {
-			/*
-			res.opt.stream = { filename: filename, start: HEADERSIZE, custom: true };
-			res.opt.make = opt.make;
-			res.opt.cache = opt.cache !== false;
-			res.opt.persistent = false;
-			res.$image();
-			*/
+		if (opt.image && IMAGES[obj.ext]) {
+			var img = {};
+			img.ext = obj.ext;
+			img.cache = opt.cache;
+			img.load = next => next(F.Fs.createReadStream(filename, { start: HEADERSIZE }));
+			img.image = opt.image;
+			ctrl.image(img);
 		} else {
 
 			var range = ctrl.headers.range;
@@ -1077,10 +1076,8 @@ FP.http = function(ctrl, opt) {
 
 			} else {
 				var stream = F.Fs.createReadStream(filename, { start: HEADERSIZE });
-
 				if (!opt.download && !DEBUG && date)
 					ctrl.httpcache(date);
-
 				ctrl.stream(obj.type, stream);
 			}
 		}

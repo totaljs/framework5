@@ -574,6 +574,67 @@ Controller.prototype.filefs = function(name, id, download, checkmeta) {
 	opt.check = checkmeta;
 
 	F.filestorage(name).http(ctrl, opt);
+	return opt;
+};
+
+Controller.prototype.image = function(opt) {
+
+	// opt.ext {String} required, image extension
+	// opt.date {Date} optional, for HTTP cache
+	// opt.cache {String} optional, a cache key
+	// opt.load {Function(next(stream), opt)};
+	// opt.image {Function(img, opt)}
+
+	var ctrl = this;
+	var date = opt.date ? opt.date instanceof Date ? opt.date.toUTCString() : opt.date : null;
+
+	// HTTP Cache
+	if (ctrl.response.cache && date && ctrl.notmodified(date))
+		return;
+
+	if (opt.cache) {
+		var tmp = F.path.tmp('img_' + opt.cache + '.' + opt.ext);
+
+		if (!DEBUG && date)
+			ctrl.httpcache(date);
+
+		F.Fs.lstat(tmp, function(err) {
+			if (err) {
+				opt.load.call(ctrl, function(stream) {
+					var img = F.TImages.load(stream);
+					opt.image.call(ctrl, img, opt);
+					img.save(tmp, function(err) {
+						if (err)
+							ctrl.fallback(404, err);
+						else
+							ctrl.file(tmp);
+					});
+				}, opt);
+			} else
+				ctrl.file(tmp);
+		});
+	} else {
+
+		opt.load.call(ctrl, function(stream) {
+
+			var img = F.TImages.load(stream);
+			var response = ctrl.response;
+
+			opt.image.call(ctrl, img, opt);
+
+			if (ctrl.response.headers.expires)
+				delete response.headers.expires;
+
+			if (!DEBUG && date)
+				ctrl.httpcache(date);
+
+			response.headers.etag = '858' + F.config.$httpetag;
+			response.headers['content-type'] = F.TUtils.getContentType(opt.ext);
+			ctrl.res.writeHead(response.status, response.headers);
+			F.stats.response.stream++;
+			img.pipe(ctrl.res);
+		}, opt);
+	}
 };
 
 Controller.prototype.binary = function(buffer, type, download) {
