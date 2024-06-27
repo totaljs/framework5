@@ -558,7 +558,7 @@ QBP.id = function(id) {
 };
 
 QBP.userid = function(id) {
-	return id instanceof Array ? this.in('userid', id) : this.where('userid', id);
+	return id instanceof Array ? this.in('userid', id) : this.where('userid', typeof(id) === 'string' ? id : (id.user ? id.user.id : id.id));
 };
 
 QBP.equal = function(obj) {
