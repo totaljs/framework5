@@ -1069,11 +1069,19 @@ Controller.prototype.authorize = function(callback) {
 		opt.TYPE = 'auth';
 		opt.query = ctrl.query;
 		opt.next = opt.callback;
-		opt.$callback = (err, response) => callback(null, response);
+		opt.$callback = function(err, response) {
+			if (response)
+				ctrl.user = response;
+			callback(null, response);
+		};
 		F.def.onAuthorize(opt);
 	} else
 		callback();
-}
+};
+
+Controller.prototype.action = function(name, model) {
+	return F.action(name, model, this);
+};
 
 Controller.prototype.notmodified = function(date) {
 	var ctrl = this;

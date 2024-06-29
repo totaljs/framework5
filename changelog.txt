@@ -19,6 +19,8 @@
 - added `ctrl.image(opt)` method
 - extended `ctrl.filefs()` method by returing `opt` object
 - extended `QueryBuilder.userid()` by supporting `$` options/controller instance
+- added `controller.action()`
+- improved `controller.authorize()` it assigns `controller.user` automatically
 
 ========================
 0.0.2
