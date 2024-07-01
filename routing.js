@@ -451,6 +451,9 @@ function compareflags(ctrl, routes, auth) {
 
 	for (let route of routes) {
 
+		if (route.ext && !route.ext[ctrl.ext])
+			continue;
+
 		if (auth && route.auth && route.auth !== auth)
 			continue;
 
@@ -663,6 +666,7 @@ exports.lookupfile = function(ctrl, auth = 0) {
 		let key = '';
 		for (let i = 0; i < ctrl.split2.length - 1; i++)
 			key += (i ? '/' : '') + ctrl.split2[i];
+
 		let routes = F.routes.filescache[key];
 		if (routes)
 			return compareflags(ctrl, routes, auth);
