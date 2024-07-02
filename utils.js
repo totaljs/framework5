@@ -4256,6 +4256,16 @@ NP.pluralize = function(zero, one, few, other) {
 	var num = this;
 	var value = '';
 
+	if (!one && typeof(zero) === 'string') {
+		zero = zero.split(',');
+		if (zero instanceof Array) {
+			one = zero[1];
+			few = zero[2];
+			other = zero[3];
+			zero = zero[0];
+		}
+	}
+
 	if (num == 0)
 		value = zero || '';
 	else if (num == 1)
