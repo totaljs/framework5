@@ -3,6 +3,9 @@
 ========================
 
 - improved `Number.pluralize()` method
+- added `PROMISIFY(fn, [a], [b])` method
+- added `$.promisify(fn, [a], [b])` method
+- added `FILESTORAGE().copy(id, path, [callback(err, meta)])`
 
 ========================
 0.0.3
