@@ -64,6 +64,27 @@ global.ErrorBuilder = F.TBuilders.ErrorBuilder;
 global.DOWNLOAD = F.download;
 global.OPENCLIENT = (url, id) => require('./openclient').create(url, id);
 global.NEWMACRO = (str, nocompile, isasync) => require('./macros').compile(str, nocompile, isasync);
+global.PROMISIFY = function(fn, a, b, c) {
+	return new Promise(function(resolve, reject) {
+
+		var callback = function(err, response) {
+			if (err)
+				reject(err);
+			else
+				resolve(response);
+		};
+
+		if (c !== undefined)
+			fn(a, b, c, callback);
+		else if (b !== undefined)
+			fn(a, b, callback);
+		else if (a !== undefined)
+			fn(a, callback);
+		else
+			fn(callback);
+
+	});
+};
 
 global.BLOCKED = function($, limit, expire) {
 

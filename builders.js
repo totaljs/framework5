@@ -111,6 +111,29 @@ Options.prototype.action = function(schema, payload) {
 	return F.action(schema, payload, this.controller);
 };
 
+Options.prototype.promisify = function(fn, a, b, c) {
+	var $ = this;
+	return new Promise(function(resolve) {
+
+		var callback = function(err, response) {
+			if (err)
+				$.invalid(err);
+			else
+				resolve(response);
+		};
+
+		if (c !== undefined)
+			fn(a, b, c, callback);
+		else if (b !== undefined)
+			fn(a, b, callback);
+		else if (a !== undefined)
+			fn(a, callback);
+		else
+			fn(callback);
+
+	});
+};
+
 Options.prototype.publish = function(value) {
 	var self = this;
 	var name = self.id;
