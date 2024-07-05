@@ -256,11 +256,15 @@ Options.prototype.output = function(name) {
 	return self;
 };
 
+function $errorhandling(self) {
+	self.$callback(true);
+}
+
 Options.prototype.invalid = function(error, path, index) {
 	var self = this;
 	self.error.push(error, path, index);
-	self.$callback(true);
-	return self;
+	setTimeout($errorhandling, 1, self);
+	return self.error;
 };
 
 Options.prototype.cookie = function(name, value, expire, options) {

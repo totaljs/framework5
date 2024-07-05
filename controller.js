@@ -319,23 +319,9 @@ Controller.prototype.empty = function() {
 	F.stats.response.empty++;
 };
 
-Controller.prototype.invalid = function(value) {
-
-	var ctrl = this;
-
-	if (ctrl.destroyed)
-		return;
+function $errorhandling(ctrl, err) {
 
 	var response = ctrl.response;
-	var err;
-
-	if (value instanceof F.TBuilders.ErrorBuilder) {
-		err = value;
-	} else {
-		err = new F.TBuilders.ErrorBuilder();
-		err.push(value);
-	}
-
 	response.headers['content-type'] = 'application/json';
 	response.headers['cache-control'] = NOCACHE;
 	response.headers.vary = 'Accept-Encoding, Last-Modified, User-Agent';
@@ -347,6 +333,25 @@ Controller.prototype.invalid = function(value) {
 
 	if (F.stats.response[key] != null)
 		F.stats.response[key]++;
+}
+
+Controller.prototype.invalid = function(value) {
+
+	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
+	var err;
+
+	if (value instanceof F.TBuilders.ErrorBuilder) {
+		err = value;
+	} else {
+		err = new F.TBuilders.ErrorBuilder();
+		err.push(value);
+	}
+
+	setTimeout($errorhandling, 1, ctrl, err);
 };
 
 Controller.prototype.flush = function() {
