@@ -1389,7 +1389,16 @@ ActionCaller.prototype.finish = function(value) {
 	var self = this;
 	self.finish = null;
 	if (self.options.callback) {
-		self.options.callback(self.error.length ? self.error : null, value === undefined ? self.$.response : value);
+
+		if (self.options.callback instanceof Options) {
+			let $ = self.options.callback;
+			if (self.error.length)
+				$.invalid(self.error);
+			else
+				$.callback(value === undefined ? self.$.response : value);
+		} else
+			self.options.callback(self.error.length ? self.error : null, value === undefined ? self.$.response : value);
+
 		self.options.callback = null;
 	}
 };
