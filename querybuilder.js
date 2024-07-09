@@ -335,7 +335,8 @@ CTP.remove = CTP.rem = function(table) {
 
 CTP.query = function(table, query, params) {
 
-	if (query == null) {
+	if (query == null || typeof(query) === 'object') {
+		params = query;
 		query = table;
 		table = 'default/';
 	} else

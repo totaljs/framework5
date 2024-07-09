@@ -9,6 +9,7 @@
 - fixed formatting `0` number in the `Tangular.format` helper
 - improved `$.invalid()` method, now it returns `ErrorBuilder`
 - improved `$.callback()`, it accepts another instance of `$`
+- improved `DATA.query()` method
 
 ========================
 0.0.3
