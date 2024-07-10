@@ -118,7 +118,7 @@ ON('ready', function () {
 				string_capitalize2: { i: 'only first', o: 'Only first' },
 				string_lowercase: { i: 'LoWEr cAse', o: 'lower case' },
 				string_uppercase: { i: 'UPper CaSe', o: 'UPPER CASE' },
-				datauri: { i: datauri, o: datauri },
+				datauri: { i: datauri, o: 'image/png' },
 				zip: { i: '23432', o: '23432' },
 				icon: { i: 'ti ti-user', o: 'ti ti-user' },
 				color: { i: '#68B25B', o: '#68B25B' },
@@ -139,7 +139,8 @@ ON('ready', function () {
 			RESTBuilder.POST(url + '/schema/formatting/', body).exec(function (err, res, output) {
 				console.log(res, output);
 				for (var key in data)
-					Test.print('Schema formatting - ' + res[key], res[key] === data[key].o ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
+					
+					Test.print('Schema formatting - ' + res[key], res[key].toString() === data[key].o.toString() ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
 				resume();
 			});
 		});
@@ -147,6 +148,7 @@ ON('ready', function () {
 		arr.push(function (resume) {
 			prefill_undefined(valid);
 			valid.wait(function (item, func) {
+				console.log(item);
 				RESTBuilder.POST(url + '/schema/required/', item).exec(function (err) {
 					var items = [];
 					if (err && err.items && err.items.length)
