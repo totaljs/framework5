@@ -1664,7 +1664,7 @@ F.cron = function(line, fn) {
 	obj.remove = function() {
 		let index = F.crons.indexOf(this);
 		if (index !== -1)
-			F.crons.splice(index, 0);
+			F.crons.splice(index, 1);
 	};
 	F.crons.push(obj);
 	return obj;
