@@ -10,6 +10,7 @@
 - improved `$.invalid()` method, now it returns `ErrorBuilder`
 - improved `$.callback()`, it accepts another instance of `$`
 - improved `DATA.query()` method
+- fixed removing existing CRONs by [Marek Mraz](https://github.com/Mrazbb)
 
 ========================
 0.0.3
