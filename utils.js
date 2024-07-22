@@ -6010,7 +6010,7 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 			tmp = nestedtypes[+tmp];
 
 			// Nested schema
-			if (tmp.includes(':')) {
+			if ((/[:,\s]/).test(tmp)) {
 				nestedschema = tmp.toJSONSchema();
 				type = 'object';
 			} else {

@@ -3,6 +3,7 @@
 ========================
 
 - added support for multiple events `ON('event1 + event2 + event3', function() {})`
+- fixed parsing nested schema in inline JSON schemas
 
 ========================
 0.0.4
