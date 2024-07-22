@@ -2785,10 +2785,14 @@ process.on('message', function(msg, h) {
 
 	F.on2 = F.on;
 	F.on = function(name, fn) {
-		if (name === 'ready' && F.isLoaded)
-			fn();
-		else
-			F.on2(name, fn);
+		var arr = name.split('+');
+		for (let e of arr) {
+			e = e.trim();
+			if (e === 'ready' && F.isLoaded)
+				fn();
+			else
+				F.on2(e, fn);
+		}
 	};
 
 	// Configuration

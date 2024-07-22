@@ -2,6 +2,8 @@
 0.0.5
 ========================
 
+- added support for multiple events `ON('event1 + event2 + event3', function() {})`
+
 ========================
 0.0.4
 ========================
