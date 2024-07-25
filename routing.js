@@ -178,7 +178,7 @@ function Route(url, action, size) {
 		t.method = 'POST';
 		isapi = true;
 		t.id = t.id.replace(/^(\+|-)/, '');
-		url = url.replace(/(\*|\+|-|%)?[a-z0-9-_/{}]+/i, function(text) {
+		url = url.replace(/(\*|\+|-|%)?[a-z0-9-_/|{}]+/i, function(text) {
 			let tmp = text.trim();
 			let c = tmp[0];
 			endpoint = c === '%' || c === '+' || c === '*' || c === '-' ? tmp.substring(1) : tmp;
@@ -204,7 +204,7 @@ function Route(url, action, size) {
 
 	if (index !== -1) {
 		t.actions = [];
-		url = url.substring(index + 3).replace(/(\+|-|%)?[a-z0-9-_/]+(\s\(response\))?/gi, function(text) {
+		url = url.substring(index + 3).replace(/(\+|-|%)?[a-z0-9-|_/]+(\s\(response\))?/gi, function(text) {
 			t.actions.push(text.trim());
 			return '';
 		}).trim();

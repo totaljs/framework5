@@ -1169,12 +1169,11 @@ exports.newaction = function(name, obj) {
 	}
 
 	var url = name;
-	var tmp = name.split('/').trim();
-	if (tmp.length)
-		obj.$url = url.replace(/\//g, '_').toLowerCase();
 
 	if (F.actions[name])
 		F.actions[name].remove();
+
+	obj.$url = url;
 
 	F.actions[name] = obj;
 	obj.id = name;
