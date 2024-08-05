@@ -362,7 +362,8 @@ function runwatching() {
 
 					reload && livereload(LIVERELOADCHANGE);
 					if (counter % 150 === 0)
-						speed = isRELOAD ? 3000 : 6000;
+						speed = isRELOAD ? 3000 : (counter % 750 === 0 ? 30000 : 6000);
+
 					setTimeout(refresh_directory, speed);
 					return;
 				}
