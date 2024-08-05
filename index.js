@@ -2519,7 +2519,8 @@ F.dir = function(val) {
 };
 
 F.run = function(opt) {
-	var type = opt.release ? 'release' : 'debug';
+	var type = opt.watcher === false ? 'release' : 'debug';
+	opt.watcher = false;
 	require('./' + type)(opt);
 };
 

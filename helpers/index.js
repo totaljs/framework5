@@ -16,7 +16,7 @@ const options = {};
 // options.inspector = 9229;
 // options.watch = ['private'];
 // options.livereload = 'https://yourhostname';
-// options.watcher = true; // enables watcher for the release mode only controlled by the app `F.restart()`
+// options.watcher = false; // disables watcher
 // options.edit = 'wss://www.yourcodeinstance.com/?id=projectname'
 options.release = process.argv.includes('--release');
 

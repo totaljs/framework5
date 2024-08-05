@@ -52,9 +52,9 @@ function killapp(pid) {
 
 function runapp() {
 	!options && (options = {});
+	global.DEBUG = options.release !== true;
 	if (options.servicemode) {
 		var types = options.servicemode === true || options.servicemode === 1 ? '' : options.servicemode.split(',').trim();
-		global.DEBUG = true;
 		F.load(types);
 	} else
 		F.http(options);
@@ -492,7 +492,7 @@ function runwatching() {
 
 		if (process.pid > 0) {
 
-			!Meta.callback && console.log(prefix.substring(8) + 'DEBUG PID: ' + process.pid + ' (v' + VERSION + ')');
+			!Meta.callback && console.log(prefix.substring(8) + 'Total.js watcher PID: ' + process.pid + ' (v' + VERSION + ')');
 
 			pid = F.Path.join(directory, PIDNAME);
 			F.Fs.writeFileSync(pid, process.pid + '');
