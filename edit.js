@@ -84,6 +84,11 @@ F.newaction('editor', {
 				browse($, model);
 				break;
 
+			// Restart
+			case 'restart':
+				restart($);
+				break;
+
 			// Download
 			case 'download':
 				download($, model);
@@ -245,6 +250,11 @@ function load($, model) {
 				$.callback({ type: F.TUtils.contentTypes[F.TUtils.getExtension(model.path)], data: buffer.toString('base64') });
 		});
 	});
+}
+
+function restart($) {
+	F.restart();
+	$.success();
 }
 
 function save($, model) {

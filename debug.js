@@ -514,6 +514,7 @@ function runwatching() {
 
 		restart();
 		refresh_directory();
+		F.restart = restart;
 	}
 
 	var filename = F.Path.join(process.cwd(), PIDNAME);

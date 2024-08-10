@@ -6,6 +6,8 @@
 	- they use monitoring files
 	- monitoring can be disabled via `options.watcher = false` in the start script
 - improved watcher interval for a long-term process
+- extended `edit` mode:
+	- added `restart` command
 
 ========================
 0.0.5
