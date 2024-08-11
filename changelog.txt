@@ -8,6 +8,7 @@
 - improved watcher interval for a long-term process
 - extended `edit` mode:
 	- added `restart` command
+- fixed partial validation
 
 ========================
 0.0.5

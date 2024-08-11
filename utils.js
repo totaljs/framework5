@@ -6180,34 +6180,7 @@ exports.jsonschematransform = function(value, partial, error, path) {
 	if (!error)
 		error = new ErrorBuilder();
 
-	var response = null;
-
-	if (partial) {
-
-		var tmp = {};
-		var schema = {};
-
-		schema.properties = {};
-		schema.required = [];
-
-		for (let key in value) {
-			let prop = self.properties[key];
-			if (prop) {
-				tmp[key] = value[key];
-				schema.properties[key] = prop;
-				if (self.required && self.required.includes(key))
-					schema.required.push(key);
-			}
-		}
-
-		schema.$id = self.$id;
-		schema.$schema = self.$schema;
-		schema.type = self.type;
-		response = F.TJSONSchema.transform(schema, error, tmp, false, path);
-
-	} else
-		response = F.TJSONSchema.transform(self, error, value, false, path);
-
+	var response = F.TJSONSchema.transform(self, error, value, false, path, partial);
 	return { error: error.items.length ? error : null, response: response };
 };
 
