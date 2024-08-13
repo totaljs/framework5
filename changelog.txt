@@ -9,6 +9,7 @@
 - extended `edit` mode:
 	- added `restart` command
 - fixed partial validation
+- fixed permissions error handling in actions
 
 ========================
 0.0.5

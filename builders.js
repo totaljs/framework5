@@ -1307,6 +1307,7 @@ ActionCaller.prototype.exec = function() {
 	$.user = self.options.user;
 
 	$.$callback = function(err, response) {
+
 		if (err) {
 			// close
 			self.cancel();
@@ -1335,11 +1336,8 @@ ActionCaller.prototype.exec = function() {
 	if (action.permissions) {
 		let permissions = action.permissions.slice(0);
 		permissions.unshift($);
-		if (F.unauthorized.apply(global, permissions)) {
-			self.finish = null;
-			self.cancel();
+		if (F.unauthorized.apply(global, permissions))
 			return;
-		}
 	}
 
 	var params = self.options.params || EMPTYOBJECT;
