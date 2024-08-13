@@ -10,6 +10,7 @@
 	- added `restart` command
 - fixed partial validation
 - fixed permissions error handling in actions
+- added `Image` global variable
 
 ========================
 0.0.5
