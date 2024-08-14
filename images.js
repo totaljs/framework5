@@ -98,7 +98,7 @@ exports.measureWEBP = function(buffer) {
 		var start = (extendedheader & 0xc0) === 0;
 		var end = (extendedheader & 0x01) === 0;
 		if (start && end)
-			return { width: 1 + buffer.readUIntLE(7, 3), height: 1 + buffer.readUIntLE(4, 3) };
+			return { width: 1 + buffer.readUIntLE(4, 3), height: 1 + buffer.readUIntLE(7, 3) }
 	}
 
 	if (header === 'VP8 ' && buffer[0] !== 0x2f)
