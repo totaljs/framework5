@@ -11,6 +11,7 @@
 - fixed partial validation
 - fixed permissions error handling in actions
 - added `Image` global variable
+- added `Utils.filestreamer(filename, onbuffer(buffer, next), onend, [buffer_size])`
 
 ========================
 0.0.5

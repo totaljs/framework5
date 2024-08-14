@@ -1556,6 +1556,34 @@ exports.streamer2 = function(beg, end, callback, skip, stream) {
 	return exports.streamer(beg, end, callback, skip, stream, true);
 };
 
+exports.filestreamer = function(filename, onbuffer, onend, size) {
+
+	if (typeof(onend) === 'number') {
+		size = onend;
+		onend = null;
+	}
+
+	var Fd = null;
+
+	var read = function(offset) {
+		var buffer = Buffer.alloc(size || (1024 * 16));
+		Total.Fs.read(Fd, buffer, 0, buffer.length, offset, function(err, bytes) {
+			if (err || !bytes) {
+				onend && onend(err);
+				Total.Fs.close(Fd, NOOP);
+			} else {
+				onbuffer(buffer.length !== read ? buffer.slice(0, bytes) : buffer, next => read(offset + bytes));
+			}
+		});
+	};
+
+	Total.Fs.open(filename, function(err, fd) {
+		Fd = fd;
+		read(0);
+	});
+
+};
+
 exports.parseInt = function(obj, def) {
 	if (obj == null || obj === '')
 		return def === undefined ? 0 : def;
