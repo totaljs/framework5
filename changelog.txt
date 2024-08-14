@@ -12,6 +12,7 @@
 - fixed permissions error handling in actions
 - added `Image` global variable
 - added `Utils.filestreamer(filename, onbuffer(buffer, next), onend, [buffer_size])`
+- fix image bug in the `Image.measureWEBP()` method by [Marek Mraz](https://github.com/Mrazbb)
 
 ========================
 0.0.5
