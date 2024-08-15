@@ -1,12 +1,12 @@
 NEWSCHEMA('Auth', function(schema) {
-    schema.action('exec', {
-        name: 'Execution action',
-        action: function($) {
+	schema.action('exec', {
+		name: 'Execution action',
+		action: function($) {
 
-            if ($.user)
-                $.success('123');
-            else
-                $.success();
-        }
-    });
+			if ($.user)
+				$.success('123');
+			else
+				$.success();
+		}
+	});
 });

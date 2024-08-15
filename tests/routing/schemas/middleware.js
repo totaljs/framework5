@@ -1,9 +1,9 @@
 NEWSCHEMA('Middleware', function(schema) {
 
-    schema.action('exec', {
-        name: 'Execution action',
-        action: function($) {
-            $.success();
-        }
-    });
+	schema.action('exec', {
+		name: 'Execution action',
+		action: function($) {
+			$.success();
+		}
+	});
 });

@@ -3,6 +3,7 @@ require('../index');
 var tests = [];
 
 // tests.push('bundles/index.js');
+//tests.push('common/cron.js');
 tests.push('common/utils.js');
 tests.push('tms/index.js');
 // tests.push('minificators/index.js');

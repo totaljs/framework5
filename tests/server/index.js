@@ -8,8 +8,7 @@ Test.push('Test Server', function(next) {
 
 	var arr = [];
 
-	// IP+PORT
-	arr.push(function(next_fn) {
+	arr.push(function(resume) {
 		var options = {};
 		options.ip = '127.0.0.1';
 		options.port = 8000;
@@ -18,14 +17,13 @@ Test.push('Test Server', function(next) {
 			child.on('message', function() {
 				RESTBuilder.GET('http://{0}:{1}/exit/'.format(options.ip, options.port)).exec(function(err, response) {
 					Test.print('Port + Ip: ', err === null && response && response.success === true ? null : 'Expected sucess == true response from child server')
-					next_fn();
+					resume();
 				})
 			});
 		});
 	});
 
-	// Unixsocket
-	arr.push(function(next_fn) {
+	arr.push(function(resume) {
 		var options = {};
 		options.unixsocket = PATH.root('test.socket');
 		options.unixsocket777 = true;
@@ -33,7 +31,7 @@ Test.push('Test Server', function(next) {
 			var child2 = NEWTHREAD('child2', options);
 			child2.on('message', function(message) {
 				Test.print('UnixSocket  :', message.unixsocket == options.unixsocket ? null : 'Expected valid Unixsocket');
-				next_fn();
+				resume();
 			});
 		});
 
