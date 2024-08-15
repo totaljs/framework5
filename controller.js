@@ -319,23 +319,9 @@ Controller.prototype.empty = function() {
 	F.stats.response.empty++;
 };
 
-Controller.prototype.invalid = function(value) {
-
-	var ctrl = this;
-
-	if (ctrl.destroyed)
-		return;
+function $errorhandling(ctrl, err) {
 
 	var response = ctrl.response;
-	var err;
-
-	if (value instanceof F.TBuilders.ErrorBuilder) {
-		err = value;
-	} else {
-		err = new F.TBuilders.ErrorBuilder();
-		err.push(value);
-	}
-
 	response.headers['content-type'] = 'application/json';
 	response.headers['cache-control'] = NOCACHE;
 	response.headers.vary = 'Accept-Encoding, Last-Modified, User-Agent';
@@ -347,6 +333,25 @@ Controller.prototype.invalid = function(value) {
 
 	if (F.stats.response[key] != null)
 		F.stats.response[key]++;
+}
+
+Controller.prototype.invalid = function(value) {
+
+	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
+	var err;
+
+	if (value instanceof F.TBuilders.ErrorBuilder) {
+		err = value;
+	} else {
+		err = new F.TBuilders.ErrorBuilder();
+		err.push(value);
+	}
+
+	setTimeout($errorhandling, 1, ctrl, err);
 };
 
 Controller.prototype.flush = function() {
@@ -574,6 +579,67 @@ Controller.prototype.filefs = function(name, id, download, checkmeta) {
 	opt.check = checkmeta;
 
 	F.filestorage(name).http(ctrl, opt);
+	return opt;
+};
+
+Controller.prototype.image = function(opt) {
+
+	// opt.ext {String} required, image extension
+	// opt.date {Date} optional, for HTTP cache
+	// opt.cache {String} optional, a cache key
+	// opt.load {Function(next(stream), opt)};
+	// opt.image {Function(img, opt)}
+
+	var ctrl = this;
+	var date = opt.date ? opt.date instanceof Date ? opt.date.toUTCString() : opt.date : null;
+
+	// HTTP Cache
+	if (ctrl.response.cache && date && ctrl.notmodified(date))
+		return;
+
+	if (opt.cache) {
+		var tmp = F.path.tmp('img_' + opt.cache + '.' + opt.ext);
+
+		if (!DEBUG && date)
+			ctrl.httpcache(date);
+
+		F.Fs.lstat(tmp, function(err) {
+			if (err) {
+				opt.load.call(ctrl, function(stream) {
+					var img = F.TImages.load(stream);
+					opt.image.call(ctrl, img, opt);
+					img.save(tmp, function(err) {
+						if (err)
+							ctrl.fallback(404, err);
+						else
+							ctrl.file(tmp);
+					});
+				}, opt);
+			} else
+				ctrl.file(tmp);
+		});
+	} else {
+
+		opt.load.call(ctrl, function(stream) {
+
+			var img = F.TImages.load(stream);
+			var response = ctrl.response;
+
+			opt.image.call(ctrl, img, opt);
+
+			if (ctrl.response.headers.expires)
+				delete response.headers.expires;
+
+			if (!DEBUG && date)
+				ctrl.httpcache(date);
+
+			response.headers.etag = '858' + F.config.$httpetag;
+			response.headers['content-type'] = F.TUtils.getContentType(opt.ext);
+			ctrl.res.writeHead(response.status, response.headers);
+			F.stats.response.stream++;
+			img.pipe(ctrl.res);
+		}, opt);
+	}
 };
 
 Controller.prototype.binary = function(buffer, type, download) {
@@ -1008,11 +1074,19 @@ Controller.prototype.authorize = function(callback) {
 		opt.TYPE = 'auth';
 		opt.query = ctrl.query;
 		opt.next = opt.callback;
-		opt.$callback = (err, response) => callback(null, response);
+		opt.$callback = function(err, response) {
+			if (response)
+				ctrl.user = response;
+			callback(null, response);
+		};
 		F.def.onAuthorize(opt);
 	} else
 		callback();
-}
+};
+
+Controller.prototype.action = function(name, model) {
+	return F.action(name, model, this);
+};
 
 Controller.prototype.notmodified = function(date) {
 	var ctrl = this;

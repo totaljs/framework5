@@ -335,7 +335,8 @@ CTP.remove = CTP.rem = function(table) {
 
 CTP.query = function(table, query, params) {
 
-	if (query == null) {
+	if (query == null || typeof(query) === 'object') {
+		params = query;
 		query = table;
 		table = 'default/';
 	} else
@@ -558,7 +559,7 @@ QBP.id = function(id) {
 };
 
 QBP.userid = function(id) {
-	return id instanceof Array ? this.in('userid', id) : this.where('userid', id);
+	return id instanceof Array ? this.in('userid', id) : this.where('userid', typeof(id) === 'string' ? id : (id.user ? id.user.id : id.id));
 };
 
 QBP.equal = function(obj) {

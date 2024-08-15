@@ -36,7 +36,7 @@ global.DEF = {};
 
 	F.id = '';
 	F.clusterid = '';
-	F.is5 = F.version = 5003;
+	F.is5 = F.version = 5006;
 	F.isBundle = false;
 	F.isLoaded = false;
 	F.version_header = '5';
@@ -1664,7 +1664,7 @@ F.cron = function(line, fn) {
 	obj.remove = function() {
 		let index = F.crons.indexOf(this);
 		if (index !== -1)
-			F.crons.splice(index, 0);
+			F.crons.splice(index, 1);
 	};
 	F.crons.push(obj);
 	return obj;
@@ -2519,7 +2519,8 @@ F.dir = function(val) {
 };
 
 F.run = function(opt) {
-	var type = opt.release ? 'release' : 'debug';
+	var type = opt.watcher === false ? 'release' : 'debug';
+	opt.watcher = false;
 	require('./' + type)(opt);
 };
 
@@ -2785,10 +2786,14 @@ process.on('message', function(msg, h) {
 
 	F.on2 = F.on;
 	F.on = function(name, fn) {
-		if (name === 'ready' && F.isLoaded)
-			fn();
-		else
-			F.on2(name, fn);
+		var arr = name.split('+');
+		for (let e of arr) {
+			e = e.trim();
+			if (e === 'ready' && F.isLoaded)
+				fn();
+			else
+				F.on2(e, fn);
+		}
 	};
 
 	// Configuration
@@ -2835,9 +2840,9 @@ F.dir();
 // Init CORS
 F.on('$cors', function() {
 
-	var arr = (F.config.$cors || '').toLowerCase().split(',').trim();
+	var arr = (F.config.$cors || '').toLowerCase().split(/,|;|\|/).trim();
 	var wildcard = [];
-	var strict = [];
+	var strict = {};
 
 	for (let i = 0; i < arr.length; i++) {
 		let val = arr[i];
@@ -2845,7 +2850,7 @@ F.on('$cors', function() {
 			if (val[0] === '*' && val.length > 1)
 				wildcard.push(val.substring(1));
 			else
-				strict.push(val);
+				strict[val] = 1;
 		}
 	}
 

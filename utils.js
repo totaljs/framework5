@@ -1556,6 +1556,34 @@ exports.streamer2 = function(beg, end, callback, skip, stream) {
 	return exports.streamer(beg, end, callback, skip, stream, true);
 };
 
+exports.filestreamer = function(filename, onbuffer, onend, size) {
+
+	if (typeof(onend) === 'number') {
+		size = onend;
+		onend = null;
+	}
+
+	var Fd = null;
+
+	var read = function(offset) {
+		var buffer = Buffer.alloc(size || (1024 * 16));
+		Total.Fs.read(Fd, buffer, 0, buffer.length, offset, function(err, bytes) {
+			if (err || !bytes) {
+				onend && onend(err);
+				Total.Fs.close(Fd, NOOP);
+			} else {
+				onbuffer(buffer.length !== read ? buffer.slice(0, bytes) : buffer, next => read(offset + bytes));
+			}
+		});
+	};
+
+	Total.Fs.open(filename, function(err, fd) {
+		Fd = fd;
+		read(0);
+	});
+
+};
+
 exports.parseInt = function(obj, def) {
 	if (obj == null || obj === '')
 		return def === undefined ? 0 : def;
@@ -4256,6 +4284,16 @@ NP.pluralize = function(zero, one, few, other) {
 	var num = this;
 	var value = '';
 
+	if (!one && typeof(zero) === 'string') {
+		zero = zero.split(',');
+		if (zero instanceof Array) {
+			one = zero[1];
+			few = zero[2];
+			other = zero[3];
+			zero = zero[0];
+		}
+	}
+
 	if (num == 0)
 		value = zero || '';
 	else if (num == 1)
@@ -5968,6 +6006,17 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 		var arr = prop[i].split(':').trim();
 		var tmp = null;
 
+		if (arr[0][0] === '@') {
+			let ext = F.jsonschemas[arr[0].substring(1)];
+			if (ext) {
+				for (let m of ext.required)
+					required.push(m);
+				for (let m in ext.properties)
+					obj.properties[m] = ext.properties[m];
+			}
+			continue;
+		}
+
 		if (arr[0][0] === '!' || arr[0][0] === '*') {
 			// required
 			arr[0] = arr[0].substring(1);
@@ -5989,7 +6038,7 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 			tmp = nestedtypes[+tmp];
 
 			// Nested schema
-			if (tmp.includes(':')) {
+			if ((/[:,\s]/).test(tmp)) {
 				nestedschema = tmp.toJSONSchema();
 				type = 'object';
 			} else {
@@ -6159,34 +6208,7 @@ exports.jsonschematransform = function(value, partial, error, path) {
 	if (!error)
 		error = new ErrorBuilder();
 
-	var response = null;
-
-	if (partial) {
-
-		var tmp = {};
-		var schema = {};
-
-		schema.properties = {};
-		schema.required = [];
-
-		for (let key in value) {
-			let prop = self.properties[key];
-			if (prop) {
-				tmp[key] = value[key];
-				schema.properties[key] = prop;
-				if (self.required && self.required.includes(key))
-					schema.required.push(key);
-			}
-		}
-
-		schema.$id = self.$id;
-		schema.$schema = self.$schema;
-		schema.type = self.type;
-		response = F.TJSONSchema.transform(schema, error, tmp, false, path);
-
-	} else
-		response = F.TJSONSchema.transform(self, error, value, false, path);
-
+	var response = F.TJSONSchema.transform(self, error, value, false, path, partial);
 	return { error: error.items.length ? error : null, response: response };
 };
 

@@ -98,11 +98,11 @@ exports.measureWEBP = function(buffer) {
 		var start = (extendedheader & 0xc0) === 0;
 		var end = (extendedheader & 0x01) === 0;
 		if (start && end)
-			return { width: 1 + buffer.readUIntLE(7, 3), height: 1 + buffer.readUIntLE(4, 3) };
+			return { width: 1 + buffer.readUIntLE(4, 3), height: 1 + buffer.readUIntLE(7, 3) }
 	}
 
 	if (header === 'VP8 ' && buffer[0] !== 0x2f)
-		return { width: buffer.readInt16LE(8) & 0x3fff, height: buffer.readInt16LE(6) & 0x3fff };
+		return { width: buffer.readInt16LE(6) & 0x3fff, height: buffer.readInt16LE(8) & 0x3fff };
 
 	var signature = buffer.toString('hex', 3, 6);
 	if (header === 'VP8L' && signature !== '9d012a')
@@ -222,11 +222,6 @@ ImageProto.measure = function(callback) {
 	return self;
 };
 
-ImageProto.$$measure = function() {
-	var self = this;
-	return callback => self.measure(callback);
-};
-
 ImageProto.save = function(filename, callback, writer) {
 
 	var self = this;
@@ -284,13 +279,6 @@ ImageProto.save = function(filename, callback, writer) {
 	return self;
 };
 
-ImageProto.$$save = function(filename, writer) {
-	var self = this;
-	return function(callback) {
-		self.save(filename, callback, writer);
-	};
-};
-
 ImageProto.pipe = function(stream, type, options) {
 
 	var self = this;
@@ -327,7 +315,7 @@ ImageProto.pipe = function(stream, type, options) {
 	return self;
 };
 
-ImageProto.stream = function(type, writer) {
+ImageProto.writer = function(type, writer) {
 
 	var self = this;
 
@@ -426,13 +414,6 @@ ImageProto.identify = function(callback) {
 	});
 
 	return self;
-};
-
-ImageProto.$$identify = function() {
-	var self = this;
-	return function(callback) {
-		self.identify(callback);
-	};
 };
 
 ImageProto.push = function(key, value, priority, encode) {

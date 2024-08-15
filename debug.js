@@ -52,9 +52,9 @@ function killapp(pid) {
 
 function runapp() {
 	!options && (options = {});
+	global.DEBUG = options.release !== true;
 	if (options.servicemode) {
 		var types = options.servicemode === true || options.servicemode === 1 ? '' : options.servicemode.split(',').trim();
-		global.DEBUG = true;
 		F.load(types);
 	} else
 		F.http(options);
@@ -362,7 +362,8 @@ function runwatching() {
 
 					reload && livereload(LIVERELOADCHANGE);
 					if (counter % 150 === 0)
-						speed = isRELOAD ? 3000 : 6000;
+						speed = isRELOAD ? 3000 : (counter % 750 === 0 ? 30000 : 6000);
+
 					setTimeout(refresh_directory, speed);
 					return;
 				}
@@ -492,7 +493,7 @@ function runwatching() {
 
 		if (process.pid > 0) {
 
-			!Meta.callback && console.log(prefix.substring(8) + 'DEBUG PID: ' + process.pid + ' (v' + VERSION + ')');
+			!Meta.callback && console.log(prefix.substring(8) + 'Total.js watcher PID: ' + process.pid + ' (v' + VERSION + ')');
 
 			pid = F.Path.join(directory, PIDNAME);
 			F.Fs.writeFileSync(pid, process.pid + '');
@@ -513,6 +514,7 @@ function runwatching() {
 
 		restart();
 		refresh_directory();
+		F.restart = restart;
 	}
 
 	var filename = F.Path.join(process.cwd(), PIDNAME);

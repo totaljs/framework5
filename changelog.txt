@@ -1,4 +1,42 @@
 ========================
+0.0.6
+========================
+
+- unified debug and release mode
+	- they use monitoring files
+	- monitoring can be disabled via `options.watcher = false` in the start script
+- improved watcher interval for a long-term process
+- extended `edit` mode:
+	- added `restart` command
+- fixed partial validation
+- fixed permissions error handling in actions
+- added `Image` global variable
+- added `Utils.filestreamer(filename, onbuffer(buffer, next), onend, [buffer_size])`
+- fix image bug in the `Image.measureWEBP()` method by [Marek Mraz](https://github.com/Mrazbb)
+
+========================
+0.0.5
+========================
+
+- added support for multiple events `ON('event1 + event2 + event3', function() {})`
+- fixed parsing nested schema in inline JSON schemas
+- added support for `|` characters in the routes API endpoints
+
+========================
+0.0.4
+========================
+
+- improved `Number.pluralize()` method
+- added `PROMISIFY(fn, [a], [b])` method
+- added `$.promisify(fn, [a], [b])` method
+- added `FILESTORAGE().copy(id, path, [callback(err, meta)])`
+- fixed formatting `0` number in the `Tangular.format` helper
+- improved `$.invalid()` method, now it returns `ErrorBuilder`
+- improved `$.callback()`, it accepts another instance of `$`
+- improved `DATA.query()` method
+- fixed removing existing CRONs by [Marek Mraz](https://github.com/Mrazbb)
+
+========================
 0.0.3
 ========================
 
@@ -13,6 +51,14 @@
 - fixed global settings for JS/CSS/HTML minificator
 - improved merging files
 - fixed middleware with `_` underscore character in routes
+- fixed `CORS()` method
+- improved `CORS` checker
+- added support for inheriting inline schemas in the form e.g. `id:String,@address,@products`
+- added `ctrl.image(opt)` method
+- extended `ctrl.filefs()` method by returing `opt` object
+- extended `QueryBuilder.userid()` by supporting `$` options/controller instance
+- added `controller.action()`
+- improved `controller.authorize()` it assigns `controller.user` automatically
 
 ========================
 0.0.2

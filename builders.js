@@ -111,6 +111,29 @@ Options.prototype.action = function(schema, payload) {
 	return F.action(schema, payload, this.controller);
 };
 
+Options.prototype.promisify = function(fn, a, b, c) {
+	var $ = this;
+	return new Promise(function(resolve) {
+
+		var callback = function(err, response) {
+			if (err)
+				$.invalid(err);
+			else
+				resolve(response);
+		};
+
+		if (c !== undefined)
+			fn(a, b, c, callback);
+		else if (b !== undefined)
+			fn(a, b, callback);
+		else if (a !== undefined)
+			fn(a, callback);
+		else
+			fn(callback);
+
+	});
+};
+
 Options.prototype.publish = function(value) {
 	var self = this;
 	var name = self.id;
@@ -233,11 +256,15 @@ Options.prototype.output = function(name) {
 	return self;
 };
 
+function $errorhandling(self) {
+	self.$callback(true);
+}
+
 Options.prototype.invalid = function(error, path, index) {
 	var self = this;
 	self.error.push(error, path, index);
-	self.$callback(true);
-	return self;
+	setTimeout($errorhandling, 1, self);
+	return self.error;
 };
 
 Options.prototype.cookie = function(name, value, expire, options) {
@@ -1142,12 +1169,11 @@ exports.newaction = function(name, obj) {
 	}
 
 	var url = name;
-	var tmp = name.split('/').trim();
-	if (tmp.length)
-		obj.$url = url.replace(/\//g, '_').toLowerCase();
 
 	if (F.actions[name])
 		F.actions[name].remove();
+
+	obj.$url = url;
 
 	F.actions[name] = obj;
 	obj.id = name;
@@ -1281,6 +1307,7 @@ ActionCaller.prototype.exec = function() {
 	$.user = self.options.user;
 
 	$.$callback = function(err, response) {
+
 		if (err) {
 			// close
 			self.cancel();
@@ -1309,11 +1336,8 @@ ActionCaller.prototype.exec = function() {
 	if (action.permissions) {
 		let permissions = action.permissions.slice(0);
 		permissions.unshift($);
-		if (F.unauthorized.apply(global, permissions)) {
-			self.finish = null;
-			self.cancel();
+		if (F.unauthorized.apply(global, permissions))
 			return;
-		}
 	}
 
 	var params = self.options.params || EMPTYOBJECT;
@@ -1362,7 +1386,16 @@ ActionCaller.prototype.finish = function(value) {
 	var self = this;
 	self.finish = null;
 	if (self.options.callback) {
-		self.options.callback(self.error.length ? self.error : null, value === undefined ? self.$.response : value);
+
+		if (self.options.callback instanceof Options) {
+			let $ = self.options.callback;
+			if (self.error.length)
+				$.invalid(self.error);
+			else
+				$.callback(value === undefined ? self.$.response : value);
+		} else
+			self.options.callback(self.error.length ? self.error : null, value === undefined ? self.$.response : value);
+
 		self.options.callback = null;
 	}
 };
