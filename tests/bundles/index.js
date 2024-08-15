@@ -8,9 +8,9 @@ require('../../test');
 
 // load web server and test app
 CONF.$imprint = false;
-F.http();
+F.http({ port: 3000 });
 
-var url = 'http://localhost:8000/';
+var url = 'http://localhost:5000/';
 var filename = 'openreports.bundle';
 var bundle_link = 'https://raw.githubusercontent.com/totaljs/flow/master/--bundles--/app.bundle';
 
@@ -21,8 +21,8 @@ ON('ready', function() {
 		var arr = [];
 
 		arr.push(function(resume) {
-			RESTBuilder.GET(url).exec(function(err, response) {
-				console.log(err, response);
+			RESTBuilder.GET(url).exec(function(err, response, output) {
+				console.log(err, output);
 				Test.print('From local', err === null ? null : 'App is not successfully started ');
 				PATH.unlink(PATH.root('bundles/' + filename), function() {
 					F.restart();
