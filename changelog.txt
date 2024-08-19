@@ -13,7 +13,7 @@
 - added `Image` global variable
 - added `Utils.filestreamer(filename, onbuffer(buffer, next), onend, [buffer_size])`
 - fix image bug in the `Image.measureWEBP()` method by [Marek Mraz](https://github.com/Mrazbb)
-- added `action.progress(fn)` and caller `$.progress(value)` for actions
+- added `action.status(fn)` for handling and `$.status(value)` for calling in actions
 
 ========================
 0.0.5

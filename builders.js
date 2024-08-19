@@ -134,7 +134,7 @@ Options.prototype.promisify = function(fn, a, b, c) {
 	});
 };
 
-Options.prototype.progress = function() {};
+Options.prototype.status = function() {};
 
 Options.prototype.publish = function(value) {
 	var self = this;
@@ -1256,8 +1256,8 @@ ActionCaller.prototype.params = function(value) {
 	return this;
 };
 
-ActionCaller.prototype.progress = function(fn) {
-	this.options.progress = fn;
+ActionCaller.prototype.status = function(fn) {
+	this.options.status = fn;
 	return this;
 };
 
@@ -1386,7 +1386,7 @@ ActionCaller.prototype.exec = function() {
 	} else
 		$.payload = payload;
 
-	$.progress = self.options.progress;
+	$.status = self.options.status;
 	action.action($, $.payload);
 };
 
