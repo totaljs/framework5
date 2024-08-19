@@ -134,6 +134,8 @@ Options.prototype.promisify = function(fn, a, b, c) {
 	});
 };
 
+Options.prototype.progress = function() {};
+
 Options.prototype.publish = function(value) {
 	var self = this;
 	var name = self.id;
@@ -1254,6 +1256,11 @@ ActionCaller.prototype.params = function(value) {
 	return this;
 };
 
+ActionCaller.prototype.progress = function(fn) {
+	this.options.progress = fn;
+	return this;
+};
+
 ActionCaller.prototype.exec = function() {
 
 	var self = this;
@@ -1379,6 +1386,7 @@ ActionCaller.prototype.exec = function() {
 	} else
 		$.payload = payload;
 
+	$.progress = self.options.progress;
 	action.action($, $.payload);
 };
 
