@@ -15,6 +15,7 @@
 - fix image bug in the `Image.measureWEBP()` method by [Marek Mraz](https://github.com/Mrazbb)
 - added `action.status(fn)` for handling and `$.status(value)` for calling in actions
 - added HTTP auto-redirect for `WebSocketClient`
+- added support for WebSocket redirections in the remote edit
 
 ========================
 0.0.5

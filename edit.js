@@ -26,6 +26,14 @@ exports.init = function(url) {
 			return;
 		}
 
+		if (msg.TYPE === 'redirect') {
+			if (msg.url) {
+				client.close(3001);
+				exports.init(msg.url);
+			}
+			return;
+		}
+
 		F.action('editor', msg).callback(function(err, response) {
 
 			if (err) {
