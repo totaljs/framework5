@@ -1272,6 +1272,11 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 
 	self.req.on('response', function(res) {
 
+		if (res.statusCode === 301 || res.statusCode === 302) {
+			self.connect(res.headers.location, self.protocol, self.origin);
+			return;
+		}
+
 		self.$events.error && self.emit('error', new Error('Unexpected server response (' + res.statusCode + ')'));
 
 		if (self.options.reconnectserver) {
