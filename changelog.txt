@@ -16,6 +16,7 @@
 - added `action.status(fn)` for handling and `$.status(value)` for calling in actions
 - added HTTP auto-redirect for `WebSocketClient`
 - added support for WebSocket redirections in the remote edit
+- fixed `CACHE.read()`
 
 ========================
 0.0.5
