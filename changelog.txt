@@ -17,6 +17,7 @@
 - added HTTP auto-redirect for `WebSocketClient`
 - added support for WebSocket redirections in the remote edit
 - fixed `CACHE.read()`
+- added a new argument `size {Number}` to the `WebSocket.on('message', function(client, msg, [size]))` event
 
 ========================
 0.0.5
