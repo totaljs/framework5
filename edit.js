@@ -16,15 +16,9 @@ exports.init = function(url) {
 	client.options.reconnect = 10000;
 	client.options.reconnectserver = true;
 
-	client.on('message', function(msg) {
+	var initilaized = false;
 
-		if (msg.TYPE === 'init') {
-			console.log(DIVIDER);
-			console.log(HEADER + ': Welcome to "' + msg.name + ' (' + msg.version + ')"');
-			console.log('> Project: "' + msg.project + '"');
-			console.log(DIVIDER);
-			return;
-		}
+	client.on('message', function(msg) {
 
 		if (msg.TYPE === 'redirect') {
 			if (msg.url) {
@@ -33,6 +27,18 @@ exports.init = function(url) {
 			}
 			return;
 		}
+
+		if (msg.TYPE === 'init') {
+			console.log(DIVIDER);
+			console.log(HEADER + ': Welcome to "' + msg.name + ' (' + msg.version + ')"');
+			console.log('> Project: "' + msg.project + '"');
+			console.log(DIVIDER);
+			initilaized = true;
+			return;
+		}
+
+		if (!initilaized)
+			return;
 
 		F.action('editor', msg).callback(function(err, response) {
 
@@ -52,6 +58,8 @@ exports.init = function(url) {
 	});
 
 	client.on('close', function(e) {
+
+		initilaized = false;
 
 		if (e === 4004) {
 			console.log(HEADER + ': 404 project not found');
