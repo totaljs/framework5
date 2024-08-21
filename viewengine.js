@@ -672,9 +672,10 @@ function querystring_encode(value, def, key) {
 View.prototype.href = function(key, value) {
 
 	var self = this;
+	var query = self.controller.query;
 
 	if (!arguments.length) {
-		let val = F.TUtils.toURLEncode(self.query);
+		let val = F.TUtils.toURLEncode(query);
 		return val ? '?' + val : '';
 	}
 
@@ -688,18 +689,21 @@ View.prototype.href = function(key, value) {
 
 		if (!str) {
 
-			obj = F.TUtils.copy(self.query);
+			obj = {};
 
-			for (var i = 2; i < arguments.length; i++)
+			for (let key in query)
+				obj[key] = query[key];
+
+			for (let i = 2; i < arguments.length; i++)
 				obj[arguments[i]] = undefined;
 
 			obj[key] = '\0';
 
-			for (var m in obj) {
+			for (let m in obj) {
 				var val = obj[m];
 				if (val !== undefined) {
 					if (val instanceof Array) {
-						for (var j = 0; j < val.length; j++)
+						for (let j = 0; j < val.length; j++)
 							str += (str ? '&' : '') + m + '=' + (key === m ? '\0' : querystring_encode(val[j]));
 					} else
 						str += (str ? '&' : '') + m + '=' + (key === m ? '\0' : querystring_encode(val));
@@ -708,22 +712,25 @@ View.prototype.href = function(key, value) {
 			self.repository[cachekey] = str;
 		}
 
-		str = str.replace('\0', querystring_encode(value, self.query[key], key));
+		str = str.replace('\0', querystring_encode(value, query[key], key));
 
-		for (var i = 2; i < arguments.length; i++) {
-			var beg = str.indexOf(arguments[i] + '=');
+		for (let i = 2; i < arguments.length; i++) {
+			let beg = str.indexOf(arguments[i] + '=');
 			if (beg === -1)
 				continue;
-			var end = str.indexOf('&', beg);
+			let end = str.indexOf('&', beg);
 			str = str.substring(0, beg) + str.substring(end === -1 ? str.length : end + 1);
 		}
 
-		return str ? '?' + str : '';
+		return str ? ('?' + str) : '';
 	}
 
 	if (value) {
-		obj = F.TUtils.copy(self.query);
-		F.TUtils.extend(obj, value);
+		obj = {};
+		for (let key in query)
+			obj[key] = query[key];
+		for (let key in value)
+			obj[key] = value[key];
 	}
 
 	if (value != null)
@@ -734,7 +741,7 @@ View.prototype.href = function(key, value) {
 	if (value === undefined && type === 'string')
 		obj += (obj ? '&' : '') + key;
 
-	return self.url + (obj ? '?' + obj : '');
+	return self.controller.url + (obj ? '?' + obj : '');
 };
 
 function makehtmlmeta(self) {

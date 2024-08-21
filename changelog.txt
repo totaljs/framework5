@@ -18,6 +18,7 @@
 - added support for WebSocket redirections in the remote edit
 - fixed `CACHE.read()`
 - added a new argument `size {Number}` to the `WebSocket.on('message', function(client, msg, [size]))` event
+- fixed `@{href()}` command in the ViewEngine
 
 ========================
 0.0.5
