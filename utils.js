@@ -3218,7 +3218,7 @@ SP.parseConfig = function(def, onerr) {
 
 		index = str.indexOf(':');
 		if (index === -1) {
-			index = str.indexOf('\t:');
+			index = str.indexOf('=');
 			if (index === -1)
 				continue;
 		}

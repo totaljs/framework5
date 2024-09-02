@@ -19,6 +19,7 @@
 - fixed `CACHE.read()`
 - added a new argument `size {Number}` to the `WebSocket.on('message', function(client, msg, [size]))` event
 - fixed `@{href()}` command in the ViewEngine
+- improved config & resource parser by adding support for `=` between key and value and for `#` as a comment
 
 ========================
 0.0.5

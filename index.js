@@ -650,7 +650,7 @@ F.loadresource = function(name, value) {
 
 		let index = line.indexOf(':');
 		if (index === -1) {
-			index = line.indexOf('\t:');
+			index = line.indexOf('=');
 			if (index === -1)
 				continue;
 		}
