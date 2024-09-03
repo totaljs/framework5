@@ -591,6 +591,7 @@ function View(controller) {
 	self.language = controller?.language || '';
 	self.repository = { layout: 'layout' };
 	self.islayout = false;
+	self.url = controller?.url || '';
 }
 
 View.prototype.ota = function(obj) {
@@ -857,9 +858,9 @@ View.prototype.section = function(name, value, replace) {
 	return self;
 };
 
-View.prototype.url = function(hostname = false) {
+View.prototype.hostname = function(url) {
 	var self = this;
-	return hostname ? (self.controller ? self.controller.hostname(self.controller.url) : '') : (self.controller ? self.controller.url : '');
+	return self.controller ? self.controller.hostname(url == null ? self.controller.url : url) : (url || '');
 };
 
 View.prototype.set = function() {
