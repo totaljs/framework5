@@ -39,7 +39,7 @@ function Controller(req, res) {
 	ctrl.ext = ctrl.uri.ext;
 	ctrl.split = ctrl.uri.split;
 	ctrl.split2 = [];
-	ctrl.url = ctrl.uri.key;
+	ctrl.url = ctrl.uri.pathname;
 	ctrl.released = false;
 	ctrl.downloaded = false;
 	ctrl.protocol = req.connection.encrypted || (req.headers['x-forwarded-protocol'] || req.headers['x-forwarded-proto']) === 'https' ? 'https' : 'http';
@@ -1032,6 +1032,10 @@ Controller.prototype.$route = function() {
 	} else
 		ctrl.fallback(404);
 
+};
+
+Controller.prototype.href = function(key, value) {
+	return F.TViewEngine.prototype.href.call(this, key, value);
 };
 
 function readfile(filename, callback) {

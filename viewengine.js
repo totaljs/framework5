@@ -592,6 +592,7 @@ function View(controller) {
 	self.repository = { layout: 'layout' };
 	self.islayout = false;
 	self.url = controller?.url || '';
+	self.query = controller?.query || {};
 }
 
 View.prototype.ota = function(obj) {
@@ -656,29 +657,22 @@ View.prototype.keywords = function(value) {
 	return '';
 };
 
-function querystring_encode(value, def, key) {
-
-	if (value instanceof Array) {
-		var tmp = '';
-		for (var i = 1; i < value.length; i++)
-			tmp += (tmp ? '&' : '') + key + '=' + querystring_encode(value[i], def);
-		return querystring_encode(value[0], def) + (tmp ? tmp : '');
-	}
-
-	return value != null ? value instanceof Date ? encodeURIComponent(value.format()) : typeof(value) === 'string' ? encodeURIComponent(value) : (value + '') : def || '';
-}
-
+// @{href({ key1: 1, key2: 2 })}
+// @{href('key', 'value')}
 // @{href({ key1: 1, key2: 2 })}
 // @{href('key', 'value')}
 View.prototype.href = function(key, value) {
 
 	var self = this;
-	var query = self.controller.query;
+	var query = self.query;
 
 	if (!arguments.length) {
 		let val = F.TUtils.toURLEncode(query);
 		return val ? '?' + val : '';
 	}
+
+	if (!self.repository)
+		self.repository = {};
 
 	var type = typeof(key);
 	var obj;
@@ -742,8 +736,20 @@ View.prototype.href = function(key, value) {
 	if (value === undefined && type === 'string')
 		obj += (obj ? '&' : '') + key;
 
-	return self.controller.url + (obj ? '?' + obj : '');
+	return self.url + (obj ? '?' + obj : '');
 };
+
+function querystring_encode(value, def, key) {
+
+	if (value instanceof Array) {
+		var tmp = '';
+		for (var i = 1; i < value.length; i++)
+			tmp += (tmp ? '&' : '') + key + '=' + querystring_encode(value[i], def);
+		return querystring_encode(value[0], def) + (tmp ? tmp : '');
+	}
+
+	return value != null ? value instanceof Date ? encodeURIComponent(value.format()) : typeof(value) === 'string' ? encodeURIComponent(value) : (value + '') : def || '';
+}
 
 function makehtmlmeta(self) {
 

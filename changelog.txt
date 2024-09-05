@@ -22,6 +22,7 @@
 - improved config & resource parser by adding support for `=` between key and value and for `#` as a comment
 - removed `@{url()}` method and added `@{url}` property
 - added `@{hostname([url])}`
+- added `controller.href()` method
 
 ========================
 0.0.5
