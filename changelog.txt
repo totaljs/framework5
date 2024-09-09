@@ -23,6 +23,7 @@
 - removed `@{url()}` method and added `@{url}` property
 - added `@{hostname([url])}`
 - added `controller.href()` method
+- extended `HTMLParser` by adding selector for prefixes, example: `node.find('xsd:')`
 
 ========================
 0.0.5

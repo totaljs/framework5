@@ -67,7 +67,12 @@ function parseRule(selector, output) {
 	}
 
 	selector = selector.trim();
-	rule.tagName = selector[0] === '*' ? '' : selector.toUpperCase();
+
+	if (selector[selector.length - 1] === ':') {
+		rule.prefix = selector.toUpperCase();
+		rule.tagName = '';
+	} else
+		rule.tagName = selector[0] === '*' ? '' : selector.toUpperCase();
 
 	return rule;
 }
@@ -166,6 +171,9 @@ HTMLElement.prototype.find = function(selector, reverse) {
 			var skip = false;
 
 			if (rule.tagName && rule.tagName !== node.tagName)
+				skip = true;
+
+			if (rule.prefix && rule.prefix !== node.prefix)
 				skip = true;
 
 			if (rule.attrs.length && !skip) {
@@ -566,6 +574,11 @@ function parseHTML(html, trim, onerror, isxml) {
 		}
 
 		dom.tagName = tag.toUpperCase();
+		index = dom.tagName.indexOf(':');
+
+		if (index !== -1)
+			dom.prefix = dom.tagName.substring(0, index + 1);
+
 		dom.children = [];
 		dom.attrs = node ? parseAttrs(node) : {};
 		dom.raw = tag;
