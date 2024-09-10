@@ -498,7 +498,7 @@ function parseHTML(html, trim, onerror, isxml) {
 	};
 
 	var parseAttrs = function(str) {
-		var attrs = str.match(/[a-z-0-9A-Z\:]+(=("|').*?("|'))?/g);
+		var attrs = str.match(/[a-z-0-9A-Z\:_-]+(=("|').*?("|'))?/g);
 		var obj = {};
 		if (attrs) {
 			for (var m of attrs) {
