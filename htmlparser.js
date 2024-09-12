@@ -447,6 +447,7 @@ HTMLElement.prototype.toString = HTMLElement.prototype.html = function(formatted
 						builder.push(indent + item.textContent);
 					break;
 				default:
+					tag = item.raw;
 					if (item.unpair) {
 						builder.push(indent + '<' + tag + (attrs.length ? (' ' + attrs.join(' ')) : '') + ' />');
 					} else {
@@ -588,7 +589,10 @@ function parseHTML(html, trim, onerror, isxml) {
 		str = str.substring(end + 1);
 
 		// Unpair tags
-		if (!isxml) {
+		if (isxml) {
+			if (dom.unpair)
+				return str;
+		} else {
 			switch (dom.tagName) {
 				case 'BR':
 				case 'HR':
