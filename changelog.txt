@@ -27,6 +27,7 @@
 - fixed parsing attributes with the `_` character in the `HTMLParser`
 - fixed parsing unpair XML elements in the `HTMLParser`
 - improved Markdown parser
+- added a test functionality for testing Flow components
 
 ========================
 0.0.5

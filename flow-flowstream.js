@@ -2648,8 +2648,10 @@ function MAKEFLOWSTREAM(meta) {
 
 	var sendstatusforce = function(instance) {
 		instance.$statusdelay = null;
-		if (instance.$status != null && flow.proxy.online)
+		if (instance.$status != null) {
 			flow.proxy.online && flow.proxy.send({ TYPE: 'flow/status', id: instance.id, data: instance.$status });
+			flow.$events.status && flow.emit('status', instance, instance.$status);
+		}
 	};
 
 	// component.status() will execute this method
@@ -2663,22 +2665,24 @@ function MAKEFLOWSTREAM(meta) {
 		if (delay) {
 			if (!instance.$statusdelay)
 				instance.$statusdelay = setTimeout(sendstatusforce, delay || 1000, instance);
-		} else if (instance.$status != null && flow.proxy.online)
-			flow.proxy.online && flow.proxy.send({ TYPE: 'flow/status', id: instance.id, data: instance.$status });
+		} else
+			sendstatusforce();
 	};
 
 	// component.dashboard() will execute this method
-	flow.ondashboard = function(status) {
+	flow.ondashboard = function(data) {
 
 		var instance = this;
 
-		if (status == null)
-			status = instance.$dashboard;
+		if (data == null)
+			data = instance.$dashboard;
 		else
-			instance.$dashboard = status;
+			instance.$dashboard = data;
 
-		if (status != null && flow.proxy.online)
-			flow.proxy.online && flow.proxy.send({ TYPE: 'flow/dashboard', id: instance.id, data: status });
+		if (data != null) {
+			flow.proxy.online && flow.proxy.send({ TYPE: 'flow/dashboard', id: instance.id, data: data });
+			flow.$events.dashboard && flow.emit('dashboard', instance, instance.data);
+		}
 
 	};
 
