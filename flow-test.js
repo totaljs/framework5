@@ -76,7 +76,8 @@ exports.load = function(name, source, config, init) {
 	};
 
 	Test.trigger = function(data) {
-		Flow.test.component.trigger && Flow.test.component.trigger(data);
+		var instances = Test.flow.flow.meta.flow;
+		instances.component.trigger && instances.component.trigger(data);
 	};
 
 	Test.reconfigure = function(value) {
