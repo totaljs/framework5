@@ -2666,7 +2666,7 @@ function MAKEFLOWSTREAM(meta) {
 			if (!instance.$statusdelay)
 				instance.$statusdelay = setTimeout(sendstatusforce, delay || 1000, instance);
 		} else
-			sendstatusforce();
+			sendstatusforce(instance);
 	};
 
 	// component.dashboard() will execute this method
