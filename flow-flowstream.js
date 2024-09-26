@@ -1006,6 +1006,7 @@ function init_current(meta, callback, nested) {
 		}
 	}
 
+	flow.name = meta.name || meta.id;
 	flow.env = meta.env;
 	flow.origin = meta.origin;
 	flow.proxypath = meta.proxypath || '';
@@ -1607,6 +1608,7 @@ function init_worker(meta, type, callback) {
 				break;
 
 			case 'stream/save':
+				worker.$schema.name = msg.data.name;
 				worker.$schema.components = msg.data.components;
 				worker.$schema.design = msg.data.design;
 				worker.$schema.variables = msg.data.variables;
@@ -2707,6 +2709,7 @@ function MAKEFLOWSTREAM(meta) {
 
 	flow.proxy.refreshmeta = function() {
 
+		flow.name = flow.$schema.name || flow.$schema.id;
 		flow.origin = flow.$schema.origin;
 		flow.proxypath = flow.$schema.proxypath || '';
 
