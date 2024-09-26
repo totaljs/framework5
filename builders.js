@@ -1328,9 +1328,11 @@ ActionCaller.prototype.exec = function() {
 		}
 	};
 
-	if (action.user && !$.user) {
-		$.invalid(401);
-		return;
+	if (action.user != null) {
+		if ((action.user && !user) || (!action.user && user)) {
+			$.invalid(401);
+			return;
+		}
 	}
 
 	if (action.sa) {
