@@ -1961,3 +1961,5 @@ exports.createclient = function(callback) {
 	callback && callback(client);
 	return client;
 };
+
+exports.Controller = Controller;

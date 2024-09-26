@@ -28,6 +28,7 @@
 - fixed parsing unpair XML elements in the `HTMLParser`
 - improved Markdown parser
 - added a test functionality for testing Flow components
+- added `F.extend(prototype, name, fn)` for extending Total.js prototypes
 
 ========================
 0.0.5

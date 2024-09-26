@@ -2062,3 +2062,6 @@ exports.create = function(id, errorhandler) {
 	F.flowstreams[id] = flowstream;
 	return flowstream;
 };
+
+exports.Message = Message;
+exports.FlowStream = FlowStream.prototype;

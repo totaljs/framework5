@@ -2397,6 +2397,59 @@ F.backup = function(filename, files, callback, filter) {
 	});
 };
 
+F.extend = function(proto, name, fn) {
+
+	let target = null;
+
+	switch(proto.toLowerCase().replace(/\-\_\s/g, '')) {
+		case '$':
+		case 'options':
+			target = F.TBuilders.Options;
+			break;
+		case 'error':
+		case 'errorbuilder':
+			target = F.TBuilders.ErrorBuilder;
+			break;
+		case 'controller':
+			target = [F.TController.Controller, F.TWebSocket.Controller];
+			break;
+		case 'flowstream':
+			target = F.TFlowStream.FlowStream;
+			break;
+		case 'mail':
+		case 'email':
+			target = F.TMail.Message;
+			break;
+		case 'restbuilder':
+			target = F.TBuilders.RESTBuilder;
+			break;
+		case 'message':
+		case 'flowstreammessage':
+			target = F.TFlowStream.Message;
+			break;
+		case 'view':
+		case 'viewengine':
+			target = F.TViewEngine.View;
+			break;
+		case 'querybuilder':
+			target = T.TQueryBuilder.QueryBuilder;
+			break;
+		case 'database':
+			target = T.TQueryBuilder.Controller;
+			break;
+	}
+
+	if (target) {
+		if (target instanceof Array) {
+			for (let m of target)
+				m.prototype[name] = fn;
+		} else
+			target.prototype[name] = fn;
+		return true;
+	}
+
+};
+
 F.restart = function() {
 	process.send && process.send('total:restart');
 };
@@ -2748,6 +2801,7 @@ process.on('message', function(msg, h) {
 	F.TUtils = require('./utils');
 	F.TRouting = require('./routing');
 	F.TBuilders = require('./builders');
+	F.TController = require('./controller');
 	F.TViewEngine = require('./viewengine');
 	F.TMinificators = require('./minificators');
 	F.TWebSocket = require('./websocket');
