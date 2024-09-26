@@ -1329,7 +1329,7 @@ ActionCaller.prototype.exec = function() {
 	};
 
 	if (action.user != null) {
-		if ((action.user && !user) || (!action.user && user)) {
+		if ((action.user && !$.user) || (!action.user && $.user)) {
 			$.invalid(401);
 			return;
 		}
