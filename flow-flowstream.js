@@ -502,8 +502,13 @@ Instance.prototype.add = function(id, body, callback) {
 		if (callback)
 			CALLBACKS[callbackid] = { id: self.flow.id, callback: callback };
 		self.flow.postMessage2({ TYPE: 'stream/add', id: id, data: body, callbackid: callbackid });
-	} else
-		self.flow.add(id, body, callback, ASFILES);
+	} else {
+		self.flow.add(id, body, function(err) {
+			callback && callback(err);
+			self.flow.redraw();
+			self.flow.save();
+		}, ASFILES);
+	}
 	return self;
 };
 
@@ -1222,6 +1227,7 @@ function init_current(meta, callback, nested) {
 						msg.error = err ? err.toString() : null;
 						if (msg.callbackid !== -1)
 							Parent.postMessage(msg);
+						flow.redraw();
 						flow.save();
 					}, ASFILES);
 					break;
