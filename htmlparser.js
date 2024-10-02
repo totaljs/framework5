@@ -641,8 +641,6 @@ function parseHTML(html, trim, onerror, isxml) {
 		if (str && str.indexOf('<') === -1) {
 			if (trim)
 				str = str.trim();
-			if (str)
-				parent.children.push(makeText(parent, str));
 		}
 
 		return str;
