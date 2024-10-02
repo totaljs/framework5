@@ -4416,6 +4416,30 @@ function filesizehelper(number, count) {
 
 var AP = Array.prototype;
 
+AP.group = function(name) {
+
+	let groups = {};
+
+	for (let m of this) {
+		let key = m[name] || '__';
+		let tmp = groups[key];
+		if (tmp)
+			tmp.push(m);
+		else
+			groups[key] = [m];
+	}
+
+	let output = [];
+
+	for (let key in groups) {
+		let id = key === '__' ? '' : key;
+		output.push({ name: id, items: groups[key] });
+	}
+
+	output.quicksort('name');
+	return output;
+};
+
 AP.take = function(count) {
 	var arr = [];
 	var self = this;

@@ -31,6 +31,7 @@
 - added `F.extend(prototype, name, fn)` for extending Total.js prototypes
 - fixed assigning the `name` field in FlowStream
 - fixed prerendering UI after manual using `Flow.add()` method
+- added `Array.group(key)` method
 
 ========================
 0.0.5
