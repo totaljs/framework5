@@ -485,18 +485,9 @@ function removeComments(html) {
 	return html;
 }
 
-var CC = 0;
-
 function parseHTML(html, trim, onerror, isxml) {
 
 	var makeText = function(parent, str) {
-
-		if (str === 'hello world 5')
-			CC++;
-
-		if (CC === 2)
-			throw new Error('FET');
-
 		var obj = new HTMLElement();
 		obj.xml = isxml;
 		obj.tagName = 'TEXT';
