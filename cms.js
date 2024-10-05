@@ -342,7 +342,7 @@ exports.run = function(html) {
 	return instance;
 };
 
-// Parse widget from the HTML
+// Parse all widgets from the Total.js CMS HTML
 exports.widgets = function(html) {
 
 	let arr = html.match(/data-cms=".*?"/g) || EMPTYARRAY;
