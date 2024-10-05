@@ -312,13 +312,13 @@ exports.run = function(html) {
 	if (meta.html)
 		meta.html = meta.html.replace(REG_CLASS, 'w-' + uid);
 
-	if (instances.dependencies) {
+	if (instance.dependencies) {
 
-		if (typeof(instances.dependencies) === 'string')
-			instances.dependencies = instances.dependencies.split(/,|;/).trim();
+		if (typeof(instance.dependencies) === 'string')
+			instance.dependencies = instance.dependencies.split(/,|;/).trim();
 
 		let arr = [];
-		for (let m of instances.dependencies) {
+		for (let m of instance.dependencies) {
 			if (m.includes('<'))
 				arr.push(m);
 			else if (m.endsWith('.js'))
@@ -327,7 +327,7 @@ exports.run = function(html) {
 				arr.push('<link rel="stylesheet" href="{0}">'.format(m));
 		}
 
-		instances.dependencies = arr.join('');
+		instance.dependencies = arr.join('');
 	}
 
 	let index = (meta.html || '').indexOf('<scr' + 'ipt>');
