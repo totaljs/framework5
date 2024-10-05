@@ -2292,7 +2292,7 @@ function string_hash(s, convert) {
 	return hash;
 }
 
-SP.parseComponent = function(tags) {
+SP.parseElements = SP.parseComponent = function(tags) {
 
 	var html = this;
 	var beg = -1;

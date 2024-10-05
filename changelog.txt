@@ -33,6 +33,7 @@
 - fixed prerendering UI after manual using `Flow.add()` method
 - added `Array.group(key)` method
 - fixed `HTMLParser` by [Marek Mraz](https://github.com/Mrazbb)
+- added a new alias `String.parseElements()` to `String.parseComponent()`
 
 ========================
 0.0.5
