@@ -34,6 +34,7 @@
 - added `Array.group(key)` method
 - fixed `HTMLParser` by [Marek Mraz](https://github.com/Mrazbb)
 - added a new alias `String.parseElements()` to `String.parseComponent()`
+- added a new method `CMS.run(widget_html)`
 
 ========================
 0.0.5
