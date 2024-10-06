@@ -36,6 +36,7 @@
 - added a new alias `String.parseElements()` to `String.parseComponent()`
 - added a new method `CMS.run(widget_html)`
 - added a support for middleware for actions
+- added a new method `U.paginate(page, pages, [max])`
 
 ========================
 0.0.5
