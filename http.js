@@ -4,8 +4,6 @@
 
 'use strict';
 
-const TController = require('./controller');
-
 exports.listen = function(req, res) {
 
 	// req.ip
@@ -29,7 +27,7 @@ exports.listen = function(req, res) {
 		return;
 	}
 
-	var ctrl = new TController.Controller(req, res);
+	var ctrl = new F.TController.Controller(req, res);
 
 	if (F.paused.length) {
 		ctrl.fallback(999);

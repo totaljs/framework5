@@ -2292,7 +2292,7 @@ function string_hash(s, convert) {
 	return hash;
 }
 
-SP.parseComponent = function(tags) {
+SP.parseElements = SP.parseComponent = function(tags) {
 
 	var html = this;
 	var beg = -1;
@@ -3218,7 +3218,7 @@ SP.parseConfig = function(def, onerr) {
 
 		index = str.indexOf(':');
 		if (index === -1) {
-			index = str.indexOf('\t:');
+			index = str.indexOf('=');
 			if (index === -1)
 				continue;
 		}
@@ -4415,6 +4415,36 @@ function filesizehelper(number, count) {
 }
 
 var AP = Array.prototype;
+
+AP.group = function(name) {
+
+	let groups = {};
+
+	for (let m of this) {
+		let key = m[name];
+
+		if (key != null)
+			key = key.toString();
+		else
+			key = '__';
+
+		let tmp = groups[key];
+		if (tmp)
+			tmp.push(m);
+		else
+			groups[key] = [m];
+	}
+
+	let output = [];
+
+	for (let key in groups) {
+		let id = key === '__' ? '' : key;
+		output.push({ name: id, items: groups[key] });
+	}
+
+	output.quicksort('name');
+	return output;
+};
 
 AP.take = function(count) {
 	var arr = [];
@@ -6451,4 +6481,50 @@ exports.uidr = function() {
 	}
 
 	return builder + RANDOM_STRING[sum] + 'r'; // "r" version
+};
+
+exports.paginate = function(page, pages, max) {
+
+	if (!page)
+		page = 1;
+
+	let response = {};
+
+	response.page = page;
+	response.count = pages;
+	response.next = (page + 1) < pages ? (page + 1) : null;
+	response.prev = (page - 1) > 0 ? (page - 1) : null;
+	response.first = 1;
+	response.last = pages;
+	response.visible = pages > 1;
+	response.pages = [];
+
+	if (!max) {
+		for (let i = page; i < pages + 1; i++)
+			response.pages.push(i);
+		return response;
+	}
+
+	let half = Math.floor(max / 2);
+	let pageFrom = page - half;
+	let pageTo = page + half;
+	let plus = 0;
+
+	if (pageFrom <= 0) {
+		plus = Math.abs(pageFrom);
+		pageFrom = 1;
+		pageTo += plus;
+	}
+
+	if (pageTo >= pages) {
+		pageTo = pages;
+		pageFrom = pages - max;
+		if (pageFrom <= 0)
+			pageFrom = 1;
+	}
+
+	for (let i = pageFrom; i < (pageTo + 1); i++)
+		response.pages.push(i);
+
+	return response;
 };

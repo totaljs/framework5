@@ -13,6 +13,30 @@
 - added `Image` global variable
 - added `Utils.filestreamer(filename, onbuffer(buffer, next), onend, [buffer_size])`
 - fix image bug in the `Image.measureWEBP()` method by [Marek Mraz](https://github.com/Mrazbb)
+- added `action.status(fn)` for handling and `$.status(value)` for calling in actions
+- added HTTP auto-redirect for `WebSocketClient`
+- added support for WebSocket redirections in the remote edit
+- fixed `CACHE.read()`
+- added a new argument `size {Number}` to the `WebSocket.on('message', function(client, msg, [size]))` event
+- fixed `@{href()}` command in the ViewEngine
+- improved config & resource parser by adding support for `=` between key and value and for `#` as a comment
+- removed `@{url()}` method and added `@{url}` property
+- added `@{hostname([url])}`
+- added `controller.href()` method
+- extended `HTMLParser` by adding selector for prefixes, example: `node.find('xsd:')`
+- fixed parsing attributes with the `_` character in the `HTMLParser`
+- fixed parsing unpair XML elements in the `HTMLParser`
+- improved Markdown parser
+- added a test functionality for testing Flow components
+- added `F.extend(prototype, name, fn)` for extending Total.js prototypes
+- fixed assigning the `name` field in FlowStream
+- fixed prerendering UI after manual using `Flow.add()` method
+- added `Array.group(key)` method
+- fixed `HTMLParser` by [Marek Mraz](https://github.com/Mrazbb)
+- added a new alias `String.parseElements()` to `String.parseComponent()`
+- added a new method `CMS.run(widget_html)`
+- added a support for middleware for actions
+- added a new method `U.paginate(page, pages, [max])`
 
 ========================
 0.0.5

@@ -134,6 +134,8 @@ Options.prototype.promisify = function(fn, a, b, c) {
 	});
 };
 
+Options.prototype.status = function() {};
+
 Options.prototype.publish = function(value) {
 	var self = this;
 	var name = self.id;
@@ -1190,7 +1192,7 @@ exports.newaction = function(name, obj) {
 		obj.cache = parseactioncache(obj, obj.cache);
 
 	if (obj.middleware)
-		obj.middleware = obj.middleware.replace(/,/g, ' ').replace(/\s{2,}/, ' ');
+		obj.middleware = obj.middleware.replace(/,|\|/g, ' ').replace(/\s{2,}/, ' ').split(' ').trim();
 
 	obj.remove = function() {
 		obj.route && obj.route.remove();
@@ -1251,6 +1253,11 @@ ActionCaller.prototype.debug = function() {
 
 ActionCaller.prototype.params = function(value) {
 	this.options.params = value;
+	return this;
+};
+
+ActionCaller.prototype.status = function(fn) {
+	this.options.status = fn;
 	return this;
 };
 
@@ -1321,9 +1328,11 @@ ActionCaller.prototype.exec = function() {
 		}
 	};
 
-	if (action.user && !$.user) {
-		$.invalid(401);
-		return;
+	if (action.user != null) {
+		if ((action.user && !$.user) || (!action.user && $.user)) {
+			$.invalid(401);
+			return;
+		}
 	}
 
 	if (action.sa) {
@@ -1379,7 +1388,20 @@ ActionCaller.prototype.exec = function() {
 	} else
 		$.payload = payload;
 
-	action.action($, $.payload);
+	$.status = self.options.status;
+
+	if (action.middleware) {
+		action.middleware.wait(function(name, next) {
+			let fn = F.routes.middleware[name];
+			if (fn) {
+				fn($, next);
+			} else {
+				Total.error('The middleware "{0}" not found.'.format(name), action.id, $.url);
+				next();
+			}
+		}, () => action.action($, $.payload));
+	} else
+		action.action($, $.payload);
 };
 
 ActionCaller.prototype.finish = function(value) {

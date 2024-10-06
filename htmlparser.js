@@ -67,7 +67,12 @@ function parseRule(selector, output) {
 	}
 
 	selector = selector.trim();
-	rule.tagName = selector[0] === '*' ? '' : selector.toUpperCase();
+
+	if (selector[selector.length - 1] === ':') {
+		rule.prefix = selector.toUpperCase();
+		rule.tagName = '';
+	} else
+		rule.tagName = selector[0] === '*' ? '' : selector.toUpperCase();
 
 	return rule;
 }
@@ -166,6 +171,9 @@ HTMLElement.prototype.find = function(selector, reverse) {
 			var skip = false;
 
 			if (rule.tagName && rule.tagName !== node.tagName)
+				skip = true;
+
+			if (rule.prefix && rule.prefix !== node.prefix)
 				skip = true;
 
 			if (rule.attrs.length && !skip) {
@@ -439,6 +447,7 @@ HTMLElement.prototype.toString = HTMLElement.prototype.html = function(formatted
 						builder.push(indent + item.textContent);
 					break;
 				default:
+					tag = item.raw;
 					if (item.unpair) {
 						builder.push(indent + '<' + tag + (attrs.length ? (' ' + attrs.join(' ')) : '') + ' />');
 					} else {
@@ -490,7 +499,7 @@ function parseHTML(html, trim, onerror, isxml) {
 	};
 
 	var parseAttrs = function(str) {
-		var attrs = str.match(/[a-z-0-9A-Z\:]+(=("|').*?("|'))?/g);
+		var attrs = str.match(/[a-z-0-9A-Z\:_-]+(=("|').*?("|'))?/g);
 		var obj = {};
 		if (attrs) {
 			for (var m of attrs) {
@@ -566,6 +575,11 @@ function parseHTML(html, trim, onerror, isxml) {
 		}
 
 		dom.tagName = tag.toUpperCase();
+		index = dom.tagName.indexOf(':');
+
+		if (index !== -1)
+			dom.prefix = dom.tagName.substring(0, index + 1);
+
 		dom.children = [];
 		dom.attrs = node ? parseAttrs(node) : {};
 		dom.raw = tag;
@@ -575,7 +589,10 @@ function parseHTML(html, trim, onerror, isxml) {
 		str = str.substring(end + 1);
 
 		// Unpair tags
-		if (!isxml) {
+		if (isxml) {
+			if (dom.unpair)
+				return str;
+		} else {
 			switch (dom.tagName) {
 				case 'BR':
 				case 'HR':
@@ -641,8 +658,9 @@ function parseHTML(html, trim, onerror, isxml) {
 		if (str && str.indexOf('<') === -1) {
 			if (trim)
 				str = str.trim();
-			if (str)
-				parent.children.push(makeText(parent, str));
+
+			// Commented because it inserts the same textContent twice
+			// str && parent.children.push(makeText(parent, str));
 		}
 
 		return str;

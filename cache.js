@@ -12,7 +12,7 @@ exports.set = function(key, value, expire = '5 minutes') {
 exports.read = exports.get = function(key, def) {
 	var item = F.temporary.cache[key];
 	global.NOW = new Date();
-	if (item && item.expire < global.NOW)
+	if (item && item.expire > global.NOW)
 		return item.value;
 	else
 		return def;

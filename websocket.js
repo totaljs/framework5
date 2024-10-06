@@ -411,14 +411,15 @@ Controller.prototype.decode = function() {
 
 	var ctrl = this;
 	var data = ctrl.current.body;
+	var size = data.length;
 
 	F.stats.performance.message++;
-	F.stats.performance.download += data.length / 1024 / 1024;
+	F.stats.performance.download += size / 1024 / 1024;
 
 	switch (ctrl.datatype) {
 
 		case 'binary':
-			ctrl.parent.$events.message && ctrl.parent.emit('message', ctrl, data);
+			ctrl.parent.$events.message && ctrl.parent.emit('message', ctrl, data, size);
 			break;
 
 		case 'json':
@@ -440,7 +441,7 @@ Controller.prototype.decode = function() {
 					tmp = tmp.replace(REG_EMPTYBUFFER, '');
 
 				if (tmp !== undefined && ctrl.parent.$events.message)
-					ctrl.parent.emit('message', this, tmp);
+					ctrl.parent.emit('message', this, tmp, size);
 			}
 			break;
 
@@ -458,7 +459,7 @@ Controller.prototype.decode = function() {
 			if (REG_EMPTYBUFFER_TEST.test(data))
 				data = data.replace(REG_EMPTYBUFFER, '');
 
-			ctrl.parent.$events.message && ctrl.parent.emit('message', ctrl, data);
+			ctrl.parent.$events.message && ctrl.parent.emit('message', ctrl, data, size);
 			break;
 	}
 
@@ -1272,6 +1273,11 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 
 	self.req.on('response', function(res) {
 
+		if (res.statusCode === 301 || res.statusCode === 302) {
+			self.connect(res.headers.location, self.protocol, self.origin);
+			return;
+		}
+
 		self.$events.error && self.emit('error', new Error('Unexpected server response (' + res.statusCode + ')'));
 
 		if (self.options.reconnectserver) {
@@ -1529,13 +1535,14 @@ WebSocketClient.prototype.decode = function() {
 
 	var self = this;
 	var data = self.current.body;
+	var size = data.length;
 
 	F.stats.performance.message++;
 
 	switch (self.options.type) {
 
 		case 'binary':
-			self.emit('message', data);
+			self.emit('message', data, size);
 			break;
 
 		case 'json':
@@ -1552,7 +1559,7 @@ WebSocketClient.prototype.decode = function() {
 			if (data.isJSON()) {
 				var tmp = data.parseJSON(true);
 				if (tmp !== undefined)
-					self.emit('message', tmp);
+					self.emit('message', tmp, size);
 			}
 			break;
 
@@ -1567,7 +1574,7 @@ WebSocketClient.prototype.decode = function() {
 			if (self.options.encrypt)
 				data = F.TUtils.decrypt_data(data, self.options.encrypt);
 
-			self.emit('message', data);
+			self.emit('message', data, size);
 			break;
 	}
 
@@ -1954,3 +1961,5 @@ exports.createclient = function(callback) {
 	callback && callback(client);
 	return client;
 };
+
+exports.Controller = Controller;

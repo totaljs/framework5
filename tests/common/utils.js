@@ -1314,7 +1314,7 @@ Test.push('Array.prototypes', function(next) {
 	response = value.findValue(property, val, path);
 	Test.print('Array.findValue() - Test 1', correct !== response ? 'Test failed' : null);
 
-		// Test 1: Find value at 'quantity' path where fruit is 'apple' in the array of objects
+	// Test 1: Find value at 'quantity' path where fruit is 'apple' in the array of objects
 	value = [{ fruit: 'orange', quantity: 2 },{ fruit: 'apple', quantity: 5 },{ fruit: 'banana', quantity: 3 }];
 
 	var property = 'fruit';
@@ -1396,9 +1396,14 @@ Test.push('Array.prototypes', function(next) {
 	condition = function(item) {
 		return item.age === 30;
 	};
+
 	correct = [{ name: 'Alice', age: 25 },{ name: 'Bob', age: 35 }];
 	response = value.remove(condition);
 	Test.print('Array.remove() - Test 3', JSON.stringify(correct) !== JSON.stringify(response) ? 'Test failed' : null);
+
+	value = [{ name: 'A' },{ name: 'B' },{ name: 'A' },{ name: 'A' },{ name: '' }];
+	response = value.group('name');
+	Test.print('Array.group()', !response[0].name && response[1].name === 'A' && response[1].items.length === 3  ? null : 'Test failed');
 
 	// Test 1: Wait for each element to be processed, then call the response
 	value = [1, 2, 3, 4, 5];

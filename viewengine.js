@@ -591,6 +591,8 @@ function View(controller) {
 	self.language = controller?.language || '';
 	self.repository = { layout: 'layout' };
 	self.islayout = false;
+	self.url = controller?.url || '';
+	self.query = controller?.query || {};
 }
 
 View.prototype.ota = function(obj) {
@@ -655,28 +657,22 @@ View.prototype.keywords = function(value) {
 	return '';
 };
 
-function querystring_encode(value, def, key) {
-
-	if (value instanceof Array) {
-		var tmp = '';
-		for (var i = 1; i < value.length; i++)
-			tmp += (tmp ? '&' : '') + key + '=' + querystring_encode(value[i], def);
-		return querystring_encode(value[0], def) + (tmp ? tmp : '');
-	}
-
-	return value != null ? value instanceof Date ? encodeURIComponent(value.format()) : typeof(value) === 'string' ? encodeURIComponent(value) : (value + '') : def || '';
-}
-
+// @{href({ key1: 1, key2: 2 })}
+// @{href('key', 'value')}
 // @{href({ key1: 1, key2: 2 })}
 // @{href('key', 'value')}
 View.prototype.href = function(key, value) {
 
 	var self = this;
+	var query = self.query;
 
 	if (!arguments.length) {
-		let val = F.TUtils.toURLEncode(self.query);
+		let val = F.TUtils.toURLEncode(query);
 		return val ? '?' + val : '';
 	}
+
+	if (!self.repository)
+		self.repository = {};
 
 	var type = typeof(key);
 	var obj;
@@ -688,18 +684,21 @@ View.prototype.href = function(key, value) {
 
 		if (!str) {
 
-			obj = F.TUtils.copy(self.query);
+			obj = {};
 
-			for (var i = 2; i < arguments.length; i++)
+			for (let key in query)
+				obj[key] = query[key];
+
+			for (let i = 2; i < arguments.length; i++)
 				obj[arguments[i]] = undefined;
 
 			obj[key] = '\0';
 
-			for (var m in obj) {
+			for (let m in obj) {
 				var val = obj[m];
 				if (val !== undefined) {
 					if (val instanceof Array) {
-						for (var j = 0; j < val.length; j++)
+						for (let j = 0; j < val.length; j++)
 							str += (str ? '&' : '') + m + '=' + (key === m ? '\0' : querystring_encode(val[j]));
 					} else
 						str += (str ? '&' : '') + m + '=' + (key === m ? '\0' : querystring_encode(val));
@@ -708,22 +707,25 @@ View.prototype.href = function(key, value) {
 			self.repository[cachekey] = str;
 		}
 
-		str = str.replace('\0', querystring_encode(value, self.query[key], key));
+		str = str.replace('\0', querystring_encode(value, query[key], key));
 
-		for (var i = 2; i < arguments.length; i++) {
-			var beg = str.indexOf(arguments[i] + '=');
+		for (let i = 2; i < arguments.length; i++) {
+			let beg = str.indexOf(arguments[i] + '=');
 			if (beg === -1)
 				continue;
-			var end = str.indexOf('&', beg);
+			let end = str.indexOf('&', beg);
 			str = str.substring(0, beg) + str.substring(end === -1 ? str.length : end + 1);
 		}
 
-		return str ? '?' + str : '';
+		return str ? ('?' + str) : '';
 	}
 
 	if (value) {
-		obj = F.TUtils.copy(self.query);
-		F.TUtils.extend(obj, value);
+		obj = {};
+		for (let key in query)
+			obj[key] = query[key];
+		for (let key in value)
+			obj[key] = value[key];
 	}
 
 	if (value != null)
@@ -736,6 +738,18 @@ View.prototype.href = function(key, value) {
 
 	return self.url + (obj ? '?' + obj : '');
 };
+
+function querystring_encode(value, def, key) {
+
+	if (value instanceof Array) {
+		var tmp = '';
+		for (var i = 1; i < value.length; i++)
+			tmp += (tmp ? '&' : '') + key + '=' + querystring_encode(value[i], def);
+		return querystring_encode(value[0], def) + (tmp ? tmp : '');
+	}
+
+	return value != null ? value instanceof Date ? encodeURIComponent(value.format()) : typeof(value) === 'string' ? encodeURIComponent(value) : (value + '') : def || '';
+}
 
 function makehtmlmeta(self) {
 
@@ -850,9 +864,9 @@ View.prototype.section = function(name, value, replace) {
 	return self;
 };
 
-View.prototype.url = function(hostname = false) {
+View.prototype.hostname = function(url) {
 	var self = this;
-	return hostname ? (self.controller ? self.controller.hostname(self.controller.url) : '') : (self.controller ? self.controller.url : '');
+	return self.controller ? self.controller.hostname(url == null ? self.controller.url : url) : (url || '');
 };
 
 View.prototype.set = function() {

@@ -5,6 +5,8 @@
 'use strict';
 
 const SKIP_CLASSES = { CMS_hidden: 1, CMS_mv: 1, CMS_mh: 1, CMS_expression: 1, CMS_multiple: 1, CMS_keyword: 1, CMS_monospace: 1 };
+const WIDGET_TAGS = { settings: '<settings>', css: '<style>', total: '<script total>', html: '<body>', js: '<script>', template: '<template>', readme: '<readme>' };
+const REG_CLASS = /CLASS/g;
 const VERSION = 1;
 
 function clean(html) {
@@ -280,6 +282,67 @@ function tidy(body) {
 	}).replace(/<div\s>/g, '<div>');
 }
 
+// Run a widget instance
+exports.run = function(html) {
+
+	let meta = html.parseElements(WIDGET_TAGS);
+	let instance = {};
+
+	(new Function('exports', meta.total))(instance);
+
+	if (!instance.id)
+		instance.id = instance.name;
+
+	let uid = instance.id.slug().replace(/\-/g, '');
+
+	meta.cls = uid;
+
+	if (meta.css)
+		meta.css = meta.css.replace(REG_CLASS, 'w-' + uid);
+
+	if (meta.settings)
+		meta.settings = meta.settings.replace(REG_CLASS, 'w-' + uid);
+
+	if (meta.template)
+		meta.template = meta.template.replace(REG_CLASS, 'w-' + uid);
+
+	if (meta.js)
+		meta.js = meta.js.replace(REG_CLASS, 'w-' + uid);
+
+	if (meta.html)
+		meta.html = meta.html.replace(REG_CLASS, 'w-' + uid);
+
+	if (instance.dependencies) {
+
+		if (typeof(instance.dependencies) === 'string')
+			instance.dependencies = instance.dependencies.split(/,|;/).trim();
+
+		let arr = [];
+		for (let m of instance.dependencies) {
+			if (m.includes('<'))
+				arr.push(m);
+			else if (m.endsWith('.js'))
+				arr.push('<script src="{0}"></script>'.format(m));
+			else if (m.endsWith('.css'))
+				arr.push('<link rel="stylesheet" href="{0}">'.format(m));
+		}
+
+		instance.dependencies = arr.join('');
+	}
+
+	let index = (meta.html || '').indexOf('<scr' + 'ipt>');
+
+	if (index !== -1)
+		meta.editor = meta.html.substring(index + 8, meta.html.indexOf('</scr' + 'ipt>', index + 8));
+
+	if (!instance.uninstall)
+		instance.uninstall = NOOP;
+
+	instance.ui = meta;
+	return instance;
+};
+
+// Parse all widgets from the Total.js CMS HTML
 exports.widgets = function(html) {
 
 	let arr = html.match(/data-cms=".*?"/g) || EMPTYARRAY;
@@ -367,6 +430,7 @@ exports.widgets = function(html) {
 	return response;
 };
 
+// Compile CMS HTML string
 exports.compile = function(html, widgets, used) {
 
 	let arr = html.match(/data-cms=".*?"/g) || EMPTYARRAY;

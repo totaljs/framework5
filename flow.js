@@ -16,6 +16,7 @@ FS.worker = false;
 FS.instances = {};
 FS.onerror = function(err, source, id, componentid, stack) {
 
+throw new Error('FET');
 	var flow = FS.db[this.id];
 	var empty = '---';
 	var output = '';
@@ -168,6 +169,7 @@ FS.load = function(flow, callback) {
 			FS.$events.load && FS.emit('load', instance, flow);
 			callback && callback(err, err ? null : instance);
 		};
+
 	});
 
 };
@@ -227,6 +229,10 @@ FS.ping = function() {
 		if (fs.isworkerthread && fs.flow && fs.flow.postMessage2)
 			fs.flow.postMessage2(PING);
 	}
+};
+
+FS.test = function(name, source, config, init) {
+	require('./flow-test.js').load(name, source, config, init);
 };
 
 global.Flow = FS;

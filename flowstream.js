@@ -380,6 +380,7 @@ MP.send = function(outputindex, data, clonedata) {
 		return count;
 	}
 
+
 	var meta = self.main.meta;
 	var now = Date.now();
 
@@ -930,11 +931,13 @@ FP.onreconfigure = function(instance, init) {
 */
 
 FP.ondashboard = function(a, b, c, d) {
+	// Flow uses only the "a {Object}" argument
 	// this == instance
 	this.main.$events.dashboard && this.main.emit('dashboard', this, a, b, c, d);
 };
 
 FP.onstatus = function(a, b, c, d) {
+	// Flow uses only the "a {Object}" argument
 	// this == instance
 	this.main.$events.status && this.main.emit('status', this, a, b, c, d);
 };
@@ -2059,3 +2062,6 @@ exports.create = function(id, errorhandler) {
 	F.flowstreams[id] = flowstream;
 	return flowstream;
 };
+
+exports.Message = Message;
+exports.FlowStream = FlowStream.prototype;
