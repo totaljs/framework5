@@ -35,6 +35,7 @@
 - fixed `HTMLParser` by [Marek Mraz](https://github.com/Mrazbb)
 - added a new alias `String.parseElements()` to `String.parseComponent()`
 - added a new method `CMS.run(widget_html)`
+- added a support for middleware for actions
 
 ========================
 0.0.5

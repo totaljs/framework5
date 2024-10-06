@@ -1192,7 +1192,7 @@ exports.newaction = function(name, obj) {
 		obj.cache = parseactioncache(obj, obj.cache);
 
 	if (obj.middleware)
-		obj.middleware = obj.middleware.replace(/,/g, ' ').replace(/\s{2,}/, ' ');
+		obj.middleware = obj.middleware.replace(/,|\|/g, ' ').replace(/\s{2,}/, ' ').split(' ').trim();
 
 	obj.remove = function() {
 		obj.route && obj.route.remove();
@@ -1389,7 +1389,19 @@ ActionCaller.prototype.exec = function() {
 		$.payload = payload;
 
 	$.status = self.options.status;
-	action.action($, $.payload);
+
+	if (action.middleware) {
+		action.middleware.wait(function(name, next) {
+			let fn = F.routes.middleware[name];
+			if (fn) {
+				fn($, next);
+			} else {
+				Total.error('The middleware "{0}" not found.'.format(name), action.id, $.url);
+				next();
+			}
+		}, () => action.action($, $.payload));
+	} else
+		action.action($, $.payload);
 };
 
 ActionCaller.prototype.finish = function(value) {
