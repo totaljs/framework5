@@ -6488,6 +6488,9 @@ exports.paginate = function(page, pages, max) {
 	if (!page)
 		page = 1;
 
+	if (page > pages)
+		page = pages;
+
 	let response = {};
 
 	response.page = page;
