@@ -9,7 +9,7 @@ require('../../test');
 // .update()
 // .remove()
 
-Test.push('Nosql', function(next) {
+Test.push('NOSQL', function(next) {
 	// Test.print('String.slug()', [error]);
 
 
