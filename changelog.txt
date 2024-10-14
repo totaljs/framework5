@@ -2,6 +2,8 @@
 0.0.7
 ========================
 
+- improved user-agent parser (added support for new headers `Sec-CH-UA`)
+
 ========================
 0.0.6
 ========================

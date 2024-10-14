@@ -1584,6 +1584,20 @@ exports.filestreamer = function(filename, onbuffer, onend, size) {
 
 };
 
+exports.parseUA = function(headers, structured) {
+	let ua = headers['sec-ch-ua'];
+	if (ua) {
+		let platform = headers['sec-ch-ua-platform'] || '';
+		let mobile = headers['sec-ch-ua-mobile'] === '?1';
+		let index = ua.indexOf('";v');
+		let browser = ua.substring(1, index);
+		return structured ? { os: platform, browser: browser, device: mobile ? 'mobile' : 'desktop' } : (platfrom + ' ' + browser + (mobile ? ' Mobile' : '')).trim();
+	} else {
+		ua = (headers['user-agent'] || '');
+		return ua ? ua.parseUA() : ua;
+	}
+};
+
 exports.parseInt = function(obj, def) {
 	if (obj == null || obj === '')
 		return def === undefined ? 0 : def;
