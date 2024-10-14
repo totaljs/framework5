@@ -1591,7 +1591,9 @@ exports.parseUA = function(headers, structured) {
 		let mobile = headers['sec-ch-ua-mobile'] === '?1';
 		let index = ua.indexOf('";v');
 		let browser = ua.substring(1, index);
-		return structured ? { os: platform, browser: browser, device: mobile ? 'mobile' : 'desktop' } : (platform + ' ' + browser + (mobile ? ' Mobile' : '')).trim();
+		if (platform)
+			platform = platform.substring(1, platform.length - 1);
+		return structured ? { os: platform, browser: browser, device: mobile ? 'mobile' : 'desktop' } : ((platform ? (platform + ' ') : '') + browser + (mobile ? ' Mobile' : ''));
 	} else {
 		ua = (headers['user-agent'] || '');
 		return ua ? ua.parseUA() : ua;
