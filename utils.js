@@ -1596,7 +1596,7 @@ exports.parseUA = function(headers, structured) {
 		return structured ? { os: platform, browser: browser, device: mobile ? 'mobile' : 'desktop' } : ((platform ? (platform + ' ') : '') + browser + (mobile ? ' Mobile' : ''));
 	} else {
 		ua = (headers['user-agent'] || '');
-		return ua ? ua.parseUA() : ua;
+		return ua ? ua.parseUA(structured) : ua;
 	}
 };
 
