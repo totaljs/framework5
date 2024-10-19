@@ -4319,13 +4319,7 @@ NP.pluralize = function(zero, one, few, other) {
 	else
 		value = other;
 
-	var beg = value.indexOf('#');
-	if (beg === -1)
-		return value;
-
-	var end = value.lastIndexOf('#');
-	var format = value.substring(beg, end + 1);
-	return num.format(format) + value.replace(format, '');
+	return value.replace('#', num.toString());
 };
 
 NP.VAT = NP.TAX = function(percentage, decimals, includedVAT) {
