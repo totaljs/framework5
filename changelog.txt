@@ -3,6 +3,7 @@
 ========================
 
 - improved user-agent parser (added support for new headers `Sec-CH-UA`)
+- improved `Number.pluralize()` method
 
 ========================
 0.0.6
