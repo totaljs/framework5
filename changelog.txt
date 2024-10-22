@@ -4,7 +4,7 @@
 
 - improved user-agent parser (added support for new headers `Sec-CH-UA`)
 - improved `Number.pluralize()` method
-- deduced DNS cache flush time to 3 minutes
+- Reduced DNS cache flush time to 3 minutes
 
 ========================
 0.0.6
