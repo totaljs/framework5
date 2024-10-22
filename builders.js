@@ -75,6 +75,10 @@ Options.prototype = {
 		return this.controller ? this.controller.ip : null;
 	},
 
+	get address() {
+		return this.controller ? this.controller.address : null;
+	},
+
 	get files() {
 		return this.controller ? this.controller.files : null;
 	},
@@ -1454,6 +1458,11 @@ ActionCaller.prototype.language = function(value) {
 
 ActionCaller.prototype.error = function(value) {
 	this.options.error = value;
+	return this;
+};
+
+ActionCaller.prototype.ctrl = function(ctrl) {
+	this.controller = ctrl ? (ctrl.controller || ctrl) : null;
 	return this;
 };
 

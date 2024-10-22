@@ -42,7 +42,7 @@ function Controller(req, res) {
 	ctrl.url = ctrl.uri.pathname;
 	ctrl.released = false;
 	ctrl.downloaded = false;
-	ctrl.protocol = req.connection.encrypted || (req.headers['x-forwarded-protocol'] || req.headers['x-forwarded-proto']) === 'https' ? 'https' : 'http';
+	ctrl.protocol = req.connection.encrypted || req.headers['x-forwarded-ssl'] === 'on' || req.headers['x-forwarded-port'] === '443' || (req.headers['x-forwarded-proto'] || req.headers['x-forwarded-protocol']) === 'https' ? 'https' : 'http';
 
 	for (let path of ctrl.split)
 		ctrl.split2.push(path.toLowerCase());
@@ -159,6 +159,10 @@ Controller.prototype = {
 
 	get host() {
 		return this.headers.host;
+	},
+
+	get address() {
+		return (this.protocol + '://' + this.headers?.host || '') + (this.req?.url || '');
 	}
 
 };

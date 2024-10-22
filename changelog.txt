@@ -4,7 +4,9 @@
 
 - improved user-agent parser (added support for new headers `Sec-CH-UA`)
 - improved `Number.pluralize()` method
-- Reduced DNS cache flush time to 3 minutes
+- reduced DNS cache flush time to 3 minutes
+- added `$.address` property with the absolute URL address
+- added `$.ctrl(ctrl_instance)` method
 
 ========================
 0.0.6
