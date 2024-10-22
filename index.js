@@ -1724,7 +1724,7 @@ F.service = function(count) {
 	if (count % F.config.$tmsclearblocked === 0)
 		F.temporary.tmsblocked = {};
 
-	if (count % 30 === 0)
+	if (count % 3 === 0)
 		F.temporary.dnscache = {};
 
 	let blocked = F.temporary.blocked;
