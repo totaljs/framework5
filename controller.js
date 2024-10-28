@@ -1030,7 +1030,7 @@ Controller.prototype.$route = function() {
 				switch (ctrl.datatype) {
 					case 'json':
 						val = ctrl.payload.toString('utf8');
-						ctrl.body = val ? F.def.parsers.json(body) : null;
+						ctrl.body = val ? F.def.parsers.json(val) : null;
 						break;
 					case 'urlencoded':
 						val = ctrl.payload.toString('utf8');
