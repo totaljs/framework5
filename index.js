@@ -2499,7 +2499,7 @@ F.filestorage = function(name) {
 
 F.encryptreq = function(ctrl, val, key, strict) {
 	var obj = {};
-	obj.ua = ctrl.ua;
+	obj.ua = HASH(ctrl.headers['user-agent'] || '').toString(36);
 	if (strict)
 		obj.ip = ctrl.ip;
 	obj.data = val;
@@ -2510,7 +2510,7 @@ F.decryptreq = function(ctrl, val, key) {
 	if (!val)
 		return;
 	var obj = F.decrypt(val, key || '', true);
-	if (!obj || (obj.ip && obj.ip !== ctrl.ip) || (obj.ua !== ctrl.ua))
+	if (!obj || (obj.ip && obj.ip !== ctrl.ip) || (obj.ua !== HASH(ctrl.headers['user-agent'] || '').toString(36)))
 		return;
 	return obj.data;
 };
