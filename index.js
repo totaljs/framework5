@@ -460,7 +460,7 @@ function unlink(arr, callback) {
 		} else
 			msg.to(email);
 
-		msg.from(F.config.mail_from || F.config.smtp.from || F.config.smtp.user, F.config.mail_from_name);
+		msg.from(F.config.mail_from || F.config.smtp.from || F.config.smtp.user, F.config.mail_from_name || F.config.smtp.name);
 		callback && msg.callback(callback);
 
 		if (reply)
