@@ -9,6 +9,7 @@
 - added `$.ctrl(ctrl_instance)` method
 - extended `Mail.from(email, [name])` method by adding `name` argument by [Marek Mráz](https://github.com/Mrazbb)
 - added `CONF.mail_from_name {String}` option
+- improved `$.query` parser
 
 ========================
 0.0.6

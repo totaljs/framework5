@@ -113,6 +113,14 @@ function Controller(req, res) {
 
 Controller.prototype = {
 
+	get query() {
+		return this.$query || (this.$query = ctrl.uri.search.parseEncoded());
+	},
+
+	set query(val) {
+		this.$query = val;
+	},
+
 	get mobile() {
 		let ua = this.headers['user-agent'];
 		return ua ? REG_MOBILE.test(ua) : false;
@@ -1017,12 +1025,16 @@ Controller.prototype.$route = function() {
 
 				ctrl.payload = Buffer.concat(ctrl.payload);
 				F.stats.performance.download += ctrl.payload.length / 1024 / 1024;
+				let val;
+
 				switch (ctrl.datatype) {
 					case 'json':
-						ctrl.body = F.def.parsers.json(ctrl.payload.toString('utf8'));
+						val = ctrl.payload.toString('utf8');
+						ctrl.body = val ? F.def.parsers.json(body) : null;
 						break;
 					case 'urlencoded':
-						ctrl.body = F.def.parsers.urlencoded(ctrl.payload.toString('utf8'));
+						val = ctrl.payload.toString('utf8');
+						ctrl.body = val ? F.def.parsers.urlencoded(val) : {};
 						break;
 				}
 

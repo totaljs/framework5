@@ -1243,6 +1243,11 @@ F.httpload = function(opt) {
 	F.server = F.Http.createServer(F.THttp.listen);
 	F.server.on('upgrade', F.TWebSocket.listen);
 
+	CONF.$performance && F.server.on('connection', function(socket) {
+		socket.setNoDelay(true);
+		socket.setKeepAlive(true, 10);
+	});
+
 	var unixsocket = opt.unixsocket || F.config.$unixsocket;
 	if (unixsocket) {
 
