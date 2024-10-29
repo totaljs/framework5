@@ -2577,6 +2577,8 @@ F.dir = function(val) {
 };
 
 F.run = function(opt) {
+	if (!opt)
+		opt = {};
 	var type = opt.watcher === false ? 'release' : 'debug';
 	opt.watcher = false;
 	require('./' + type)(opt);
