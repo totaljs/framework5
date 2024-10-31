@@ -128,8 +128,9 @@ Component.prototype.create = function(opt, status) {
 			instance.config[key] = opt[key];
 	}
 
-	t.make.call(instance, instance, instance.config, status);
 	t.instances.push(instance);
+	t.make.call(instance, instance, instance.config, status);
+	t.oncreate && t.oncreate(instance);
 	return instance;
 };
 
@@ -195,6 +196,7 @@ Instance.prototype.remove = function() {
 	let t = this;
 	t.close && t.close.call(t, true);
 	t.destroy && t.destroy.call(t);
+	t.module.onremove && t.module.onremove(t);
 	let index = t.module.instances.indexOf(t);
 	t.module.instances.splice(index, 1);
 };
