@@ -90,6 +90,11 @@ function Component() {
 	t.instances = [];
 }
 
+Component.prototype.service = function(counter) {
+	for (let m of this.instances)
+		m.service && m.service(counter);
+};
+
 Component.prototype.status = function(instance, msg) {
 	console.log('STATUS', this.name, msg);
 };
