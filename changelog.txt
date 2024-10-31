@@ -12,7 +12,7 @@
 - improved `$.query` parser
 - improved `Total.run()` method
 - added a new method `NEWCOMPONENT(html, [callback])`
-	- it compiles FlowStream component to a method
+	- it compiles a FlowStream component to a method
 
 ========================
 0.0.6
