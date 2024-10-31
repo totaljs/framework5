@@ -152,7 +152,6 @@ Message.prototype.end = Message.prototype.destroy = function() {
 function Instance() {
 	let t = this;
 	t.id = U.random_text(8);
-	t.stats = { pending: 0, input: 0, output: 0, duration: 0, destroyed: 0 };
 	t.cache = {};
 	t.middleware = NOOP;
 	t.transform = NOOP;
