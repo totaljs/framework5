@@ -115,7 +115,7 @@ Component.prototype.output = function(instance, response) {
 	console.log('OUTPUT', this.name + ' | ' + response.output + ':', response.data);
 };
 
-Component.prototype.create = function(opt) {
+Component.prototype.create = function(opt, status) {
 
 	let t = this;
 	let instance = new Instance();
@@ -128,7 +128,7 @@ Component.prototype.create = function(opt) {
 			instance.config[key] = opt[key];
 	}
 
-	t.make.call(instance, instance, instance.config);
+	t.make.call(instance, instance, instance.config, status);
 	t.instances.push(instance);
 	return instance;
 };
