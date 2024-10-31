@@ -90,7 +90,23 @@ function Component() {
 	t.instances = [];
 }
 
-Component.prototype.output = function(response) {
+Component.prototype.status = function(instance, msg) {
+	console.log('STATUS', this.name, msg);
+};
+
+Component.prototype.debug = function(instance, msg) {
+	console.log('DEBUG', this.name + ':', msg);
+};
+
+Component.prototype.dashboard = function(instance, msg) {
+	console.log('DASHBOARD', this.name + ':', msg);
+};
+
+Component.prototype.throw = function(instance, err) {
+	console.log('ERROR', this.name + ':', err);
+};
+
+Component.prototype.output = function(instance, response) {
 	console.log('OUTPUT', this.name + ' | ' + response.output + ':', response.data);
 };
 
@@ -120,6 +136,10 @@ Component.prototype.remove = function() {
 	}, function() {
 		t.uninstall && t.uninstall.call(t, t);
 	});
+};
+
+Component.prototype.save = function(instance) {
+	// save state
 };
 
 function Message() {
@@ -200,24 +220,36 @@ Instance.prototype.newmessage = function(data) {
 	return msg;
 };
 
+Instance.prototype.save = function() {
+	this.module.save(this);
+};
+
 Instance.prototype.output = function(response) {
-	this.module.output(response);
+	this.module.output(this, response);
 };
 
 Instance.prototype.debug = function(msg) {
-	console.log('DEBUG', this.module.name + ':', msg);
+	this.module.debug(this, msg);
 };
 
 Instance.prototype.throw = function(err) {
-	console.log('ERROR', this.module.name + ':', err);
+	this.module.throw(this, error);
 };
 
 Instance.prototype.dashboard = function(msg) {
-	console.log('DASHBOARD', this.module.name + ':', msg);
+	this.module.dashboard(this, msg);
+};
+
+Instance.prototype.reconfigure = function(opt) {
+	let t = this;
+	for (let key in opt)
+		t.config[key] = opt[key];
+	t.configure && t.configure(t.config);
+	t.save();
 };
 
 Instance.prototype.status = function(msg) {
-	console.log('STATUS', this.module.name + ':', msg);
+	this.module.status(this, msg);
 };
 
 Instance.prototype.logger = NOOP;
