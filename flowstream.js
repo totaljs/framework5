@@ -999,7 +999,6 @@ function newmessage(data) {
 	msg.data = data instanceof Message ? data.data : data;
 	msg.cloned = 0;
 	msg.count = 0;
-	msg.instance = self;
 	msg.duration = msg.ts = Date.now();
 	msg.used = 1;
 	msg.main = self instanceof FlowStream ? self : self.main;
