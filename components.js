@@ -95,15 +95,8 @@ Component.prototype.create = function(opt) {
 	let t = this;
 	let instance = new Instance();
 	instance.id = U.random_text(8);
-	instance.stats = { pending: 0, input: 0, output: 0, duration: 0, destroyed: 0 };
-	instance.cache = {};
-	instance.module = t;
 	instance.config = t.config ? F.TUtils.clone(t.config) : {};
-	instance.middleware = NOOP;
-	instance.transform = NOOP;
-	instance.replace = variables;
-	instance.instances = EMPTYOBJECT;
-	instance.components = EMPTYOBJECT;
+	instance.module = t;
 
 	if (opt) {
 		for (let key in opt)
@@ -208,20 +201,20 @@ Instance.prototype.output = function(response) {
 	console.log('OUTPUT', this.module.name + ':', response);
 };
 
-Instance.prototype.debug = function(a, b, c, d) {
-	console.log('DEBUG', this.module.name + ':', a, b, c, d);
+Instance.prototype.debug = function(msg) {
+	console.log('DEBUG', this.module.name + ':', msg);
 };
 
-Instance.prototype.throw = function(a, b, c, d) {
-	console.log('ERROR', this.module.name + ':', a, b, c, d);
+Instance.prototype.throw = function(err) {
+	console.log('ERROR', this.module.name + ':', err);
 };
 
-Instance.prototype.dashboard = function(a, b, c, d) {
-	console.log('DASHBOARD', this.module.name + ':', a, b, c, d);
+Instance.prototype.dashboard = function(msg) {
+	console.log('DASHBOARD', this.module.name + ':', msg);
 };
 
-Instance.prototype.status = function(a, b, c, d) {
-	console.log('STATUS', this.module.name + ':', a, b, c, d);
+Instance.prototype.status = function(msg) {
+	console.log('STATUS', this.module.name + ':', msg);
 };
 
 Instance.prototype.logger = NOOP;
