@@ -2655,6 +2655,10 @@ F.datauri = function(path) {
 	}));
 };
 
+F.newcomponent = function(html, callback) {
+	return require('./components').compile(html, callback);
+};
+
 F.loadstats = function() {
 
 	var main = {};
