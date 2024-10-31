@@ -90,6 +90,10 @@ function Component() {
 	t.instances = [];
 }
 
+Component.prototype.output = function(response) {
+	console.log('OUTPUT', this.name + ' | ' + response.output + ':', response.data);
+};
+
 Component.prototype.create = function(opt) {
 
 	let t = this;
@@ -197,7 +201,7 @@ Instance.prototype.newmessage = function(data) {
 };
 
 Instance.prototype.output = function(response) {
-	console.log('OUTPUT', this.module.name + ':', response);
+	this.module.output(response);
 };
 
 Instance.prototype.debug = function(msg) {
