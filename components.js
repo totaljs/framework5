@@ -129,6 +129,7 @@ Component.prototype.create = function(opt, status) {
 	}
 
 	t.instances.push(instance);
+	t.onextend && t.onextend(instance);
 	t.make.call(instance, instance, instance.config, status);
 	t.oncreate && setImmediate(() => t.oncreate(instance));
 	return instance;
