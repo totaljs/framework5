@@ -208,6 +208,8 @@ Instance.prototype.input = function(input, data) {
 		let msg = t.newmessage(data);
 		msg.input = input;
 		t.message(msg);
+		let fn = t['message_' + input];
+		fn && fn(msg);
 	}
 };
 
