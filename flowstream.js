@@ -353,7 +353,7 @@ function timeouthandler(msg) {
 
 MP.send = function(outputindex, data, clonedata) {
 
-	var self = this;
+	let self = this;
 
 	if (clonedata == null)
 		clonedata = self.main.cloning;
@@ -364,13 +364,13 @@ MP.send = function(outputindex, data, clonedata) {
 		return 0;
 	}
 
-	var outputs;
-	var count = 0;
+	let outputs;
+	let count = 0;
 
 	if (outputindex == null) {
 
 		if (self.instance.connections) {
-			for (var key in self.instance.connections)
+			for (let key in self.instance.connections)
 				count += self.send(key);
 		}
 
@@ -381,8 +381,8 @@ MP.send = function(outputindex, data, clonedata) {
 	}
 
 
-	var meta = self.main.meta;
-	var now = Date.now();
+	let meta = self.main.meta;
+	let now = Date.now();
 
 	outputs = self.instance.connections ? (self.instance.connections[outputindex] || F.EMPTYARRAY) : F.EMPTYARRAY;
 
@@ -407,7 +407,7 @@ MP.send = function(outputindex, data, clonedata) {
 		return count;
 	}
 
-	var tid = self.toid + D + outputindex + (self.color || '');
+	let tid = self.toid + D + outputindex + (self.color || '');
 
 	if (self.main.stats.traffic[tid]) {
 		self.main.stats.traffic[tid]++;
@@ -419,29 +419,30 @@ MP.send = function(outputindex, data, clonedata) {
 	if (self.transformation === '1')
 		self.transformation = '_' + tid;
 
-	for (var i = 0; i < outputs.length; i++) {
-		var output = outputs[i];
+	for (let i = 0; i < outputs.length; i++) {
+
+		let output = outputs[i];
 
 		if (output.disabled || output.paused)
 			continue;
 
-		var schema = meta.flow[output.id];
+		let schema = meta.flow[output.id];
 		if (schema && (schema.message || schema['message_' + output.index]) && schema.component && schema.ready && self.main.$can(true, output.id, output.index)) {
-			var next = meta.components[schema.component];
+			let next = meta.components[schema.component];
 			if (next && next.connected && !next.isdestroyed && !next.disabled) {
 
 				if (output.color && self.color && self.color !== output.color)
 					continue;
 
-				var inputindex = output.index;
-				var message = self.clone();
+				let inputindex = output.index;
+				let message = self.clone();
 
 				if (data != undefined)
 					message.data = data;
 
 				if (clonedata && message.data && typeof(message.data) === 'object') {
 					if (message.data instanceof Buffer) {
-						var buf = Buffer.alloc(message.data.length);
+						let buf = Buffer.alloc(message.data.length);
 						buf.copy(message.data);
 						message.data = buf;
 					} else
@@ -461,6 +462,13 @@ MP.send = function(outputindex, data, clonedata) {
 				message.cache = schema.cache;
 				message.ts = now;
 				message.color = output.color;
+
+				let ti = schema.inputschemas[message.input];
+				if (ti && ti.schema) {
+					let tmp = ti.schema.transform(typeof(message.data) === 'object' ? message.data : {});
+					message.data = tmp.response;
+					message.error = tmp.error;
+				}
 
 				if (self.$timeout)
 					message.$timeoutid = setTimeout(timeouthandler, self.$timeout, message);
@@ -1140,6 +1148,13 @@ FP.ontrigger = function(outputindex, data, controller, events) {
 					message.cache = target.cache;
 					message.processed = 0;
 
+					let ti = target.inputschemas[message.input];
+					if (ti && ti.schema) {
+						let tmp = ti.schema.transform(message.data);
+						message.data = tmp.response;
+						message.error = tmp.error;
+					}
+
 					target.stats.pending++;
 					target.stats.input++;
 					schema.stats.output++;
@@ -1193,6 +1208,7 @@ FP.reconfigure = function(id, config, rewrite) {
 		self.onreconfigure && self.onreconfigure(instance);
 		self.$events.configure && self.emit('configure', instance);
 	}
+
 	return !!instance;
 };
 
@@ -1605,6 +1621,29 @@ FP.initcomponent = function(key, component) {
 	instance.replace = variables;
 	instance.instances = self.meta.flow;
 	instance.components = self.meta.components;
+	instance.inputschemas = {};
+	// instance.outputschemas = {};
+
+	// Due to inline data schemas
+	if (component.inputs) {
+		for (let m of component.inputs) {
+			let tmp = CLONE(m);
+			instance.inputschemas[m.id] = tmp;
+			if (tmp.schema)
+				tmp.schema = tmp.schema.toJSONSchema();
+		}
+	}
+
+	// Due to inline data schemas
+	/*
+	if (component.outputs) {
+		for (let m in component.outputs) {
+			let tmp = CLONE(m);
+			instance.outputschemas[m.id] = tmp;
+			if (tmp.schema)
+				tmp.schema = tmp.schema.toJSONSchema();
+		}
+	}*/
 
 	self.onconnect && self.onconnect(instance);
 	self.$events.connect && self.emit('connect', instance);

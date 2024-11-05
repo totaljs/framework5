@@ -13,6 +13,7 @@
 - improved `Total.run()` method
 - added a new method `NEWCOMPONENT(html, [callback])`
 	- it compiles a FlowStream component to a method
+- extended FlowStream by adding support for `input` and `output` Total.js inline schemas
 
 ========================
 0.0.6
