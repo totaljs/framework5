@@ -16,7 +16,6 @@ FS.worker = false;
 FS.instances = {};
 FS.onerror = function(err, source, id, componentid, stack) {
 
-throw new Error('FET');
 	var flow = FS.db[this.id];
 	var empty = '---';
 	var output = '';
