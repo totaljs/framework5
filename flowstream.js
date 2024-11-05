@@ -305,10 +305,8 @@ function variables(str, data, encoding) {
 
 		var customencoding = typeof(encoding) === 'function';
 
-		if (!val && data != null && typeof(data) === 'object') {
-			var nested = key.indexOf('.') !== -1;
-			val = nested ? F.TUtils.get(data, key) : data[key];
-		}
+		if (!val && data != null && typeof(data) === 'object')
+			val = key.includes('.') ? F.TUtils.get(data, key) : data[key];
 
 		if (customencoding) {
 
