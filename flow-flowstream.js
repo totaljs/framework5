@@ -2461,6 +2461,8 @@ function MAKEFLOWSTREAM(meta) {
 			minutes = stats.minutes;
 			if (isFLOWSTREAMWORKER)
 				memory = process.memoryUsage().heapUsed;
+			else if (F.consumption.memory)
+				memory = F.consumption.memory * 1024 * 1024;
 		}
 
 		flow.stats.memory = memory;
