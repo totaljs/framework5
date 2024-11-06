@@ -205,8 +205,17 @@ Instance.prototype.remove = function() {
 Instance.prototype.input = function(input, data) {
 	let t = this;
 	if (t.message) {
+
 		let msg = t.newmessage(data);
 		msg.input = input;
+
+		var schema = t.module.inputschemas[input];
+		if (schema) {
+			let tmp = schema.transform(msg.data);
+			msg.data = tmp.response;
+			msg.error = tmp.error;
+		}
+
 		t.message(msg);
 		let fn = t['message_' + input];
 		fn && fn(msg);
@@ -315,6 +324,15 @@ exports.compile = function(html, callback) {
 		});
 	}, function() {
 		com.install && com.install.call(com, com);
+		com.inputschemas = {};
+
+		if (com.inputs) {
+			for (let m of com.inputs) {
+				if (m.schema)
+					com.inputschemas[m.id] = m.schema.toJSONSchema();
+			}
+		}
+
 		callback(null, com);
 	});
 
