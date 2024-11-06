@@ -1620,7 +1620,7 @@ FP.initcomponent = function(key, component) {
 	instance.instances = self.meta.flow;
 	instance.components = self.meta.components;
 	instance.inputschemas = {};
-	// instance.outputschemas = {};
+	instance.outputschemas = {};
 
 	// Due to inline data schemas
 	if (component.inputs) {
@@ -1633,7 +1633,6 @@ FP.initcomponent = function(key, component) {
 	}
 
 	// Due to inline data schemas
-	/*
 	if (component.outputs) {
 		for (let m in component.outputs) {
 			let tmp = CLONE(m);
@@ -1641,7 +1640,7 @@ FP.initcomponent = function(key, component) {
 			if (tmp.schema)
 				tmp.schema = tmp.schema.toJSONSchema();
 		}
-	}*/
+	}
 
 	self.onconnect && self.onconnect(instance);
 	self.$events.connect && self.emit('connect', instance);

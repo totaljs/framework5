@@ -323,8 +323,9 @@ exports.compile = function(html, callback) {
 				next();
 		});
 	}, function() {
-		com.install && com.install.call(com, com);
+
 		com.inputschemas = {};
+		com.outputschemas = {};
 
 		if (com.inputs) {
 			for (let m of com.inputs) {
@@ -332,6 +333,15 @@ exports.compile = function(html, callback) {
 					com.inputschemas[m.id] = m.schema.toJSONSchema();
 			}
 		}
+
+		if (com.outputs) {
+			for (let m of com.outputs) {
+				if (m.schema)
+					com.outputschemas[m.id] = m.schema.toJSONSchema();
+			}
+		}
+
+		com.install && com.install.call(com, com);
 
 		callback(null, com);
 	});
