@@ -15,6 +15,7 @@
 	- it compiles a FlowStream component to a method
 - extended FlowStream by adding support for `input` and `output` Total.js inline schemas
 - fixed memory usage in the Flow in non-worker mode
+- improved Flow error handling
 
 ========================
 0.0.6
