@@ -561,7 +561,15 @@ function parseHTML(html, trim, onerror, isxml) {
 		}
 
 		var tag = node;
-		var index = tag.indexOf(' ');
+		var index = -1;
+
+		for (let i = 0; i < tag.length; i++) {
+			let c = tag[i];
+			if (c === '\n' || c === ' ' || c === '/' || c === '>') {
+				index = i;
+				break;
+			}
+		}
 
 		if (index > 0) {
 			tag = tag.substring(0, index);
@@ -597,9 +605,14 @@ function parseHTML(html, trim, onerror, isxml) {
 				case 'BR':
 				case 'HR':
 				case 'IMG':
+				case 'INPUT':
 				case 'META':
 				case 'LINK':
-				case 'INPUT':
+				case 'SOURCE':
+				case 'AREA':
+				case 'COL':
+				case 'EMBED':
+				case 'TRACK':
 					dom.unpair = true;
 					return str;
 			}

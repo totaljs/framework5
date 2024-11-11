@@ -16,6 +16,7 @@
 - extended FlowStream by adding support for `input` and `output` Total.js inline schemas
 - fixed memory usage in the Flow in non-worker mode
 - improved Flow error handling
+- improved HTML parser
 
 ========================
 0.0.6
