@@ -466,13 +466,17 @@ Controller.prototype.layout = function(name) {
 Controller.prototype.view = function(name, model) {
 
 	var ctrl = this;
+	var view = new F.TViewEngine.View(ctrl);
+
+	if (!name)
+		return view;
 
 	if (ctrl.destroyed)
 		return;
 
-	var view = new F.TViewEngine.View(ctrl);
 	ctrl.response.layout && view.layout(ctrl.response.layout);
 	setImmediate(renderview, view, name, model);
+
 	return view;
 };
 

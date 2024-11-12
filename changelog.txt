@@ -17,6 +17,7 @@
 - fixed memory usage in the Flow in non-worker mode
 - improved Flow error handling
 - improved HTML parser
+- improved `controller.view()` supports calling without arguments
 
 ========================
 0.0.6
