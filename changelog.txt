@@ -18,6 +18,7 @@
 - improved Flow error handling
 - improved HTML parser
 - improved `controller.view()` supports calling without arguments
+- extended ViewEngine by adding `.renderlayout(name, content)` method
 
 ========================
 0.0.6
