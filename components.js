@@ -88,7 +88,7 @@ function Component() {
 	t.variables = t.variables2 = {};
 	t.secrets = {};
 	t.instances = [];
-	t.debugger = true;
+	t.logger = true;
 }
 
 Component.prototype.service = function(counter) {
@@ -97,22 +97,22 @@ Component.prototype.service = function(counter) {
 };
 
 Component.prototype.status = function(instance, msg) {
-	if (t.debugger)
+	if (t.logger)
 		console.log('STATUS', this.name, msg);
 };
 
 Component.prototype.debug = function(instance, msg) {
-	if (t.debugger)
+	if (t.logger)
 		console.log('DEBUG', this.name + ':', msg);
 };
 
 Component.prototype.dashboard = function(instance, msg) {
-	if (t.debugger)
+	if (t.logger)
 		console.log('DASHBOARD', this.name + ':', msg);
 };
 
 Component.prototype.throw = function(instance, err) {
-	if (t.debugger)
+	if (t.logger)
 		console.log('ERROR', this.name + ':', err);
 };
 
