@@ -88,6 +88,7 @@ function Component() {
 	t.variables = t.variables2 = {};
 	t.secrets = {};
 	t.instances = [];
+	t.debugger = true;
 }
 
 Component.prototype.service = function(counter) {
@@ -96,23 +97,28 @@ Component.prototype.service = function(counter) {
 };
 
 Component.prototype.status = function(instance, msg) {
-	console.log('STATUS', this.name, msg);
+	if (t.debugger)
+		console.log('STATUS', this.name, msg);
 };
 
 Component.prototype.debug = function(instance, msg) {
-	console.log('DEBUG', this.name + ':', msg);
+	if (t.debugger)
+		console.log('DEBUG', this.name + ':', msg);
 };
 
 Component.prototype.dashboard = function(instance, msg) {
-	console.log('DASHBOARD', this.name + ':', msg);
+	if (t.debugger)
+		console.log('DASHBOARD', this.name + ':', msg);
 };
 
 Component.prototype.throw = function(instance, err) {
-	console.log('ERROR', this.name + ':', err);
+	if (t.debugger)
+		console.log('ERROR', this.name + ':', err);
 };
 
 Component.prototype.output = function(instance, response) {
-	console.log('OUTPUT', this.name + ' | ' + response.output + ':', response.data);
+	if (t.debugger)
+		console.log('OUTPUT', this.name + ' | ' + response.output + ':', response.data);
 };
 
 Component.prototype.create = function(opt, status) {
@@ -167,6 +173,7 @@ Message.prototype.send = function(output, data) {
 	if (data != null)
 		t.data = data;
 	t.output = output;
+	t.callback && t.callback(t);
 	t.instance.output && t.instance.output(t);
 };
 
@@ -202,12 +209,13 @@ Instance.prototype.remove = function() {
 	t.module.instances.splice(index, 1);
 };
 
-Instance.prototype.input = function(input, data) {
+Instance.prototype.input = function(input, data, callback) {
 	let t = this;
 	if (t.message) {
 
 		let msg = t.newmessage(data);
 		msg.input = input;
+		msg.callback = callback;
 
 		var schema = t.module.inputschemas[input];
 		if (schema) {
@@ -225,7 +233,7 @@ Instance.prototype.input = function(input, data) {
 Instance.prototype.send = function(output, data) {
 	let msg = data instanceof Message ? data : this.newmessage();
 	msg.output = output;
-	msg.data = data;
+	msg.data = data;x
 	msg.send(output);
 };
 
