@@ -288,6 +288,20 @@ exports.compile = function(html, callback) {
 		})
 	}
 
+	if ((/^http(s)\:\/\//i).test(html)) {
+		let opt = {};
+		opt.url = html;
+		opt.callback = function(err, response) {
+			console.log(err, response);
+			if (err)
+				callback(err);
+			else
+				exports.compile(response.body, callback);
+		};
+		REQUEST(opt);
+		return;
+	}
+
 	var meta = html.parseComponent({ readme: '<readme>', settings: '<settings>', css: '<style>', be: '<script total>', be2: '<script node>', js: '<script>', html: '<body>', schema: '<schema>', template: '<template>' });
 	var node = (meta.be || meta.be2 || '').trim().replace(/\n\t/g, '\n');
 
