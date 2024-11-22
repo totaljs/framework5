@@ -302,6 +302,16 @@ exports.compile = function(html, callback) {
 		return;
 	}
 
+	if (!html.includes('<')) {
+		F.Fs.readFile(PATH.root('components/' + html + '.html'), 'utf8', function(err, response) {
+			if (err)
+				callback(err);
+			else
+				exports.compile(response, callback);
+		});
+		return;
+	}
+
 	var meta = html.parseComponent({ readme: '<readme>', settings: '<settings>', css: '<style>', be: '<script total>', be2: '<script node>', js: '<script>', html: '<body>', schema: '<schema>', template: '<template>' });
 	var node = (meta.be || meta.be2 || '').trim().replace(/\n\t/g, '\n');
 
