@@ -11,7 +11,7 @@
 - added `CONF.mail_from_name {String}` option
 - improved `$.query` parser
 - improved `Total.run()` method
-- added a new method `NEWCOMPONENT(html, [callback])`
+- added a new method `NEWCOMPONENT(html_or_URL_or_name, [callback])`
 	- it compiles a FlowStream component to a method
 - extended FlowStream by adding support for `input` and `output` Total.js inline schemas
 - fixed memory usage in the Flow in non-worker mode
