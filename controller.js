@@ -15,6 +15,7 @@ const CHECK_COMPRESSION = { 'text/plain': true, 'text/javascript': true, 'text/c
 const CHECK_CHARSET =  { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'text/x-markdown': true, 'text/html': true, 'application/x-ijsnb+json': true, 'application/x-ipynb+json': true };
 const CHECK_NOCACHE = { zip: 1, rar: 1 };
 const CHECK_MIN = /(\.|-|@)min/i;
+const CHECK_CACHEDEBUG = { html: 1, js: 1, css: 1 };
 
 const GZIP_FILE = { memLevel: 9 };
 const GZIP_STREAM = { memLevel: 1 };
@@ -64,7 +65,7 @@ function Controller(req, res) {
 
 	ctrl.response = {
 		status: 200,
-		cache: global.DEBUG != true,
+		cache: !global.DEBUG || !CHECK_CACHEDEBUG[ctrl.ext],
 		minify: true,
 		// minifyjson: false
 		// encrypt: false

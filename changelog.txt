@@ -3,6 +3,7 @@
 ========================
 
 - added `opt.retry()` method in to the `API` evaluation
+- improved HTTP cache in debug mode
 
 ========================
 0.0.7
