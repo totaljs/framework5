@@ -4,6 +4,8 @@
 
 - added `opt.retry()` method in to the `API` evaluation
 - improved HTTP cache in debug mode
+- added `Total.edit('socket_url')` for remote editing of source code
+- added support for `scripts` folder
 
 ========================
 0.0.7

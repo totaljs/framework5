@@ -221,6 +221,7 @@ global.DEF = {};
 	F.path = {};
 	F.path.root = path => path ? F.path.$join(F.directory, path) : F.directory;
 	F.path.logs = path => path ? F.path.$join(F.temporary.directories.logs, path) : F.temporary.directories.logs;
+	F.path.scripts = path => path ? F.path.$join(F.temporary.directories.scripts, path) : F.temporary.directories.scripts;
 	F.path.public = path => path ? F.path.$join(F.temporary.directories.public, path) : F.temporary.directories.public;
 	F.path.private = path => path ? F.path.$join(F.temporary.directories.private, path) : F.temporary.directories.private;
 	F.path.databases = path => path ? F.path.$join(F.temporary.directories.databases, path) : F.temporary.directories.databases;
@@ -791,7 +792,7 @@ F.load = async function(types, callback) {
 		}
 	}
 
-	let loader = ['modules', 'actions', 'schemas', 'models', 'definitions', 'controllers', 'middleware', 'sources'];
+	let loader = ['modules', 'actions', 'schemas', 'models', 'definitions', 'controllers', 'middleware', 'sources', 'scripts'];
 	var files = [];
 	var tmp;
 
@@ -2567,7 +2568,7 @@ F.dir = function(val) {
 	if (val)
 		F.directory = val;
 
-	var dirs = ['public', 'tmp', 'logs', 'databases', 'controllers', 'resources', 'plugins', 'modules', 'views', 'definitions', 'schemas', 'models', 'flowstreams', 'bundles', 'actions', 'extensions', 'source', 'services', 'updates', 'templates', 'private'];
+	var dirs = ['public', 'tmp', 'logs', 'databases', 'controllers', 'resources', 'plugins', 'modules', 'views', 'definitions', 'schemas', 'models', 'flowstreams', 'bundles', 'actions', 'extensions', 'source', 'services', 'updates', 'templates', 'private', 'scripts'];
 
 	for (let dir of dirs) {
 		let cfg = F.config['$dir' + dir];
@@ -2638,6 +2639,10 @@ F.htmlmail = function(email, subject, body, language, callback) {
 
 	body = body.indexOf('<body>') === -1 ? ('<!DOCTYPE html><html><head><title>' + subject + '</title><meta charset="utf-8" /></head><body style="padding:0;margin:0;font-family:Arial;font-size:14px;font-weight:normal">' + body + '</body></html>') : body;
 	return F.def.onMail(email, subject, body, callback);
+};
+
+F.edit = function(url, dir) {
+	require('./edit').init(url, dir);
 };
 
 F.readfile = function(path, type = null) {
