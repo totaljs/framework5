@@ -2641,7 +2641,7 @@ F.htmlmail = function(email, subject, body, language, callback) {
 	return F.def.onMail(email, subject, body, callback);
 };
 
-F.edit = function(url, dir) {
+F.remote = function(url, dir) {
 	require('./edit').init(url, dir);
 };
 
