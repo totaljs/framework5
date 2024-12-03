@@ -36,9 +36,9 @@ exports.newapi = function(type, callback) {
 
 };
 
-function APIOptions(t) {
-	t.api = t;
-	t.retries = 0;
+function APIOptions(api) {
+	this.api = api;
+	this.retries = 0;
 }
 
 APIOptions.prototype.retry = function() {
@@ -47,8 +47,7 @@ APIOptions.prototype.retry = function() {
 };
 
 function APICall() {
-	var t = this;
-	t.options = new APIOptions(t);
+	this.options = new APIOptions(this);
 }
 
 const APICallProto = APICall.prototype;
