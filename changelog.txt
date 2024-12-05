@@ -7,6 +7,7 @@
 - added `Total.edit('socket_url')` for remote editing of source code
 - added support for `scripts` folder
 - added Total.remote('wss_totaljs_code_url') method for remote editing of the source-code
+- added a better support for `*:tagname` prefixes in HTMLParser
 
 ========================
 0.0.7
