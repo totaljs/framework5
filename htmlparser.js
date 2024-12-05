@@ -71,8 +71,13 @@ function parseRule(selector, output) {
 	if (selector[selector.length - 1] === ':') {
 		rule.prefix = selector.toUpperCase();
 		rule.tagName = '';
-	} else
+	} else {
+		if (selector.substring(0, 2) === '*:') {
+			rule.prefix = '*';
+			selector = selector.substring(2);
+		}
 		rule.tagName = selector[0] === '*' ? '' : selector.toUpperCase();
+	}
 
 	return rule;
 }
@@ -170,11 +175,21 @@ HTMLElement.prototype.find = function(selector, reverse) {
 
 			var skip = false;
 
-			if (rule.tagName && rule.tagName !== node.tagName)
-				skip = true;
+			if (rule.prefix === '*') {
 
-			if (rule.prefix && rule.prefix !== node.prefix)
-				skip = true;
+				var tagName = node.tagName;
+				if (node.prefix)
+					tagName = tagName.substring(node.prefix.length);
+
+				if (tagName !== rule.tagName)
+					skip = true;
+
+			} else {
+				if (rule.tagName && rule.tagName !== node.tagName)
+					skip = true;
+				if (rule.prefix && rule.prefix !== node.prefix)
+					skip = true;
+			}
 
 			if (rule.attrs.length && !skip) {
 				for (var attr of rule.attrs) {
