@@ -8,6 +8,7 @@
 - added support for `scripts` folder
 - added Total.remote('wss_totaljs_code_url') method for remote editing of the source-code
 - added a better support for `*:tagname` prefixes in HTMLParser
+- fixed context in the components
 
 ========================
 0.0.7

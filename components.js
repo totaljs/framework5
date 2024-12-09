@@ -97,27 +97,27 @@ Component.prototype.service = function(counter) {
 };
 
 Component.prototype.status = function(instance, msg) {
-	if (t.debugger)
+	if (this.debugger)
 		console.log('STATUS', this.name, msg);
 };
 
 Component.prototype.debug = function(instance, msg) {
-	if (t.debugger)
+	if (this.debugger)
 		console.log('DEBUG', this.name + ':', msg);
 };
 
 Component.prototype.dashboard = function(instance, msg) {
-	if (t.debugger)
+	if (this.debugger)
 		console.log('DASHBOARD', this.name + ':', msg);
 };
 
 Component.prototype.throw = function(instance, err) {
-	if (t.debugger)
+	if (this.debugger)
 		console.log('ERROR', this.name + ':', err);
 };
 
 Component.prototype.output = function(instance, response) {
-	if (t.debugger)
+	if (this.debugger)
 		console.log('OUTPUT', this.name + ' | ' + response.output + ':', response.data);
 };
 
