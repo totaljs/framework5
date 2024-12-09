@@ -9,6 +9,7 @@
 - added Total.remote('wss_totaljs_code_url') method for remote editing of the source-code
 - added a better support for `*:tagname` prefixes in HTMLParser
 - fixed context in the components
+- fixed URL downloading templates in `TEMPLATE()` method
 
 ========================
 0.0.7

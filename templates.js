@@ -35,7 +35,7 @@ exports.render = function(body, model, $) {
 				var opt = {};
 				opt.url = body;
 				opt.method = 'GET';
-				opt.$ = function(err, response) {
+				opt.callback = function(err, response) {
 
 					if (err) {
 						if ($ && $.invalid)
