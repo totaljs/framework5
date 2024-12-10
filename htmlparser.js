@@ -550,7 +550,6 @@ function parseHTML(html, trim, onerror, isxml) {
 			return '';
 		}
 
-
 		if (beg > 0) {
 			tmp = str.substring(0, beg);
 
@@ -617,12 +616,6 @@ function parseHTML(html, trim, onerror, isxml) {
 				return str;
 		} else {
 			switch (dom.tagName) {
-				case 'BR':
-				case 'HR':
-				case 'IMG':
-				case 'INPUT':
-				case 'META':
-				case 'LINK':
 				case 'SOURCE':
 				case 'AREA':
 				case 'COL':
@@ -643,6 +636,26 @@ function parseHTML(html, trim, onerror, isxml) {
 				break;
 
 			beg = str.indexOf(tagBeg, pos);
+
+			if (beg !== -1) {
+
+				// another one with the same type
+				// check unpair
+
+				let posend = str.indexOf('>', beg + tagBeg.length);
+				if (posend === -1) {
+					// tag is not closed
+					return '';
+				}
+
+				if (str[posend - 1] === '/') {
+					// unpair
+					pos = posend + 1;
+					continue;
+				}
+
+			}
+
 			end = str.indexOf(tagEnd, pos);
 
 			// Fallback for the non-exists end tag
@@ -671,7 +684,8 @@ function parseHTML(html, trim, onerror, isxml) {
 		}
 
 		var inner = str.substring(0, pos - tagEnd.length);
-		if (inner.indexOf('<') === -1 || (/\<(script|style|template)/).test(tag)) {
+
+		if (inner.indexOf('<') === -1 || (!isxml && (/\<(script|style|template)/).test(tag))) {
 			if (trim)
 				inner = inner.trim();
 			if (inner)
