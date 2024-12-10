@@ -11,6 +11,7 @@
 - fixed context in the components
 - fixed URL downloading templates in `TEMPLATE()` method
 - fixed parsing of unpaired elements in HTMLParser
+- added support for `log` extension in static file processing
 
 ========================
 0.0.7
