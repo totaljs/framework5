@@ -1339,7 +1339,7 @@ ActionCaller.prototype.exec = function() {
 		}
 	}
 
-	if (action.sa) {
+	if (action.sa || action.su) {
 		if (!$.user || (!$.user.sa && !$.user.su)) {
 			$.invalid(401);
 			return;
