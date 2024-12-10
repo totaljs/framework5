@@ -60,8 +60,9 @@ Message.prototype.callback = function(fn) {
 	return this;
 };
 
-Message.prototype.sender = Message.prototype.from = function(email) {
+Message.prototype.sender = Message.prototype.from = function(email, name) {
 	this.email_from = email;
+	this.email_from_name = name;
 	return this;
 };
 
@@ -571,7 +572,7 @@ Mailer.$writemessage = function(obj, buffer) {
 	self.$priority && message.push('X-Priority: ' + self.$priority);
 	self.$confidential && message.push('Sensitivity: Company-Confidential');
 
-	message.push('From: <' + msg.email_from + '>');
+	message.push('From: ' + (msg.email_from_name ? (unicode_encode(msg.email_from_name) + ' <' + msg.email_from + '>') : msg.email_from));
 
 	if (msg.headers) {
 		for (let key in msg.headers)

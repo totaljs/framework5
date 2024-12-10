@@ -873,12 +873,21 @@ View.prototype.set = function() {
 	return '';
 };
 
+View.prototype.renderlayout = function(name, content) {
+	let self = this;
+	self.output = content;
+	self.islayout = true;
+	content = self.render(self.repository.layout);
+	self.islayout = false;
+	return content;
+};
+
 View.prototype.render = function(name, model, ispartial = false) {
 
-	var self = this;
-	var key = name + '_' + self.language;
-	var fn = F.temporary.views[key];
-	var content;
+	let self = this;
+	let key = name + '_' + self.language;
+	let fn = F.temporary.views[key];
+	let content;
 
 	self.model = model;
 
@@ -897,6 +906,7 @@ View.prototype.render = function(name, model, ispartial = false) {
 		self.output = content;
 		self.islayout = true;
 		content = self.render(self.repository.layout);
+		self.islayout = false;
 	}
 
 	return content;

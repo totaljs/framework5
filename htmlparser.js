@@ -71,8 +71,13 @@ function parseRule(selector, output) {
 	if (selector[selector.length - 1] === ':') {
 		rule.prefix = selector.toUpperCase();
 		rule.tagName = '';
-	} else
+	} else {
+		if (selector.substring(0, 2) === '*:') {
+			rule.prefix = '*';
+			selector = selector.substring(2);
+		}
 		rule.tagName = selector[0] === '*' ? '' : selector.toUpperCase();
+	}
 
 	return rule;
 }
@@ -170,11 +175,21 @@ HTMLElement.prototype.find = function(selector, reverse) {
 
 			var skip = false;
 
-			if (rule.tagName && rule.tagName !== node.tagName)
-				skip = true;
+			if (rule.prefix === '*') {
 
-			if (rule.prefix && rule.prefix !== node.prefix)
-				skip = true;
+				var tagName = node.tagName;
+				if (node.prefix)
+					tagName = tagName.substring(node.prefix.length);
+
+				if (tagName !== rule.tagName)
+					skip = true;
+
+			} else {
+				if (rule.tagName && rule.tagName !== node.tagName)
+					skip = true;
+				if (rule.prefix && rule.prefix !== node.prefix)
+					skip = true;
+			}
 
 			if (rule.attrs.length && !skip) {
 				for (var attr of rule.attrs) {
@@ -535,7 +550,6 @@ function parseHTML(html, trim, onerror, isxml) {
 			return '';
 		}
 
-
 		if (beg > 0) {
 			tmp = str.substring(0, beg);
 
@@ -561,7 +575,15 @@ function parseHTML(html, trim, onerror, isxml) {
 		}
 
 		var tag = node;
-		var index = tag.indexOf(' ');
+		var index = -1;
+
+		for (let i = 0; i < tag.length; i++) {
+			let c = tag[i];
+			if (c === '\n' || c === ' ' || c === '/' || c === '>') {
+				index = i;
+				break;
+			}
+		}
 
 		if (index > 0) {
 			tag = tag.substring(0, index);
@@ -594,12 +616,11 @@ function parseHTML(html, trim, onerror, isxml) {
 				return str;
 		} else {
 			switch (dom.tagName) {
-				case 'BR':
-				case 'HR':
-				case 'IMG':
-				case 'META':
-				case 'LINK':
-				case 'INPUT':
+				case 'SOURCE':
+				case 'AREA':
+				case 'COL':
+				case 'EMBED':
+				case 'TRACK':
 					dom.unpair = true;
 					return str;
 			}
@@ -615,6 +636,26 @@ function parseHTML(html, trim, onerror, isxml) {
 				break;
 
 			beg = str.indexOf(tagBeg, pos);
+
+			if (beg !== -1) {
+
+				// another one with the same type
+				// check unpair
+
+				let posend = str.indexOf('>', beg + tagBeg.length);
+				if (posend === -1) {
+					// tag is not closed
+					return '';
+				}
+
+				if (str[posend - 1] === '/') {
+					// unpair
+					pos = posend + 1;
+					continue;
+				}
+
+			}
+
 			end = str.indexOf(tagEnd, pos);
 
 			// Fallback for the non-exists end tag
@@ -643,7 +684,8 @@ function parseHTML(html, trim, onerror, isxml) {
 		}
 
 		var inner = str.substring(0, pos - tagEnd.length);
-		if (inner.indexOf('<') === -1 || (/\<(script|style|template)/).test(tag)) {
+
+		if (inner.indexOf('<') === -1 || (!isxml && (/\<(script|style|template)/).test(tag))) {
 			if (trim)
 				inner = inner.trim();
 			if (inner)

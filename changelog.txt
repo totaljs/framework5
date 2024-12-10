@@ -1,4 +1,40 @@
 ========================
+0.0.8
+========================
+
+- added `opt.retry()` method in to the `API` evaluation
+- improved HTTP cache in debug mode
+- added `Total.edit('socket_url')` for remote editing of source code
+- added support for `scripts` folder
+- added Total.remote('wss_totaljs_code_url') method for remote editing of the source-code
+- added a better support for `*:tagname` prefixes in HTMLParser
+- fixed context in the components
+- fixed URL downloading templates in `TEMPLATE()` method
+- fixed parsing of unpaired elements in HTMLParser
+
+========================
+0.0.7
+========================
+
+- improved user-agent parser (added support for new headers `Sec-CH-UA`)
+- improved `Number.pluralize()` method
+- reduced DNS cache flush time to 3 minutes
+- added `$.address` property with the absolute URL address
+- added `$.ctrl(ctrl_instance)` method
+- extended `Mail.from(email, [name])` method by adding `name` argument by [Marek Mráz](https://github.com/Mrazbb)
+- added `CONF.mail_from_name {String}` option
+- improved `$.query` parser
+- improved `Total.run()` method
+- added a new method `NEWCOMPONENT(html_or_URL_or_name, [callback])`
+	- it compiles a FlowStream component to a method
+- extended FlowStream by adding support for `input` and `output` Total.js inline schemas
+- fixed memory usage in the Flow in non-worker mode
+- improved Flow error handling
+- improved HTML parser
+- improved `controller.view()` supports calling without arguments
+- extended ViewEngine by adding `view.renderlayout(name, content)` method
+
+========================
 0.0.6
 ========================
 

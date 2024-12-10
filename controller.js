@@ -15,6 +15,7 @@ const CHECK_COMPRESSION = { 'text/plain': true, 'text/javascript': true, 'text/c
 const CHECK_CHARSET =  { 'text/plain': true, 'text/javascript': true, 'text/css': true, 'text/jsx': true, 'application/javascript': true, 'application/x-javascript': true, 'application/json': true, 'text/xml': true, 'text/x-markdown': true, 'text/html': true, 'application/x-ijsnb+json': true, 'application/x-ipynb+json': true };
 const CHECK_NOCACHE = { zip: 1, rar: 1 };
 const CHECK_MIN = /(\.|-|@)min/i;
+const CHECK_CACHEDEBUG = { html: 1, js: 1, css: 1 };
 
 const GZIP_FILE = { memLevel: 9 };
 const GZIP_STREAM = { memLevel: 1 };
@@ -42,7 +43,7 @@ function Controller(req, res) {
 	ctrl.url = ctrl.uri.pathname;
 	ctrl.released = false;
 	ctrl.downloaded = false;
-	ctrl.protocol = req.connection.encrypted || (req.headers['x-forwarded-protocol'] || req.headers['x-forwarded-proto']) === 'https' ? 'https' : 'http';
+	ctrl.protocol = req.connection.encrypted || req.headers['x-forwarded-ssl'] === 'on' || req.headers['x-forwarded-port'] === '443' || (req.headers['x-forwarded-proto'] || req.headers['x-forwarded-protocol']) === 'https' ? 'https' : 'http';
 
 	for (let path of ctrl.split)
 		ctrl.split2.push(path.toLowerCase());
@@ -64,7 +65,7 @@ function Controller(req, res) {
 
 	ctrl.response = {
 		status: 200,
-		cache: global.DEBUG != true,
+		cache: !global.DEBUG || !CHECK_CACHEDEBUG[ctrl.ext],
 		minify: true,
 		// minifyjson: false
 		// encrypt: false
@@ -113,6 +114,14 @@ function Controller(req, res) {
 
 Controller.prototype = {
 
+	get query() {
+		return this.$query || (this.$query = ctrl.uri.search.parseEncoded());
+	},
+
+	set query(val) {
+		this.$query = val;
+	},
+
 	get mobile() {
 		let ua = this.headers['user-agent'];
 		return ua ? REG_MOBILE.test(ua) : false;
@@ -134,8 +143,7 @@ Controller.prototype = {
 	get ua() {
 		if (this.$ua != null)
 			return this.$ua;
-		let ua = this.headers['user-agent'];
-		this.$ua = ua ? ua.parseUA() : '';
+		this.$ua = F.TUtils.parseUA(this.headers);
 		return this.$ua;
 	},
 
@@ -160,6 +168,10 @@ Controller.prototype = {
 
 	get host() {
 		return this.headers.host;
+	},
+
+	get address() {
+		return (this.protocol + '://' + this.headers?.host || '') + (this.req?.url || '');
 	}
 
 };
@@ -455,13 +467,17 @@ Controller.prototype.layout = function(name) {
 Controller.prototype.view = function(name, model) {
 
 	var ctrl = this;
+	var view = new F.TViewEngine.View(ctrl);
+
+	if (!name)
+		return view;
 
 	if (ctrl.destroyed)
 		return;
 
-	var view = new F.TViewEngine.View(ctrl);
 	ctrl.response.layout && view.layout(ctrl.response.layout);
 	setImmediate(renderview, view, name, model);
+
 	return view;
 };
 
@@ -1014,12 +1030,16 @@ Controller.prototype.$route = function() {
 
 				ctrl.payload = Buffer.concat(ctrl.payload);
 				F.stats.performance.download += ctrl.payload.length / 1024 / 1024;
+				let val;
+
 				switch (ctrl.datatype) {
 					case 'json':
-						ctrl.body = F.def.parsers.json(ctrl.payload.toString('utf8'));
+						val = ctrl.payload.toString('utf8');
+						ctrl.body = val ? F.def.parsers.json(val) : null;
 						break;
 					case 'urlencoded':
-						ctrl.body = F.def.parsers.urlencoded(ctrl.payload.toString('utf8'));
+						val = ctrl.payload.toString('utf8');
+						ctrl.body = val ? F.def.parsers.urlencoded(val) : {};
 						break;
 				}
 

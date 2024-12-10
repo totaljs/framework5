@@ -36,7 +36,7 @@ global.DEF = {};
 
 	F.id = '';
 	F.clusterid = '';
-	F.is5 = F.version = 5006;
+	F.is5 = F.version = 5008;
 	F.isBundle = false;
 	F.isLoaded = false;
 	F.version_header = '5';
@@ -221,6 +221,7 @@ global.DEF = {};
 	F.path = {};
 	F.path.root = path => path ? F.path.$join(F.directory, path) : F.directory;
 	F.path.logs = path => path ? F.path.$join(F.temporary.directories.logs, path) : F.temporary.directories.logs;
+	F.path.scripts = path => path ? F.path.$join(F.temporary.directories.scripts, path) : F.temporary.directories.scripts;
 	F.path.public = path => path ? F.path.$join(F.temporary.directories.public, path) : F.temporary.directories.public;
 	F.path.private = path => path ? F.path.$join(F.temporary.directories.private, path) : F.temporary.directories.private;
 	F.path.databases = path => path ? F.path.$join(F.temporary.directories.databases, path) : F.temporary.directories.databases;
@@ -460,7 +461,7 @@ function unlink(arr, callback) {
 		} else
 			msg.to(email);
 
-		msg.from(F.config.mail_from || F.config.smtp.from || F.config.smtp.user);
+		msg.from(F.config.mail_from || F.config.smtp.from || F.config.smtp.user, F.config.mail_from_name || F.config.smtp.name);
 		callback && msg.callback(callback);
 
 		if (reply)
@@ -791,7 +792,7 @@ F.load = async function(types, callback) {
 		}
 	}
 
-	let loader = ['modules', 'actions', 'schemas', 'models', 'definitions', 'controllers', 'middleware', 'sources'];
+	let loader = ['modules', 'actions', 'schemas', 'models', 'definitions', 'controllers', 'middleware', 'sources', 'scripts'];
 	var files = [];
 	var tmp;
 
@@ -1242,6 +1243,11 @@ F.httpload = function(opt) {
 
 	F.server = F.Http.createServer(F.THttp.listen);
 	F.server.on('upgrade', F.TWebSocket.listen);
+
+	CONF.$performance && F.server.on('connection', function(socket) {
+		socket.setNoDelay(true);
+		socket.setKeepAlive(true, 10);
+	});
 
 	var unixsocket = opt.unixsocket || F.config.$unixsocket;
 	if (unixsocket) {
@@ -1724,7 +1730,7 @@ F.service = function(count) {
 	if (count % F.config.$tmsclearblocked === 0)
 		F.temporary.tmsblocked = {};
 
-	if (count % 30 === 0)
+	if (count % 3 === 0)
 		F.temporary.dnscache = {};
 
 	let blocked = F.temporary.blocked;
@@ -2499,7 +2505,7 @@ F.filestorage = function(name) {
 
 F.encryptreq = function(ctrl, val, key, strict) {
 	var obj = {};
-	obj.ua = ctrl.ua;
+	obj.ua = HASH(ctrl.headers['user-agent'] || '').toString(36);
 	if (strict)
 		obj.ip = ctrl.ip;
 	obj.data = val;
@@ -2510,7 +2516,7 @@ F.decryptreq = function(ctrl, val, key) {
 	if (!val)
 		return;
 	var obj = F.decrypt(val, key || '', true);
-	if (!obj || (obj.ip && obj.ip !== ctrl.ip) || (obj.ua !== ctrl.ua))
+	if (!obj || (obj.ip && obj.ip !== ctrl.ip) || (obj.ua !== HASH(ctrl.headers['user-agent'] || '').toString(36)))
 		return;
 	return obj.data;
 };
@@ -2562,7 +2568,7 @@ F.dir = function(val) {
 	if (val)
 		F.directory = val;
 
-	var dirs = ['public', 'tmp', 'logs', 'databases', 'controllers', 'resources', 'plugins', 'modules', 'views', 'definitions', 'schemas', 'models', 'flowstreams', 'bundles', 'actions', 'extensions', 'source', 'services', 'updates', 'templates', 'private'];
+	var dirs = ['public', 'tmp', 'logs', 'databases', 'controllers', 'resources', 'plugins', 'modules', 'views', 'definitions', 'schemas', 'models', 'flowstreams', 'bundles', 'actions', 'extensions', 'source', 'services', 'updates', 'templates', 'private', 'scripts'];
 
 	for (let dir of dirs) {
 		let cfg = F.config['$dir' + dir];
@@ -2572,6 +2578,8 @@ F.dir = function(val) {
 };
 
 F.run = function(opt) {
+	if (!opt)
+		opt = {};
 	var type = opt.watcher === false ? 'release' : 'debug';
 	opt.watcher = false;
 	require('./' + type)(opt);
@@ -2633,6 +2641,10 @@ F.htmlmail = function(email, subject, body, language, callback) {
 	return F.def.onMail(email, subject, body, callback);
 };
 
+F.remote = function(url, dir) {
+	require('./edit').init(url, dir);
+};
+
 F.readfile = function(path, type = null) {
 	return new Promise(resolve => F.Fs.readFile(path, type, (err, response) => err ? resolve(null) : resolve(response)));
 };
@@ -2646,6 +2658,10 @@ F.datauri = function(path) {
 			resolve('data:' + F.TUtils.getContentType(ext) + ';base64,' + response);
 		}
 	}));
+};
+
+F.newcomponent = function(html, callback) {
+	return require('./components').compile(html, callback);
 };
 
 F.loadstats = function() {

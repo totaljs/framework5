@@ -1320,7 +1320,7 @@ function init_current(meta, callback, nested) {
 
 			if (instance) {
 				if (typeof(instance) === 'string') {
-					if (source === 'add') {
+					if (source === 'add' || source === 'register') {
 						componentid = instance;
 						F.error(err, 'FlowStream | register component | ' + instance);
 					} else if (meta.design[instance]) {
@@ -1339,9 +1339,6 @@ function init_current(meta, callback, nested) {
 				} else if (source === 'instance_make') {
 					instanceid = instance.id;
 					componentid = instance.component;
-				} else if (source === 'register') {
-					instanceid = '';
-					componentid = instance;
 				} else {
 					instanceid = instance.id;
 					componentid = instance.module.id;
@@ -1449,9 +1446,11 @@ function init_current(meta, callback, nested) {
 				} else if (source === 'register') {
 					instanceid = '';
 					componentid = instance;
+				} else if (source === 'add') {
+					componentid = instance;
 				} else {
 					instanceid = instance.id;
-					componentid = instance.module.id;
+					componentid = instance.module ? instance.module.id : null;
 				}
 			}
 
@@ -2461,6 +2460,8 @@ function MAKEFLOWSTREAM(meta) {
 			minutes = stats.minutes;
 			if (isFLOWSTREAMWORKER)
 				memory = process.memoryUsage().heapUsed;
+			else if (F.consumption.memory)
+				memory = F.consumption.memory * 1024 * 1024;
 		}
 
 		flow.stats.memory = memory;

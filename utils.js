@@ -1584,6 +1584,22 @@ exports.filestreamer = function(filename, onbuffer, onend, size) {
 
 };
 
+exports.parseUA = function(headers, structured) {
+	let ua = headers['sec-ch-ua'];
+	if (ua) {
+		let platform = headers['sec-ch-ua-platform'] || '';
+		let mobile = headers['sec-ch-ua-mobile'] === '?1';
+		let index = ua.indexOf('";v');
+		let browser = ua.substring(1, index);
+		if (platform)
+			platform = platform.substring(1, platform.length - 1);
+		return structured ? { os: platform, browser: browser, device: mobile ? 'mobile' : 'desktop' } : ((platform ? (platform + ' ') : '') + browser + (mobile ? ' Mobile' : ''));
+	} else {
+		ua = (headers['user-agent'] || '');
+		return ua ? ua.parseUA(structured) : ua;
+	}
+};
+
 exports.parseInt = function(obj, def) {
 	if (obj == null || obj === '')
 		return def === undefined ? 0 : def;
@@ -4303,13 +4319,7 @@ NP.pluralize = function(zero, one, few, other) {
 	else
 		value = other;
 
-	var beg = value.indexOf('#');
-	if (beg === -1)
-		return value;
-
-	var end = value.lastIndexOf('#');
-	var format = value.substring(beg, end + 1);
-	return num.format(format) + value.replace(format, '');
+	return value.replace('#', num.toString());
 };
 
 NP.VAT = NP.TAX = function(percentage, decimals, includedVAT) {
@@ -6487,6 +6497,9 @@ exports.paginate = function(page, pages, max) {
 
 	if (!page)
 		page = 1;
+
+	if (page > pages)
+		page = pages;
 
 	let response = {};
 
