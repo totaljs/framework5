@@ -24,23 +24,23 @@ function parseRule(selector, output) {
 	rule.attrs = [];
 	rule.output = output || [];
 
+	// > div
 	// div div[name="Peter Sirka"]
 	// div > div[name="Peter Sirka"]
 
-	// for (var c of selector) {
-	// 	if (c === '>')
-	// 		console.log(c);
-	// }
-
 	var cache = [];
 
-	selector = selector.replace(/\[.*?\]/gi, text => '[' + (cache.push(text) - 1) + ']').replace(/(\s)?>(\s)?/, '>').replace(/\s{2}/g, '');
+	selector = selector.replace(/\[.*?\]/gi, text => '[' + (cache.push(text) - 1) + ']').replace(/(\s)?>(\s)?/, '>').replace(/\s{2}/g, '').trim();
+
+	rule.notravelse = selector[0] === '>';
+
+	if (rule.notravelse)
+		selector = selector.substring(1);
 
 	var m = selector.match(/>|\s/);
 	if (m) {
-		var nested = selector.substring(m.index + 1).trim().replace(/\[\d+\]/g, text => cache[+text.substring(1, text.length - 1)]);
+		var nested = selector.substring(m.index).trim().replace(/\[\d+\]/g, text => cache[+text.substring(1, text.length - 1)]);
 		rule.nested = parseRule(nested, rule.output);
-		rule.direct = m[0] === '>';
 		selector = selector.substring(0, m.index).trim();
 	}
 
@@ -156,6 +156,48 @@ function extendarr(output) {
 	return output;
 }
 
+function compare(rule, node) {
+
+	if (rule.prefix === '*') {
+		var tagName = node.tagName;
+		if (node.prefix)
+			tagName = tagName.substring(node.prefix.length);
+		if (tagName !== rule.tagName)
+			return false;
+	} else {
+		if (rule.tagName && rule.tagName !== node.tagName)
+			return false;
+		if (rule.prefix && rule.prefix !== node.prefix)
+			return false;
+	}
+
+	if (rule.attrs.length) {
+		for (var attr of rule.attrs) {
+			switch (attr.id) {
+				case 'class':
+					var tmp = node.attrs[attr.id];
+					if (tmp) {
+						tmp = tmp.split(' ');
+						if (!tmp.includes(attr.value))
+							return false;
+					} else
+						return false;
+					break;
+				default:
+					if (attr.value) {
+						if (node.attrs[attr.id] !== attr.value)
+							return false;
+					} else if (node.attrs[attr.id] === undefined)
+						return false;
+
+					break;
+			}
+		}
+	}
+
+	return true;
+}
+
 HTMLElement.prototype.find = function(selector, reverse) {
 
 	var self = this;
@@ -166,81 +208,33 @@ HTMLElement.prototype.find = function(selector, reverse) {
 	for (var sel of selectors)
 		rules.push(parseRule(sel.trim()));
 
-	var browse = function(rule, children, parent) {
+	var browse = function(rule, children) {
 
-		for (var node of children) {
+		for (let node of children) {
 
 			if (!node.tagName)
 				continue;
 
-			var skip = false;
+			let children = reverse ? [node.parentNode] : node.children;
 
-			if (rule.prefix === '*') {
-
-				var tagName = node.tagName;
-				if (node.prefix)
-					tagName = tagName.substring(node.prefix.length);
-
-				if (tagName !== rule.tagName)
-					skip = true;
-
-			} else {
-				if (rule.tagName && rule.tagName !== node.tagName)
-					skip = true;
-				if (rule.prefix && rule.prefix !== node.prefix)
-					skip = true;
+			if (!compare(rule, node)) {
+				if (!rule.notravelse)
+					browse(rule, children);
+				continue;
 			}
 
-			if (rule.attrs.length && !skip) {
-				for (var attr of rule.attrs) {
-					switch (attr.id) {
-
-						case 'class':
-							var tmp = node.attrs[attr.id];
-							if (tmp) {
-								tmp = tmp.split(' ');
-								if (!tmp.includes(attr.value))
-									skip = true;
-							} else
-								skip = true;
-							break;
-
-						default:
-							if (attr.value) {
-								if (node.attrs[attr.id] !== attr.value)
-									skip = true;
-							} else if (node.attrs[attr.id] === undefined)
-								skip = true;
-
-							break;
-					}
-
-					if (skip)
-						break;
-				}
-			}
-
-			var next = ((reverse && node.parentNode) || (!reverse && node.children.length));
-
-			if (parent) {
-				if (skip && parent.direct)
-					continue;
-			}
+			// types complexType attribute
+			// types > complexType attribute
+			// types complexType > attribute
 
 			if (rule.nested) {
-
-				if (!skip && next)
-					browse(rule.nested, reverse ? [node.parentNode] : node.children, rule);
-
-				// Again same
-				if (!parent)
-					browse(rule, reverse ? [node.parentNode] : node.children);
-
+				browse(rule.nested, children);
 			} else {
-				if (!skip)
-					rule.output.push(node);
-				if (next)
-					browse(rule, reverse ? [node.parentNode] : node.children);
+
+				rule.output.push(node);
+
+				if (!rule.notravelse)
+					browse(rule, children);
 			}
 		}
 	};
@@ -249,7 +243,9 @@ HTMLElement.prototype.find = function(selector, reverse) {
 		return output;
 
 	for (var rule of rules) {
+
 		browse(rule, reverse ? [self.parentNode] : self.children);
+
 		if (rule.output.length)
 			output.push.apply(output, rule.output);
 	}
@@ -626,17 +622,23 @@ function parseHTML(html, trim, onerror, isxml) {
 			}
 		}
 
-		var pos = 0;
+		var pos = -1;
 		var tagBeg = '<' + dom.raw;
 		var tagEnd = '</' + dom.raw + '>';
+		var unpair = false;
 
 		while (true) {
 
 			if (counter++ > 10000)
 				break;
 
-			beg = str.indexOf(tagBeg, pos);
+			if (unpair)
+				unpair = false;
+			else
+				end = str.indexOf(tagEnd, pos);
 
+			// Tries to find the same tag
+			beg = str.indexOf(tagBeg, pos);
 			if (beg !== -1) {
 
 				// another one with the same type
@@ -651,12 +653,10 @@ function parseHTML(html, trim, onerror, isxml) {
 				if (str[posend - 1] === '/') {
 					// unpair
 					pos = posend + 1;
+					unpair = true;
 					continue;
 				}
-
 			}
-
-			end = str.indexOf(tagEnd, pos);
 
 			// Fallback for the non-exists end tag
 			if (end === -1) {
@@ -671,20 +671,17 @@ function parseHTML(html, trim, onerror, isxml) {
 			}
 
 			if (beg === -1 || end < beg) {
-
 				pos = end + tagEnd.length;
-
 				if (count) {
 					count--;
 					continue;
 				}
-
 				break;
 			}
+
 		}
 
 		var inner = str.substring(0, pos - tagEnd.length);
-
 		if (inner.indexOf('<') === -1 || (!isxml && (/\<(script|style|template)/).test(tag))) {
 			if (trim)
 				inner = inner.trim();
@@ -700,7 +697,6 @@ function parseHTML(html, trim, onerror, isxml) {
 		if (str && str.indexOf('<') === -1) {
 			if (trim)
 				str = str.trim();
-
 			// Commented because it inserts the same textContent twice
 			// str && parent.children.push(makeText(parent, str));
 		}
