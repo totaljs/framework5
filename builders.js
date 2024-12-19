@@ -47,6 +47,11 @@ Options.prototype = {
 		this.payload = value;
 	},
 
+	get hostname() {
+		let ctrl = this.controller;
+		return ctrl ? ((ctrl.protocol || 'https') + '://' + ctrl.headers.host) : null;
+	},
+
 	get url() {
 		return (this.controller ? this.controller.url : '') || '';
 	},
