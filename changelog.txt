@@ -11,6 +11,9 @@
 - fixed context in the components
 - fixed URL downloading templates in `TEMPLATE()` method
 - fixed parsing of unpaired elements in HTMLParser
+- added support for `log` extension in static file processing
+- fixed selectors in the HTMLParser
+- added `$.hostname {String}` to the `SchemaOptions`
 
 ========================
 0.0.7
