@@ -126,6 +126,7 @@ Options.prototype.promisify = function(fn, a, b, c) {
 
 		var callback = function(err, response) {
 			if (err)
+
 				$.invalid(err);
 			else
 				resolve(response);
@@ -1050,8 +1051,12 @@ function restbuilder_callback(err, response) {
 
 	if (self.$resolve) {
 
-		if (err)
-			self.$.invalid(err);
+		if (err) {
+			if (self.$)
+				self.$.invalid(err);
+			else
+				self.$reject(err);
+		}
 		else
 			self.$resolve(val);
 
