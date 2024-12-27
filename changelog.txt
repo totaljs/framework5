@@ -14,6 +14,7 @@
 - added support for `log` extension in static file processing
 - fixed selectors in the HTMLParser
 - added `$.hostname {String}` to the `SchemaOptions`
+- fixed `RESTBuilder.promise()`
 
 ========================
 0.0.7
