@@ -1586,8 +1586,11 @@ exports.filestreamer = function(filename, onbuffer, onend, size) {
 };
 
 exports.parseUA = function(headers, structured) {
-	let ua = headers['sec-ch-ua'];
+	let ua = (headers['user-agent'] || '');
 	if (ua) {
+		return ua ? ua.parseUA(structured) : ua;
+	} else {
+		ua = headers['sec-ch-ua'];
 		let platform = headers['sec-ch-ua-platform'] || '';
 		let mobile = headers['sec-ch-ua-mobile'] === '?1';
 		let index = ua.indexOf('";v');
@@ -1595,9 +1598,6 @@ exports.parseUA = function(headers, structured) {
 		if (platform)
 			platform = platform.substring(1, platform.length - 1);
 		return structured ? { os: platform, browser: browser, device: mobile ? 'mobile' : 'desktop' } : ((platform ? (platform + ' ') : '') + browser + (mobile ? ' Mobile' : ''));
-	} else {
-		ua = (headers['user-agent'] || '');
-		return ua ? ua.parseUA(structured) : ua;
 	}
 };
 

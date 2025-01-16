@@ -3,6 +3,7 @@
 ========================
 
 - added missing method `NEWMIDDLEWARE()`
+- fixed parsing `user-agent`
 
 ========================
 0.0.8
