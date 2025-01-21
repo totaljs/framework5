@@ -4,6 +4,7 @@
 
 - added missing method `NEWMIDDLEWARE()`
 - fixed parsing `user-agent`
+- fixed `Message-ID` generator for email messages
 
 ========================
 0.0.8
