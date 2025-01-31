@@ -5,6 +5,7 @@
 - added missing method `NEWMIDDLEWARE()`
 - fixed parsing `user-agent`
 - fixed `Message-ID` generator for email messages
+- improved `Number.round()` by [Tomáš Novák](https://github.com/tomee03)
 
 ========================
 0.0.8
