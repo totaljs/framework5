@@ -4230,8 +4230,8 @@ NP.padRight = function(max, c) {
 };
 
 NP.round = function(precision) {
-	var m = Math.pow(10, precision) || 1;
-	return Math.round(this * m) / m;
+	var m = Math.round(this + 'e' + precision);
+	return Number(m + 'e-' + precision);
 };
 
 NP.currency = function(currency, a, b, c) {

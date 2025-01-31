@@ -858,6 +858,27 @@ Test.push('Number.prototypes', function(next) {
 	response = value.round(precision);
 	Test.print('Number.round() - Round with precision 4', correct !== response ? 'Test failed' : null);
 
+	// Test 5: Round with precision 2
+	value = 1.005;
+	precision = 2;
+	correct = 1.01;
+	response = value.round(precision);
+	Test.print('Number.round() - Round with precision 2', correct !== response ? 'Test failed' : null);
+
+	// Test 6: Round with precision 2
+	value = 2.175;
+	precision = 2;
+	correct = 2.18;
+	response = value.round(precision);
+	Test.print('Number.round() - Round with precision 2', correct !== response ? 'Test failed' : null);
+
+	// Test 7: Round with precision 2
+	value = 5.015;
+	precision = 2;
+	correct = 5.02;
+	response = value.round(precision);
+	Test.print('Number.round() - Round with precision 2', correct !== response ? 'Test failed' : null);
+
 	DEF.currencies.eur = val => val.format(2) + ' €';
 	DEF.currencies.usd = val => '$' + val.format(2);
 
