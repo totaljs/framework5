@@ -47,11 +47,6 @@ Options.prototype = {
 		this.payload = value;
 	},
 
-	get hostname() {
-		let ctrl = this.controller;
-		return ctrl ? ((ctrl.protocol || 'https') + '://' + ctrl.headers.host) : null;
-	},
-
 	get url() {
 		return (this.controller ? this.controller.url : '') || '';
 	},
@@ -103,6 +98,11 @@ Options.prototype = {
 	get ua() {
 		return this.controller ? this.controller.ua : null;
 	}
+};
+
+Options.prototype.hostname = function(path) {
+	let ctrl = this.controller;
+	return ctrl ? ctrl.hostname(path) : path;
 };
 
 Options.prototype.unauthorized = function() {

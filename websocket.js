@@ -48,6 +48,7 @@ function Controller(req, socket, head) {
 	ctrl.current = {};
 	ctrl.masking = false;
 	ctrl.iswebsocket = true;
+	ctrl.protocol = req.connection.encrypted || req.headers['x-forwarded-ssl'] === 'on' || req.headers['x-forwarded-port'] === '443' || (req.headers['x-forwarded-proto'] || req.headers['x-forwarded-protocol']) === 'https' ? 'https' : 'http';
 
 	for (let path of ctrl.split)
 		ctrl.split2.push(path.toLowerCase());
@@ -91,6 +92,14 @@ Controller.prototype = {
 
 	get referrer() {
 		return this.headers.referer;
+	},
+
+	get host() {
+		return this.headers.host;
+	},
+
+	get address() {
+		return (this.protocol + '://' + this.headers?.host || '') + (this.req?.url || '');
 	}
 
 };
@@ -590,6 +599,11 @@ Controller.prototype.ping = function(ts) {
 		}
 	}
 	return ctrl;
+};
+
+Controller.prototype.hostname = function(path) {
+	var ctrl = this;
+	return ctrl.protocol + '://' + ctrl.headers.host + (path ? path : '');
 };
 
 function websocketclientdestroy(ctrl) {
