@@ -438,12 +438,8 @@ MP.send = function(outputindex, data, clonedata) {
 				if (data != undefined)
 					message.data = data;
 
-				if (clonedata && message.data && typeof(message.data) === 'object') {
-					if (message.data instanceof Buffer)
-						message.data = Buffer.from(message.data);
-					else
-						message.data = F.TUtils.clone(message.data);
-				}
+				if (clonedata && message.data && typeof(message.data) === 'object')
+					message.data = message.data instanceof Buffer ? Buffer.from(message.data) : F.TUtils.clone(message.data);
 
 				message.used++;
 				message.instance = schema;
@@ -1118,12 +1114,8 @@ FP.ontrigger = function(outputindex, data, controller, events) {
 						message.used = 1;
 					}
 
-					if (i && (self.cloning != false) && message.data && typeof(message.data) === 'object') {
-						if (message.data instanceof Buffer)
-							message.data = Buffer.from(message.data);
-						else
-							message.data = F.TUtils.clone(message.data);
-					}
+					if (i && (self.cloning != false) && message.data && typeof(message.data) === 'object')
+						message.data = message.data instanceof Buffer ? Buffer.from(message.data) : F.TUtils.clone(message.data);
 
 					message.main = self;
 					message.controller = controller;
