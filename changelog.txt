@@ -9,6 +9,7 @@
 - added missing `$.hostname()` method in the `WebSocketController`
 - added missing `$.address` property in the `WebSocketController`
 - replaced `$.hostname` property with a method in the Schema/Auth Options
+- __critital__ fixed cloning buffers in the `FlowStream`
 
 ========================
 0.0.8

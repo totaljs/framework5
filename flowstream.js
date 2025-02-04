@@ -439,11 +439,9 @@ MP.send = function(outputindex, data, clonedata) {
 					message.data = data;
 
 				if (clonedata && message.data && typeof(message.data) === 'object') {
-					if (message.data instanceof Buffer) {
-						let buf = Buffer.alloc(message.data.length);
-						buf.copy(message.data);
-						message.data = buf;
-					} else
+					if (message.data instanceof Buffer)
+						message.data = Buffer.from(message.data);
+					else
 						message.data = F.TUtils.clone(message.data);
 				}
 
@@ -1121,11 +1119,9 @@ FP.ontrigger = function(outputindex, data, controller, events) {
 					}
 
 					if (i && (self.cloning != false) && message.data && typeof(message.data) === 'object') {
-						if (message.data instanceof Buffer) {
-							var buf = Buffer.alloc(message.data.length);
-							buf.copy(message.data);
-							message.data = buf;
-						} else
+						if (message.data instanceof Buffer)
+							message.data = Buffer.from(message.data);
+						else
 							message.data = F.TUtils.clone(message.data);
 					}
 
