@@ -10,6 +10,7 @@
 - added missing `$.address` property in the `WebSocketController`
 - replaced `$.hostname` property with a method in the Schema/Auth Options
 - __critital__ fixed cloning buffers in the `FlowStream`
+- improved user-agent parser
 
 ========================
 0.0.8
