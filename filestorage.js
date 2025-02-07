@@ -373,6 +373,106 @@ FP._read = function(id, callback, nostream) {
 	return self;
 };
 
+FP.clone = function(id, newid, callback) {
+	var self = this;
+
+	if (typeof(newid) === 'function') {
+		callback = newid;
+		newid = UID();
+	}
+
+	if (callback)
+		return self._clone(id, newid, callback);
+	else
+		return new Promise((resolve, reject) => self._clone(id, newid, (err, res) => err ? reject(err) : resolve(res)));
+};
+
+FP._clone = function(id, newid, callback) {
+
+	var self = this;
+
+	if (self.pause) {
+		setTimeout(self._clone, 500, id, newid, callback);
+		return self;
+	}
+
+	var filename = F.Path.join(self.makedirectory(id), id + '.file');
+
+	F.stats.performance.open++;
+	F.Fs.open(filename, 'r', function(err, fd) {
+
+		if (err) {
+			callback(err);
+			return;
+		}
+
+		var buffer = Buffer.alloc(HEADERSIZE);
+		F.Fs.read(fd, buffer, 0, HEADERSIZE, 0, function(err) {
+
+			if (err) {
+				F.Fs.close(fd, NOOP);
+				callback(err);
+				return;
+			}
+
+			F.stats.performance.open++;
+
+			var str = buffer.toString('utf8').replace(REG_CLEAN, '');
+			if (!str) {
+				// Invalid file
+				F.Fs.close(fd, function() {
+					if (buffer.length === HEADERSIZE)
+						F.Fs.unlink(filename, NOOP);
+				});
+				callback('File not found');
+				return;
+			}
+
+			var meta = str.parseJSON(true);
+			if (!meta) {
+				F.Fs.close(fd, NOOP);
+				callback('Invalid file');
+				return;
+			}
+
+			F.Fs.close(fd, NOOP);
+			meta.id = newid;
+
+			if (meta.expire && meta.expire < NOW) {
+				callback('File is expired');
+				return;
+			}
+
+			var directory = self.makedirectory(newid);
+			var filenamenew = F.Path.join(directory, newid + '.file');
+
+			if (self.cache[directory]) {
+				F.Fs.copyFile(filename, filenamenew, function(err) {
+					if (!err)
+						F.Fs.appendFile(self.logger, JSON.stringify(meta) + '\n', NOOP);
+					callback && callback(err, meta);
+				});
+			} else {
+				F.Fs.mkdir(directory, MKDIR, function(err) {
+
+					if (err) {
+						callback(err);
+						return;
+					}
+
+					self.cache[directory] = 1;
+					F.Fs.copyFile(filename, filenamenew, function(err) {
+						if (!err)
+							F.Fs.appendFile(self.logger, JSON.stringify(meta) + '\n', NOOP);
+						callback && callback(err, meta);
+					});
+				});
+			}
+
+		});
+	});
+};
+
 FP.copy = function(id, path, callback) {
 	var self = this;
 	if (callback)
@@ -390,10 +490,10 @@ FP._copy = function(id, path, callback) {
 		return self;
 	}
 
-	var filename = Path.join(self.makedirectory(id), id + '.file');
+	var filename = F.Path.join(self.makedirectory(id), id + '.file');
 
 	F.stats.performance.open++;
-	Fs.open(filename, 'r', function(err, fd) {
+	F.Fs.open(filename, 'r', function(err, fd) {
 
 		if (err) {
 			callback(err);
@@ -401,20 +501,20 @@ FP._copy = function(id, path, callback) {
 		}
 
 		var buffer = Buffer.alloc(HEADERSIZE);
-		Fs.read(fd, buffer, 0, HEADERSIZE, 0, function(err) {
+		F.Fs.read(fd, buffer, 0, HEADERSIZE, 0, function(err) {
 
 			if (err) {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback(err);
 				return;
 			}
 
-			var str = buffer.toString('utf8').replace(REGCLEAN, '');
+			var str = buffer.toString('utf8').replace(REG_CLEAN, '');
 			if (!str) {
 				// Invalid file
-				Fs.close(fd, function() {
+				F.Fs.close(fd, function() {
 					if (buffer.length === HEADERSIZE)
-						Fs.unlink(filename, NOOP);
+						F.Fs.unlink(filename, NOOP);
 				});
 				callback('File not found');
 				return;
@@ -422,7 +522,7 @@ FP._copy = function(id, path, callback) {
 
 			var meta = str.parseJSON(true);
 			if (!meta) {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback('Invalid file');
 				return;
 			}
@@ -430,21 +530,21 @@ FP._copy = function(id, path, callback) {
 			meta.id = id;
 
 			if (meta.expire && meta.expire < NOW) {
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 				callback('File is expired');
 				return;
 			}
 
 			F.stats.performance.open++;
 
-			var reader = Fs.createReadStream(filename, { fd: fd, start: HEADERSIZE });
-			var writer = Fs.createWriteStream(path.includes('.') ? path : Path.join(path, meta.name));
+			var reader = F.Fs.createReadStream(filename, { fd: fd, start: HEADERSIZE });
+			var writer = F.Fs.createWriteStream(path.includes('.') ? path : F.Path.join(path, meta.name));
 
 			reader.pipe(writer);
 
 			CLEANUP(reader, function() {
 				callback(err, meta);
-				Fs.close(fd, NOOP);
+				F.Fs.close(fd, NOOP);
 			});
 
 		});
