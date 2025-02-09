@@ -13,6 +13,8 @@
 - improved user-agent parser
 - added `FILESTORAGE().clone(id, newid, [callback])` method
 - fixed `FILESTORAGE().copy(id, newid, [callback])` method
+- extended `PROXY(endpoint, stream_function(ctrl))` by adding support for a custom handler
+- extended `REQUEST()` by adding `opt.writer {function(res)}` option
 
 ========================
 0.0.8

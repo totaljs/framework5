@@ -893,7 +893,9 @@ function request_call(uri, options) {
 
 	req.on('response', request_assign_res);
 
-	if (options.upload) {
+	if (options.writer) {
+		options.writer(req);
+	} else if (options.upload) {
 		options.first = true;
 		options.files.wait(function(file, next) {
 			request_writefile(req, options, file, next);
@@ -921,9 +923,9 @@ function request_call(uri, options) {
 			req.end(NEWLINE + '--' + options.boundary + '--');
 		});
 	} else {
-		if (options.opt.compress) {
+		if (options.opt.compress)
 			F.Zlib[options.opt.compress](options.body, (err, buffer) => req.end(buffer));
-		} else
+		else
 			req.end(options.body);
 	}
 }

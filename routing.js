@@ -761,19 +761,23 @@ function Proxy(url, target) {
 	t.url = url.toLowerCase();
 	t.copypath = 'none'; // replace|extend|none
 
-	if ((/^(https|http):\/\//).test(target))
+	if (typeof(target) === 'function')
+		t.stream = target;
+	else if ((/^(https|http):\/\//).test(target))
 		t.target = F.Url.parse(target);
 	else
 		t.target = { socketPath: target };
 
-	if (t.target.href) {
-		let index = t.target.href.indexOf('?');
-		if (index !== -1)
-			t.query = t.target.href.substring(index + 1);
-		t.path = t.target.pathname[t.target.pathname.length - 1] === '/' ? t.target.pathname.substring(0, t.target.pathname.length - 1) : t.target.pathname;
-	}
+	if (t.target) {
+		if (t.target.href) {
+			let index = t.target.href.indexOf('?');
+			if (index !== -1)
+				t.query = t.target.href.substring(index + 1);
+			t.path = t.target.pathname[t.target.pathname.length - 1] === '/' ? t.target.pathname.substring(0, t.target.pathname.length - 1) : t.target.pathname;
+		}
 
-	t.uri = t.target;
+		t.uri = t.target;
+	}
 }
 
 Proxy.prototype.copy = function(type) {
@@ -882,6 +886,13 @@ function proxyheadersws(header, headers) {
 }
 
 function proxycreate(proxy, ctrl) {
+
+	if (proxy.stream) {
+		F.stats.performance.external++;
+		F.stats.request.external++;
+		proxy.stream(ctrl);
+		return;
+	}
 
 	var secured = proxy.uri.protocol === 'https:';
 	var uri = {};
