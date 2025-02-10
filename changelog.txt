@@ -15,6 +15,7 @@
 - fixed `FILESTORAGE().copy(id, newid, [callback])` method
 - extended `PROXY(endpoint, stream_function(ctrl))` by adding support for a custom handler
 - extended `REQUEST()` by adding `opt.writer {function(res)}` option
+- added missing `TotalAPI()` method
 
 ========================
 0.0.8

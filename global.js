@@ -299,3 +299,9 @@ global.clearTimeout2 = function(id) {
 
 	return !!tmp;
 };
+
+global.TotalAPI = function(name, model, callback) {
+	let obj = API('TAPI', name, model);
+	callback && obj.callback(callback);
+	return obj;
+};
