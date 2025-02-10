@@ -545,7 +545,10 @@ F.loadconfig = function(value) {
 
 		switch (key) {
 			case 'totalapi':
-				key = '$tapi';
+				if (typeof(val) === 'string' && val.length > 5)
+					key = 'secret_totalapi';
+				else
+					key = '$tapi';
 				break;
 			case '$tms':
 				break;
