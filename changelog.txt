@@ -17,6 +17,7 @@
 - extended `REQUEST()` by adding `opt.writer {function(res)}` option
 - added missing `TotalAPI()` method
 - fixed `CONF.totalapi` key when initializing the framework
+- added support for plugins in `TEMPLATE()` method
 
 ========================
 0.0.8
