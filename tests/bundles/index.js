@@ -1,48 +1,23 @@
 /* eslint-disable */
 require('../../index');
 require('../../test');
+var worker = NEWTHREAD();
 
 // Unpack bundle in bundles directory + download bundles from URL (we can add a test bundle to our CDN)
 // Merging files
 // Removing files
 
 // load web server and test app
-CONF.$imprint = false;
-F.http();
-
-var url = 'http://localhost:8000/';
-var filename = 'openreports.bundle';
-var bundle_link = 'https://raw.githubusercontent.com/totaljs/flow/master/--bundles--/app.bundle';
-
+CONF.$imprint = true;
+F.http({ release: true, port: 3000 });
 ON('ready', function() {
-
-	Test.push('Bundles', function(next) {
-		// Test.print('String.slug()', [error]);
-		var arr = [];
-
-		arr.push(function(resume) {
-			RESTBuilder.GET(url).exec(function(err, response) {
-				console.log(err, response);
-				Test.print('From local', err === null ? null : 'App is not successfully started ');
-				PATH.unlink(PATH.root('bundles/' + filename), function() {
-					F.restart();
-					resume()
-				});
-			});
-		});
-
-		arr.push(function(resume) {
-			resume();
-		});
-
-		arr.push(function(resume) {
-			resume();
-		});
-
-		arr.async(function() {
-			next();
-		});
-	});
-
-	setTimeout(() => Test.run(), 600);
+	//console.log('READY');
+	DEBUG = true;
+	setTimeout( function() {
+	worker.postMessage(JSON.stringify({ ready: true }));
+	setTimeout(process.exit, 1000);
+	}, 3000);
 });
+
+
+

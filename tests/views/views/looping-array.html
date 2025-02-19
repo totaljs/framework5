@@ -1,0 +1,13 @@
+@{layout('')}
+@{foreach m in [1, 2, 3, 4]}
+    <div>@{m}, index: @{index}</div>
+@{end}
+
+<br />
+<br />
+
+@{foreach property in model}
+    <div>@{index}</div>
+    <div>@{property.name}</div>
+    <div>@{property.age.format('### ###')}</div>
+@{end}

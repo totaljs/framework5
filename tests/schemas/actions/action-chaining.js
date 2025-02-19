@@ -1,4 +1,3 @@
-
 NEWACTION('Chaining/one', {
 	name: 'Action number one',
 	input: 'value:Object',
@@ -6,8 +5,6 @@ NEWACTION('Chaining/one', {
 		$.success(model.value.one);
 	}
 });
-
-
 
 NEWACTION('Chaining/two', {
 	name: 'Action number two',

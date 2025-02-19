@@ -1,0 +1,24 @@
+@{layout('')}
+@{if user === null}
+    <div>sign in</div>
+@{else}
+    <div>sign up</div>
+@{fi}
+
+<br />
+<br />
+
+@{if model.name === 'Peter'}
+    @{if model.name === 'Lucia'}
+        <div>Here is Lucia.</div>
+        @{else}
+        <div>Here is Peter.</div>
+    @{fi}
+@{fi}
+
+<br />
+<br />
+
+@{if model.name !== 'Peter'}
+    <div>Here is @{model.name}</div>
+@{fi}

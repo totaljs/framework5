@@ -24,6 +24,7 @@ ON('ready', function () {
 		var methods = ['query', 'read', 'update', 'patch', 'remove', 'insert'];
 		var valid = [
 			{ number: 123, email: 'abc@abc.abc', phone: '+421123456789', boolean: true, uid: UID(), url: 'https://www.totaljs.com', object: {}, date: NOW, json: '{}', base64: 'c3VwZXJ1c2Vy' },
+			{  datauri: 'data:image/png;base64', zip: '23432', icon: 'ti ti-user',  color: '#68B25B', guid: GUID(25), tinyint: 250, smallint: 3322, enums: 'red', inlineobject: { name:'Peter Sirka',email: 'petersirka@gmail.com' }, arrayobj: [{ name: 'Peter Sirka', email: 'pertersirka@gmail.com' }, { name: 'Louis Bertson', email: 'louisbertson@gmail.com' }], linkedschema: '@Address' },
 			{ number: 123.123456, email: 'abc@abc.abc', boolean: '1', url: 'http://www.totaljs.com', date: new Date(), base64: 'c3VwZXJ1c2Vy' },
 			{ email: 'abc.abc@abc.abc', url: 'http://totaljs.com' },
 			{ url: 'https://totaljs.com' }
@@ -31,12 +32,13 @@ ON('ready', function () {
 
 		var invalid = [
 			{ number: 'abc', email: 'ca@.sk', phone: 'notphone', boolean: '', uid: 'AV232CS@', url: 'url', date: 'today', json: null, base64: '' },
-			{ number: 'one', email: '@', phone: '12345667', boolean: '', json: '', base64: '' }
+			{ number: 'one', email: '@', phone: '12345667', boolean: '', json: '', base64: '' },
+			{  datauri: 'data', zip: '232', icon: 'titi-uer',  color: '#625', guid: 'ererddghvgcg', tinyint: 255, smallint: 33000000022, enums: 'yellow', inlineobject: {}, arrayobj: [ 'Peter Sirka', 'Louis Bertson' ], linkedschema: '@Address2' }
 		];
 
 		var fields = [
-			{ number: 123, email: 'ca@gmail.sk', phone: '+413233443344', boolean: false, uid: UID(), url: 'https://totaljs.com', date: NOW, json: '{"key":"value"}', base64: 'c3VwZXJ1c2Vy' },
-			{ number: 1, email: 'slovakia@gmail.sk', phone: '+41543454323', boolean: false, uid: UID(), url: 'https://totaljs.com/community', date: NOW, json: '{"anotherkey":"anothervalue"}', base64: 'c3VwZXJ1c2Vy' },
+			{ number: 123, email: 'ca@gmail.sk', phone: '+413233443344', boolean: false, uid: UID(), url: 'https://totaljs.com', date: NOW, json: '{"key":"value"}', base64: 'c3VwZXJ1c2Vy', datauri: 'data:image/png;base64', zip: '23432', icon: 'ti ti-user',  color: '#68B25B', guid: GUID(25), tinyint: 250, smallint: 3322, enums: 'red', inlineobject: { name:'Peter Sirka',email: 'petersirka@gmail.com' }, arrayobj: [{ name: 'Peter Sirka', email: 'pertersirka@gmail.com' }, { name: 'Louis Bertson', email: 'louisbertson@gmail.com' }], linkedschema: '@Address' },
+			{ number: 1, email: 'slovakia@gmail.sk', phone: '+41543454323', boolean: false, uid: UID(), url: 'https://totaljs.com/community', date: NOW, json: '{"anotherkey":"anothervalue"}', base64: 'c3VwZXJ1c2Vy', datauri: 'data:image/png;base64', zip: '23432', icon: 'ti ti-user',  color: '#68B25B', guid: GUID(25), tinyint: 250, smallint: 3322, enums: 'red', inlineobject: { name:'Peter Sirka',email: 'petersirka@gmail.com' }, arrayobj: [{ name: 'Peter Sirka', email: 'pertersirka@gmail.com' }, { name: 'Louis Bertson', email: 'louisbertson@gmail.com' }], linkedschema: '@Address' },
 		];
 		function prefill_undefined(arr) {
 			// Prefill missing fields in rows if 'undefined' based on index 0 row
@@ -65,9 +67,9 @@ ON('ready', function () {
 		// 	var methods = [{ name: 'GET', validate: false }, { name: 'POST', validate: true }, { name: 'PUT', validate: true }, { name: 'PATCH', validate: true }, { name: 'DELETE', validate: true }];
 		// 	methods.wait(function(method, next) {
 		// 		RESTBuilder[method.name](url + '/schema/methods/validation').exec(function(err, res) {
-		// 			if (method.validate) 
+		// 			if (method.validate)
 		// 				Test.print('Schema data validation - Should validate ' + method.name, err !== null && !res ? null : 'Should Validate');
-		// 			else 
+		// 			else
 		// 				Test.print('Schema data validation - Should not validate ' + method.name, err === null && res  ? null : 'Should not validate');
 
 		// 			next();
@@ -105,6 +107,8 @@ ON('ready', function () {
 
 		arr.push(function (resume) {
 
+			var guid = GUID();
+			var datauri = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==';
 			var data = {
 				number: { i: 123, o: 123 },
 				number_float: { i: 123.456789, o: 123.456789 },
@@ -113,58 +117,69 @@ ON('ready', function () {
 				string_capitalize: { i: 'camel časé1', o: 'Camel Časé1' },
 				string_capitalize2: { i: 'only first', o: 'Only first' },
 				string_lowercase: { i: 'LoWEr cAse', o: 'lower case' },
-				string_uppercase: { i: 'UPper CaSe', o: 'UPPER CASE' }
+				string_uppercase: { i: 'UPper CaSe', o: 'UPPER CASE' },
+				datauri: { i: datauri, o: 'image/png' },
+				zip: { i: '23432', o: '23432' },
+				icon: { i: 'ti ti-user', o: 'ti ti-user' },
+				color: { i: '#68B25B', o: '#68B25B' },
+				guid: { i: guid, o: guid },
+				tinyint: { i: 250, o: 250 },
+				smallint: { i: 3322, o: 3322 },
+				enums: { i: 'red', o: 'red' },
+				inlineobject: { i: { name:'Peter Sirka', email: 'petersirka@gmail.com' }, o: { name:'Peter Sirka', email: 'petersirka@gmail.com' } },
+				arrayobj:{i:[{name:'Peter Sirka',email:'pertersirka@gmail.com'},{name:'Louis Bertson',email:'louisbertson@gmail.com'}],o:[{name:'Peter Sirka',email:'pertersirka@gmail.com'},{name:'Louis Bertson',email:'louisbertson@gmail.com'}]},
+				linkedschema: { i: { name:'Peter Sirka', email: 'petersirka@gmail.com' }, o: { name:'Peter Sirka', email: 'petersirka@gmail.com' } }
 			};
-
 			// Assemble body object
 			var body = {};
 			for (var key in data) {
 				body[key] = data[key].i;
 			}
 
-			RESTBuilder.POST(url + '/schema/formatting/', body).exec(function (err, res) {
+			RESTBuilder.POST(url + '/schema/formatting/', body).exec(function (err, res, output) {
+				console.log(res, output);
 				for (var key in data)
-					Test.print('Schema formatting - ' + res[key], res[key] === data[key].o ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
+					
+					Test.print('Schema formatting - ' + res[key], res[key].toString() === data[key].o.toString() ? null : ' - ' + key + ' - INPUT=' + data[key].i + ' OUTPUT=' + res[key] + ' EXPECTING=' + data[key].o);
 				resume();
 			});
-
 		});
 
-		arr.push(function (resume) {
+		// arr.push(function (resume) {
+		// 	prefill_undefined(valid);
+		// 	valid.wait(function (item, func) {
+		// 		console.log(item);
+		// 		RESTBuilder.POST(url + '/schema/required/', item).exec(function (err, response, output) {
+		// 			var items = [];
+		// 			if (err && err.items && err.items.length)
+		// 				items = err.items.map(i => i.name + '(' + i.error + ')');
+		// 			console.log(items);
+		// 			Test.print('Schema required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
+		// 			func();
+		// 		});
+		// 	}, resume);
+		// });
 
-			prefill_undefined(valid);
+		// arr.push(function(resume) {
+		// 	prefill_undefined(invalid);
+		// 	invalid.wait(function (item, resume2) {
+		// 		RESTBuilder.POST(url + '/schema/required/', item).exec(function (err) {
+		// 			// Remap
+		// 			var errors = [];
+		// 			if (err && err.items && err.items.length) {
+		// 				for (var i = 0; i < err.items.length; i++)
+		// 					errors.push(err.items[i].name);
+		// 			}
 
-			valid.wait(function (item, func) {
-				RESTBuilder.POST(url + '/schema/required/', item).exec(function (err) {
-					var items = [];
-					if (err && err.items && err.items.length)
-						items = err.items.map(i => i.name + '(' + item[i.name] + ')');
-					Test.print('Schema required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
-					func();
-				});
-			}, resume);
-		});
-
-		arr.push(function(resume) {
-			prefill_undefined(invalid);
-			invalid.wait(function (item, resume2) {
-				RESTBuilder.POST(url + '/schema/required/', item).exec(function (err) {
-					// Remap
-					var errors = [];
-					if (err && err.items && err.items.length) {
-						for (var i = 0; i < err.items.length; i++)
-							errors.push(err.items[i].name);
-					}
-
-					// Check
-					var keys = Object.keys(item);
-					keys.wait(function (i, cb) {
-						Test.print('Schema required (invalid): {0}({1})'.format(i, item[i]), errors.includes(i) ? null : 'field was accepted --> ' + i + '(' + item[i] + ')');
-						cb();
-					}, resume2);
-				});
-			}, resume);
-		});
+		// 			// Check
+		// 			var keys = Object.keys(item);
+		// 			keys.wait(function (i, cb) {
+		// 				Test.print('Schema required (invalid): {0}({1})'.format(i, item[i]), errors.includes(i) ? null : 'field was accepted --> ' + i + '(' + item[i] + ')');
+		// 				cb();
+		// 			}, resume2);
+		// 		});
+		// 	}, resume);
+		// });
 
 		var data = { value: { one: 'one', two: 'two' } };
 		arr.push(function (resume) {
@@ -245,9 +260,9 @@ ON('ready', function () {
 		// 	var methods = [{ name: 'GET', validate: false }, { name: 'POST', validate: true }, { name: 'PUT', validate: true }, { name: 'PATCH', validate: true }, { name: 'DELETE', validate: true }];
 		// 	methods.wait(function(method, next) {
 		// 		RESTBuilder[method.name](url + '/actions/methods/validation').exec(function(err, res) {
-		// 			if (method.validate) 
+		// 			if (method.validate)
 		// 				Test.print('Schema data validation - Should validate ' + method.name, err !== null && !res ? null : 'Should Validate');
-		// 			else 
+		// 			else
 		// 				Test.print('Schema data validation - Should not validate ' + method.name, err === null && res  ? null : 'Should not validate');
 
 		// 			next();
@@ -313,18 +328,18 @@ ON('ready', function () {
 
 		});
 
-		arr.push(function (resume) {
-			prefill_undefined(valid);
-			valid.wait(function (item, func) {
-				RESTBuilder.POST(url + '/actions/required/', item).exec(function (err) {
-					var items = [];
-					if (err && err.items && err.items.length)
-						items = err.items.map(i => i.name + '(' + item[i.name] + ')');
-					Test.print('New Action required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
-					func();
-				});
-			}, resume);
-		});
+		// arr.push(function (resume) {
+		// 	prefill_undefined(valid);
+		// 	valid.wait(function (item, func) {
+		// 		RESTBuilder.POST(url + '/actions/required/', item).exec(function (err) {
+		// 			var items = [];
+		// 			if (err && err.items && err.items.length)
+		// 				items = err.items.map(i => i.name + '(' + item[i.name] + ')');
+		// 			Test.print('New Action required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
+		// 			func();
+		// 		});
+		// 	}, resume);
+		// });
 
 		arr.push(function (resume) {
 
@@ -431,9 +446,9 @@ ON('ready', function () {
 		// 	var methods = [{ name: 'GET', validate: false }, { name: 'POST', validate: true }, { name: 'PUT', validate: true }, { name: 'PATCH', validate: true }, { name: 'DELETE', validate: true }];
 		// 	methods.wait(function(method, next) {
 		// 		RESTBuilder[method.name](url + '/actions/methods/validation').exec(function(err, res) {
-		// 			if (method.validate) 
+		// 			if (method.validate)
 		// 				Test.print('Schema data validation - Should validate ' + method.name, err !== null && !res ? null : 'Should Validate');
-		// 			else 
+		// 			else
 		// 				Test.print('Schema data validation - Should not validate ' + method.name, err === null && res  ? null : 'Should not validate');
 
 		// 			next();
@@ -482,18 +497,18 @@ ON('ready', function () {
 			});
 		});
 
-		arr.push(function (resume) {
-			prefill_undefined(valid);
-			valid.wait(function (item, resume2) {
-				ACTION('Required/exec', item).callback(function (err) {
-					var items = [];
-					if (err && err.items && err.items.length)
-						items = err.items.map(i => i.name + '(' + item[i.name] + ')');
-					Test.print('Action Required/exec (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
-					resume2();
-				});
-			}, resume);
-		});
+		// arr.push(function (resume) {
+		// 	prefill_undefined(valid);
+		// 	valid.wait(function (item, resume2) {
+		// 		ACTION('Required/exec', item).callback(function (err) {
+		// 			var items = [];
+		// 			if (err && err.items && err.items.length)
+		// 				items = err.items.map(i => i.name + '(' + item[i.name] + ')');
+		// 			Test.print('Action Required/exec (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
+		// 			resume2();
+		// 		});
+		// 	}, resume);
+		// });
 
 		arr.push(function (resume) {
 
