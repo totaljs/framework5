@@ -41,12 +41,12 @@ function extract(callback) {
 	try {
 		META.ignore = makeignore(F.Fs.readFileSync(F.Path.join(path, '.bundleignore')).toString('utf8').split('\n'));
 		isignore = true;
-	} catch (e) {}
+	} catch {}
 
 	if (!isignore) {
 		try {
 			META.ignore = makeignore(F.Fs.readFileSync(F.Path.join(path, '.bundlesignore')).toString('utf8').split('\n'));
-		} catch (e) {}
+		} catch {}
 	}
 
 	ignore['/tmp/'] = 1;
@@ -116,12 +116,12 @@ function extract(callback) {
 						var exists = null;
 						try {
 							exists = F.Fs.statSync(F.Path.join(target, p));
-						} catch (e) {}
+						} catch {}
 
 						if ((dirname === pathupdate || dirname === pathstartup) && !exists) {
 							try {
-								exists = F.Fs.statSync(F.Path.join(target, p + '_bk')) != null;
-							} catch (e) {}
+								exists = F.Fs.statSync(F.Path.join(target, p + '_bk'));
+							} catch {}
 						}
 
 						// A specific file like DB file or startup file or update script
@@ -155,7 +155,7 @@ function extract(callback) {
 				for (var i = 0; i < Merge.length; i++) {
 					try {
 						F.Fs.unlinkSync(Merge[i].filename);
-					} catch(e) {}
+					} catch {}
 				}
 				next();
 			});
@@ -267,7 +267,7 @@ function cleanFiles(callback) {
 			return;
 		}
 
-	} catch (e) {
+	} catch {
 		meta = {};
 	}
 
@@ -278,7 +278,7 @@ function cleanFiles(callback) {
 			if (!ignore[dir]) {
 				try {
 					F.Fs.unlinkSync(F.Path.join(path, filename));
-				} catch (e) {}
+				} catch {}
 			}
 		}
 	}
@@ -301,7 +301,7 @@ function cleanFiles(callback) {
 
 					try {
 						F.Fs.rmdirSync(p);
-					} catch (e) {
+					} catch {
 						break;
 					}
 
@@ -311,7 +311,7 @@ function cleanFiles(callback) {
 						break;
 				}
 
-			} catch (e) {}
+			} catch {}
 		}
 	}
 
@@ -324,7 +324,7 @@ function createDirectories(dirs, callback) {
 
 	try {
 		F.Fs.mkdirSync(path);
-	} catch(e) {}
+	} catch {}
 
 	for (var i = 0, length = dirs.length; i < length; i++) {
 		var p = normalize(dirs[i]);
@@ -332,7 +332,7 @@ function createDirectories(dirs, callback) {
 			META.directories.push(p);
 		try {
 			F.Fs.mkdirSync(F.Path.join(path, dirs[i]));
-		} catch (e) {}
+		} catch {}
 	}
 
 	callback();
@@ -352,7 +352,7 @@ function copyFiles(files, callback) {
 
 		try {
 			exists = F.Fs.statSync(filename);
-		} catch (e) {}
+		} catch {}
 
 		if (exists && (!exists.isFile() | exists.isSocket())) {
 			next();
@@ -406,7 +406,7 @@ exports.extract = function(callback, skip) {
 			return;
 		}
 
-	} catch (e) {}
+	} catch {}
 
 	var bundles = F.path.root('/bundles/');
 	var extractbundles = function() {
@@ -441,7 +441,7 @@ exports.extract = function(callback, skip) {
 			extractbundles();
 		else
 			callback();
-	} catch(e) {
+	} catch {
 		callback();
 	}
 };
