@@ -47,11 +47,6 @@ Options.prototype = {
 		this.payload = value;
 	},
 
-	get hostname() {
-		let ctrl = this.controller;
-		return ctrl ? ((ctrl.protocol || 'https') + '://' + ctrl.headers.host) : null;
-	},
-
 	get url() {
 		return (this.controller ? this.controller.url : '') || '';
 	},
@@ -105,6 +100,11 @@ Options.prototype = {
 	}
 };
 
+Options.prototype.hostname = function(path) {
+	let ctrl = this.controller;
+	return ctrl ? ctrl.hostname(path) : path;
+};
+
 Options.prototype.unauthorized = function() {
 	var args = [this];
 	for (let i = 0; i < arguments.length; i++)
@@ -126,6 +126,7 @@ Options.prototype.promisify = function(fn, a, b, c) {
 
 		var callback = function(err, response) {
 			if (err)
+
 				$.invalid(err);
 			else
 				resolve(response);
@@ -946,9 +947,12 @@ function restbuilder_callback(err, response) {
 
 	if (self.options.custom) {
 		if (self.$resolve) {
-			if (err)
-				self.$.invalid(err);
-			else
+			if (err) {
+				if (self.$)
+					self.$.invalid(err);
+				else
+					self.$reject(err);
+			} else
 				self.$resolve(response);
 			self.$ = null;
 			self.$reject = null;
@@ -1047,8 +1051,12 @@ function restbuilder_callback(err, response) {
 
 	if (self.$resolve) {
 
-		if (err)
-			self.$.invalid(err);
+		if (err) {
+			if (self.$)
+				self.$.invalid(err);
+			else
+				self.$reject(err);
+		}
 		else
 			self.$resolve(val);
 

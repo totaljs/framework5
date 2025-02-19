@@ -75,6 +75,10 @@ const REG_HEADERPARSER = /(name|filename)=".*?"|content-type:\s[a-z0-9-./+]+/ig;
 const HEADEREND = Buffer.from('\r\n\r\n', 'ascii');
 const JSCHEMAS_NULLABLE = { json: 1, base64: 1, guid: 1, datauri: 1, uid: 1, string2: 1 };
 
+const ARR_UA_OS = ['android', 'windows', 'ios', 'iphone', 'ubuntu', 'fedora', 'linux', 'mac os'];
+const ARR_UA_BROWSER = ['xbox', 'playstation', 'nintendo', 'appletv', 'fxios', 'opera', 'edge', 'vivaldi', 'chrome', 'firefox', 'kindle', 'safari'];
+const REG_UA_MOBILE = /iphone|android|mobile/i;
+
 exports.MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 exports.DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -889,7 +893,9 @@ function request_call(uri, options) {
 
 	req.on('response', request_assign_res);
 
-	if (options.upload) {
+	if (options.writer) {
+		options.writer(req);
+	} else if (options.upload) {
 		options.first = true;
 		options.files.wait(function(file, next) {
 			request_writefile(req, options, file, next);
@@ -917,9 +923,9 @@ function request_call(uri, options) {
 			req.end(NEWLINE + '--' + options.boundary + '--');
 		});
 	} else {
-		if (options.opt.compress) {
+		if (options.opt.compress)
 			F.Zlib[options.opt.compress](options.body, (err, buffer) => req.end(buffer));
-		} else
+		else
 			req.end(options.body);
 	}
 }
@@ -1586,19 +1592,8 @@ exports.filestreamer = function(filename, onbuffer, onend, size) {
 };
 
 exports.parseUA = function(headers, structured) {
-	let ua = headers['sec-ch-ua'];
-	if (ua) {
-		let platform = headers['sec-ch-ua-platform'] || '';
-		let mobile = headers['sec-ch-ua-mobile'] === '?1';
-		let index = ua.indexOf('";v');
-		let browser = ua.substring(1, index);
-		if (platform)
-			platform = platform.substring(1, platform.length - 1);
-		return structured ? { os: platform, browser: browser, device: mobile ? 'mobile' : 'desktop' } : ((platform ? (platform + ' ') : '') + browser + (mobile ? ' Mobile' : ''));
-	} else {
-		ua = (headers['user-agent'] || '');
-		return ua ? ua.parseUA(structured) : ua;
-	}
+	let ua = (headers['user-agent'] || '');
+	return ua ? ua.parseUA(structured) : structured ? {} : ua;
 };
 
 exports.parseInt = function(obj, def) {
@@ -2689,165 +2684,36 @@ SP.parseUA = function(structured) {
 	if (!ua)
 		return '';
 
-	var arr = ua.match(REG_UA);
-	var uid = '';
+	let lowered = ua.toLowerCase();
+	let os = '';
+	let device = '';
+	let browser = '';
 
-	if (arr) {
-
-		var data = {};
-
-		for (var i = 0; i < arr.length; i++) {
-
-			if (arr[i] === 'like' && arr[i + 1] === 'Gecko') {
-				i += 1;
-				continue;
-			}
-
-			var key = arr[i].toLowerCase();
-			if (key === 'like')
-				break;
-
-			switch (key) {
-				case 'linux':
-				case 'windows':
-				case 'mac':
-				case 'symbian':
-				case 'symbos':
-				case 'tizen':
-				case 'android':
-					data[arr[i]] = 2;
-					if (key === 'tizen' || key === 'android')
-						data.Mobile = 1;
-					break;
-				case 'webos':
-					data.WebOS = 2;
-					break;
-				case 'media':
-				case 'center':
-				case 'tv':
-				case 'smarttv':
-				case 'smart':
-					data[arr[i]] = 5;
-					break;
-				case 'iemobile':
-				case 'mobile':
-					data[arr[i]] = 1;
-					data.Mobile = 3;
-					break;
-				case 'ipad':
-				case 'ipod':
-				case 'iphone':
-					data.iOS = 2;
-					data.Mobile = 3;
-					data[arr[i]] = 1;
-					if (key === 'ipad')
-						data.Tablet = 4;
-					break;
-				case 'phone':
-					data.Mobile = 3;
-					break;
-				case 'tizenbrowser':
-				case 'blackberry':
-				case 'mini':
-					data.Mobile = 3;
-					data[arr[i]] = 1;
-					break;
-				case 'samsungbrowser':
-				case 'chrome':
-				case 'firefox':
-				case 'msie':
-				case 'opera':
-				case 'brave':
-				case 'vivaldi':
-				case 'outlook':
-				case 'safari':
-				case 'mail':
-				case 'edge':
-				case 'maxthon':
-				case 'electron':
-					data[arr[i]] = 1;
-					break;
-				case 'trident':
-					data.MSIE = 1;
-					break;
-				case 'opr':
-					data.Opera = 1;
-					break;
-				case 'tablet':
-					data.Tablet = 4;
-					break;
-			}
+	for (let m of ARR_UA_OS) {
+		let index = lowered.indexOf(m);
+		if (index !== -1) {
+			os = ua.substring(index, index + m.length);
+			break;
 		}
-
-		if (data.MSIE) {
-			data.IE = 1;
-			delete data.MSIE;
-		}
-
-		if (data.WebOS || data.Android)
-			delete data.Linux;
-
-		if (data.IEMobile) {
-			if (data.Android)
-				delete data.Android;
-			if (data.Safari)
-				delete data.Safari;
-			if (data.Chrome)
-				delete data.Chrome;
-		} else if (data.MSIE) {
-			if (data.Chrome)
-				delete data.Chrome;
-			if (data.Safari)
-				delete data.Safari;
-		} else if (data.Edge) {
-			if (data.Chrome)
-				delete data.Chrome;
-			if (data.Safari)
-				delete data.Safari;
-		} else if (data.Opera || data.Electron) {
-			if (data.Chrome)
-				delete data.Chrome;
-			if (data.Safari)
-				delete data.Safari;
-		} else if (data.Chrome) {
-			if (data.Safari)
-				delete data.Safari;
-			if (data.SamsungBrowser)
-				delete data.SamsungBrowser;
-		} else if (data.SamsungBrowser) {
-			if (data.Safari)
-				delete data.Safari;
-		}
-
-		if (structured) {
-			var output = { os: '', browser: '', device: 'desktop' };
-
-			if (data.Tablet)
-				output.device = 'tablet';
-			else if (data.Mobile)
-				output.device = 'mobile';
-
-			for (var key in data) {
-				var val = data[key];
-				switch (val) {
-					case 1:
-						output.browser += (output.browser ? ' ' : '') + key;
-						break;
-					case 2:
-						output.os += (output.os ? ' ' : '') + key;
-						break;
-					case 5:
-						output.device = 'tv';
-						break;
-				}
-			}
-			return output;
-		}
-
-		uid = Object.keys(data).join(' ');
 	}
 
-	return uid;
+	for (let m of ARR_UA_BROWSER) {
+		let index = lowered.lastIndexOf(m);
+		if (index !== -1) {
+			switch (m) {
+				case 'fxios':
+					browser = 'Firefox';
+					break;
+				default:
+					browser = ua.substring(index, index + m.length);
+					break;
+			}
+			break;
+		}
+	}
+
+	device = REG_UA_MOBILE.test(lowered) ? 'mobile' : 'desktop';
+	return structured ? { os, browser, device } : ((os ? (os + ' ') : '') + (browser ? (browser + ' ') : '')).trim();
 };
 
 SP.parseCSV = function(delimiter) {
@@ -4230,8 +4096,8 @@ NP.padRight = function(max, c) {
 };
 
 NP.round = function(precision) {
-	var m = Math.pow(10, precision) || 1;
-	return Math.round(this * m) / m;
+	var m = Math.round(this + 'e' + precision);
+	return Number(m + 'e-' + precision);
 };
 
 NP.currency = function(currency, a, b, c) {

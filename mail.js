@@ -567,7 +567,11 @@ Mailer.$writemessage = function(obj, buffer) {
 
 	message.push('MIME-Version: 1.0');
 	buffer.push('MAIL FROM: <' + msg.email_from + '>');
-	message.push('Message-ID: <total5X' + dt.toString(36) + 'X' + (INDEXATTACHMENT++) + 'X' + (INDEXATTACHMENT) + '>');
+
+	if (!Mailer.domain)
+		Mailer.domain = msg.email_from.substring(msg.email_from.lastIndexOf('@'));
+
+	message.push('Message-ID: <total5X' + dt.toString(36) + 'X' + (INDEXATTACHMENT++) + 'X' + (INDEXATTACHMENT) + Mailer.domain + '>');
 
 	self.$priority && message.push('X-Priority: ' + self.$priority);
 	self.$confidential && message.push('Sensitivity: Company-Confidential');

@@ -143,7 +143,9 @@ Controller.prototype = {
 	get ua() {
 		if (this.$ua != null)
 			return this.$ua;
-		this.$ua = F.TUtils.parseUA(this.headers);
+		this.$ua = this.headers['user-agent'] || '';
+		if (this.$ua)
+			this.$ua = this.$ua.parseUA();
 		return this.$ua;
 	},
 

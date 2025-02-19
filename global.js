@@ -42,6 +42,7 @@ global.CACHE = F.cache;
 global.NEWACTION = F.TBuilders.newaction;
 global.NEWCOMPONENT = F.newcomponent;
 global.NEWSCHEMA = F.TBuilders.newschema;
+global.NEWMIDDLEWARE = F.middleware;
 global.ACTION = global.EXEC = F.TBuilders.action;
 global.TEMPLATE = F.template;
 global.FILESTORAGE = F.filestorage;
@@ -297,4 +298,10 @@ global.clearTimeout2 = function(id) {
 	}
 
 	return !!tmp;
+};
+
+global.TotalAPI = function(name, model, callback) {
+	let obj = API('TAPI', name, model);
+	callback && obj.callback(callback);
+	return obj;
 };

@@ -62,7 +62,11 @@ exports.render = function(body, model, $) {
 			} else {
 
 				if (body[0] === '~') {
+					// absolute path
 					body = body.substring(1);
+				} else if (body[0] === '#') {
+					// plugins
+					body = PATH.plugins(body.substring(1));
 				} else {
 					body = F.path.templates(body);
 					if (body.indexOf('.html') === -1)
