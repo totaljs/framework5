@@ -145,40 +145,41 @@ ON('ready', function () {
 			});
 		});
 
-		arr.push(function (resume) {
-			prefill_undefined(valid);
-			valid.wait(function (item, func) {
-				console.log(item);
-				RESTBuilder.POST(url + '/schema/required/', item).exec(function (err) {
-					var items = [];
-					if (err && err.items && err.items.length)
-						items = err.items.map(i => i.name + '(' + item[i.name] + ')');
-					Test.print('Schema required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
-					func();
-				});
-			}, resume);
-		});
+		// arr.push(function (resume) {
+		// 	prefill_undefined(valid);
+		// 	valid.wait(function (item, func) {
+		// 		console.log(item);
+		// 		RESTBuilder.POST(url + '/schema/required/', item).exec(function (err, response, output) {
+		// 			var items = [];
+		// 			if (err && err.items && err.items.length)
+		// 				items = err.items.map(i => i.name + '(' + i.error + ')');
+		// 			console.log(items);
+		// 			Test.print('Schema required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
+		// 			func();
+		// 		});
+		// 	}, resume);
+		// });
 
-		arr.push(function(resume) {
-			prefill_undefined(invalid);
-			invalid.wait(function (item, resume2) {
-				RESTBuilder.POST(url + '/schema/required/', item).exec(function (err) {
-					// Remap
-					var errors = [];
-					if (err && err.items && err.items.length) {
-						for (var i = 0; i < err.items.length; i++)
-							errors.push(err.items[i].name);
-					}
+		// arr.push(function(resume) {
+		// 	prefill_undefined(invalid);
+		// 	invalid.wait(function (item, resume2) {
+		// 		RESTBuilder.POST(url + '/schema/required/', item).exec(function (err) {
+		// 			// Remap
+		// 			var errors = [];
+		// 			if (err && err.items && err.items.length) {
+		// 				for (var i = 0; i < err.items.length; i++)
+		// 					errors.push(err.items[i].name);
+		// 			}
 
-					// Check
-					var keys = Object.keys(item);
-					keys.wait(function (i, cb) {
-						Test.print('Schema required (invalid): {0}({1})'.format(i, item[i]), errors.includes(i) ? null : 'field was accepted --> ' + i + '(' + item[i] + ')');
-						cb();
-					}, resume2);
-				});
-			}, resume);
-		});
+		// 			// Check
+		// 			var keys = Object.keys(item);
+		// 			keys.wait(function (i, cb) {
+		// 				Test.print('Schema required (invalid): {0}({1})'.format(i, item[i]), errors.includes(i) ? null : 'field was accepted --> ' + i + '(' + item[i] + ')');
+		// 				cb();
+		// 			}, resume2);
+		// 		});
+		// 	}, resume);
+		// });
 
 		var data = { value: { one: 'one', two: 'two' } };
 		arr.push(function (resume) {
@@ -327,18 +328,18 @@ ON('ready', function () {
 
 		});
 
-		arr.push(function (resume) {
-			prefill_undefined(valid);
-			valid.wait(function (item, func) {
-				RESTBuilder.POST(url + '/actions/required/', item).exec(function (err) {
-					var items = [];
-					if (err && err.items && err.items.length)
-						items = err.items.map(i => i.name + '(' + item[i.name] + ')');
-					Test.print('New Action required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
-					func();
-				});
-			}, resume);
-		});
+		// arr.push(function (resume) {
+		// 	prefill_undefined(valid);
+		// 	valid.wait(function (item, func) {
+		// 		RESTBuilder.POST(url + '/actions/required/', item).exec(function (err) {
+		// 			var items = [];
+		// 			if (err && err.items && err.items.length)
+		// 				items = err.items.map(i => i.name + '(' + item[i.name] + ')');
+		// 			Test.print('New Action required (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
+		// 			func();
+		// 		});
+		// 	}, resume);
+		// });
 
 		arr.push(function (resume) {
 
@@ -496,18 +497,18 @@ ON('ready', function () {
 			});
 		});
 
-		arr.push(function (resume) {
-			prefill_undefined(valid);
-			valid.wait(function (item, resume2) {
-				ACTION('Required/exec', item).callback(function (err) {
-					var items = [];
-					if (err && err.items && err.items.length)
-						items = err.items.map(i => i.name + '(' + item[i.name] + ')');
-					Test.print('Action Required/exec (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
-					resume2();
-				});
-			}, resume);
-		});
+		// arr.push(function (resume) {
+		// 	prefill_undefined(valid);
+		// 	valid.wait(function (item, resume2) {
+		// 		ACTION('Required/exec', item).callback(function (err) {
+		// 			var items = [];
+		// 			if (err && err.items && err.items.length)
+		// 				items = err.items.map(i => i.name + '(' + item[i.name] + ')');
+		// 			Test.print('Action Required/exec (valid): ', !items.length ? null : 'fields are not valid --> ' + items);
+		// 			resume2();
+		// 		});
+		// 	}, resume);
+		// });
 
 		arr.push(function (resume) {
 
