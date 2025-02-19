@@ -1238,25 +1238,25 @@ ON('ready', function () {
 			resume();
 		});
 	
-		// arr.push(function(resume) {
-		// 	value = '<?xml-stylesheet type="text/xsl" href="style.xsl"?>';
-		// 	correct = 'text/xsl';
-		// 	parsed = value.parseHTML(true);
-		// 	console.log(parsed);
-		// 	response = parsed.attr('type');
-		// 	Test.print('XML Processing Instruction: Attribute parsing', response === correct ? null : 'Expected ' + correct);
-		// 	resume();
-		// });
+		/*
+		arr.push(function(resume) {
+			value = '<?xml-stylesheet type="text/xsl" href="style.xsl"?>';
+			correct = 'text/xsl';
+			parsed = value.parseHTML(true);
+			console.log(parsed);
+			response = parsed.attr('type');
+			Test.print('XML Processing Instruction: Attribute parsing', response === correct ? null : 'Expected ' + correct);
+			resume();
+		});*/
 	
-		// arr.push(function(resume) {
-		// 	value = '<element>&lt;escaped&gt;</element>';
-		// 	correct = '<escaped>';
-		// 	parsed = value.parseHTML(true).children[0];
-		// 	response = parsed.text();
-		// 	console.log(response);
-		// 	Test.print('XML Entity: Reference resolution', response === correct ? null : 'Expected ' + correct);
-		// 	resume();
-		// });
+		arr.push(function(resume) {
+			value = '<element>&lt;escaped&gt;</element>';
+			correct = '<escaped>';
+			parsed = value.parseHTML(true).children[0];
+			response = parsed.text();
+			Test.print('XML Entity: Reference resolution', response === correct ? null : 'Expected ' + correct);
+			resume();
+		});
 	
 		arr.push(function(resume) {
 			value = '<description>This is <b>bold</b> and <i>italic</i> text</description>';

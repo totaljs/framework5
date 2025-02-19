@@ -18,6 +18,7 @@
 - added missing `TotalAPI()` method
 - fixed `CONF.totalapi` key when initializing the framework
 - added support for plugins in `TEMPLATE()` method
+- fixed decoding of encoded HTML entities in the HTML parser
 
 ========================
 0.0.8
