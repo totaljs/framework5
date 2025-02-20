@@ -152,7 +152,7 @@ FS.load = function(flow, callback) {
 	FS.db[id] = flow;
 
 	if (!flow.name)
-		flow.name = flow.id;
+		flow.name = id;
 
 	if (!flow.components)
 		flow.components = {};
