@@ -19,6 +19,7 @@
 - fixed `CONF.totalapi` key when initializing the framework
 - added support for plugins in `TEMPLATE()` method
 - fixed decoding of encoded HTML entities in the HTML parser
+- fixed loading `empty` flow in `Flow.load()` method
 
 ========================
 0.0.8

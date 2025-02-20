@@ -151,6 +151,21 @@ FS.load = function(flow, callback) {
 	flow.directory = flow.directory || F.path.root('/flowstream/');
 	FS.db[id] = flow;
 
+	if (!flow.name)
+		flow.name = flow.id;
+
+	if (!flow.components)
+		flow.components = {};
+
+	if (!flow.design)
+		flow.design = {};
+
+	if (!flow.sources)
+		flow.sources = {};
+
+	if (!flow.variables)
+		flow.variables = {};
+
 	FS.module.init(flow, flow.worker, function(err, instance) {
 
 		instance.onerror = FS.onerror;
