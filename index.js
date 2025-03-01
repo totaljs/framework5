@@ -36,7 +36,7 @@ global.DEF = {};
 
 	F.id = '';
 	F.clusterid = '';
-	F.is5 = F.version = 5009;
+	F.is5 = F.version = 5010;
 	F.isBundle = false;
 	F.isLoaded = false;
 	F.version_header = '5';
