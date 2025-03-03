@@ -1311,6 +1311,15 @@ ON('ready', function () {
 			Test.print('XML Schema: Key constraint', response === correct ? null : 'Expected ' + correct);
 			resume();
 		});
+
+		arr.push(function(resume) {
+			value = '<FITNESS><DATE_OF_ISSUE>2025-02-28</DATE_OF_ISSUE><VALID_UNTIL>2025-03-03</VALID_UNTIL><RESTRICTION><RESTRICTION_TYPE>08</RESTRICTION_TYPE><RESTRICTION_TYPE_ADDITIONAL>ANA</RESTRICTION_TYPE_ADDITIONAL><COMMENTS>test</COMMENTS></RESTRICTION><TEST>test</TEST><RESTRICTION><RESTRICTION_TYPE>03</RESTRICTION_TYPE><RESTRICTION_TYPE_ADDITIONAL>ANA</RESTRICTION_TYPE_ADDITIONAL><COMMENTS>test</COMMENTS></RESTRICTION><TEST>test</TEST></FITNESS>';
+			parsed = value.parseHTML(true).children[0];
+			Test.print('XML repeating elements', value === parsed.innerHTML ? null : 'The same XML as the source is expected');
+			resume();
+		});
+
+
 		arr.async(next);
 	});
 

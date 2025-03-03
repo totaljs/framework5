@@ -627,6 +627,7 @@ function parseHTML(html, trim, onerror, isxml) {
 		var tagEnd = '</' + dom.raw + '>';
 		var unpair = false;
 
+		// Tries to parse the content of the "dom.raw" element
 		while (true) {
 
 			if (counter++ > 10000)
@@ -639,22 +640,32 @@ function parseHTML(html, trim, onerror, isxml) {
 
 			// Tries to find the same tag
 			beg = str.indexOf(tagBeg, pos);
+
 			if (beg !== -1) {
 
-				// another one with the same type
-				// check unpair
+				let nextcharpos = beg + tagBeg.length;
+				let nextchar = str.charAt(nextcharpos);
 
-				let posend = str.indexOf('>', beg + tagBeg.length);
-				if (posend === -1) {
-					// tag is not closed
-					return '';
-				}
+				if (!(nextchar === ' ' || nextchar === '/' || nextchar === '>')) {
+					pos = nextcharpos + 1;
+					beg = -1;
+				} else {
 
-				if (str[posend - 1] === '/') {
-					// unpair
-					pos = posend + 1;
-					unpair = true;
-					continue;
+					// another one with the same type
+					// check unpair
+
+					let posend = str.indexOf('>', beg + tagBeg.length);
+					if (posend === -1) {
+						// tag is not closed
+						return '';
+					}
+
+					if (str[posend - 1] === '/') {
+						// unpair
+						pos = posend + 1;
+						unpair = true;
+						continue;
+					}
 				}
 			}
 
