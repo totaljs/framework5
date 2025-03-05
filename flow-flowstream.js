@@ -1809,8 +1809,14 @@ exports.socket = function(flow, socket, verify, check) {
 		if (client.isflowstreamready) {
 
 			// It can check permissions
-			if (check && !check(client, msg))
-				return;
+			if (check) {
+				let err = check(client, msg);
+				if (err !== true) {
+					if (msg.callbackid)
+						client.send({ callbackid: msg.callbackid, error: typeof(err) === 'string' ? err : '401' });
+					return;
+				}
+			}
 
 			if (flow.isworkerthread)
 				flow.postMessage2({ TYPE: 'ui/message', clientid: client.id, data: msg });
