@@ -1753,7 +1753,7 @@ exports.io = function(flowstreamid, id, callback) {
 	});
 };
 
-exports.socket = function(flow, socket, check) {
+exports.socket = function(flow, socket, verify, check) {
 
 	if (typeof(flow) === 'string')
 		flow = FLOWS[flow];
@@ -1779,8 +1779,8 @@ exports.socket = function(flow, socket, check) {
 	};
 
 	socket.on('open', function(client) {
-		if (check)
-			check(client, () => newclient(client));
+		if (verify)
+			verify(client, () => newclient(client));
 		else
 			newclient(client);
 	});
@@ -1807,6 +1807,11 @@ exports.socket = function(flow, socket, check) {
 
 	socket.on('message', function(client, msg) {
 		if (client.isflowstreamready) {
+
+			// It can check permissions
+			if (check && !check(client, msg))
+				return;
+
 			if (flow.isworkerthread)
 				flow.postMessage2({ TYPE: 'ui/message', clientid: client.id, data: msg });
 			else
