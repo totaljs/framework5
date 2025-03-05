@@ -36,12 +36,13 @@ function load(args) {
 setTimeout(load, 10, ARGS);
 
 FUNC.help = function() {
-	console.log('translate                : it makes a resource file with a localized dictionary from the current directory');
-	console.log('minify <filename>        : it minifies .js, .css and .html files');
-	console.log('bundle <filename>        : it makes a bundle from the current directory');
-	console.log('extract <filename>       : it extracts a bundle into the current directory');
-	console.log('edit <url?id=project>    : it opens remote editing of the current directory with the Total.js Code Editor');
-	console.log('8000                     : it starts a web server on port "8000" for the current directory');
+	console.log('translate                                   : it makes a resource file with a localized dictionary from the current directory');
+	console.log('minify <filename>                           : it minifies .js, .css and .html files');
+	console.log('bundle <filename>                           : it makes a bundle from the current directory');
+	console.log('extract <filename>                          : it extracts a bundle into the current directory');
+	console.log('edit <url?id=project>                       : it opens remote editing of the current directory with the Total.js Code Editor');
+	console.log('proxyclient <server_endpoint> <local_port>  : It connects a local port with a remote totaljs proxy server');
+	console.log('8000                                        : it starts a web server on port "8000" for the current directory');
 	done();
 };
 
@@ -239,6 +240,10 @@ FUNC.server = function(port) {
 	});
 
 	F.http({ load: 'none', port: port || 8000 });
+};
+
+FUNC.proxyclient = function(endpoint, port) {
+	require('../proxyclient').init(endpoint, port);
 };
 
 FUNC.edit = function(url) {
