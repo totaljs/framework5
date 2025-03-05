@@ -3,7 +3,7 @@
 ========================
 
 - improved HTMLParser parser
-- extended `Flow.socket(flow, socket, [verify(client)], [check(client, msg)])` by adding `check argument for verifying permissions
+- extended `Flow.socket(flow, socket, [verify(client)], [check(client, msg)])` by adding `check` argument for verifying permissions
 
 ========================
 0.0.9
