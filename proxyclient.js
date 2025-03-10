@@ -1,4 +1,3 @@
-
 // Total.js client for Proxy
 // The MIT License
 // Copyright 2017-2023 (c) Peter Širka <petersirka@gmail.com>
