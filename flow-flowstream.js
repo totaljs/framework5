@@ -3182,7 +3182,7 @@ TMS.refresh = function(fs, callback) {
 					readme.push(beautifyjsonschema(m.schema));
 
 					var id = 'pub' + item.id + 'X' + m.id;
-					var template = TEMPLATE_PUBLISH.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-broadcast-tower', m.url, id, item.meta.name.max(15), item.id);
+					var template = TEMPLATE_PUBLISH.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'ti ti-antenna', m.url, id, item.meta.name.max(15), item.id);
 					var com = fs.add(id, template);
 					m.url = url;
 					com.type = 'pub';
@@ -3204,7 +3204,7 @@ TMS.refresh = function(fs, callback) {
 					readme.push(beautifyjsonschema(m));
 
 					var id = 'sub' + item.id + 'X' + m.id;
-					var template = TEMPLATE_SUBSCRIBE.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fas fa-satellite-dish', m.url, id, item.meta.name.max(15), item.id);
+					var template = TEMPLATE_SUBSCRIBE.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'ti ti-satellite', m.url, id, item.meta.name.max(15), item.id);
 					var com = fs.add(id, template);
 					m.url = url;
 					com.type = 'sub';
@@ -3226,7 +3226,7 @@ TMS.refresh = function(fs, callback) {
 					readme.push(beautifyjsonschema(m.schema));
 
 					var id = 'cal' + item.id + 'X' + m.id;
-					var template = TEMPLATE_CALL.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'fa fa-plug', m.url, id, item.meta.name.max(15), item.id);
+					var template = TEMPLATE_CALL.format(item.meta.name, m.id, readme.join('\n'), m.icon || 'ti ti-plug', m.url, id, item.meta.name.max(15), item.id);
 					var com = fs.add(id, template);
 					m.url = url;
 					com.type = 'call';
