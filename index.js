@@ -1976,11 +1976,15 @@ function transform(items, opt, index) {
 F.transform = function(name, value, callback, controller) {
 
 	if (typeof(callback) !== 'function')
-		return new Promise((resolve, reject) => F.transform(name, value, (err, response) => err ? reject(err) : resolve(response), controller));
+		return new Promise((resolve, reject) => F.transform(name, value, (err, response) => err ? reject(err) : resolve(response), callback || controller));
 
 	var items = F.transformations[name];
 	if (items) {
 		let opt = new F.TBuilders.Options(controller, new F.TBuilders.ErrorBuilder());
+
+		if (controller)
+			opt.user = controller.user;
+
 		opt.value = value;
 		opt.$callback = callback;
 		transform(items, opt, 0);

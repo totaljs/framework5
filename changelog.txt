@@ -2,6 +2,8 @@
 0.0.11
 ========================
 
+- fixed `controller` and `user` argument in the `TRANSFORM()` method
+
 ========================
 0.0.10
 ========================
