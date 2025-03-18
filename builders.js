@@ -117,7 +117,17 @@ Options.prototype.transform = function(name, value, callback) {
 };
 
 Options.prototype.action = function(schema, payload) {
-	return F.action(schema, payload, this.controller);
+	let t = this;
+	let action = F.action(schema, payload, this.controller);
+	if (!t.controller) {
+		if (t.user)
+			action.options.user = t.user;
+		if (t.query)
+			action.options.query = t.query;
+		if (t.params)
+			action.options.params = t.params;
+	}
+	return action;
 };
 
 Options.prototype.promisify = function(fn, a, b, c) {

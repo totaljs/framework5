@@ -3,6 +3,7 @@
 ========================
 
 - fixed `controller` and `user` argument in the `TRANSFORM()` method
+- fixed assigning `user`, `query` and `params` properties in the `$.action()` method
 
 ========================
 0.0.10
