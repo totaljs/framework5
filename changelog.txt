@@ -4,6 +4,7 @@
 
 - fixed `controller` and `user` argument in the `TRANSFORM()` method
 - fixed assigning `user`, `query` and `params` properties in the `$.action()` method
+- fixed nullable `value` argument in the `querybuilder.permit()`
 
 ========================
 0.0.10

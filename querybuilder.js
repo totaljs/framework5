@@ -1192,9 +1192,11 @@ QBP.permit = function(name, type, value, userid, required) {
 	var types = type.split('');
 	var arr = [];
 
-	for (let m of value) {
-		for (let n of types)
-			arr.push(n + m);
+	if (value && value.length) {
+		for (let m of value) {
+			for (let n of types)
+				arr.push(n + m);
+		}
 	}
 
 	t.options.checksum += (t.options.checksum ? ' ' : '') + 'permit' + type + arr.join('');
