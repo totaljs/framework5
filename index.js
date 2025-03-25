@@ -608,7 +608,7 @@ F.loadconfig = function(value) {
 		F.Http.globalAgent.maxSockets = 9999;
 
 	if (!F.config.$httpetag)
-		F.config.$httpetag = F.config.version.replace(/\.|\s/g, '');
+		F.config.$httpetag = (F.config.version || '').toString().replace(/\.|\s/g, '');
 
 	if (smtp)
 		F.config.smtp = smtp;
