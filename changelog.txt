@@ -6,6 +6,10 @@
 - fixed assigning `user`, `query` and `params` properties in the `$.action()` method
 - fixed nullable `value` argument in the `querybuilder.permit()`
 - fixed parsing `CONF.version`
+- added `QueryBuilder.pipe()` method as alias to `QueryBuilder.callback()`
+- added `API.pipe()` method as alias to `API.callback()`
+- added `Action.pipe()` method as alias to `Action.callback()`
+- added `RESTBuilder.pipe()` method as alias to `RESTBuilder.callback()`
 
 ========================
 0.0.10

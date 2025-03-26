@@ -153,7 +153,7 @@ CTP.next = function(t) {
 
 };
 
-CTP.callback = function($) {
+CTP.callback = CTP.pipe = function($) {
 	var t = this;
 	t.$callback = typeof($) === 'function' ? $ : $.callback();
 	return t;
@@ -499,7 +499,7 @@ QBP.set = function(name) {
 	return this;
 };
 
-QBP.callback = function($) {
+QBP.callback = QBP.pipe = function($) {
 	var t = this;
 	t.main.callback = typeof($) === 'function' ? $ : $.callback();
 	return t;

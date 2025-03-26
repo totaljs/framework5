@@ -140,7 +140,7 @@ APICallProto.error = APICallProto.err = function(err, reverse) {
 	return this;
 };
 
-APICallProto.callback = function($) {
+APICallProto.callback = APICallProto.pipe = function($) {
 	var t = this;
 	t.$callback = typeof($) === 'function' ? $ : $.callback();
 	return t;

@@ -241,7 +241,7 @@ Options.prototype.successful = function(callback) {
 	};
 };
 
-Options.prototype.callback = function(value) {
+Options.prototype.callback = Options.prototype.pipe = function(value) {
 
 	var self = this;
 
@@ -1499,7 +1499,7 @@ ActionCaller.prototype.done = function($, fn) {
 	return this;
 };
 
-ActionCaller.prototype.callback = function(value) {
+ActionCaller.prototype.callback = ActionCaller.prototype.pipe = function(value) {
 	this.options.callback = value;
 	return this;
 };
