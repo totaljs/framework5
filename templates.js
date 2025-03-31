@@ -117,6 +117,9 @@ exports.render = function(body, model, $) {
 
 function parse(body, $) {
 
+	if ($ && $.language)
+		body = F.translate($.language, body);
+
 	var helpers = {};
 	var model = EMPTYOBJECT;
 	var strhelpers = '';
@@ -143,7 +146,7 @@ function parse(body, $) {
 
 	var output = {};
 	output.helpers = helpers;
-	output.template = Tangular.compile($ && $.language ? F.translate($.language, body) : body);
+	output.template = Tangular.compile(body);
 	output.model = model;
 	return output;
 }
