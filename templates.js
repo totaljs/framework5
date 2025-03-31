@@ -6,7 +6,7 @@ exports.render = function(body, model, $) {
 	return new Promise(function(resolve, reject) {
 
 		var cache = F.temporary.templates;
-		var id = 'Ttemplate' + HASH(body);
+		var id = 'Ttemplate' + HASH(body) + ($ ? $.language : '');
 		var data = cache[id];
 
 		if (data) {
@@ -45,7 +45,7 @@ exports.render = function(body, model, $) {
 						return;
 					}
 
-					data = parse(response.body);
+					data = parse(response.body, $);
 					cache[id] = data;
 
 					try {
@@ -83,7 +83,7 @@ exports.render = function(body, model, $) {
 						return;
 					}
 
-					data = parse(response.toString('utf8'));
+					data = parse(response.toString('utf8'), $);
 
 					if (!DEBUG)
 						cache[id] = data;
@@ -102,7 +102,7 @@ exports.render = function(body, model, $) {
 			}
 		}
 
-		data = cache[id] = parse(body);
+		data = cache[id] = parse(body, $);
 
 		try {
 			resolve(data.template({ value: model || data.model }, null, data.helpers));
@@ -115,7 +115,7 @@ exports.render = function(body, model, $) {
 	});
 };
 
-function parse(body) {
+function parse(body, $) {
 
 	var helpers = {};
 	var model = EMPTYOBJECT;
@@ -143,7 +143,7 @@ function parse(body) {
 
 	var output = {};
 	output.helpers = helpers;
-	output.template = Tangular.compile(body);
+	output.template = Tangular.compile($ && $.language ? F.translate($.language, body) : body);
 	output.model = model;
 	return output;
 }

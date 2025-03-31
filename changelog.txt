@@ -10,6 +10,7 @@
 - added `API.pipe()` method as alias to `API.callback()`
 - added `Action.pipe()` method as alias to `Action.callback()`
 - added `RESTBuilder.pipe()` method as alias to `RESTBuilder.callback()`
+- added support for localization in the `TEMPLATE()` method
 
 ========================
 0.0.10
