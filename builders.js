@@ -1415,7 +1415,8 @@ ActionCaller.prototype.exec = function() {
 	} else
 		$.payload = payload;
 
-	$.status = self.options.status;
+	if (self.options.status)
+		$.status = self.options.status;
 
 	if (action.middleware) {
 		action.middleware.wait(function(name, next) {
