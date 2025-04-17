@@ -3,6 +3,7 @@
 ========================
 
 - fixed `$.status()` calling
+- added support for schemas in the `QueryBuilder.autoquery(..., '@schema_name')` method
 
 ========================
 0.0.11

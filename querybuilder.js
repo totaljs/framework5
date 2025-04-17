@@ -1095,23 +1095,36 @@ QBP.schema = function(value) {
 
 QBP.autoquery = function(query, schema, defsort, maxlimit) {
 
-	var t = this;
-	var skipped;
-	var key = 'QBF' + schema;
-	var allowed = F.temporary.querybuilders[key];
-	var tmp;
+	let t = this;
+	let skipped;
+	let key = 'QBF' + schema;
+	let allowed = F.temporary.querybuilders[key];
+	let tmp;
 
 	if (!allowed) {
-		var obj = {};
-		var arr = [];
-		var filter = [];
-		var localized = {};
+
+		let obj = {};
+		let arr = [];
+		let filter = [];
+		let localized = {};
+
+		if (schema.charAt(0) === '@') {
+			let jschema = F.jsonschemas[schema.substring(1)];
+			if (jschema) {
+				schema = '';
+				for (let key in jschema.properties) {
+					let prop = jschema.properties[key];
+					schema = (schema ? schema + ',' : '') + key + ':' + (prop.type === 'array' ? '[string]' : prop.type);
+				}
+			}
+		}
+
 		tmp = schema.split(',').trim();
 
-		for (var i = 0; i < tmp.length; i++) {
-			var k = tmp[i].split(':').trim();
+		for (let field of tmp) {
+			let k = field.split(':').trim();
 			arr.push(k[0]);
-			var cleaned = k[0].replace(/§/g, '');
+			let cleaned = k[0].replace(/§/g, '');
 			obj[cleaned] = 1;
 			localized[cleaned] = k[0];
 			filter.push({ name: cleaned, type: (k[1] || 'string').toLowerCase() });
@@ -1120,15 +1133,15 @@ QBP.autoquery = function(query, schema, defsort, maxlimit) {
 		allowed = F.temporary.querybuilders[key] = { keys: arr, meta: obj, filter: filter, fields: localized };
 	}
 
-	var fields = query.fields;
-	var fieldscount = 0;
+	let fields = query.fields;
+	let fieldscount = 0;
 
 	if (!t.options.fields)
 		t.options.fields = [];
 
 	if (fields) {
 		fields = fields.replace(REG_FIELDS_CLEANER, '').split(',');
-		for (var field of fields) {
+		for (let field of fields) {
 			if (allowed && allowed.meta[field]) {
 				t.options.fields.push(field);
 				fieldscount++;
@@ -1137,23 +1150,23 @@ QBP.autoquery = function(query, schema, defsort, maxlimit) {
 	}
 
 	if (!fieldscount) {
-		for (var field of allowed.keys)
+		for (let field of allowed.keys)
 			t.options.fields.push(field);
 	}
 
 	if (allowed && allowed.filter) {
-		for (var item of allowed.filter)
+		for (let item of allowed.filter)
 			t.gridfilter(item.name, query, item.type, allowed.fields[item.name]);
 	}
 
 	if (query.sort) {
 
 		tmp = query.sort.split(',');
-		var count = 0;
+		let count = 0;
 
-		for (var item of tmp) {
-			var index = item.lastIndexOf('_');
-			var name = index === - 1 ? item : item.substring(0, index);
+		for (let item of tmp) {
+			let index = item.lastIndexOf('_');
+			let name = index === - 1 ? item : item.substring(0, index);
 
 			if ((skipped && skipped[name]) || (!allowed.meta[name]))
 				continue;
