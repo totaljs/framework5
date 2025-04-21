@@ -1110,11 +1110,12 @@ RESTBuilderResponse.prototype.cookie = function(name) {
 
 function parseactioncache(obj, meta) {
 
-	var query = meta.query;
-	var user = meta.user;
-	var params = meta.params;
-	var language = meta.language;
-	var search = meta.id || meta.key;
+	let query = meta.query;
+	let user = meta.user;
+	let params = meta.params;
+	let input = meta.input;
+	let language = meta.language;
+	let search = meta.id || meta.key;
 
 	if (typeof(user) === 'string')
 		user = user.split(',').trim();
@@ -1128,19 +1129,31 @@ function parseactioncache(obj, meta) {
 	else if (params === true) {
 		if (obj.jsparams) {
 			params = [];
-			for (var key in obj.jsparams.properties)
+			for (let key in obj.jsparams.properties)
 				params.push(key);
 		} else
 			params = null;
 	} else
 		params = null;
 
+	if (typeof(input) === 'string')
+		input = input.split(',').trim();
+	else if (input === true) {
+		if (obj.jsinput) {
+			input = [];
+			for (let key in obj.jsinput.properties)
+				input.push(key);
+		} else
+			input = null;
+	} else
+		input = null;
+
 	if (typeof(query) === 'string')
 		query = query.split(',').trim();
 	else if (query === true) {
 		if (obj.jsquery) {
 			query = [];
-			for (var key in obj.jsquery.properties)
+			for (let key in obj.jsquery.properties)
 				query.push(key);
 		} else
 			query = null;
@@ -1150,9 +1163,9 @@ function parseactioncache(obj, meta) {
 	return function($, value) {
 		if (value === undefined) {
 
-			var key = 'action|' + (search ? (search + '|') : '') + $.ID;
-			var sum = '';
-			var tmp;
+			let key = 'action|' + (search ? (search + '|') : '') + $.ID;
+			let sum = '';
+			let tmp;
 
 			if (language)
 				sum += ($.language || '');
@@ -1168,6 +1181,14 @@ function parseactioncache(obj, meta) {
 			if (params) {
 				for (let key of params) {
 					tmp = $.params[key];
+					if (tmp)
+						sum += '|' + tmp;
+				}
+			}
+
+			if (input) {
+				for (let key of input) {
+					tmp = $.model[key];
 					if (tmp)
 						sum += '|' + tmp;
 				}
