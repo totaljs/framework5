@@ -5,6 +5,7 @@
 - fixed `$.status()` calling
 - added support for schemas in the `QueryBuilder.autoquery(..., '@schema_name')` method
 - extended `NEWACTION` cache with additional `input` key
+- updated download procedure in the `COMPONENTANTOR()` method
 
 ========================
 0.0.11

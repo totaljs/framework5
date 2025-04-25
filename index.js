@@ -1402,18 +1402,18 @@ F.componentator = function(name, components, removeprev = true, attrs = '') {
 
 	F.$events.componentator && F.emit('componentator', meta);
 
-	var url = 'https://componentator.com/download.js?id=' + meta.components + (attrs ? ('&' + attrs) : '');
-	var nameid = meta.name.slug();
-	var relative = 'ui-' + (removeprev ? (nameid + '-') : '') + url.makeid() + '.min.js';
-	var filename = F.path.public(relative);
+	let url = 'https://componentator.com/download/';
+	let nameid = meta.name.slug();
+	let relative = 'ui-' + (removeprev ? (nameid + '-') : '') + meta.components.makeid() + '.min.js';
+	let filename = F.path.public(relative);
 
 	F.repo[meta.name] = '/' + relative;
 
 	if (removeprev) {
 		F.Fs.readdir(F.path.public(), function(err, files) {
 
-			var rem = [];
-			for (var m of files) {
+			let rem = [];
+			for (let m of files) {
 				if (m !== relative && m.indexOf('ui-' + nameid + '-') !== -1)
 					rem.push(F.path.public(m));
 			}
@@ -1425,8 +1425,22 @@ F.componentator = function(name, components, removeprev = true, attrs = '') {
 	}
 
 	F.Fs.lstat(filename, function(err) {
-		if (err)
-			F.download(url, filename, err => err ? F.error(err, 'COMPONENTATOR') : null);
+		if (err) {
+
+			let opt = {};
+			opt.method = 'POST';
+			opt.body = 'id=' + meta.components + (attrs ? ('&' + attrs) : '');
+			opt.type = 'urlencoded';
+			opt.url = url;
+			opt.callback = function(err, response) {
+				if (err)
+					Total.error(err, 'COMPONENTATOR()');
+				else
+					Total.Fs.writeFile(filename, response.body, 'utf8', ERROR('COMPONENTATOR()'))
+			};
+
+			REQUEST(opt);
+		}
 	});
 
 };
@@ -1446,7 +1460,7 @@ F.errorcallback = function(err) {
 
 F.merge = function(url) {
 
-	var arr = [];
+	let arr = [];
 
 	for (let i = 1; i < arguments.length; i++) {
 		let links = arguments[i];
