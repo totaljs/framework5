@@ -2,6 +2,9 @@
 0.0.13
 ========================
 
+- added auto script loader for `extensions` directory
+- added auto script loader for `transforms` directory
+
 ========================
 0.0.12
 ========================

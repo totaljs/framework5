@@ -124,6 +124,7 @@ function runwatching() {
 			F.Path.join(directory, 'middleware'),
 			F.Path.join(directory, 'bundles'),
 			F.Path.join(directory, 'flowstreams'),
+			F.Path.join(directory, 'transforms'),
 			F.Path.join(directory, 'startup'),
 			F.Path.join(directory, 'plugins')
 		];

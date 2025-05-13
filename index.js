@@ -795,7 +795,7 @@ F.load = async function(types, callback) {
 		}
 	}
 
-	let loader = ['modules', 'actions', 'schemas', 'models', 'definitions', 'controllers', 'middleware', 'sources', 'scripts'];
+	let loader = ['extensions', 'modules', 'actions', 'schemas', 'models', 'definitions', 'controllers', 'middleware', 'sources', 'scripts', 'transforms'];
 	var files = [];
 	var tmp;
 
@@ -818,7 +818,7 @@ F.load = async function(types, callback) {
 
 			files.push({ id: F.TUtils.getName(plugin).replace(/\.js$/, ''), type: 'plugins', filename: F.path.directory('plugins', plugin + '/index.js') });
 
-			let loader = ['controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware'];
+			let loader = ['extensions', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware', 'transforms'];
 			for (let type of loader) {
 				tmp = await list(F.path.root('plugins/' + plugin + '/' + type), type === 'flowstreams' ? 'flow' : 'js');
 				if (tmp.length)
