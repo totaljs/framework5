@@ -221,8 +221,10 @@ global.CLONE = F.TUtils.clone;
 global.COPY = F.TUtils.copy;
 global.QUERIFY = F.TUtils.querify;
 global.PYPELINE = function(name, options) {
-	name = name[0] === '~' ? name.substring(1) : PATH.root('pypelines/' + name + '.py');
-	return require('./pypeline').init(name, options);
+	let filename = name[0] === '~' ? name.substring(1) : PATH.root('pypelines/' + name + '.py');
+	let pypeline = require('./pypeline').init(filename, options);
+	pypeline.name = name;
+	return pypeline;
 };
 
 // TMS

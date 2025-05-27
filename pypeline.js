@@ -40,25 +40,15 @@ Pypeline.prototype.init = function() {
 				let length = buffer.readUInt32BE(0);
 				if (buffer.length >= length + 4) {
 
-					let uid = buffer.readUInt32BE(4);
-					let buf = buffer.subarray(8, 8 + length);
+					let buf = buffer.subarray(4, 4 + length);
 
 					if (t.type === 'json')
 						buf = buf.toString('utf8').parseJSON(true);
 					else if (t.type === 'text')
 						buf = buf.toString('utf8');
 
-					if (uid) {
-						let key = uid + '';
-						let callback = t.callbacks[key];
-						if (callback) {
-							callback.fn(null, buf);
-							delete t.callbacks[key];
-						}
-					} else
-						t.emit('data', buf);
-
-					buffer = buffer.subarray(8 + length);
+					t.emit('data', buf);
+					buffer = buffer.subarray(4 + length);
 				} else
 					break;
 			}
@@ -84,16 +74,18 @@ Pypeline.prototype.init = function() {
 		});
 
 		let pending = t.pending.splice(0);
-		for (let msg of pending)
-			t.send(msg.data, msg.callback);
+		for (let data of pending)
+			t.send(data);
 
 		t.emit('open');
 
 	});
 
-	t.server.listen(t.socket, function() {
-		console.log('Pypeline connected:', t.filename);
-		t.run();
+	Total.Fs.unlink(t.socket, function() {
+		t.server.listen(t.socket, function() {
+			console.log('Pypeline connected:', t.name);
+			t.run();
+		});
 	});
 };
 
@@ -129,16 +121,15 @@ Pypeline.prototype.close = function() {
 	return t;
 };
 
-Pypeline.prototype.send = function(data, callback) {
+Pypeline.prototype.send = function(data) {
 
 	let t = this;
+	let client = t.sockets[0];
 
-	if (!t.sockets.length) {
-		t.pending.push({ data: data, callback: callback });
+	if (!client) {
+		t.pending.push(data);
 		return;
 	}
-
-	let client = t.sockets[0];
 
 	/*
 	let client = t.sockets[t.current++];
@@ -146,20 +137,11 @@ Pypeline.prototype.send = function(data, callback) {
 		t.current = 0;
 	*/
 
-	let buffer = data instanceof Buffer ? data : Buffer.from(typeof(data) === 'object' ? JSON.stringify(data) : data, 'utf8');
+	let buffer = data instanceof Buffer ? data : Buffer.from(typeof(data) === 'object' ? JSON.stringify(data) : data.toString(), 'utf8');
 	let size = Buffer.alloc(4);
-	let uid = Buffer.alloc(4);
 
 	size.writeUInt32BE(buffer.length);
-
-	if (callback) {
-		if (t.counter === 4294967295)
-			t.counter = 0;
-		uid.writeUInt32BE(t.counter++);
-		t.callbacks[t.counter + ''] = { ts: Date.now(), fn: callback, socket: client };
-	}
-
-	client.write(Buffer.concat([size, uid, buffer]));
+	client.write(Buffer.concat([size, buffer]));
 	return t;
 };
 
@@ -176,7 +158,7 @@ Pypeline.prototype.run = function() {
 		} catch {}
 	}
 
-	t.process = Total.Child.spawn('python3', [t.filename, t.socket], { cwd: PATH.root(), stdio: ['inherit', 'inherit', 'inherit'] });
+	t.process = Total.Child.spawn('python3', ['-u', t.filename, t.socket], { cwd: PATH.root(), stdio: ['inherit', 'inherit', 'inherit'] });
 
 	t.process.on('close', function() {
 		if (t.autorestart) {
