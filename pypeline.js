@@ -188,6 +188,11 @@ exports.init = function(filename, options) {
 	if (options.type)
 		pypeline.type = options.type;
 
-	setImmediate(pypeline => pypeline.init(), pypeline);
+	Total.Fs.stat(filename, function(err) {
+		if (err)
+			throw err;
+		setImmediate(pypeline => pypeline.init(), pypeline);
+	});
+
 	return pypeline;
 };
