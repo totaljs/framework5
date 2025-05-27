@@ -220,6 +220,10 @@ global.DIFFARR = F.TUtils.diffarr;
 global.CLONE = F.TUtils.clone;
 global.COPY = F.TUtils.copy;
 global.QUERIFY = F.TUtils.querify;
+global.PYPELINE = function(name, options) {
+	name = name[0] === '~' ? name.substring(1) : PATH.root('pypelines/' + name + '.py');
+	return require('./pypeline').init(name, options);
+};
 
 // TMS
 global.SUBSCRIBE = F.TTMS.subscribe;
