@@ -7,3 +7,4 @@
 *.js.json
 *.socket
 /tests/nosql/databases/
+/.zed/
