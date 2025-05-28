@@ -180,7 +180,7 @@ exports.init = function(filename, options) {
 	let pypeline = new Pypeline(filename);
 	Utils.EventEmitter2(pypeline);
 
-	pypeline.autorestart = options.autorestart != true;
+	pypeline.autorestart = options.autorestart != false;
 
 	if (options.threads)
 		pypeline.threads = options.threads;
