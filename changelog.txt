@@ -5,7 +5,7 @@
 - added auto script loader for `extensions` directory
 - added auto script loader for `transforms` directory
 - added support for Python scripts in the `pypelines` folder
-- added `PYPELINE(name)` method starts a python process
+- added `PYPELINE(name, [options])` method starts a python process
 
 ========================
 0.0.12
