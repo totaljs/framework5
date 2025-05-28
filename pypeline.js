@@ -158,7 +158,7 @@ Pypeline.prototype.run = function() {
 		} catch {}
 	}
 
-	t.process = Total.Child.spawn('python3', ['-u', t.filename, t.socket], { cwd: PATH.root(), stdio: ['inherit', 'inherit', 'inherit'] });
+	t.process = Total.Child.spawn('python3', ['-u', t.filename, t.socket], { cwd: Total.Path.dirname(t.filename), stdio: ['inherit', 'inherit', 'inherit'] });
 
 	t.process.on('close', function() {
 		if (t.autorestart) {
