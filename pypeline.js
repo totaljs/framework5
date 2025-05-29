@@ -21,7 +21,14 @@ function Pypeline(filename) {
 }
 
 Pypeline.prototype.init = function() {
+
 	let t = this;
+
+	if (!t.socket) {
+		console.log('Pypeline created:', t.name);
+		t.run();
+		return;
+	}
 
 	t.server = Total.Net.createServer(function(socket) {
 
@@ -145,7 +152,7 @@ Pypeline.prototype.send = function(data) {
 	return t;
 };
 
-Pypeline.prototype.run = function() {
+Pypeline.prototype.run = Pypeline.prototype.restart = function() {
 
 	let t = this;
 
@@ -158,7 +165,18 @@ Pypeline.prototype.run = function() {
 		} catch {}
 	}
 
-	t.process = Total.Child.spawn('python3', ['-u', t.filename, t.socket], { cwd: Total.Path.dirname(t.filename), stdio: ['inherit', 'inherit', 'inherit'] });
+	let args = [];
+	let scr = t.filename.includes('\n');
+
+	if (t.inline)
+		args.push('-c');
+	else
+		args.push('-u');
+
+	args.push(t.filename);
+	args.push(t.socket);
+
+	t.process = Total.Child.spawn('python3', args, { cwd: t.inline ? PATH.root() : Total.Path.dirname(t.filename), stdio: ['inherit', 'inherit', 'inherit'] });
 
 	t.process.on('close', function() {
 		if (t.autorestart) {
@@ -172,7 +190,7 @@ Pypeline.prototype.run = function() {
 
 };
 
-exports.init = function(filename, options) {
+exports.init = function(filename, options, inline) {
 
 	if (!options)
 		options = EMPTYOBJECT;
@@ -181,6 +199,7 @@ exports.init = function(filename, options) {
 	Utils.EventEmitter2(pypeline);
 
 	pypeline.autorestart = options.autorestart != false;
+	pypeline.inline = inline;
 
 	if (options.threads)
 		pypeline.threads = options.threads;
@@ -188,11 +207,18 @@ exports.init = function(filename, options) {
 	if (options.type)
 		pypeline.type = options.type;
 
-	Total.Fs.stat(filename, function(err) {
-		if (err)
-			throw err;
+	if (options.socket === false)
+		pypeline.socket = null;
+
+	if (pypeline.inline) {
 		setImmediate(pypeline => pypeline.init(), pypeline);
-	});
+	} else {
+		Total.Fs.stat(filename, function(err) {
+			if (err)
+				throw err;
+			setImmediate(pypeline => pypeline.init(), pypeline);
+		});
+	}
 
 	return pypeline;
 };

@@ -4,6 +4,8 @@
 
 'use strict';
 
+const REG_PYPELINE_INLINE = /\n|;|\"|'/;
+
 global.ON = (name, fn) => F.on(name, fn);
 global.ONCE = (name, fn) => F.once(name, fn);
 global.EMIT = (name, a, b, c, d, e, f, g) => F.emit(name, a, b, c, d, e, f, g);
@@ -220,10 +222,20 @@ global.DIFFARR = F.TUtils.diffarr;
 global.CLONE = F.TUtils.clone;
 global.COPY = F.TUtils.copy;
 global.QUERIFY = F.TUtils.querify;
+
 global.PYPELINE = function(name, options) {
-	let filename = name[0] === '~' ? name.substring(1) : PATH.root('pypelines/' + name + '.py');
-	let pypeline = require('./pypeline').init(filename, options);
-	pypeline.name = name;
+
+	let pypeline = require('./pypeline');
+
+	if (REG_PYPELINE_INLINE.test(name)) {
+		pypeline = pypeline.init(name, options, true);
+		pypeline.name = 'Inline Python Code';
+	} else  {
+		let filename = name[0] === '~' ? name.substring(1) : PATH.root('pypelines/' + name + '.py');
+		pypeline = pypeline.init(filename, options);
+		pypeline.name = name;
+	}
+
 	return pypeline;
 };
 
