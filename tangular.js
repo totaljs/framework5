@@ -96,7 +96,7 @@
 
 		self.template = template;
 
-		template = template.replace(/\|\|/g, '\1');
+		template = template.replace(/\|\|/g, '\x01');
 
 		self.variables = {};
 		self.commands = [];
@@ -221,9 +221,9 @@
 						var ishelperfirst = ishelper && !i;
 						index = helper.indexOf('(');
 						if (index === -1) {
-							helper = 'Thelpers.$execute($helpers,model,\'' + helper + '\',' + (ishelperfirst ? '' : '\7)');
+							helper = 'Thelpers.$execute($helpers,model,\'' + helper + '\',' + (ishelperfirst ? '' : '\x07)');
 						} else
-							helper = 'Thelpers.$execute($helpers,model,\'' + helper.substring(0, index) + '\',' + (ishelperfirst ? '' : '\7,') + helper.substring(index + 1);
+							helper = 'Thelpers.$execute($helpers,model,\'' + helper.substring(0, index) + '\',' + (ishelperfirst ? '' : '\x07,') + helper.substring(index + 1);
 						helpers[i] = helper;
 					}
 				} else
@@ -315,9 +315,9 @@
 					for (var j = 0; j < cmd.helpers.length; j++) {
 						var helper = cmd.helpers[j];
 						if (j === 0)
-							str = helper.replace('\7', cmd.cmd.trim()).trim();
+							str = helper.replace('\x07', cmd.cmd.trim()).trim();
 						else
-							str = helper.replace('\7', str.trim());
+							str = helper.replace('\x07', str.trim());
 					}
 					builder.push('$tmp=' + str + ';if($tmp!=null)$output+=$tmp;');
 				} else

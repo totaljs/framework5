@@ -260,7 +260,7 @@ Instance.prototype.debug = function(msg) {
 };
 
 Instance.prototype.throw = function(err) {
-	this.module.throw(this, error);
+	this.module.throw(this, err);
 };
 
 Instance.prototype.dashboard = function(msg) {
@@ -343,8 +343,6 @@ exports.compile = function(html, callback) {
 		callback(e);
 		return;
 	}
-
-	var errors = [];
 
 	(com.npm || EMPTYARRAY).wait(function(name, next) {
 		NPMINSTALL(name, function(err) {

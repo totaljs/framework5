@@ -6,7 +6,6 @@ function Pypeline(filename) {
 
 	t.socket = PATH.tmp('pypeline_' + HASH(filename).toString(36) + '.socket');
 	t.filename = filename;
-	t.callbacks = {};
 	t.sockets = [];
 	t.processes = [];
 	t.current = 0;
@@ -63,21 +62,9 @@ Pypeline.prototype.init = function() {
 		});
 
 		socket.on('end', function() {
-
-			for (let key in t.callbacks) {
-				let callback = t.callbacks[key];
-				if (callback.socket === socket) {
-					try {
-						callbacks.fn('Disconnected');
-					} catch {}
-					delete t.callbacks[key];
-				}
-			}
-
 			let index = t.sockets.indexOf(socket);
 			if (index !== -1)
 				t.sockets.splice(index);
-
 		});
 
 		let pending = t.pending.splice(0);
@@ -117,14 +104,6 @@ Pypeline.prototype.close = function() {
 		t.process.kill(9);
 	} catch {}
 
-	for (let key in t.callbacks) {
-		let callback = t.callbacks[key];
-		try {
-			callbacks.fn('Disconnected');
-		} catch {}
-	}
-
-	t.callbacks = null;
 	return t;
 };
 
@@ -166,7 +145,6 @@ Pypeline.prototype.run = Pypeline.prototype.restart = function() {
 	}
 
 	let args = [];
-	let scr = t.filename.includes('\n');
 
 	if (t.inline)
 		args.push('-c');

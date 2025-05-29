@@ -731,7 +731,7 @@ Mailer.$send = function(obj, options, autosend) {
 				isAuthorization = true;
 				if (options.token && line.indexOf('XOAUTH2') !== -1) {
 					auth.push('AUTH XOAUTH2');
-					auth.push(Buffer.from('user=' + options.user + '\1auth=Bearer ' + options.token + '\1\1').toString('base64'));
+					auth.push(Buffer.from('user=' + options.user + '\x01auth=Bearer ' + options.token + '\x01\x01').toString('base64'));
 				} else if (line.lastIndexOf('XOAUTH') === -1) {
 					auth.push('AUTH LOGIN');
 					auth.push(Buffer.from(options.user).toString('base64'));

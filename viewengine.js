@@ -112,7 +112,6 @@ exports.compile = function(name, content, debug = true) {
 	var isCOMPILATION = false;
 	var builderTMP = '';
 	var sectionName = '';
-	var components = {};
 	var text;
 
 	while (command) {

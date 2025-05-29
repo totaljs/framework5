@@ -1019,9 +1019,9 @@ function init_current(meta, callback, nested) {
 	flow.proxy.ping = 0;
 
 	if (meta.import) {
-		var tmp = meta.import.split(/,|;/).trim();
-		for (var m of tmp) {
-			var mod = require(F.path.root(m));
+		let tmp = meta.import.split(/,|;/).trim();
+		for (let m of tmp) {
+			let mod = require(F.path.root(m));
 			mod.install && mod.install(flow);
 			mod.init && mod.init(flow);
 		}
