@@ -72,10 +72,10 @@ function runwatching() {
 
 	const FILENAME = F.TUtils.getName(process.argv[1] || 'index.js');
 	const VERSION = F.version_header;
-	const REG_FILES = /(config|bundles\.debug|\.js|\.ts|\.flow|\.resource|\.py)+$/i;
+	const REG_FILES = /(config|bundles\.debug|\.js|\.ts|\.flow|\.resource)+$/i;
 	const REG_PUBLIC = /\/public\//i;
 	const REG_INDEX = new RegExp(FILENAME.replace(/\.js$/, '') + '_.*?\\.js$');
-	const REG_EXTENSION = /\.(js|ts|py|resource|package|bundle|build|flow|url)$/i;
+	const REG_EXTENSION = /\.(js|ts|resource|package|bundle|build|flow|url)$/i;
 	const REG_RELOAD = /\.(js|ts|css|html|htm|jpg|png|gif|ico|svg|webp|resource)$/i;
 	const isRELOAD = !!options.livereload;
 	const SPEED = isRELOAD ? 1000 : 1500;
@@ -126,8 +126,7 @@ function runwatching() {
 			F.Path.join(directory, 'flowstreams'),
 			F.Path.join(directory, 'transforms'),
 			F.Path.join(directory, 'startup'),
-			F.Path.join(directory, 'plugins'),
-			F.Path.join(directory, 'pypelines')
+			F.Path.join(directory, 'plugins')
 		];
 
 		const SRC = F.Path.join(directory, '.src');
