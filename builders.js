@@ -1360,6 +1360,7 @@ ActionCaller.prototype.exec = function() {
 	$.controller = self.controller;
 	$.fields = action.fields;
 	$.user = self.options.user;
+	$.config = action.config || EMPTYOBJECT;
 
 	$.$callback = function(err, response) {
 
