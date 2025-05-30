@@ -6,6 +6,7 @@
 - added auto script loader for `transforms` directory
 - added support for Python scripts in the `pypelines` folder
 - added `PYPELINE(name, [options])` method starts a python process
+- added support for custom View engine helpers `DEF.helpers.myhelper`
 
 ========================
 0.0.12

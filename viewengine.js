@@ -257,7 +257,7 @@ exports.compile = function(name, content, debug = true) {
 	if (!debug)
 		builder = builder.replace(/(\+\$EMPTY\+)/g, '+').replace(/(\$output=\$EMPTY\+)/g, '$output=').replace(/(\$output\+=\$EMPTY\+)/g, '$output+=').replace(/(\}\$output\+=\$EMPTY)/g, '}').replace(/(\{\$output\+=\$EMPTY;)/g, '{').replace(/(\+\$EMPTY\+)/g, '+').replace(/(>'\+'<)/g, '><').replace(/'\+'/g, '');
 
-	var fn = ('(function(self){var model=self.model;var config=F.config;var ctrl=self.controller;var query=ctrl?.query || EMPTYOBJECT,repository=self.repository,controller=self.controller,files=ctrl?.files || EMPTYARRAY,user=ctrl?.user,session=ctrl?.session,body=ctrl?.body,language=ctrl?.language || \'\'' + (isCookie ? ',cookie=name=>ctrl?ctrl.cookie(name):\'\'' : '') + ';' + (nocompressHTML ? 'if(ctrl)ctrl.response.minify=false;' : '') + builder + ';return $output;})');
+	var fn = ('(function(self){var model=self.model;var config=F.config;var ctrl=self.controller;var query=ctrl?.query || EMPTYOBJECT,repository=self.repository,controller=self.controller,files=ctrl?.files || EMPTYARRAY,user=ctrl?.user,session=ctrl?.session,body=ctrl?.body,helpers=F.def.helpers;language=ctrl?.language || \'\'' + (isCookie ? ',cookie=name=>ctrl?ctrl.cookie(name):\'\'' : '') + ';' + (nocompressHTML ? 'if(ctrl)ctrl.response.minify=false;' : '') + builder + ';return $output;})');
 	try {
 		fn = eval(fn);
 	} catch (e) {
@@ -606,6 +606,18 @@ View.prototype.ota = function(obj) {
 View.prototype.layout = function(value) {
 	this.repository.layout = value;
 	return '';
+};
+
+View.prototype.helper = function(name) {
+	var helper = F.def.helpers[name];
+	if (!helper)
+		return '';
+
+	var params = [];
+	for (var i = 1; i < arguments.length; i++)
+		params.push(arguments[i]);
+
+	return helper.apply(this, params);
 };
 
 View.prototype.json = function(obj, id, beautify, replacer) {
