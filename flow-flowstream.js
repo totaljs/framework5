@@ -198,7 +198,7 @@ Instance.prototype.httprouting = function() {
 					if (index !== -1) {
 						try {
 							opt.cookies[line.substring(0, index)] = decodeURIComponent(line.substring(index + 1));
-						} catch (e) {}
+						} catch {}
 					}
 				}
 			}
@@ -412,6 +412,7 @@ Instance.prototype.kill = Instance.prototype.destroy = function() {
 	setTimeout(() => exports.refresh(self.id, 'destroy'), 500);
 	self.flow.$destroyed = true;
 	self.flow.$terminated = true;
+	self.flow.$socket && self.flow.$socket.close();
 
 	if (self.flow.isworkerthread) {
 
@@ -1972,7 +1973,8 @@ function MAKEFLOWSTREAM(meta) {
 	var saveforce = function() {
 		saveid && clearTimeout(saveid);
 		saveid = null;
-		flow.proxy.save(flow.export2());
+		if (!flow.$destroyed)
+			flow.proxy.save(flow.export2());
 	};
 
 	var save = function() {
@@ -2008,9 +2010,9 @@ function MAKEFLOWSTREAM(meta) {
 
 	var refresh_components_force = function() {
 		timeoutrefresh = null;
-		if (flow.proxy.online) {
+		if (!flow.$destroyed && flow.proxy.online) {
 			flow.proxy.send({ TYPE: 'flow/components', data: flow.components(true) });
-			var instances = flow.export();
+			let instances = flow.export();
 			flow.proxy.send({ TYPE: 'flow/design', data: instances });
 		}
 	};
@@ -2753,10 +2755,12 @@ function MAKEFLOWSTREAM(meta) {
 				flow.proxy.send({ TYPE: 'flow/design', data: flow.export() }, 1, clientid);
 				flow.proxy.send({ TYPE: 'flow/errors', data: flow.errors }, 1, clientid);
 				setTimeout(function() {
-					flow.instances().wait(function(com, next) {
-						com.status();
-						setImmediate(next);
-					}, 3);
+					if (!flow.$destroyed) {
+						flow.instances().wait(function(com, next) {
+							com.status();
+							setImmediate(next);
+						}, 3);
+					}
 				}, 1500);
 			}
 		}

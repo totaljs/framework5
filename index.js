@@ -274,7 +274,7 @@ global.DEF = {};
 		try {
 			if (!pathexists(path))
 				F.Fs.mkdirSync(path, { recursive: true });
-		} catch (e) {}
+		} catch {}
 	};
 
 })(global.F);
@@ -287,7 +287,7 @@ function pathexists(filename, isfile) {
 	try {
 		var val = F.Fs.statSync(filename);
 		return val ? (isfile ? val.isFile() : true) : false;
-	} catch (e) {
+	} catch {
 		return false;
 	}
 }
@@ -905,7 +905,7 @@ F.require = function(name) {
 
 	try {
 		mod = require(name);
-	} catch (e) {
+	} catch {
 		mod = require(F.Path.join(F.config.$nodemodules, name));
 	}
 
@@ -1155,8 +1155,11 @@ F.loadservices = function() {
 		F.internal.ticks++;
 		global.NOW = new Date();
 
-		for (let key in F.flowstreams)
-			F.flowstreams[key].service(F.internal.ticks);
+		for (let key in F.flowstreams) {
+			let flow = F.flowstreams[key];
+			if (!flow.$destroyed)
+				flow.service(F.internal.ticks);
+		}
 
 		if (F.internal.ticks == 6 || F.internal.ticks == 12)
 			F.TWebSocket.ping();
@@ -1258,7 +1261,7 @@ F.httpload = function(opt) {
 
 		try {
 			F.Fs.unlinkSync(unixsocket);
-		} catch (e) {}
+		} catch {}
 
 		if (F.isWindows && unixsocket.indexOf(SOCKETWINDOWS) === -1)
 			unixsocket = F.Path.join(SOCKETWINDOWS, unixsocket);
@@ -1897,7 +1900,7 @@ F.memorize = function(name, delay, skip) {
 
 	try {
 		data = F.Fs.readFileSync(filename, 'utf8').parseJSON(true);
-	} catch (e) {}
+	} catch {}
 
 	var replacer;
 	var timeout;
@@ -2496,10 +2499,15 @@ F.exit = function(signal = 15) {
 		} catch {}
 	}
 
-
 	for (let m of F.pypelines) {
 		try {
 			m.kill(signal);
+		} catch {}
+	}
+
+	for (let key in Flow.instances) {
+		try {
+			Flow.instances[key].destroy();
 		} catch {}
 	}
 
@@ -2583,7 +2591,7 @@ F.decrypt = function(value, key, tojson = true) {
 			CONCAT[0] = decipher.update(Buffer.from(value || '', 'hex'));
 			CONCAT[1] = decipher.final();
 			response = Buffer.concat(CONCAT).toString('utf8');
-		} catch (e) {
+		} catch {
 			response = null;
 		}
 	} else

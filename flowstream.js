@@ -751,6 +751,7 @@ FP.destroy = function() {
 
 	self.inc(1);
 	self.unload(function() {
+		self.$destroyed = true;
 		self.inc(-1);
 		self.emit('destroy');
 		self.meta = null;

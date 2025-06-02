@@ -8,6 +8,7 @@
 - added `PYPELINE(name, [options])` method starts a python process
 - added support for custom View engine helpers `DEF.helpers.myhelper`
 - fixed killing workers and pypelines
+- added a feature that kills worker flow instances when the main process is terminated
 
 ========================
 0.0.12
