@@ -310,7 +310,7 @@ function remove($, model) {
 			else
 				F.Fs.unlink(filename, NOOP);
 		}
-	} catch (e) {}
+	} catch {}
 
 	$.success();
 }

@@ -238,7 +238,7 @@ exports.parseConfig = function(value) {
 		var cache = {};
 		try {
 			cache = F.Fs.readFileSync(filename).toString('utf8').parseJSON();
-		} catch (e) {}
+		} catch {}
 
 		var resave = false;
 
@@ -2566,13 +2566,13 @@ SP.parseXML = function(replace) {
 SP.parseJSON = function(date) {
 	try {
 		return JSON.parse(this, date ? jsonparser : undefined);
-	} catch (e) {}
+	} catch {}
 };
 
 function parseQueryArgumentsDecode(val) {
 	try {
 		return decodeURIComponent(val);
-	} catch (e) {
+	} catch {
 		return '';
 	}
 }
@@ -3809,7 +3809,7 @@ exports.decrypt_data = function(value, key, encode) {
 
 	try {
 		value = value instanceof Buffer ? value : Buffer.from(value, encode || 'base64');
-	} catch (e) {
+	} catch {
 		return null;
 	}
 
@@ -3897,7 +3897,7 @@ exports.decrypt_crypto = function(type, key, value) {
 		CONCAT[0] = decipher.update(value);
 		CONCAT[1] = decipher.final();
 		return Buffer.concat(CONCAT);
-	} catch (e) {}
+	} catch {}
 };
 
 SP.base64ToFile = function(filename, callback) {
@@ -6209,7 +6209,7 @@ exports.decodeURIComponent = function(value) {
 	try
 	{
 		return decodeURIComponent(value);
-	} catch (e) {
+	} catch {
 		return value;
 	}
 };

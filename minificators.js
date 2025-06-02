@@ -179,14 +179,14 @@ exports.js = function(value) {
 
 exports.css = function(value) {
 	try {
-		var isvariable = false;
+		let isvariable = false;
 		value = cssnested(value, '', () => isvariable = true);
 		value = cssautovendor(value);
 		if (isvariable)
 			value = cssvariables(value);
 		return value;
-	} catch (ex) {
-		F.error(new Error('CSS compiler error: ' + ex.message));
+	} catch (e) {
+		F.error(new Error('CSS compiler error: ' + e.message));
 		return '';
 	}
 };

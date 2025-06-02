@@ -406,7 +406,7 @@ function runwatching() {
 						setTimeout(restart, 1000);
 						return;
 					}
-				} catch (err) {}
+				} catch {}
 				app = null;
 			}
 
