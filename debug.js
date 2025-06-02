@@ -46,8 +46,7 @@ module.exports.watcher = function(callback) {
 function killapp(pid) {
 	try {
 		process.kill(pid, 'SIGINT');
-	} catch (e) {
-	}
+	} catch {}
 }
 
 function runapp() {

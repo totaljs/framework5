@@ -68,6 +68,7 @@ global.DEF = {};
 	F.errors = [];
 	F.paused = [];
 	F.crons = [];
+	F.pypelines = [];
 
 	F.internal = {
 		ticks: 0,
@@ -2492,7 +2493,14 @@ F.exit = function(signal = 15) {
 		let worker = F.workers[m];
 		try {
 			worker && worker.kill && worker.kill(signal);
-		} catch (e) {}
+		} catch {}
+	}
+
+
+	for (let m of F.pypelines) {
+		try {
+			m.kill(signal);
+		} catch {}
 	}
 
 	let key = 'exit';
@@ -2502,7 +2510,7 @@ F.exit = function(signal = 15) {
 	if (!F.isWorker && process.send && process.connected) {
 		try {
 			process.send('total:stop');
-		} catch (e) {}
+		} catch {}
 	}
 
 	F.internal.interval && clearInterval(F.internal.interval);
@@ -2777,6 +2785,15 @@ function httptuningperformance(socket) {
 	socket.setNoDelay(true);
 	socket.setKeepAlive(true, 10);
 }
+
+function forcestop() {
+	console.log('KILLUJEM');
+	F.exit();
+}
+
+process.on('SIGTERM', forcestop);
+process.on('SIGINT', forcestop);
+process.on('exit', forcestop);
 
 process.on('unhandledRejection', function(e) {
 	F.error(e.stack, '');

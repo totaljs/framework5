@@ -154,15 +154,22 @@ Pypeline.prototype.run = Pypeline.prototype.restart = function() {
 	args.push(t.filename);
 	args.push(t.socket);
 
-	t.process = Total.Child.spawn('python3', args, { cwd: t.inline ? PATH.root() : Total.Path.dirname(t.filename), stdio: ['inherit', 'inherit', 'inherit'] });
+	t.process = Total.Child.spawn('python3', args, { cwd: t.inline ? PATH.root() : Total.Path.dirname(t.filename), stdio: ['inherit', 'inherit', 'inherit'], detached: false });
+	t.process.$pypelines = t;
+	F.pypelines.push(t.process);
 
 	t.process.on('close', function() {
+
+		let index = F.pypelines.indexOf(t.process);
+		F.pypelines.splice(index, 1);
+
 		if (t.autorestart) {
 			t.run();
 			t.emit('restart');
 		} else {
 			t.server.close();
 			t.emit('close');
+			F.pypelines.push(t);
 		}
 	});
 
