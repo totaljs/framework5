@@ -2787,7 +2787,6 @@ function httptuningperformance(socket) {
 }
 
 function forcestop() {
-	console.log('KILLUJEM');
 	F.exit();
 }
 
