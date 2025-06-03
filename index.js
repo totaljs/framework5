@@ -2683,7 +2683,18 @@ F.remote = function(url, dir) {
 };
 
 F.readfile = function(path, type = null) {
-	return new Promise(resolve => F.Fs.readFile(path, type, (err, response) => err ? resolve(null) : resolve(response)));
+
+	// @type {utf8|ascii|datauri|base64}
+
+	return new Promise(resolve => F.Fs.readFile(path, type === 'datauri' ? 'base64' : type, function(err, response) {
+		if (err) {
+			resolve(null);
+		} else {
+			if (type === 'datauri')
+				response = 'data:' + U.getContentType(U.getExtension(path)) + ';base64,' + response;
+			resolve(response);
+		}
+	}));
 };
 
 F.datauri = function(path) {
