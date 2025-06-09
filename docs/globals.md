@@ -120,6 +120,8 @@ DATA.count('table_name'); // It returns count of rows.
 
 The QueryBuilder makes always `AND` statement between different filters.
 
+__Syntax__:
+
 ```javascript
 var builder = DATA.find(...);
 // var builder = DATA.read(...);
@@ -198,7 +200,8 @@ builder.autoquery(query, schema, default_sort, default_maxlimit);
 // query {Object} a filter in the form: { name: "Peter", age: "30-40", dtcreated: "2025", sort: "dtcreated_desc" }.
 // schema {String} a Total.js schema declaration in the form key:type, example: "name:String,age:Number,dtcreated:Date".
 // @default_sort {String} a default sorting in the form "column_asc" or "column_desc".
-// @default_maxlimit {Number} a maximum count of rows (default: 100)
+// @default_maxlimit {Number} a maximum count of rows (default: 100).
+// returns {QueryBuilder} object;
 
 builder.or(fn);
 // This method creates "OR" statement.
@@ -229,3 +232,174 @@ DATA.read('tbl_user').where('isremoved', false).search('name', 'Peter').callback
 	console.log(err, response);
 });
 ```
+
+## RESTBuilder;
+
+It creates a request to an external endpoint.
+
+__Syntax__:
+
+```javascript
+RESTBuilder.POST(url, [payload]);
+// Creates an HTTP POST request.
+// url {String} An absolute URL address is required.
+// payload {Object} A payload that will be serialized according to the selected serialization mode. The default mode is JSON.
+// returns {RESTBuilderInstance} object;
+
+RESTBuilder.GET(url);
+// Creates an HTTP GET request.
+// url {String} An absolute URL address is required.
+// returns {RESTBuilderInstance} object;
+
+RESTBuilder.PUT(url, [payload]);
+// Creates an HTTP PUT request.
+// url {String} An absolute URL address is required.
+// payload {Object} A payload that will be serialized according to the selected serialization mode. The default mode is JSON.
+// returns {RESTBuilderInstance} object;
+
+RESTBuilder.DELETE(url, [payload]);
+// Creates an HTTP DELETE request.
+// url {String} An absolute URL address is required.
+// payload {Object} A payload that will be serialized according to the selected serialization mode. The default mode is JSON.
+// returns {RESTBuilderInstance} object;
+
+RESTBuilder.PATCH(url, [payload]);
+// Creates an HTTP PATCH request.
+// url {String} An absolute URL address is required.
+// payload {Object} A payload that will be serialized according to the selected serialization mode. The default mode is JSON.
+// returns {RESTBuilderInstance} object;
+
+RESTBuilder.API(url, action, [payload]);
+// Creates an HTTP POST request with the Total.js API specification in the form: { "schema": action, "data": payload }
+// url {String} An absolute URL address is required.
+// action {String} The action name is usually "NEWACTION()" in the targeted endpoint.
+// payload {Object} A payload that will be serialized according to the selected serialization mode. The default mode is JSON.
+// returns {RESTBuilderInstance} object;
+```
+
+### RESTBuilderInstance
+
+A `RESTBuilderInstance` object is returned when any of the following methods are called: `RESTBuilder.POST()`, `RESTBuilder.GET()`, `RESTBuilder.PUT()`, `RESTBuilder.DELETE()`, `RESTBuilder.PATCH()` or `RESTBuilder.API()`.
+
+__Syntax__:
+
+```javascript
+var builder = RESTBuilder.GET('https://www.totaljs.com');
+
+builder.keepalive();
+// This method maintains the socket connection to reuse it.
+// returns {RESTBuilderInstance} object;
+
+builder.insecure();
+// It allows insecure connections for invalid SSL certificates.
+// returns {RESTBuilderInstance} object;
+
+builder.noparse();
+// The method disables parsing the response according to its content type. It returns a raw string.
+// returns {RESTBuilderInstance} object;
+
+builder.xhr();
+// The method appends XMLHttpRequest header.
+// returns {RESTBuilderInstance} object;
+
+builder.header(name, value);
+// The method sets a custom HTTP header.
+// name {String} A header name.
+// value {String} A header value.
+// returns {RESTBuilderInstance} object;
+
+builder.auth(user_or_token, [password]);
+// The method creates "Authorization" header.
+// user_or_token {String}
+// password {String} optional
+// returns {RESTBuilderInstance};
+// Example user + password (HTTP authentification): builder.auth('petersirka', '123456');
+// Example token: builder.auth('Bearer YOUR_AUTH_TOKEN');
+// returns {RESTBuilderInstance} object;
+
+builder.urlencoded([payload]);
+// This method changes the content type to "application/x-www-form-urlencoded" and modifies the payload serialization.
+// payload {Object} Optional, a payload in the form key:value.
+// returns {RESTBuilderInstance} object;
+
+builder.timeout(timeout);
+// This method sets timeout.
+// timeout {Number} It must be defined in milliseconds (default: 5000).
+// returns {RESTBuilderInstance} object;
+
+builder.file(name, filename, [buffer]);
+// This method modifies the payload serialization, changes the content type to "multipart/form-data", and adds a "file."
+// name {String} A key for the file blob data.
+// filename {String} It can contain either an absolute file name or a relative file name with a defined "buffer" argument.
+// buffer {Buffer} It is optional and can contain a file with data loaded as the buffer.
+// returns {RESTBuilderInstance} object;
+
+builder.cookie(name, value);
+// This method sets a cookie value for the request.
+// name {String} A cookie name.
+// value {String} A cookie value.
+// returns {RESTBuilderInstance} object;
+
+buidler.callback(callback);
+// This is a callback for handling values from the database.
+// callback {Function(err, response)} a callback function.
+// returns {RESTBuilderInstance} object;
+
+buidler.promise($);
+// It returns a promise instead of a callback.
+// $ {Options} optional, it's very helpful for handling errors in "NEWACTION".
+// returns {RESTBuilderInstance} object;
+
+builder.stream(callback);
+// This method creates a request, and the wrapped response stream is returned to the callback.
+// callback {Function(err, response)}
+// returns {RESTBuilderInstance} object;
+
+// Example builder.stream():
+builder.stream(function(err, response) {
+	// response.stream {Response stream}
+	// response.host {String} Resolved host
+	// response.headers {Object} Obtained headers
+	// response.status {Number} HTTP status code
+});
+```
+
+__Example__:
+
+```javascript
+RESTBuilder.GET('https://www.totaljs.com').xhr().callback(function(err, response) {
+	console.log(err, response);
+});
+```
+
+## AUTH();
+
+The Total.js framework supports a simple authorization mechanism and it is built on one delegate function called `AUTH(function($){ ... })`. Authorization is asynchronous and executed for all requests except those for static files. If the developer calls the `$.success(user_session)` method, the request will contain the user session obtained from that method. Then, the user session object becomes easily accessible in the `NEWACTION` options object `$.user`.
+
+```javascript
+AUTH(function($) {
+
+	// This method will be executed for every request except those for static files.
+
+	// $ {Options} Documentation: https://docs.totaljs.com/total5/IbGpBV25x60f/
+	// $.url {String} It returns the current relative endpoint.
+	// $.query {Object key:value} It returns the URL query arguments of a request.
+	// $.headers {Object key:value} It returns a request headers.
+	// $.ip {String} It returns a request IP address.
+	// $.invalid(); This is an important method for unauthorized request.
+	// $.success(user_session); This is an important method for authorizing request.
+	// $.cookie(name); This method returns a cookie value.
+
+	if ($.headers['x-token'] === '123456') {
+		// Here, you can load the user session from a database, for example.
+		$.success({ name: 'Token', sa: true });
+	} else
+		$.invalid();
+
+});
+```
+
+__Good to know:__ Total.js routes are evaluated according to the calls from this delegate:
+
+- `$.success(user_session)` It only evaluates routes or new actions with a defined URL containing a "+". For example:`ROUTE('+HTTP_METHOD /endpoint/')`.
+- `$.invalid()` It only evaluates routes or new actions with a defined URL containing a "-". For example:`ROUTE('-HTTP_METHOD /endpoint/')`.
