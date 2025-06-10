@@ -143,7 +143,7 @@ function extendarr(output) {
 				arr.push(result);
 		}
 		extendarr(arr);
-		return this;
+		return arr;
 	};
 
 	output.toString = output.html = function(formatted) {
@@ -151,6 +151,10 @@ function extendarr(output) {
 		for (var item of this)
 			builder.push(item.toString(formatted));
 		return builder.join(formatted ? '\n' : '');
+	};
+
+	output.text = function() {
+		return output.html().removeTags();
 	};
 
 	return output;
@@ -198,54 +202,52 @@ function compare(rule, node) {
 	return true;
 }
 
+function browserule(rule, children, reverse) {
+
+	for (let node of children) {
+
+		if (!node.tagName)
+			continue;
+
+		let children = reverse ? [node.parentNode] : node.children;
+
+		if (!compare(rule, node)) {
+			if (!rule.notravelse)
+				browserule(rule, children);
+			continue;
+		}
+
+		// types complexType attribute
+		// types > complexType attribute
+		// types complexType > attribute
+
+		if (rule.nested) {
+			browserule(rule.nested, children);
+		} else {
+
+			rule.output.push(node);
+
+			if (!rule.notravelse)
+				browserule(rule, children);
+		}
+	}
+}
+
 HTMLElement.prototype.find = function(selector, reverse) {
 
-	var self = this;
-	var selectors = selector.split(',');
-	var rules = [];
-	var output = [];
+	let self = this;
+	let selectors = selector.split(',');
+	let rules = [];
+	let output = [];
 
-	for (var sel of selectors)
+	for (let sel of selectors)
 		rules.push(parseRule(sel.trim()));
-
-	var browse = function(rule, children) {
-
-		for (let node of children) {
-
-			if (!node.tagName)
-				continue;
-
-			let children = reverse ? [node.parentNode] : node.children;
-
-			if (!compare(rule, node)) {
-				if (!rule.notravelse)
-					browse(rule, children);
-				continue;
-			}
-
-			// types complexType attribute
-			// types > complexType attribute
-			// types complexType > attribute
-
-			if (rule.nested) {
-				browse(rule.nested, children);
-			} else {
-
-				rule.output.push(node);
-
-				if (!rule.notravelse)
-					browse(rule, children);
-			}
-		}
-	};
 
 	if (reverse && !self.parentNode)
 		return output;
 
-	for (var rule of rules) {
-
-		browse(rule, reverse ? [self.parentNode] : self.children);
-
+	for (let rule of rules) {
+		browserule(rule, reverse ? [self.parentNode] : self.children, reverse);
 		if (rule.output.length)
 			output.push.apply(output, rule.output);
 	}

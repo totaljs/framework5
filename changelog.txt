@@ -10,6 +10,7 @@
 - fixed killing workers and pypelines
 - added a feature that kills worker flow instances when the main process is terminated
 - extended `Total.readfile(path, [type])` by adding a new type `datauri`
+- fixed returing collections from the `HTMLParser.find()` method
 
 ========================
 0.0.12
