@@ -1249,6 +1249,11 @@ exports.newaction = function(name, obj) {
 		F.makesourcemap && F.makesourcemap();
 	};
 
+	if (obj.url) {
+		obj.route = obj.url;
+		obj.url = undefined;
+	}
+
 	if (obj.route) {
 		if (obj.route.indexOf('-->') === -1)
 			obj.route = obj.route + '  ' + (obj.input ? '+' : '-') + obj.$url + ' --> ' + name;
@@ -1311,8 +1316,8 @@ ActionCaller.prototype.status = function(fn) {
 
 ActionCaller.prototype.exec = function() {
 
-	var self = this;
-	var id = self.actions.shift();
+	let self = this;
+	let id = self.actions.shift();
 
 	if (!id) {
 		self.finish && self.finish();
@@ -1322,7 +1327,7 @@ ActionCaller.prototype.exec = function() {
 		return;
 	}
 
-	var meta = F.temporary.actions[id];
+	let meta = F.temporary.actions[id];
 	if (!meta) {
 
 		let arr = id.split(' ');
@@ -1344,7 +1349,7 @@ ActionCaller.prototype.exec = function() {
 		F.temporary.actions[id] = meta;
 	}
 
-	var action = F.actions[meta.id];
+	let action = F.actions[meta.id];
 
 	if (!action) {
 		self.error.push('The action "{0}" not found'.format(meta.id));
@@ -1352,8 +1357,8 @@ ActionCaller.prototype.exec = function() {
 		return;
 	}
 
-	var type = meta.payload || (action.input ? '+' : '-');
-	var $ = self.$;
+	let type = meta.payload || (action.input ? '+' : '-');
+	let $ = self.$;
 
 	$.id = action.id;
 	$.error = self.error;
@@ -1363,6 +1368,20 @@ ActionCaller.prototype.exec = function() {
 	$.config = action.config || EMPTYOBJECT;
 
 	$.$callback = function(err, response) {
+
+		if (!err) {
+
+			if (action.jsoutput)
+				response = action.jsoutput.transform(response).response;
+
+			if (action.extend) {
+				if (action.extend.includes('.'))
+					U.set($.payload, action.extend, response);
+				else
+					$.payload[action.extend] = response;
+				response = $.payload;
+			}
+		}
 
 		if (err) {
 			// close
@@ -1400,7 +1419,7 @@ ActionCaller.prototype.exec = function() {
 
 	var params = self.options.params || EMPTYOBJECT;
 	var query = self.options.query || EMPTYOBJECT;
-	var payload = self.options.payload || EMPTYOBJECT;
+	var payload = self.options.payload || (action.extend ? {} : EMPTYOBJECT);
 	var response = null;
 
 	if (action.jsquery) {
@@ -1563,8 +1582,8 @@ ActionCaller.prototype.controller = function(ctrl) {
 
 exports.action = function(name, payload, controller) {
 
-	var key = '$' + name;
-	var actions = F.temporary.actions[key];
+	let key = '$' + name;
+	let actions = F.temporary.actions[key];
 
 	if (!actions) {
 		actions = name.replace(/(\s)?\(response\)/i, '\0').split(/\s|\,|\n/);
@@ -1580,7 +1599,7 @@ exports.action = function(name, payload, controller) {
 		F.temporary.actions[key] = actions;
 	}
 
-	var action = new ActionCaller();
+	let action = new ActionCaller();
 	action.controller = controller;
 	action.payload = payload;
 	action.actions = actions.slice(0);
@@ -1599,7 +1618,7 @@ exports.newschema = function(name, callback) {
 	if (typeof(callback) === 'string')
 		return F.jsonschemas[name] = F.TUtils.jsonschema(callback, true);
 
-	var $ = {};
+	let $ = {};
 	$.name = name;
 	$.actions = {};
 	$.action = function(aname, meta) {

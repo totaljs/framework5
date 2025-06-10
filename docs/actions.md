@@ -25,6 +25,7 @@ NEWACTION(id, options)
 - **input** `{String}` optional, input data schema in the form `property_name:data_type, property_name:data_type, ...`
 - **output** `{String}` optional, output data schema in the form `property_name:data_type, property_name:data_type, ...`
 - **route** `{String}` optional, a relative URL address and it will evalute `ROUTE(route + action_id)` in the background, example: `API /api/` or `POST /users/` or `GET /users/`
+- **extend** `{String}` optional, it must contain a relative path (property name) and it extends the current payload by the response from the action
 - **action** `{Function($, model)}` required and very imporant function that will be executed
 - **publish** `{String/Boolean}` optional, performs `NEWPUBLISH()` with declared data
   - if `true` then it will copy data from the input or output argument
@@ -113,7 +114,6 @@ NEWACTION('Save', {
 	output: 'success:Boolean',
 	params: 'projectid:String, id:String',
 	route: '+API ?',
-
 	action: function($, model) {
 
 		// $ {Options} Documentation: https://docs.totaljs.com/total5/IbGpBV25x60f/
@@ -148,7 +148,6 @@ We recommend using the `NEWACTION` with the `options.route` option, which can co
 ## Examples
 
 ```
-
 // This file contains the actions that Todo performs when listing, creating, updating, or removing tasks.
 // Run the /test.js file for API requests to the following actions.
 
