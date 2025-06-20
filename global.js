@@ -324,10 +324,10 @@ global.TotalAPI = function(name, model, callback) {
 	return obj;
 };
 
-global.FILECACHE = function(id, expire, callback, maker, encoding) {
+global.FILECACHE = function(id, expire, callback, maker, encoding = 'json') {
 
 	let filename = PATH.temp('filecache_' + (id + '').hash(true).toString(36) + '.cache');
-	let isjson = !encoding || encoding === 'json';
+	let isjson = encoding === 'json';
 
 	F.Fs.lstat(filename, function(err, stat) {
 		let time = stat ? stat.mtime > stat.ctime ? stat.mtime : stat.ctime : null;
@@ -339,7 +339,7 @@ global.FILECACHE = function(id, expire, callback, maker, encoding) {
 					callback(err, response);
 			}, id);
 		} else {
-			F.Fs.readFile(filename, isjson ? ENCODING : (encoding || ENCODING), function(err, response) {
+			F.Fs.readFile(filename, isjson ? 'utf8' : encoding, function(err, response) {
 				if (err)
 					callback(err);
 				else
