@@ -929,13 +929,13 @@ QBP.gridfields = function(fields, allowed) {
 // Grid filtering
 QBP.gridfilter = function(name, obj, type, key) {
 
-	var builder = this;
-	var value = obj[name] || '';
+	let builder = this;
+	let value = obj[name] || '';
 
 	if (!value || typeof(value) !== 'string')
 		return builder;
 
-	var arr, val;
+	let arr, val;
 
 	if (!key)
 		key = name;
@@ -966,13 +966,13 @@ QBP.gridfilter = function(name, obj, type, key) {
 	}
 
 	// Between
-	var index = value.indexOf(' - ');
+	let index = value.indexOf(' - ');
 	if (index !== -1) {
 
 		arr = value.split(' - ');
 
-		for (var i = 0, length = arr.length; i < length; i++) {
-			var item = arr[i].trim();
+		for (let i = 0, length = arr.length; i < length; i++) {
+			let item = arr[i].trim();
 			arr[i] = convert(item, type);
 		}
 
@@ -991,19 +991,19 @@ QBP.gridfilter = function(name, obj, type, key) {
 	index = value.indexOf(',');
 	if (index !== -1) {
 
-		var arr = value.split(',');
+		let arr = value.split(',');
 
 		if (type === undefined || type === String) {
 			builder.or(function() {
-				for (var i = 0; i < arr.length; i++) {
-					var item = arr[i].trim();
+				for (let i = 0; i < arr.length; i++) {
+					let item = arr[i].trim();
 					builder.search(key, item);
 				}
 			});
 			return builder;
 		}
 
-		for (var i = 0; i < arr.length; i++)
+		for (let i = 0; i < arr.length; i++)
 			arr[i] = convert(arr[i], type);
 
 		return builder.in(key, arr);
@@ -1012,7 +1012,7 @@ QBP.gridfilter = function(name, obj, type, key) {
 	if (type === undefined || type === String)
 		return value[0] === '!' ? builder.where(key, '=', value.substring(1)) : builder.search(key, value);
 
-	var comparer = '=';
+	let comparer = '=';
 
 	switch (value[0]) {
 		case '>':
