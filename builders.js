@@ -136,7 +136,6 @@ Options.prototype.promisify = function(fn, a, b, c) {
 
 		var callback = function(err, response) {
 			if (err)
-
 				$.invalid(err);
 			else
 				resolve(response);
@@ -412,7 +411,7 @@ ErrorBuilder.prototype.output = function(language = 'default') {
 		let err = m.error;
 
 		if (err == '@')
-			err = F.resource(language, 'T' + (err === '@' ? m.name : err.substring(1)).hash(true).toString(36)) || 'The field "' + m.name + '" is invalid';
+			err = F.resource(language, (err === '@' ? m.name : ('T' + err.substring(1).hash(true).toString(36)))) || 'The field "' + m.name + '" is invalid';
 		else if (err[0] === '@')
 			err = F.translate(language, err);
 

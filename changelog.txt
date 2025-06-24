@@ -13,6 +13,7 @@
 - fixed returing collections from the `HTMLParser.find()` method
 - added `extend:String` option in `NEWACTION()` method
 - added `FILECACHE(id, expire, callback, maker, encoding)` method
+- fixed linking errors with the resource files
 
 ========================
 0.0.12
