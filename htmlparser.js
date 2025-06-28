@@ -19,7 +19,7 @@ HTMLElement.prototype = {
 
 function parseRule(selector, output) {
 
-	var rule = {};
+	let rule = {};
 
 	rule.attrs = [];
 	rule.output = output || [];
@@ -28,7 +28,7 @@ function parseRule(selector, output) {
 	// div div[name="Peter Sirka"]
 	// div > div[name="Peter Sirka"]
 
-	var cache = [];
+	let cache = [];
 
 	selector = selector.replace(/\[.*?\]/gi, text => '[' + (cache.push(text) - 1) + ']').replace(/(\s)?>(\s)?/, '>').replace(/\s{2}/g, '').trim();
 
@@ -37,9 +37,9 @@ function parseRule(selector, output) {
 	if (rule.notravelse)
 		selector = selector.substring(1);
 
-	var m = selector.match(/>|\s/);
+	let m = selector.match(/>|\s/);
 	if (m) {
-		var nested = selector.substring(m.index).trim().replace(/\[\d+\]/g, text => cache[+text.substring(1, text.length - 1)]);
+		let nested = selector.substring(m.index).trim().replace(/\[\d+\]/g, text => cache[+text.substring(1, text.length - 1)]);
 		rule.nested = parseRule(nested, rule.output);
 		selector = selector.substring(0, m.index).trim();
 	}
@@ -47,20 +47,20 @@ function parseRule(selector, output) {
 	selector = selector.replace(/\[\d+\]/, text => cache[+text.substring(1, text.length - 1)]);
 
 	// attribute search
-	match = selector.match(/\[.*?\]/i);
+	let match = selector.match(/\[.*?\]/i);
 	if (match) {
-		for (var m of match) {
-			var index = m.indexOf('=');
+		for (let m of match) {
+			let index = m.indexOf('=');
 			rule.attrs.push({ id: m.substring(1, index).trim(), value: m.substring(index + 2, m.length - 2).trim() });
 		}
 		selector = selector.replace(match, '');
 	}
 
 	// #id or .class
-	var match = selector.match(/[#|.][a-z-_0-9]+/i);
+	match = selector.match(/[#|.][a-z-_0-9]+/i);
 	if (match) {
-		for (var m of match) {
-			var val = m.substring(1);
+		for (let m of match) {
+			let val = m.substring(1);
 			rule.attrs.push({ id: m[0] === '#' ? 'id' : 'class', value: val });
 		}
 		selector = selector.replace(match, '');
@@ -84,12 +84,12 @@ function parseRule(selector, output) {
 
 HTMLElement.prototype.browse = function(fn, reverse) {
 
-	var self = this;
+	let self = this;
 
-	var browse = function(children) {
-		for (var node of children) {
+	let browse = function(children) {
+		for (let node of children) {
 			if (node && node.tagName) {
-				var a = fn(node);
+				let a = fn(node);
 				if (a !== true)
 					browse(reverse ? [node.parentNode] : node.children);
 			}
@@ -106,39 +106,39 @@ HTMLElement.prototype.browse = function(fn, reverse) {
 function extendarr(output) {
 
 	output.aclass = function(cls) {
-		for (var item of this)
+		for (let item of this)
 			item.aclass(cls);
 		return this;
 	};
 
 	output.rclass = function(cls) {
-		for (var item of this)
+		for (let item of this)
 			item.rclass(cls);
 		return this;
 	};
 
 	output.tclass = function(cls, value) {
-		for (var item of this)
+		for (let item of this)
 			item.tclass(cls, value);
 		return this;
 	};
 
 	output.attr = function(key, value) {
-		for (var item of this)
+		for (let item of this)
 			item.attr(key, value);
 		return this;
 	};
 
 	output.attrd = function(key, value) {
-		for (var item of this)
+		for (let item of this)
 			item.attrd(key, value);
 		return this;
 	};
 
 	output.find = function(selector) {
-		var arr = [];
-		for (var item of this) {
-			var result = item.find(selector);
+		let arr = [];
+		for (let item of this) {
+			let result = item.find(selector);
 			if (result.length)
 				arr.push(result);
 		}
@@ -147,8 +147,8 @@ function extendarr(output) {
 	};
 
 	output.toString = output.html = function(formatted) {
-		var builder = [];
-		for (var item of this)
+		let builder = [];
+		for (let item of this)
 			builder.push(item.toString(formatted));
 		return builder.join(formatted ? '\n' : '');
 	};
@@ -163,7 +163,7 @@ function extendarr(output) {
 function compare(rule, node) {
 
 	if (rule.prefix === '*') {
-		var tagName = node.tagName;
+		let tagName = node.tagName;
 		if (node.prefix)
 			tagName = tagName.substring(node.prefix.length);
 		if (tagName !== rule.tagName)
@@ -176,10 +176,10 @@ function compare(rule, node) {
 	}
 
 	if (rule.attrs.length) {
-		for (var attr of rule.attrs) {
+		for (let attr of rule.attrs) {
 			switch (attr.id) {
 				case 'class':
-					var tmp = node.attrs[attr.id];
+					let tmp = node.attrs[attr.id];
 					if (tmp) {
 						tmp = tmp.split(' ');
 						if (!tmp.includes(attr.value))
@@ -270,7 +270,7 @@ HTMLElement.prototype.attrd = function(name, value) {
 
 HTMLElement.prototype.parsecache = function() {
 
-	var self = this;
+	let self = this;
 	if (self.cache)
 		return self;
 
@@ -278,20 +278,20 @@ HTMLElement.prototype.parsecache = function() {
 	self.cache.css = {};
 	self.cache.cls = {};
 
-	var tmp = self.attrs.class;
-	var arr;
+	let tmp = self.attrs.class;
+	let arr;
 
 	if (tmp) {
 		arr = tmp.split(' ');
-		for (var c of arr)
+		for (let c of arr)
 			self.cache.cls[c] = 1;
 	}
 
-	var tmp = self.attrs.style;
+	tmp = self.attrs.style;
 	if (tmp) {
 		arr = tmp.split(';');
-		for (var c of arr) {
-			var a = c.split(':');
+		for (let c of arr) {
+			let a = c.split(':');
 			self.cache.css[a[0]] = a[1];
 		}
 	}
@@ -300,12 +300,12 @@ HTMLElement.prototype.parsecache = function() {
 };
 
 HTMLElement.prototype.stringifycache = function() {
-	var self = this;
+	let self = this;
 	self.attrs.class = Object.keys(self.cache.cls).join(' ');
 
-	var tmp = [];
+	let tmp = [];
 
-	for (var key in self.cache.css)
+	for (let key in self.cache.css)
 		self.cache.css[key] && tmp.push(key + ':' + self.cache.css[key]);
 
 	if (tmp.length)
@@ -318,7 +318,7 @@ HTMLElement.prototype.stringifycache = function() {
 
 HTMLElement.prototype.attr = function(name, value) {
 
-	var self = this;
+	let self = this;
 
 	if (value === undefined)
 		return self.attrs[name];
@@ -332,10 +332,10 @@ HTMLElement.prototype.attr = function(name, value) {
 };
 
 HTMLElement.prototype.aclass = function(cls) {
-	var self = this;
+	let self = this;
 	self.parsecache();
-	var arr = cls.split(/\s|,/);
-	for (var m of arr)
+	let arr = cls.split(/\s|,/);
+	for (let m of arr)
 		self.cache.cls[m] = 1;
 	self.stringifycache();
 	return self;
@@ -343,16 +343,16 @@ HTMLElement.prototype.aclass = function(cls) {
 };
 
 HTMLElement.prototype.hclass = function(cls) {
-	var self = this;
+	let self = this;
 	self.parsecache();
 	return self.cache.cls[cls] === 1;
 };
 
 HTMLElement.prototype.tclass = function(cls, value) {
-	var self = this;
+	let self = this;
 	self.parsecache();
-	var arr = cls.split(/\s|,/);
-	for (var m of arr) {
+	let arr = cls.split(/\s|,/);
+	for (let m of arr) {
 		if (self.cache.cls[m]) {
 			if (!value)
 				delete self.cache.cls[m];
@@ -366,11 +366,11 @@ HTMLElement.prototype.tclass = function(cls, value) {
 };
 
 HTMLElement.prototype.rclass = function(cls) {
-	var self = this;
+	let self = this;
 	self.parsecache();
 
-	var arr = cls.split(/\s|,/);
-	for (var m of arr)
+	let arr = cls.split(/\s|,/);
+	for (let m of arr)
 		delete self.cache.cls[m];
 
 	self.stringifycache();
@@ -378,10 +378,10 @@ HTMLElement.prototype.rclass = function(cls) {
 };
 
 HTMLElement.prototype.css = function(key, value) {
-	var self = this;
+	let self = this;
 	self.parsecache();
 	if (typeof(key) === 'object') {
-		for (var k of Object.keys(key)) {
+		for (let k of Object.keys(key)) {
 			value = key[k];
 			if (value)
 				self.cache.css[k] = value;
@@ -399,9 +399,9 @@ HTMLElement.prototype.css = function(key, value) {
 };
 
 HTMLElement.prototype.remove = function() {
-	var self = this;
+	let self = this;
 	if (self.parentNode) {
-		var index = self.parentNode.children.indexOf(self);
+		let index = self.parentNode.children.indexOf(self);
 		if (index !== -1)
 			self.parentNode.children.splice(index, 1);
 	}
@@ -410,10 +410,10 @@ HTMLElement.prototype.remove = function() {
 
 HTMLElement.prototype.append = function(str) {
 
-	var self = this;
-	var dom = parseHTML(str, null, null, self.xml);
+	let self = this;
+	let dom = parseHTML(str, null, null, self.xml);
 
-	for (var item of dom.children)
+	for (let item of dom.children)
 		self.children.push(item);
 
 	return dom.children.length === 1 ? dom.children[0] : dom.children;
@@ -421,10 +421,10 @@ HTMLElement.prototype.append = function(str) {
 
 HTMLElement.prototype.prepend = function(str) {
 
-	var self = this;
-	var dom = parseHTML(str, null, null, self.xml);
+	let self = this;
+	let dom = parseHTML(str, null, null, self.xml);
 
-	for (var item of dom.children)
+	for (let item of dom.children)
 		self.children.unshift(item);
 
 	return dom;
@@ -436,19 +436,19 @@ HTMLElement.prototype.text = function() {
 
 HTMLElement.prototype.toString = HTMLElement.prototype.html = function(formatted) {
 
-	var self = this;
-	var builder = [];
+	let self = this;
+	let builder = [];
 
-	var browse = function(children, level) {
+	let browse = function(children, level) {
 
-		for (var item of children) {
+		for (let item of children) {
 
-			var indent = formatted && level ? ''.padLeft(level, '\t') : '';
-			var tag = item.tagName.toLowerCase();
-			var attrs = [];
+			let indent = formatted && level ? ''.padLeft(level, '\t') : '';
+			let tag = item.tagName.toLowerCase();
+			let attrs = [];
 
-			for (var key in item.attrs) {
-				var val = item.attrs[key];
+			for (let key in item.attrs) {
+				let val = item.attrs[key];
 				if (!val && (key === 'class' || key.substring(0, 5) === 'data-' || key === 'id'))
 					continue;
 				attrs.push(key + (val ? ('="' + (val || '') + '"') : ''));
@@ -480,17 +480,17 @@ HTMLElement.prototype.toString = HTMLElement.prototype.html = function(formatted
 };
 
 function removeComments(html) {
-	var tagBeg = '<!--';
-	var tagEnd = '-->';
-	var beg = html.indexOf(tagBeg);
-	var end = 0;
+	let tagBeg = '<!--';
+	let tagEnd = '-->';
+	let beg = html.indexOf(tagBeg);
+	let end = 0;
 	while (beg !== -1) {
 		end = html.indexOf(tagEnd, beg + 4);
 
 		if (end === -1)
 			break;
 
-		var comment = html.substring(beg, end + 3);
+		let comment = html.substring(beg, end + 3);
 		html = html.replaceAll(comment, '');
 		beg = html.indexOf(tagBeg, beg);
 	}
@@ -500,8 +500,8 @@ function removeComments(html) {
 
 function parseHTML(html, trim, onerror, isxml) {
 
-	var makeText = function(parent, str) {
-		var obj = new HTMLElement();
+	let makeText = function(parent, str) {
+		let obj = new HTMLElement();
 		obj.xml = isxml;
 		obj.tagName = 'TEXT';
 		obj.children = [];
@@ -511,14 +511,14 @@ function parseHTML(html, trim, onerror, isxml) {
 		return obj;
 	};
 
-	var parseAttrs = function(str) {
-		var attrs = str.match(/[a-z-0-9A-Z\:_-]+(=("|').*?("|'))?/g);
-		var obj = {};
+	let parseAttrs = function(str) {
+		let attrs = str.match(/[a-z-0-9A-Z\:_-]+(=("|').*?("|'))?/g);
+		let obj = {};
 		if (attrs) {
-			for (var m of attrs) {
+			for (let m of attrs) {
 				m = m.trim();
-				var index = m.indexOf('=');
-				var key, val;
+				let index = m.indexOf('=');
+				let key, val;
 				key = (index === -1 ? m : m.substring(0, index)).trim();
 				val = index === -1 ? '' : m.substring(m.indexOf('"', index) + 1, m.lastIndexOf('"')).trim();
 				obj[key] = val;
@@ -527,13 +527,13 @@ function parseHTML(html, trim, onerror, isxml) {
 		return obj;
 	};
 
-	var parseElements = function(str, parent) {
+	let parseElements = function(str, parent) {
 
-		var counter = 0;
-		var count = 0;
-		var beg = str.indexOf('<');
-		var end = -1;
-		var tmp;
+		let counter = 0;
+		let count = 0;
+		let beg = str.indexOf('<');
+		let end = -1;
+		let tmp;
 
 		if (beg !== -1)
 			end = str.indexOf('>', beg + 1);
@@ -558,8 +558,8 @@ function parseHTML(html, trim, onerror, isxml) {
 				parent.children.push(makeText(parent, tmp));
 		}
 
-		var node = str.substring(beg + 1, end);
-		var dom = new HTMLElement();
+		let node = str.substring(beg + 1, end);
+		let dom = new HTMLElement();
 
 		dom.xml = isxml;
 
@@ -572,8 +572,8 @@ function parseHTML(html, trim, onerror, isxml) {
 			dom.unpair = true;
 		}
 
-		var tag = node;
-		var index = -1;
+		let tag = node;
+		let index = -1;
 
 		for (let i = 0; i < tag.length; i++) {
 			let c = tag[i];
@@ -624,10 +624,10 @@ function parseHTML(html, trim, onerror, isxml) {
 			}
 		}
 
-		var pos = -1;
-		var tagBeg = '<' + dom.raw;
-		var tagEnd = '</' + dom.raw + '>';
-		var unpair = false;
+		let pos = -1;
+		let tagBeg = '<' + dom.raw;
+		let tagEnd = '</' + dom.raw + '>';
+		let unpair = false;
 
 		// Tries to parse the content of the "dom.raw" element
 		while (true) {
@@ -694,7 +694,7 @@ function parseHTML(html, trim, onerror, isxml) {
 
 		}
 
-		var inner = str.substring(0, pos - tagEnd.length);
+		let inner = str.substring(0, pos - tagEnd.length);
 		if (inner.indexOf('<') === -1 || (!isxml && (/\<(script|style|template)/).test(tag))) {
 			if (trim)
 				inner = inner.trim();
@@ -719,7 +719,7 @@ function parseHTML(html, trim, onerror, isxml) {
 
 	html = removeComments(html);
 
-	var dom = new HTMLElement();
+	let dom = new HTMLElement();
 	dom.xml = isxml;
 
 	while (html)
