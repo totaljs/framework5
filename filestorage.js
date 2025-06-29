@@ -113,7 +113,7 @@ FP.save = FP.insert = function(id, name, filename, custom, callback, expire, hea
 
 FP._save = function(id, name, filename, callback, custom, expire, headers) {
 
-	var self = this;
+	let self = this;
 
 	if (self.pause) {
 		setTimeout(self.retrysave, 500, id, name, filename, callback, custom, expire, headers);
@@ -125,17 +125,17 @@ FP._save = function(id, name, filename, callback, custom, expire, headers) {
 		name = F.TUtils.getName(name);
 	}
 
-	var directory = self.makedirectory(id);
-	var filenameto = F.Path.join(directory, id + '.file');
+	let directory = self.makedirectory(id);
+	let filenameto = F.Path.join(directory, id + '.file');
 
-	var index = name.lastIndexOf('/');
+	let index = name.lastIndexOf('/');
 	if (index !== -1)
 		name = name.substring(index + 1);
 
 	if (self.cache[directory]) {
+		// Check URL address
 		if (typeof(filename) === 'string' && filename[0] === 'h' && filename[1] === 't' && filename[7] === '/') {
-			// URL address
-			var opt = {};
+			lrz opt = {};
 			opt.url = filename;
 			opt.custom = true;
 			opt.headers = headers;
@@ -164,7 +164,7 @@ FP._save = function(id, name, filename, callback, custom, expire, headers) {
 				self.cache[directory] = 1;
 				if (typeof(filename) === 'string' && filename[0] === 'h' && filename[1] === 't' && filename[7] === '/') {
 					// URL address
-					var opt = {};
+					let opt = {};
 					opt.url = filename;
 					opt.custom = true;
 					opt.headers = headers;
