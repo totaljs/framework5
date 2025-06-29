@@ -545,6 +545,12 @@ RESTP.debug = function() {
 	return this;
 };
 
+RESTP.base64 = function() {
+	var self = this;
+	self.$base64 = true;;
+	return self;
+};
+
 RESTP.unixsocket = function(socket, path) {
 	var self = this;
 	self.options.unixsocket = { socket: socket, path: path };
@@ -620,11 +626,6 @@ RESTP.maxlength = function(number) {
 
 RESTP.auth = function(user, password) {
 	this.options.headers.authorization = password == null ? user : 'Basic ' + Buffer.from(user + ':' + password).toString('base64');
-	return this;
-};
-
-RESTP.convert = function(convert) {
-	this.$convert = convert;
 	return this;
 };
 
@@ -740,13 +741,10 @@ RESTP.accept = function(ext) {
 	return this;
 };
 
-RESTP.xml = function(data, replace) {
+RESTP.xml = function(data) {
 
 	if (this.options.method === 'GET')
 		this.options.method = 'POST';
-
-	if (replace)
-		this.$replace = true;
 
 	this.options.type = 'xml';
 	data && this.raw(data, this.options.type);
@@ -842,24 +840,6 @@ RESTP.cache = function(expire) {
 	return this;
 };
 
-RESTP.set = function(name, value) {
-	if (!this.options.body)
-		this.options.body = {};
-	if (typeof(name) !== 'object') {
-		this.options.body[name] = value;
-	} else {
-		for (var key in name)
-			this.options.body[key] = name[key];
-	}
-	return this;
-};
-
-RESTP.rem = function(name) {
-	if (this.options.body && this.options.body[name])
-		this.options.body[name] = undefined;
-	return this;
-};
-
 RESTP.progress = function(fn) {
 	this.options.onprogress = fn;
 	return this;
@@ -869,6 +849,12 @@ RESTP.stream = function(callback) {
 	var self = this;
 	self.options.custom = true;
 	setImmediate(streamresponse, self, callback);
+	return self;
+};
+
+RESTP.convert = function(schema) {
+	let self = this;
+	self.$jsonschema = schema.toJSONSchema();
 	return self;
 };
 
@@ -952,7 +938,7 @@ RESTP.exec = function(callback) {
 
 function restbuilder_callback(err, response) {
 
-	var self = response.builder;
+	let self = response.builder;
 
 	if (self.options.custom) {
 		if (self.$resolve) {
@@ -971,30 +957,33 @@ function restbuilder_callback(err, response) {
 		return;
 	}
 
-	var callback = self.$callback;
-	var key = self.$cachekey;
-	var type = err ? '' : response.headers['content-type'] || '';
-	var output = new RESTBuilderResponse();
+	let callback = self.$callback;
+	let key = self.$cachekey;
+	let type = err ? '' : response.headers['content-type'] || '';
+	let output = new RESTBuilderResponse();
 
 	if (self.options.cook && self.options.cookies)
 		output.cookies = self.options.cookies;
 
 	if (type) {
-		var index = type.lastIndexOf(';');
+		let index = type.lastIndexOf(';');
 		if (index !== -1)
 			type = type.substring(0, index).trim();
 	}
 
-	var ishead = response.status === 204;
-	if (ishead) {
+	let ishead = response.status === 204;
+
+	if (ishead)
 		output.value = response.status < 400;
-	} else if (self.$plain || self.$noparse) {
+	else if (self.$plain || self.$noparse)
 		output.value = response.body;
-	} else {
+	else if (self.$base64)
+		output.value = response.body instanceof Buffer ? response.body.toString('base64') : Buffer.from(response.body, 'utf8').toString('base64');
+	else {
 		switch (type.toLowerCase()) {
 			case 'text/xml':
 			case 'application/xml':
-				output.value = response.body ? response.body.parseXML(self.$replace ? true : false) : {};
+				output.value = response.body ? response.body.parseXML2() : null;
 				break;
 			case 'application/x-www-form-urlencoded':
 				output.value = response.body ? DEF.parsers.urlencoded(response.body) : {};
@@ -1025,7 +1014,7 @@ function restbuilder_callback(err, response) {
 	if (self.$debug)
 		console.log('--DEBUG-- RESTBuilder: ' + response.status + ' ' + self.options.method + ' ' + QUERIFY(self.options.url || (self.options.unixsocket + self.options.path), self.options.query), '|', 'Error:', err, '|', 'Response:', response.body);
 
-	var val = output.value;
+	let val = output.value;
 
 	if (!err && output.status >= 400) {
 		err = output.status;
@@ -1084,22 +1073,22 @@ function RESTBuilderResponse() {}
 
 RESTBuilderResponse.prototype.cookie = function(name) {
 
-	var self = this;
+	let self = this;
 	if (self.cookies)
 		return F.TUtils.decodeURIComponent(self.cookies[name] || '');
 
 	self.cookies = {};
 
-	var cookies = self.headers['set-cookie'];
+	let cookies = self.headers['set-cookie'];
 	if (!cookies)
 		return '';
 
 	if (typeof(cookies) === 'string')
 		cookies = [cookies];
 
-	for (var i = 0; i < cookies.length; i++) {
-		var line = cookies[i].split(';', 1)[0];
-		var index = line.indexOf('=');
+	for (let i = 0; i < cookies.length; i++) {
+		let line = cookies[i].split(';', 1)[0];
+		let index = line.indexOf('=');
 		if (index !== -1)
 			self.cookies[line.substring(0, index)] = line.substring(index + 1);
 	}
