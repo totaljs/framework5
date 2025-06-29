@@ -140,7 +140,7 @@ function extendarr(output) {
 		for (let item of this) {
 			let result = item.find(selector);
 			if (result.length)
-				arr.push(result);
+				arr.push.apply(arr, result);
 		}
 		extendarr(arr);
 		return arr;
