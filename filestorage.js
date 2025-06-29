@@ -135,7 +135,7 @@ FP._save = function(id, name, filename, callback, custom, expire, headers) {
 	if (self.cache[directory]) {
 		// Check URL address
 		if (typeof(filename) === 'string' && filename[0] === 'h' && filename[1] === 't' && filename[7] === '/') {
-			lrz opt = {};
+			let opt = {};
 			opt.url = filename;
 			opt.custom = true;
 			opt.headers = headers;
