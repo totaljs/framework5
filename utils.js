@@ -5879,8 +5879,8 @@ exports.connect = function(opt, callback) {
 
 SP.toJSONSchema = SP.parseSchema = function(name, url) {
 
-	var obj = {};
-	var p = (url || F.config.url || 'https://schemas.totaljs.com');
+	let obj = {};
+	let p = (url || F.config.url || 'https://schemas.totaljs.com');
 
 	if (p[p.length - 1] !== '/')
 		p += '/';
@@ -5890,8 +5890,8 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 	obj.type = 'object';
 	obj.properties = {};
 
-	var str = this;
-	var nestedtypes = [];
+	let str = this;
+	let nestedtypes = [];
 
 	str = str.replace(/\[.*?\]/g, function(text) {
 		if (text.substring(1, 2) === '@')
@@ -5905,17 +5905,34 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 		return '{#' + (nestedtypes.push(text.substring(1, text.length - 1)) - 1) + '}';
 	});
 
-	var prop = str.split(/,|\n/);
-	var required = [];
+	let prop = str.split(/,|\n/);
+	let required = [];
+	let errors = null;
 
-	for (var i = 0; i < prop.length; i++) {
+	for (let i = 0; i < prop.length; i++) {
 
-		var arr = prop[i].split(':').trim();
-		var tmp = null;
+		let line = prop[i].trim();
+		let errindex = line.indexOf('//');
+		let err = null;
+
+		if (errindex != -1) {
+			if (!errors)
+				errors = {};
+			err = line.substring(errindex + 2).trim();
+			line = line.substring(0, errindex).trim();
+		}
+
+		let arr = line.split(':').trim();
+		let tmp = null;
 
 		if (arr[0][0] === '@') {
-			let ext = F.jsonschemas[arr[0].substring(1)];
+			tmp = arr[0].substring(1);
+			let ext = F.jsonschemas[tmp];
 			if (ext) {
+
+				if (err)
+					errors[tmp] = err;
+
 				for (let m of ext.required)
 					required.push(m);
 				for (let m in ext.properties)
@@ -5930,15 +5947,18 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 			required.push(arr[0]);
 		}
 
-		var type = (arr[1] || 'string').trim();
-		// var type = typename.toLowerCase().trim();
-		var size = 0;
-		var isarr = type[0] === '[';
+		if (err)
+			errors[arr[0]] = err;
+
+		let type = (arr[1] || 'string').trim();
+		// let type = typename.toLowerCase().trim();
+		let size = 0;
+		let isarr = type[0] === '[';
 		if (isarr)
 			type = type.substring(1, type.length - 1);
 
-		var nestedschema = '';
-		var isenum = type[0] === '{';
+		let nestedschema = '';
+		let isenum = type[0] === '{';
 
 		if (isenum) {
 			tmp = type.substring(2, type.length - 1);
@@ -5954,7 +5974,7 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 			}
 		}
 
-		var index = type.indexOf('(');
+		let index = type.indexOf('(');
 		if (index !== -1) {
 			size = +type.substring(index + 1, type.length - 1).trim();
 			type = type.substring(0, index);
@@ -5989,7 +6009,7 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 			type = 'object';
 		}
 
-		var ltype = type.toLowerCase();
+		let ltype = type.toLowerCase();
 
 		switch (ltype) {
 			case 'string2':
@@ -6100,7 +6120,14 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 	if (required.length)
 		obj.required = required;
 
+	obj.errors = errors;
 	obj.transform = exports.jsonschematransform;
+	obj.validate = function(value, partial, path) {
+		let err = new F.TBuilders.ErrorBuilder();
+		err.throw();
+		let output = this.transform(value, partial, err, path);
+		return output.response;
+	};
 
 	if (name)
 		F.jsonschemas[name] = obj;
@@ -6110,17 +6137,20 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 
 exports.jsonschematransform = function(value, partial, error, path) {
 
-	var self = this;
+	let self = this;
 
 	if (!error)
 		error = new ErrorBuilder();
 
-	var response = F.TJSONSchema.transform(self, error, value, false, path, partial);
+	if (self.errors)
+		error.dictionary = self.errors;
+
+	let response = F.TJSONSchema.transform(self, error, value, false, path, partial);
 	return { error: error.items.length ? error : null, response: response };
 };
 
 exports.set = function(obj, path, value) {
-	var cachekey = 'uset' + path;
+	let cachekey = 'uset' + path;
 
 	if (F.temporary.utils[cachekey])
 		return F.temporary.utils[cachekey](obj, value);
@@ -6128,27 +6158,26 @@ exports.set = function(obj, path, value) {
 	if ((/__proto__|constructor|prototype|eval|function|\*|\+|;|\s|\(|\)|!/).test(path))
 		return value;
 
-	var arr = parsepath(path);
-	var builder = [];
+	let arr = parsepath(path);
+	let builder = [];
 
-	for (var i = 0; i < arr.length - 1; i++) {
-		var type = arr[i + 1] ? (REG_ISARR.test(arr[i + 1]) ? '[]' : '{}') : '{}';
-		var p = 'w' + (arr[i][0] === '[' ? '' : '.') + arr[i];
+	for (let i = 0; i < arr.length - 1; i++) {
+		let type = arr[i + 1] ? (REG_ISARR.test(arr[i + 1]) ? '[]' : '{}') : '{}';
+		let p = 'w' + (arr[i][0] === '[' ? '' : '.') + arr[i];
 		builder.push('if(typeof(' + p + ')!==\'object\'||' + p + '==null)' + p + '=' + type + ';');
 	}
 
-	var v = arr[arr.length - 1];
-	var ispush = v.lastIndexOf('[]') !== -1;
-	var a = builder.join(';') + ';var v=typeof(a)===\'function\'?a(F.TUtils.get(b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(REG_REPLACEARR, '.push(v)') : (v + '=v')) + ';return v';
-
-	var fn = new Function('w', 'a', 'b', a);
+	let v = arr[arr.length - 1];
+	let ispush = v.lastIndexOf('[]') !== -1;
+	let a = builder.join(';') + ';var v=typeof(a)===\'function\'?a(F.TUtils.get(b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(REG_REPLACEARR, '.push(v)') : (v + '=v')) + ';return v';
+	let fn = new Function('w', 'a', 'b', a);
 	F.temporary.utils[cachekey] = fn;
 	return fn(obj, value, path);
 };
 
 exports.get = function(obj, path) {
 
-	var cachekey = 'uget' + path;
+	let cachekey = 'uget' + path;
 
 	if (F.temporary.utils[cachekey])
 		return F.temporary.utils[cachekey](obj);
@@ -6156,14 +6185,14 @@ exports.get = function(obj, path) {
 	if ((/__proto__|constructor|prototype|eval|function|\*|\+|;|\s|\(|\)|!/).test(path))
 		return;
 
-	var arr = parsepath(path);
-	var builder = [];
+	let arr = parsepath(path);
+	let builder = [];
 
-	for (var i = 0, length = arr.length - 1; i < length; i++)
+	for (let i = 0, length = arr.length - 1; i < length; i++)
 		builder.push('if(!w' + (!arr[i] || arr[i][0] === '[' ? '' : '.') + arr[i] + ')return');
 
-	var v = arr[arr.length - 1];
-	var fn = (new Function('w', builder.join(';') + ';return w' + (v[0] === '[' ? '' : '.') + v));
+	let v = arr[arr.length - 1];
+	let fn = (new Function('w', builder.join(';') + ';return w' + (v[0] === '[' ? '' : '.') + v));
 	F.temporary.utils[cachekey] = fn;
 	return fn(obj);
 };

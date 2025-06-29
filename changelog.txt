@@ -14,6 +14,10 @@
 - added `extend:String` option in `NEWACTION()` method
 - added `FILECACHE(id, expire, callback, maker, encoding)` method
 - fixed linking errors with the resource files
+- added `RESTBuilder...base64()` method which returns the response in BASE64 format
+- added support for custom errors in the Total.js Inline JSON Schemas, example: `id:UID // Invalid identifier, ...`
+- added `ErrorBuilder.throw()` method which throws an error when an error is pushed
+- IMPORTANT: updated `RESTBuilder` XML response, now it returns `HTMLParser` output
 
 ========================
 0.0.12

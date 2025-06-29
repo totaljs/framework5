@@ -351,13 +351,18 @@ ErrorBuilder.prototype = {
 	}
 };
 
+ErrorBuilder.prototype.throw = function() {
+	this.$throw = true;
+	return this;
+};
+
 ErrorBuilder.prototype.reject = function(language) {
-	var self = this;
-	return new Error(self.toString(language, ''));
+	return new Error(this.toString(language, ''));
 };
 
 ErrorBuilder.prototype.push = function(err, path, index) {
-	var self = this;
+
+	let self = this;
 
 	if (!err)
 		err = 401;
@@ -367,24 +372,36 @@ ErrorBuilder.prototype.push = function(err, path, index) {
 		self.items.push({ error: F.TUtils.httpstatus(err) });
 	} else
 		self.items.push({ error: err.toString(), path: path, index: index });
+
+	if (self.$throw) {
+		let errors = self.output();
+		throw new Error(errors[0].error);
+	}
+
 	return self;
 };
 
 ErrorBuilder.prototype.push2 = function(name, path, index) {
-	var self = this;
+	let self = this;
 	self.items.push({ name: self.prefix + name, error: '@', path: path, index: index });
+
+	if (self.$throw) {
+		let errors = self.output();
+		throw new Error(errors[0].error);
+	}
+
 	return self;
 };
 
 ErrorBuilder.assign = function(arr) {
-	var builder = new ErrorBuilder();
+	let builder = new ErrorBuilder();
 	if (arr instanceof Array) {
-		for (var i = 0; i < arr.length; i++) {
+		for (let i = 0; i < arr.length; i++) {
 			if (arr[i].error)
 				builder.items.push(arr[i]);
 		}
 	} else {
-		var type = typeof(arr);
+		let type = typeof(arr);
 		if (type === 'number' || type === 'string')
 			builder.push(arr);
 		else if (arr instanceof Error)
@@ -394,7 +411,7 @@ ErrorBuilder.assign = function(arr) {
 };
 
 ErrorBuilder.prototype.replace = function(search, value) {
-	var self = this;
+	let self = this;
 	if (!self.replacer)
 		self.replacer = {};
 	self.replacer[search] = value;
@@ -403,16 +420,30 @@ ErrorBuilder.prototype.replace = function(search, value) {
 
 ErrorBuilder.prototype.output = function(language = 'default') {
 
-	var self = this;
-	var output = [];
+	let self = this;
+	let output = [];
 
 	for (let m of self.items) {
 
 		let err = m.error;
 
-		if (err == '@')
-			err = F.resource(language, (err === '@' ? m.name : ('T' + err.substring(1).hash(true).toString(36)))) || 'The field "' + m.name + '" is invalid';
-		else if (err[0] === '@')
+		if (err == '@') {
+
+			let key = err === '@' ? m.name : err.substring(1);
+			let is = false;
+
+			if (self.dictionary) {
+				let tmp = self.dictionary[key];
+				if (tmp) {
+					err = tmp[0] === '@(' ? F.translate(language, tmp) : tmp;
+					is = true;
+				}
+			}
+
+			if (!is)
+				err = F.resource(language, (err === '@' ? key : ('T' + key).hash(true).toString(36))) || 'The field "' + key + '" is invalid';
+
+		} else if (err[0] === '@')
 			err = F.translate(language, err);
 
 		if (self.replacer) {
