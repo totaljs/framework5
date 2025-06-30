@@ -991,15 +991,22 @@ QBP.gridfilter = function(name, obj, type, key) {
 	index = value.indexOf(',');
 	if (index !== -1) {
 
-		let arr = value.split(',');
+		let exact = value[0] === '=';
+		let arr = (exact ? value.substring(1) : value).split(',');
 
 		if (type === undefined || type === String) {
-			builder.or(function() {
-				for (let i = 0; i < arr.length; i++) {
-					let item = arr[i].trim();
-					builder.search(key, item);
-				}
-			});
+			if (exact) {
+				for (let i = 0; i < arr.length; i++)
+					arr[i] = arr[i].trim();
+				builder.in(key, arr);
+			} else {
+				builder.or(function() {
+					for (let i = 0; i < arr.length; i++) {
+						let item = arr[i].trim();
+						builder.search(key, item);
+					}
+				});
+			}
 			return builder;
 		}
 
@@ -1010,7 +1017,7 @@ QBP.gridfilter = function(name, obj, type, key) {
 	}
 
 	if (type === undefined || type === String)
-		return value[0] === '!' ? builder.where(key, '=', value.substring(1)) : builder.search(key, value);
+		return value[0] === '=' ? builder.where(key, '=', value.substring(1)) : builder.search(key, value);
 
 	let comparer = '=';
 

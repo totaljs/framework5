@@ -18,6 +18,7 @@
 - added support for custom errors in the Total.js Inline JSON Schemas, example: `id:UID // Invalid identifier, ...`
 - added `ErrorBuilder.throw()` method which throws an error when an error is pushed
 - fixed `HTMLParser.?.find()` method (fixed results)
+- extended `QueryBuilder.gridfilter()` by adding `=EXACT_VALUE` or `=EXACT_VALUE1,EXACT_VALUE2`
 - IMPORTANT: updated `RESTBuilder` XML response, now it returns `HTMLParser` output
 
 ========================
