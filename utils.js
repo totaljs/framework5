@@ -2160,14 +2160,20 @@ DP.parseDate = function() {
 
 SP.toName = function() {
 
-	var a = '';
-	var p = 0;
-	var space = false;
-	var val = this;
+	let a = '';
+	let p = 0;
+	let space = false;
+	let val = this;
+	let spaces = 0;
 
-	for (var i = 0; i < val.length; i++) {
-		var c = val.charCodeAt(i);
+	for (let i = 0; i < val.length; i++) {
+
+		let c = val.charCodeAt(i);
+
 		if ((c < 65 || (c > 90 && c < 97) || (c > 122 && c < 128)) && c !== 32)
+			continue;
+
+		if (c === 32 && p === 32)
 			continue;
 
 		if (a && p !== 32) {
