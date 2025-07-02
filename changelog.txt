@@ -21,6 +21,7 @@
 - extended `QueryBuilder.gridfilter()` by adding `=EXACT_VALUE` or `=EXACT_VALUE1,EXACT_VALUE2`
 - IMPORTANT: updated `RESTBuilder` XML response, now it returns `HTMLParser` output
 - fixed removing of multiple spaces in the `String.toName()` method
+- fixed a problem with case-sensitive characters in the route parameters
 
 ========================
 0.0.12

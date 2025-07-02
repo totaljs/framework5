@@ -150,7 +150,6 @@ function Route(url, action, size) {
 		}
 		t.size = size || 0;
 	}
-
 	t.middleware = [];
 
 	index = t.url.indexOf('*');
@@ -566,24 +565,25 @@ exports.lookup = function(ctrl, auth = 0, skip = false) {
 
 exports.split = function(url, lowercase) {
 
-	if (lowercase)
-		url = url.toLowerCase();
-
 	if (url[0] === '/')
 		url = url.substring(1);
 
 	if (url[url.length - 1] === '/')
 		url = url.substring(0, url.length - 1);
 
-	var count = 0;
-	var end = 0;
-	var arr = [];
+	let count = 0;
+	let end = 0;
+	let arr = [];
+	let tmp;
 
-	for (var i = 0; i < url.length; i++) {
+	for (let i = 0; i < url.length; i++) {
 		switch (url[i]) {
 			case '/':
 				if (count === 0) {
-					arr.push(url.substring(end + (arr.length ? 1 : 0), i));
+					tmp = url.substring(end + (arr.length ? 1 : 0), i);
+					if (lowercase && tmp[0] !== '{')
+						tmp = tmp.toLowerCase();
+					arr.push(tmp);
 					end = i;
 				}
 				break;
@@ -596,8 +596,12 @@ exports.split = function(url, lowercase) {
 		}
 	}
 
-	if (!count)
-		arr.push(url.substring(end + (arr.length ? 1 : 0), url.length));
+	if (!count) {
+		tmp = url.substring(end + (arr.length ? 1 : 0), url.length);
+		if (lowercase && tmp[0] !== '{')
+			tmp = tmp.toLowerCase();
+		arr.push(tmp);
+	}
 
 	if (arr.length === 1 && !arr[0])
 		arr[0] = '/';
