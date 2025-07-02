@@ -15,7 +15,6 @@ tests.push('server/index.js');
 tests.push('staticfiles/index.js');
 // tests.push('common/cron.js');
 
-
 console.log('==========================================');
 console.log('Total.js v5 unit tests');
 console.log('==========================================');
