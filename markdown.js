@@ -480,6 +480,17 @@ String.prototype.markdown = function(opt, nested) {
 		lines[i] = lines[i].replace(REG_ENCODETAGS, ENCODE);
 
 		if (!lines[i]) {
+
+			if (opt.emptynewline !== false && !lines[i - 1])
+				builder.push('<br />');
+
+			if (table) {
+				table = null;
+				if (opt.tables !== false)
+					builder.push('</tbody></table>');
+			}
+
+			closeul();
 			builder.push('');
 			continue;
 		}

@@ -22,6 +22,7 @@
 - IMPORTANT: updated `RESTBuilder` XML response, now it returns `HTMLParser` output
 - fixed removing of multiple spaces in the `String.toName()` method
 - fixed a problem with case-sensitive characters in the route parameters
+- fixed markdown parser
 
 ========================
 0.0.12
