@@ -116,7 +116,7 @@ exports.compile = function(name, content, debug = true) {
 
 	while (command) {
 
-		if (!isCookie && command.command.indexOf('cookie') !== -1)
+		if (!isCookie && command.command.includes('cookie'))
 			isCookie = true;
 
 		if (old) {
@@ -186,7 +186,7 @@ exports.compile = function(name, content, debug = true) {
 
 			counter++;
 
-			if (cmd.indexOf('foreach var ') !== -1)
+			if (cmd.includes('foreach var '))
 				cmd = cmd.replace(' var ', SPACE);
 
 			newCommand = (cmd.substring(8, cmd.indexOf(SPACE, 8)) || '').trim();
@@ -378,7 +378,7 @@ function prepare(command, dcommand, functions) {
 			return 'self.hostname';
 
 		case 'href':
-			return command.indexOf('(') === -1 ? 'self.href()' : 'self.' + command;
+			return command.includes('(') ? ('self.' + command) : 'self.href()';
 
 		case 'url':
 			return 'self.' + command;
@@ -387,7 +387,10 @@ function prepare(command, dcommand, functions) {
 		case 'description':
 		case 'keywords':
 		case 'author':
-			return command.indexOf('(') === -1 ? '((repository[\'' + command + '\'] || \'\') + \'\').safehtml()' : 'self.' + command;
+			return command.includes('(') ? ('self.' + command) : '((repository[\'' + command + '\'] || \'\') + \'\').safehtml()';
+
+		case 'meta':
+			return command.includes('(') ? ('self.' + command) : ('self.' + command + '()');
 
 		case 'title2':
 			return 'self.' + command;
@@ -399,10 +402,10 @@ function prepare(command, dcommand, functions) {
 			return '(repository[\'' + command.substring(1) + '\'] || \'\')';
 
 		case 'place':
-			return command.indexOf('(') === -1 ? '(repository[\'' + command + '\'] || \'\')' : 'self.' + command;
+			return command.includes('(') ? ('self.' + command) : ('(repository[\'' + command + '\'] || \'\')');
 
 		case 'import':
-			return 'self.' + command + (command.indexOf('(') === -1 ? '()' : '');
+			return 'self.' + command + (command.includes('(') ? '' : '()');
 
 		case 'index':
 			return '(' + command + ')';
@@ -424,7 +427,7 @@ function prepare(command, dcommand, functions) {
 			return '(new Date()' + command.substring(3) + ')';
 
 		default:
-			return F.def.helpers[name] ? ('F.def.helpers.' + insertcall(command)) : ('self.safehtml(' + (functions.indexOf(name) === -1 ? command[0] === '!' ? command.substring(1) + ')' : command + ', 1)' : command + ')'));
+			return F.def.helpers[name] ? ('F.def.helpers.' + insertcall(command)) : ('self.safehtml(' + (!functions.includes(name) ? command[0] === '!' ? command.substring(1) + ')' : command + ', 1)' : command + ')'));
 	}
 }
 
@@ -668,6 +671,28 @@ View.prototype.keywords = function(value) {
 	return '';
 };
 
+View.prototype.meta = function() {
+
+	let self = this;
+
+	if (!arguments.length)
+		return makehtmlmeta(self);
+
+	if (arguments[0])
+		self.repository.title = arguments[0].encode();
+
+	if (arguments[1])
+		self.repository.description = arguments[1].encode();
+
+	if (arguments[2] && arguments[2].length)
+		self.repository.keywords = (arguments[2] instanceof Array ? arguments[2].join(', ') : arguments[2]).encode();
+
+	if (arguments[3])
+		self.repository.image = arguments[3];
+
+	return '';
+};
+
 // @{href({ key1: 1, key2: 2 })}
 // @{href('key', 'value')}
 // @{href({ key1: 1, key2: 2 })}
@@ -784,12 +809,13 @@ function makehtmlmeta(self) {
 		builder += '<meta name="description" content="' + repo.description.safehtml() + '" />';
 
 	if (repo.keywords)
-		builder += '<meta name="description" content="' + repo.keywords.safehtml() + '" />';
+		builder += '<meta name="keywords" content="' + repo.keywords.safehtml() + '" />';
 
 	if (repo.image) {
 		let tmp = repo.image.substring(0, 6);
-		let src = tmp === 'http:/' || tmp === 'https:' || tmp.substring(0, 2) === '//' ? repo.image : ((self?.controller.host || '') + repo.image);
-		builder += '<meta property="og:image" content="' + src + '" /><meta name="twitter:image" content="' + src + '" />';
+		let src = tmp === 'http:/' || tmp === 'https:' || tmp.substring(0, 2) === '//' ? repo.image : self.controller ? self.controller.hostname(repo.image[0] === '/' ? repo.image : ('/' + repo.image)) : '';
+		if (src)
+			builder += '<meta property="og:image" content="' + src + '" /><meta name="twitter:image" content="' + src + '" />';
 	}
 
 	return builder;
@@ -827,7 +853,7 @@ View.prototype.import = function() {
 					continue;
 				}
 
-				if (m.indexOf('+') === -1) {
+				if (!m.includes('+')) {
 					let absolute = m[0] === '/';
 					let key = absolute ? m : ('/' + m);
 					if (REG_CHECKCSS.test(m)) {
