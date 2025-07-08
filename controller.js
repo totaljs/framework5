@@ -794,15 +794,15 @@ Controller.prototype.clear = function() {
 
 Controller.prototype.cookie = function(name, value, expires, options) {
 
-	var ctrl = this;
-	var arr;
+	let ctrl = this;
+	let arr;
 
 	if (value === undefined) {
 
 		if (ctrl.cookies)
 			return F.TUtils.decodeURIComponent(ctrl.cookies[name] || '');
 
-		var cookie = ctrl.headers.cookie;
+		let cookie = ctrl.headers.cookie;
 		if (!cookie) {
 			ctrl.cookies = F.EMPTYOBJECT;
 			return '';
@@ -821,11 +821,11 @@ Controller.prototype.cookie = function(name, value, expires, options) {
 		return name ? F.TUtils.decodeURIComponent(ctrl.cookies[name] || '') : '';
 	}
 
-	var cookiename = name + '=';
-	var builder = [cookiename + value];
-	var type = typeof(expires);
+	let cookiename = name + '=';
+	let builder = [cookiename + value];
+	let type = typeof(expires);
 
-	if (expires && type === 'object') {
+	if (expires && !(expires instanceof Date) && type === 'object') {
 		options = expires;
 		expires = options.expires || options.expire || null;
 	}
@@ -849,7 +849,7 @@ Controller.prototype.cookie = function(name, value, expires, options) {
 	if (options.httpOnly || options.httponly || options.HttpOnly)
 		builder.push('HttpOnly');
 
-	var same = options.security || options.samesite || F.config.$cookiesamesite;
+	let same = options.security || options.samesite || F.config.$cookiesamesite;
 
 	switch (same) {
 		case 1:
@@ -866,7 +866,7 @@ Controller.prototype.cookie = function(name, value, expires, options) {
 
 	// Cookie, already, can be in array, resulting in duplicate 'set-cookie' header
 	if (arr.length) {
-		var l = cookiename.length;
+		let l = cookiename.length;
 		for (let i = 0; i < arr.length; i++) {
 			if (arr[i].substring(0, l) === cookiename) {
 				arr.splice(i, 1);

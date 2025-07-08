@@ -24,6 +24,7 @@
 - fixed a problem with case-sensitive characters in the route parameters
 - fixed markdown parser
 - added missing ViewEngine `@{meta(...)}` method
+- fixed `expires` argument in the `$.cookie(key, value, expires|options)` method
 
 ========================
 0.0.12
