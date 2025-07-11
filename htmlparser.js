@@ -12,6 +12,9 @@ HTMLElement.prototype = {
 	get innerHTML() {
 		return this.toString();
 	},
+	get outerHTML() {
+		return this.toString(false, true);
+	},
 	get innerText() {
 		return this.toString().removeTags();
 	}
@@ -434,7 +437,7 @@ HTMLElement.prototype.text = function() {
 	return this.html().removeTags().decode();
 };
 
-HTMLElement.prototype.toString = HTMLElement.prototype.html = function(formatted) {
+HTMLElement.prototype.toString = HTMLElement.prototype.html = function(formatted, outer) {
 
 	let self = this;
 	let builder = [];
@@ -457,7 +460,7 @@ HTMLElement.prototype.toString = HTMLElement.prototype.html = function(formatted
 			switch (item.tagName) {
 				case 'TEXT':
 					if (item.textContent)
-						builder.push(indent + item.textContent);
+						builder.push((item.cdata ? '<![CDATA[' : '') + indent + item.textContent + (item.cdata ? ']]>' : ''));
 					break;
 				default:
 					tag = item.raw;
@@ -475,7 +478,8 @@ HTMLElement.prototype.toString = HTMLElement.prototype.html = function(formatted
 		}
 	};
 
-	browse(self.tagName ? [self] : self.children, 0);
+	// browse(self.tagName ? [self] : self.children, 0);
+	browse(outer && self.tagName ? [self] : self.children, 0);
 	return builder.join(formatted ? '\n' : '');
 };
 
@@ -534,9 +538,16 @@ function parseHTML(html, trim, onerror, isxml) {
 		let beg = str.indexOf('<');
 		let end = -1;
 		let tmp;
+		let cdata = false;
 
-		if (beg !== -1)
-			end = str.indexOf('>', beg + 1);
+		if (beg !== -1) {
+			if (str.substring(beg, beg + 5) === '<![CD') {
+				// CDATA
+				cdata = true;
+				end = str.indexOf(']]>', beg + 6)
+			} else
+				end = str.indexOf('>', beg + 1);
+		}
 
 		if (beg === -1 || end === -1) {
 			if (parent) {
@@ -550,7 +561,6 @@ function parseHTML(html, trim, onerror, isxml) {
 
 		if (beg > 0) {
 			tmp = str.substring(0, beg);
-
 			if (trim)
 				tmp = tmp.trim();
 
@@ -558,18 +568,25 @@ function parseHTML(html, trim, onerror, isxml) {
 				parent.children.push(makeText(parent, tmp));
 		}
 
-		let node = str.substring(beg + 1, end);
+		let node = str.substring(beg + (cdata ? 9 : 1), end);
 		let dom = new HTMLElement();
 
 		dom.xml = isxml;
 
 		// Doctype or xml?
-		if (node[0] === '!' || node[0] === '?')
+		if (!cdata && (node[0] === '!' || node[0] === '?'))
 			return str.substring(end + 1);
 
-		if (node[node.length - 1] === '/') {
+		if (!cdata && node[node.length - 1] === '/') {
 			node = node.substring(0, node.length - 1);
 			dom.unpair = true;
+		}
+
+		if (cdata) {
+			let txt = makeText(dom, node);
+			txt.cdata = true;
+			parent.children.push(txt);
+			return str.substring(end + 3);
 		}
 
 		let tag = node;

@@ -25,6 +25,8 @@
 - fixed markdown parser
 - added missing ViewEngine `@{meta(...)}` method
 - fixed `expires` argument in the `$.cookie(key, value, expires|options)` method
+- fixed HTMLParser for XML, added support for `<!CDATA[[`
+- added `outerHTML` property for the HTMLParser element
 
 ========================
 0.0.12
