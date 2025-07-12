@@ -157,7 +157,10 @@ function extendarr(output) {
 	};
 
 	output.text = function() {
-		return output.html().removeTags();
+		let builder = [];
+		for (let item of this)
+			builder.push(item.text());
+		return builder.join('\n');
 	};
 
 	return output;
