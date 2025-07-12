@@ -433,8 +433,21 @@ HTMLElement.prototype.prepend = function(str) {
 	return dom;
 };
 
-HTMLElement.prototype.text = function() {
-	return this.html().removeTags().decode();
+HTMLElement.prototype.text = function(formatted) {
+	let self = this;
+	let builder = [];
+	let browse = function(children, level) {
+		for (let item of children) {
+			switch (item.tagName) {
+				case 'TEXT':
+					if (item.textContent)
+						builder.push(item.textContent);
+					break;
+			}
+		}
+	};
+	browse(self.children, 0);
+	return builder.join('\n');
 };
 
 HTMLElement.prototype.toString = HTMLElement.prototype.html = function(formatted, outer) {
