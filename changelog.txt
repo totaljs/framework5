@@ -28,6 +28,8 @@
 - fixed HTMLParser for XML, added support for `<!CDATA[[`
 - added `outerHTML` property for the HTMLParser element
 - improved `HTMLParser.text()` method
+- added a new view engine property `@{version}` that appends `?ts=start_app_timestamp`
+- extended `@{import()}` method now supports `@style_name.css` and `@script_name.js` (due to HTTP cache reasons, it automatically appends the argument `?ts=start_app_timestamp` to the URL)
 
 ========================
 0.0.12

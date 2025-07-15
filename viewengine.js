@@ -372,29 +372,24 @@ function prepare(command, dcommand, functions) {
 		case '!session':
 		case '!user':
 			return 'self.safehtml(' + command.substring(1) + ')';
-
 		case 'host':
 		case 'hostname':
 			return 'self.hostname';
-
 		case 'href':
 			return command.includes('(') ? ('self.' + command) : 'self.href()';
-
 		case 'url':
 			return 'self.' + command;
-
 		case 'title':
 		case 'description':
 		case 'keywords':
 		case 'author':
 			return command.includes('(') ? ('self.' + command) : '((repository[\'' + command + '\'] || \'\') + \'\').safehtml()';
-
 		case 'meta':
 			return command.includes('(') ? ('self.' + command) : ('self.' + command + '()');
-
 		case 'title2':
 			return 'self.' + command;
-
+		case 'version':
+			return '\'?ts=\'+F.stamp';
 		case '!title':
 		case '!description':
 		case '!keywords':
@@ -823,10 +818,10 @@ function makehtmlmeta(self) {
 
 View.prototype.import = function() {
 
-	var builder = '';
-	var self = this;
+	let builder = '';
+	let self = this;
 
-	for (var m of arguments) {
+	for (let m of arguments) {
 
 		switch (m) {
 			case 'meta':
@@ -853,22 +848,29 @@ View.prototype.import = function() {
 					continue;
 				}
 
-				if (!m.includes('+')) {
-					let absolute = m[0] === '/';
-					let key = absolute ? m : ('/' + m);
-					if (REG_CHECKCSS.test(m)) {
-						tmp = '<link rel="stylesheet" href="' + (absolute ? m : ('/' + (F.routes.virtual[key] ? '' : 'css/') + m)) + '" />';
-					} else {
-						tmp = '<scri' + 'pt src="' + (absolute ? m : ('/' + (F.routes.virtual[key] ? '' : 'js/') + m)) + '"></scr' + 'ipt>';
-					}
-				} else {
+				let version = '';
+
+				if (m[0] === '@') {
+					m = m.substring(1);
+					version = '?ts=' + F.stamp;
+				}
+
+				if (m.includes('+')) {
 					let iscss = REG_CHECKCSS.test(m);
 					let path = '/' + F.TUtils.random_string(10).toLowerCase() + '-min.' + (iscss ? 'css' : 'js');
 					F.merge(path, m);
 					if (iscss)
-						tmp = '<link rel="stylesheet" href="' + path + '" />';
+						tmp = '<link rel="stylesheet" href="' + path + version + '" />';
 					else
-						tmp = '<scri' + 'pt src="' + path + '"></scr' + 'ipt>';
+						tmp = '<scri' + 'pt src="' + path + version + '"></scr' + 'ipt>';
+				} else {
+					let absolute = m[0] === '/';
+					let key = absolute ? m : ('/' + m);
+					if (REG_CHECKCSS.test(m)) {
+						tmp = '<link rel="stylesheet" href="' + (absolute ? m : ('/' + (F.routes.virtual[key] ? '' : 'css/') + m)) + version + '" />';
+					} else {
+						tmp = '<scri' + 'pt src="' + (absolute ? m : ('/' + (F.routes.virtual[key] ? '' : 'js/') + m)) + version + '"></scr' + 'ipt>';
+					}
 				}
 
 				F.temporary.views[key] = tmp;
