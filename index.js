@@ -830,11 +830,11 @@ F.load = async function(types, callback) {
 
 	files.sort(function(a) {
 
-		if (a.type === 'middleware')
-			return 1;
+		if (a.type === 'module')
+			return -1;
 
 		if (a.type === 'middleware')
-			return -1;
+			return 1;
 
 		return 0;
 	});
@@ -867,6 +867,7 @@ F.load = async function(types, callback) {
 			case 'controllers':
 			case 'schemas':
 			case 'actions':
+			case 'extensions':
 			case 'models':
 			case 'definitions':
 			case 'middleware':
