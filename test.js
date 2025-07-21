@@ -15,7 +15,7 @@ Test.start = function(message) {
 	console.log(divider);
 };
 
-Test.print = function(message, err, expected) {
+Test.print = function(message, err) {
 	console.log('[' + (err ? 'FAIL' : 'OK') + ']', message);
 	Test.count++;
 	if (err) {
