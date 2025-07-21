@@ -29,8 +29,10 @@ tests.wait(function(filename, next) {
 	var path = Total.Path.join(process.mainModule.path, Total.Path.dirname(filename));
 	var scr = Total.Path.basename(filename);
 	SHELL('node ' + scr, function(err) {
-		if (err)
+		if (err) {
+			setTimeout(() => process.exit(1), 1);
 			throw new Error(filename + ': ' + err.toString());
+		}
 		console.timeEnd(key);
 		next();
 	}, path);
