@@ -34,7 +34,7 @@ ON('ready', function () {
 			correct = '<p>Hello World</p>';
 			parsed = value.parseHTML();
 			response = parsed.find('p')[0];
-			Test.print('Basic Usage: Find p element', response.innerHTML == correct ? null : 'Expected ' + correct);
+			Test.print('Basic Usage: Find p element', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 		arr.push(function(resume) {
@@ -42,7 +42,7 @@ ON('ready', function () {
 			correct = '<p>Hello World</p>';
 			parsed = value.parseHTML();
 			response = parsed.find('div p')[0];
-			Test.print('Nested Elements: Find p elements within div', response.innerHTML === correct ? null : 'Expected ' + correct);
+			Test.print('Nested Elements: Find p elements within div', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -51,7 +51,7 @@ ON('ready', function () {
 			correct = '<p class="classname">Hello World</p>';
 			parsed = value.parseHTML();
 			response = parsed.find('p.classname')[0];
-			Test.print('Element Attributes: Find p elements with classname', response.innerHTML === correct ? null : 'Expected ' + correct);
+			Test.print('Element Attributes: Find p elements with classname', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -70,7 +70,7 @@ ON('ready', function () {
 			correct = undefined;
 			parsed = value.parseHTML();
 			response = parsed.find('p');
-			Test.print('Edge Cases: Handling empty selector', response.innerHTML === correct ? null : 'Expected ' + correct);
+			Test.print('Edge Cases: Handling empty selector', response.outerHTMLf === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -131,7 +131,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			var p = parsed.find('p')[0];
 			response = p.closest('div')[0];
-			Test.print('closest: Find closest ancestor of an element (grandparent is the closest)', response.innerHTML === correct ? null : 'Expected ' + correct);
+			Test.print('closest: Find closest ancestor of an element (grandparent is the closest)', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -142,7 +142,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			var p = parsed.find('p')[0];
 			response = p.attrd('test', 'value');
-			Test.print('attrd: Add data attribute to an element', response.innerHTML === correct ? null : 'Expected ' + correct);
+			Test.print('attrd: Add data attribute to an element', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -152,7 +152,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			var div = parsed.find('div')[0];
 			response = div.attrd('test', 'value');
-			Test.print('attrd: Add data attribute to an element (nested)', response.innerHTML === correct ? null : 'Expected ' + correct);
+			Test.print('attrd: Add data attribute to an element (nested)', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -162,7 +162,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			var p = parsed.find('p')[0];
 			response = p.attrd('test', '');
-			Test.print('attrd: Add empty data attribute to an element', response.innerHTML === correct ? null : 'Expected ' + correct);
+			Test.print('attrd: Add empty data attribute to an element', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -192,7 +192,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.attr('id', 'unique');
-			Test.print('attr: Set attribute value', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('attr: Set attribute value', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -202,7 +202,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.attr('id', null);
-			Test.print('attr: Remove attribute', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('attr: Remove attribute', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -212,7 +212,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.attr('data-test', 'value');
-			Test.print('attr: Set data attribute value', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('attr: Set data attribute value', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -222,7 +222,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.attr('data-test', '');
-			Test.print('attr: Remove data attribute value', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('attr: Remove data attribute value', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -232,7 +232,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.aclass('test');
-			Test.print('aclass: Add single class to element', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('aclass: Add single class to element', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -242,7 +242,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.aclass('test');
-			Test.print('aclass: Add multiple classes to element', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('aclass: Add multiple classes to element', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -252,7 +252,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.aclass('');
-			Test.print('aclass: Add empty class to element', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('aclass: Add empty class to element', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -302,7 +302,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.tclass('test', false);
-			Test.print('tclass: Toggle single class off', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('tclass: Toggle single class off', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -312,7 +312,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.tclass('test', true);
-			Test.print('tclass: Toggle single class on (already present)', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('tclass: Toggle single class on (already present)', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -322,7 +322,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.tclass('test', true);
-			Test.print('tclass: Toggle single class on (not present)', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('tclass: Toggle single class on (not present)', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -332,7 +332,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.tclass('test', false);
-			Test.print('tclass: Toggle single class off (with no value provided)', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('tclass: Toggle single class off (with no value provided)', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -342,7 +342,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.tclass('test', false);
-			Test.print('tclass: Toggle multiple classes off', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('tclass: Toggle multiple classes off', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -352,7 +352,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.tclass('test', true);
-			Test.print('tclass: Toggle multiple classes on', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('tclass: Toggle multiple classes on', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -362,7 +362,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.rclass('test');
-			Test.print('rclass: Remove single class', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('rclass: Remove single class', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -372,7 +372,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.rclass('test');
-			Test.print('rclass: Remove single class (multiple classes present)', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('rclass: Remove single class (multiple classes present)', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -382,7 +382,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.rclass('paragraph');
-			Test.print('rclass: Remove non-existing class', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('rclass: Remove non-existing class', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -392,7 +392,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.rclass('test paragraph');
-			Test.print('rclass: Remove multiple classes', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('rclass: Remove multiple classes', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -402,7 +402,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.rclass('');
-			Test.print('rclass: Remove empty class (no effect)', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('rclass: Remove empty class (no effect)', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -412,7 +412,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.css('color', 'red');
-			Test.print('css: Set single CSS property', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('css: Set single CSS property', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -422,7 +422,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.css({'color': 'red', 'font-size': '16px'});
-			Test.print('css: Set multiple CSS properties', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('css: Set multiple CSS properties', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -432,7 +432,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.css({'color': ''});
-			Test.print('css: Remove multiple CSS properties', response.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('css: Remove multiple CSS properties', response.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -442,7 +442,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			div = parsed.find('div')[0];
 			response = div.remove();
-			Test.print('remove: Remove element with parent', response && parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('remove: Remove element with parent', response && parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -452,7 +452,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.remove();
-			Test.print('remove: Remove element without parent', response && parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('remove: Remove element without parent', response && parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -462,7 +462,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			p = parsed.find('p')[0];
 			response = p.remove();
-			Test.print('remove: Remove element with siblings', response && parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('remove: Remove element with siblings', response && parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -472,7 +472,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			span = parsed.find('span')[0];
 			response = span.remove();
-			Test.print('remove: Remove sibling element', response && parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('remove: Remove sibling element', response && parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -483,7 +483,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			div = parsed.find('div')[0];
 			div.append(str);
-			Test.print('append: Append single element to empty parent', parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('append: Append single element to empty parent', parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -494,7 +494,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			div = parsed.find('div')[0];
 			div.append(str);
-			Test.print('append: Append single element to non-empty parent', parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('append: Append single element to non-empty parent', parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -505,7 +505,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			div = parsed.find('div')[0];
 			div.append(str);
-			Test.print('append: Append multiple elements to empty parent', parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('append: Append multiple elements to empty parent', parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -516,7 +516,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			div = parsed.find('div')[0];
 			div.append(str);
-			Test.print('append: Append multiple elements to non-empty parent', parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('append: Append multiple elements to non-empty parent', parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -527,7 +527,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			div = parsed.find('div')[0];
 			div.prepend(str);
-			Test.print('prepend: Prepend single element to empty parent', parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('prepend: Prepend single element to empty parent', parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -538,7 +538,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			div = parsed.find('div')[0];
 			div.prepend(str);
-			Test.print('prepend: Prepend single element to non-empty parent', parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('prepend: Prepend single element to non-empty parent', parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -549,7 +549,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			div = parsed.find('div')[0];
 			div.prepend(str);
-			Test.print('prepend: Prepend multiple elements to empty parent', parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('prepend: Prepend multiple elements to empty parent', parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -560,7 +560,7 @@ ON('ready', function () {
 			parsed = value.parseHTML();
 			div = parsed.find('div')[0];
 			div.prepend(str);
-			Test.print('prepend: Prepend multiple elements to non-empty parent', parsed.toString() === correct ? null : 'Expected ' + correct);
+			Test.print('prepend: Prepend multiple elements to non-empty parent', parsed.outerHTML === correct ? null : 'Expected ' + correct);
 			resume();
 		});
 
@@ -607,7 +607,7 @@ ON('ready', function () {
 			value = '<p>Hello <span>World</span></p>';
 			correct = '<p>Hello <span>World</span></p>';
 			parsed = value.parseHTML();
-			response = parsed.toString();
+			response = parsed.outerHTML;
 			Test.print('toString: Convert HTML elements to string (unformatted)', response === correct ? null : 'Expected ' + correct);
 			resume();
 		});
@@ -641,6 +641,7 @@ ON('ready', function () {
 
 		arr.async(next); // Trigger the tests execution
 	});
+
 	Test.push('Parsing XML', function (next) {
 		var value, correct, response, parsed;
 	
@@ -1231,8 +1232,8 @@ ON('ready', function () {
 	
 		arr.push(function(resume) {
 			value = '<![CDATA[<message>Special & characters</message>]]>';
-			correct = 'Special & characters';
-			parsed = value.parseHTML(true).children[0];
+			correct = '<message>Special & characters</message>';
+			parsed = value.parseHTML(true);
 			response = parsed.text();
 			Test.print('XML CDATA: Content preservation', response === correct ? null : 'Expected ' + correct);
 			resume();
@@ -1252,8 +1253,9 @@ ON('ready', function () {
 		arr.push(function(resume) {
 			value = '<element>&lt;escaped&gt;</element>';
 			correct = '<escaped>';
-			parsed = value.parseHTML(true).children[0];
+			parsed = value.parseHTML(true);
 			response = parsed.text();
+			console.log(response);
 			Test.print('XML Entity: Reference resolution', response === correct ? null : 'Expected ' + correct);
 			resume();
 		});
@@ -1314,7 +1316,7 @@ ON('ready', function () {
 
 		arr.push(function(resume) {
 			value = '<FITNESS><DATE_OF_ISSUE>2025-02-28</DATE_OF_ISSUE><VALID_UNTIL>2025-03-03</VALID_UNTIL><RESTRICTION><RESTRICTION_TYPE>08</RESTRICTION_TYPE><RESTRICTION_TYPE_ADDITIONAL>ANA</RESTRICTION_TYPE_ADDITIONAL><COMMENTS>test</COMMENTS></RESTRICTION><TEST>test</TEST><RESTRICTION><RESTRICTION_TYPE>03</RESTRICTION_TYPE><RESTRICTION_TYPE_ADDITIONAL>ANA</RESTRICTION_TYPE_ADDITIONAL><COMMENTS>test</COMMENTS></RESTRICTION><TEST>test</TEST></FITNESS>';
-			parsed = value.parseHTML(true).children[0];
+			parsed = value.parseHTML(true);
 			Test.print('XML repeating elements', value === parsed.innerHTML ? null : 'The same XML as the source is expected');
 			resume();
 		});

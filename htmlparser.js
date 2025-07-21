@@ -4,6 +4,8 @@
 
 'use strict';
 
+const BLOCK = { DIV: 1, P: 1, H1: 1, H2: 1, H3: 1, H4: 1, H5: 1, H6: 1, UL: 1, OL: 1, TABLE: 1, SECTION: 1, HEADER: 1, FOOTER: 1 };
+
 function HTMLElement() {
 	this.children = [];
 }
@@ -16,7 +18,7 @@ HTMLElement.prototype = {
 		return this.toString(false, true);
 	},
 	get innerText() {
-		return this.toString().removeTags();
+		return this.text();
 	}
 };
 
@@ -439,21 +441,26 @@ HTMLElement.prototype.prepend = function(str) {
 HTMLElement.prototype.text = function(formatted) {
 	let self = this;
 	let builder = [];
-	let browse = function(children, level) {
+	let browse = function(children, newline) {
 		for (let item of children) {
 			switch (item.tagName) {
 				case 'TEXT':
+					if (builder.length)
+						builder.push(newline ? '\n' : '');
 					if (item.textContent)
-						builder.push(item.textContent);
+						builder.push(item.textContent.decode());
+					break;
+				default:
+					browse(item.children, self.xml ? true : BLOCK[item.tagName]);
 					break;
 			}
 		}
 	};
 	browse(self.children, 0);
-	return builder.join('\n');
+	return builder.join('');
 };
 
-HTMLElement.prototype.toString = HTMLElement.prototype.html = function(formatted, outer) {
+HTMLElement.prototype.toString = function(formatted, outer) {
 
 	let self = this;
 	let builder = [];
@@ -497,6 +504,10 @@ HTMLElement.prototype.toString = HTMLElement.prototype.html = function(formatted
 	// browse(self.tagName ? [self] : self.children, 0);
 	browse(outer && self.tagName ? [self] : self.children, 0);
 	return builder.join(formatted ? '\n' : '');
+};
+
+HTMLElement.prototype.html = function(formatted = false) {
+	return this.toString(formatted, false);
 };
 
 function removeComments(html) {
