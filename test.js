@@ -15,7 +15,7 @@ Test.start = function(message) {
 	console.log(divider);
 };
 
-Test.print = function(message, err) {
+Test.print = function(message, err, expected) {
 	console.log('[' + (err ? 'FAIL' : 'OK') + ']', message);
 	Test.count++;
 	if (err) {
@@ -44,7 +44,7 @@ Test.run = function(callback) {
 		if (callback)
 			callback();
 		else
-			process.exit(0);
+			setTimeout(() => process.exit(0), 2);
 	});
 };
 
