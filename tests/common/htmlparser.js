@@ -13,7 +13,7 @@ ON('ready', function () {
 		// Test for innerHTML
 		arr.push(function(resume) {
 			value = '<p>Hello World</p>';
-			correct = '<p>Hello WorldX</p>';
+			correct = '<p>Hello World</p>';
 			parsed = value.parseHTML();
 			response = parsed.innerHTML;
 			Test.print('Basic HTML Element with innerHTML', (!response || response !== correct) ? 'Failed to retrieve innerHTML correctly' : null);
