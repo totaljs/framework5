@@ -24,6 +24,12 @@ Test.push('Test Server', function(next) {
 	});
 
 	arr.push(function(resume) {
+
+		if (F.isWindows) {
+			resume();
+			return;
+		}
+
 		var options = {};
 		options.unixsocket = PATH.root('test.socket');
 		options.unixsocket777 = true;
