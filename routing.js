@@ -63,8 +63,13 @@ function Route(url, action, size) {
 		action = null;
 	}
 
+	let skiproot = false;
+
 	// Apply a default API endpoint
-	url = url.replace(/\?/g, F.config.$api).replace(/\/{2,}/g, '/');
+	if (url.includes('?')) {
+		skiproot = true;
+		url = url.replace(/\?/g, F.config.$api).replace(/\/{2,}/g, '/');
+	}
 
 	var t = this;
 
@@ -99,6 +104,9 @@ function Route(url, action, size) {
 		console.log('This "{0}" kind of routes are not supported yet'.format(t.url2));
 		return;
 	}
+
+	if (!skiproot && t.url2 && CONF.$root)
+		t.url2 = CONF.$root + t.url2.substring(1);
 
 	t.url = exports.split(t.url2, true);
 	url = url.substring(index + 1);
@@ -271,8 +279,18 @@ function Route(url, action, size) {
 		t.action = null;
 	}
 
-	if (!t.view && !t.action && t.method !== 'FILE' && t.method !== 'SOCKET')
-		t.view = t.url[0] && t.url[0] !== '/' ? t.url[0] : 'index';
+	if (!t.view && !t.action && t.method !== 'FILE' && t.method !== 'SOCKET') {
+
+		let arr = t.url;
+
+		if (F.config.$root) {
+			arr = t.url.join('~').substring(F.config.$root.length - 1).split('~');
+			if (arr[0] == '')
+				arr[0] = '/';
+		}
+
+		t.view = arr[0] && arr[0] !== '/' ? arr[0] : 'index';
+	}
 
 	if (t.wildcard)
 		t.priority -= 50;

@@ -896,6 +896,9 @@ Controller.prototype.resume = function() {
 	if (ctrl.isfile) {
 
 		var path = ctrl.uri.key;
+		if (CONF.$root)
+			path = path.substring(CONF.$root.length - 1);
+
 		if (path[1] === '_') {
 
 			let tmp = path.substring(1);

@@ -35,6 +35,7 @@
 - added `Total.syslog(msg)` method for internal app logging
 - added auto audit logs to Actions in the form: `NEWACTION({ ... audit: 'Executed by {{ $.user.name }}' })`
 - added `called {Number}` property per action in the `F.actions` collection
+- fixed `CONF.$root` functionality
 
 ========================
 0.0.12

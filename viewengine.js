@@ -389,7 +389,7 @@ function prepare(command, dcommand, functions) {
 		case 'title2':
 			return 'self.' + command;
 		case 'version':
-			return '\'?ts=\'+F.stamp';
+			return '\'?ts=\'+F.' + command;
 		case '!title':
 		case '!description':
 		case '!keywords':
@@ -836,7 +836,7 @@ View.prototype.import = function() {
 				let ext = m.substring(m.length - 3);
 				if (ext === 'ico')
 					ext = 'x-icon';
-				builder += '<link rel="icon" href="/' + m + '" type="image/' + ext + '" />';
+				builder += '<link rel="icon" href="' + F.virtualpath(m) + '" type="image/' + ext + '" />';
 				break;
 			default:
 
@@ -860,16 +860,16 @@ View.prototype.import = function() {
 					let path = '/' + F.TUtils.random_string(10).toLowerCase() + '-min.' + (iscss ? 'css' : 'js');
 					F.merge(path, m);
 					if (iscss)
-						tmp = '<link rel="stylesheet" href="' + path + version + '" />';
+						tmp = '<link rel="stylesheet" href="' + F.virtualpath(path) + version + '" />';
 					else
-						tmp = '<scri' + 'pt src="' + path + version + '"></scr' + 'ipt>';
+						tmp = '<scri' + 'pt src="' + F.virtualpath(path) + version + '"></scr' + 'ipt>';
 				} else {
 					let absolute = m[0] === '/';
 					let key = absolute ? m : ('/' + m);
 					if (REG_CHECKCSS.test(m)) {
-						tmp = '<link rel="stylesheet" href="' + (absolute ? m : ('/' + (F.routes.virtual[key] ? '' : 'css/') + m)) + version + '" />';
+						tmp = '<link rel="stylesheet" href="' + F.virtualpath(absolute ? m : ('/' + (F.routes.virtual[key] ? '' : 'css/') + m)) + version + '" />';
 					} else {
-						tmp = '<scri' + 'pt src="' + (absolute ? m : ('/' + (F.routes.virtual[key] ? '' : 'js/') + m)) + version + '"></scr' + 'ipt>';
+						tmp = '<scri' + 'pt src="' + F.virtualpath(absolute ? m : ('/' + (F.routes.virtual[key] ? '' : 'js/') + m)) + version + '"></scr' + 'ipt>';
 					}
 				}
 

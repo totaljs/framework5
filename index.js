@@ -233,7 +233,6 @@ global.DEF = {};
 	F.path.directory = (type, path) => path ? F.path.$join(F.temporary.directories[type], path) : F.temporary.directories[type];
 	F.path.tmp = F.path.temp = path => path ? F.path.$join(F.temporary.directories.tmp, path) : F.temporary.directories.tmp;
 	F.path.exists = (path, callback) => callback ? (F.Fs.lstat(path, (err, stats) => callback(err ? false : true, stats ? stats.size : 0, stats ? stats.isFile() : false))) : new Promise(resolve => F.path.exists(path, resolve));
-
 	F.path.$join = function(directory, path) {
 		var key = '$' + directory;
 		if (!F.temporary.path[key])
@@ -275,6 +274,10 @@ global.DEF = {};
 			if (!pathexists(path))
 				F.Fs.mkdirSync(path, { recursive: true });
 		} catch {}
+	};
+
+	F.virtualpath = function(path) {
+		return F.config.$root ? (F.config.$root + (path[0] === '/' ? path.substring(1) : path)) : path;
 	};
 
 })(global.F);
@@ -536,8 +539,9 @@ function unlink(arr, callback) {
 
 F.loadconfig = function(value) {
 
-	var cfg = F.TUtils.parseConfig(value);
-	var smtp = null;
+	let cfg = F.TUtils.parseConfig(value);
+	let smtp = null;
+	let isapi = false;
 
 	for (let key in cfg) {
 
@@ -597,9 +601,18 @@ F.loadconfig = function(value) {
 				for (var m of tmp)
 					F.config.$httpfiles[m] = true;
 				continue;
+			case '$api':
+				F.config.$apibk = val || '';
+				break;
 		}
 
 		F.config[key] = cfg[key];
+	}
+
+	if (cfg.$root) {
+		if (!F.config.$apibk)
+			F.config.$apibk = F.config.$api;
+		F.config.$api = cfg.$root + F.config.$apibk.substring(1);
 	}
 
 	if (!F.config.secret_uid)
@@ -1412,7 +1425,7 @@ F.componentator = function(name, components, removeprev = true, attrs = '') {
 	let relative = 'ui-' + (removeprev ? (nameid + '-') : '') + meta.components.makeid() + '.min.js';
 	let filename = F.path.public(relative);
 
-	F.repo[meta.name] = '/' + relative;
+	F.repo[meta.name] = (F.config.$root || '/') + relative;
 
 	if (removeprev) {
 		F.Fs.readdir(F.path.public(), function(err, files) {
@@ -1510,7 +1523,7 @@ F.merge = function(url) {
 	if (url[0] !== '/')
 		url = '/' + url;
 
-	url = url.toLowerCase();
+	url = F.virtualpath(url.toLowerCase());
 
 	var ext = F.TUtils.getExtension(url);
 	var key = url.substring(1).replace(/\//g, '-').replace(/\.(js|html|css)$/, '') + '-min.' + ext;
