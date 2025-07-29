@@ -2304,6 +2304,7 @@ F.backup = function(filename, files, callback, filter) {
 	var unlink = typeof(filename) === 'string' ? F.Fs.unlink : (filename, callback) => callback();
 	var concat = [];
 	var gzipoptions = { memLevel: 9 };
+	var ignorelist = ['.ds_store', '.gitignore', '.npmignore', '.git'];
 
 	unlink(filename, function() {
 
@@ -2340,6 +2341,15 @@ F.backup = function(filename, files, callback, filter) {
 		var cleanpath = lastchar === '/' || lastchar === '\\' ? path.substring(0, path.length - 1) : path;
 
 		files.wait(function(item, next) {
+
+			let lowerfilename = item.toLowerCase();
+
+			for (let ignore of ignorelist) {
+				if (lowerfilename.includes(ignore)) {
+					next();
+					return;
+				}
+			}
 
 			var file = F.Path.join(path, item);
 
