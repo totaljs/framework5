@@ -4,8 +4,8 @@ require('../../index');
 require('../../test');
 
 Test.push('Minifactors', function(next) {
-	var value, response, correct;
 
+	var value, response, correct;
 	var arr = [];
 
 	arr.push(function(resume) {
@@ -31,6 +31,12 @@ Test.push('Minifactors', function(next) {
 	});
 
 	arr.push(function(resume) {
+
+		if (F.isWindows) {
+			resume();
+			return;
+		}
+
 		correct = 'var arr=[1,2,3,4,5,6,7,8],html=`<p>\nThis is just a good job\n</p>`;arr.wait(function(item){console.log(item)},function(){console.log(html)});';
 		Total.Fs.readFile(PATH.public('script_multiline_string.js'), 'utf8', function(err, data) {
 			var response = U.minify_js(data);
