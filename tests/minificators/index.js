@@ -14,7 +14,7 @@ Test.push('Minifactors', function(next) {
 			if (data)
 				value = data.toString();
 			var response = U.minify_js(value);
-			Test.print(' Minify - JS (without comments)', response !== null && response === correct ? null : 'Something went rong');
+			Test.print('Minify - JS (without comments)', response !== null && response === correct ? null : 'Something went rong');
 			resume();
 		});
 	});
@@ -25,7 +25,7 @@ Test.push('Minifactors', function(next) {
 			if (data)
 				value = data.toString();
 			var response = U.minify_js(value);
-			Test.print(' Minify - JS (with comments)', response !== null && response === correct ? null : 'Something went rong');
+			Test.print('Minify - JS (with comments)', response !== null && response === correct ? null : 'Something went rong');
 			resume();
 		});
 	});
@@ -45,7 +45,7 @@ Test.push('Minifactors', function(next) {
 	// 		console.log(data);
 	// 		var response = U.minify_js(data);
 	// 		console.log(response == correct, response);
-	// 		Test.print(' Minify - JS (Regular expression)', response !== null && response === correct ? null : 'Something went rong');
+	// 		Test.print('Minify - JS (Regular expression)', response !== null && response === correct ? null : 'Something went rong');
 	// 		resume();
 	// 	});
 	// });
@@ -56,7 +56,7 @@ Test.push('Minifactors', function(next) {
 			if (data)
 				value = data.toString();
 			var response = U.minify_js(value);
-			Test.print(' Minify - JS (Multiple Variable)', response !== null && response === correct ? null : 'Something went rong');
+			Test.print('Minify - JS (Multiple Variable)', response !== null && response === correct ? null : 'Something went rong');
 			resume();
 		});
 	});
@@ -69,7 +69,7 @@ Test.push('Minifactors', function(next) {
 				value = data.toString();
 
 			var response = U.minify_css(value);
-			Test.print(' Minify - CSS (without comments)', response !== null && response === correct ? null : 'Something went rong');
+			Test.print('Minify - CSS (without comments)', response !== null && response === correct ? null : 'Something went rong');
 			resume();
 		});
 	});
@@ -81,7 +81,7 @@ Test.push('Minifactors', function(next) {
 				value = data.toString();
 
 			var response = U.minify_css(value);
-			Test.print(' Minify - CSS (with comments)', response !== null && response === correct ? null : 'Something went rong');
+			Test.print('Minify - CSS (with comments)', response !== null && response === correct ? null : 'Something went rong');
 			resume();
 		});
 	});
@@ -93,7 +93,7 @@ Test.push('Minifactors', function(next) {
 				value = data.toString();
 
 			var response = U.minify_css(value);
-			Test.print(' Minify - colors', response !== null && response === correct ? null : 'Something went rong');
+			Test.print('Minify - colors', response !== null && response === correct ? null : 'Something went rong');
 			resume();
 		});
 	});
@@ -105,7 +105,7 @@ Test.push('Minifactors', function(next) {
 				value = data.toString();
 
 			var response = U.minify_css(value);
-			Test.print(' Minify - Nested selectors', response !== null && response === correct ? null : 'Something went rong');
+			Test.print('Minify - Nested selectors', response !== null && response === correct ? null : 'Something went rong');
 			resume();
 		});
 	});
@@ -117,7 +117,7 @@ Test.push('Minifactors', function(next) {
 				value = data.toString();
 
 			var response = U.minify_css(value);
-			Test.print(' Minify - Value Compression', response !== null && response === correct ? null : 'Something went rong');
+			Test.print('Minify - Value Compression', response !== null && response === correct ? null : 'Something went rong');
 			resume();
 		});
 	});
@@ -129,7 +129,7 @@ Test.push('Minifactors', function(next) {
 				value = data.toString();
 
 			var response = U.minify_js(value);
-			Test.print(' Minify - HTML (without comments)', response !== null && response === correct ? null : 'Something went rong');
+			Test.print('Minify - HTML (without comments)', response !== null && response === correct ? null : 'Something went rong');
 			resume();
 		});
 	});
@@ -140,7 +140,7 @@ Test.push('Minifactors', function(next) {
 			if (data)
 				value = data.toString();
 			var response = U.minify_js(value);
-			Test.print(' Minify - HTML (with comments)', response !== null && response === correct ? null : 'Something went rong');
+			Test.print('Minify - HTML (with comments)', response !== null && response === correct ? null : 'Something went rong');
 			resume();
 		});
 	});
