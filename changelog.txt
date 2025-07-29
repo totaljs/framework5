@@ -32,6 +32,9 @@
 - extended `@{import()}` method now supports `@style_name.css` and `@script_name.js` (due to HTTP cache reasons, it automatically appends the argument `?ts=start_app_timestamp` to the URL)
 - fixed loading extensions
 - fixed unit-tests for HTMLParser
+- added `Total.syslog(msg)` method for internal app logging
+- added auto audit logs to Actions in the form: `NEWACTION({ ... audit: 'Executed by {{ $.user.name }}' })`
+- added `called {Number}` property per action in the `F.actions` collection
 
 ========================
 0.0.12

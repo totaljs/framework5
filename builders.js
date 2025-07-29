@@ -171,6 +171,7 @@ Options.prototype.publish = function(value) {
 		F.stats.performance.publish++;
 		F.TTMS.cache.socket.send({ type: 'publish', id: name, data: tmp }, client => client.tmsready && client.$subscribers[name]);
 	}
+
 	return self;
 };
 
@@ -1237,7 +1238,7 @@ exports.newaction = function(name, obj) {
 		name = obj.id || obj.name;
 	}
 
-	var url = name;
+	let url = name;
 
 	if (F.actions[name])
 		F.actions[name].remove();
@@ -1254,6 +1255,8 @@ exports.newaction = function(name, obj) {
 	obj.options.csrf = obj.csrf;
 	obj.options.encrypt = obj.encrypt;
 	obj.options.compress = obj.compress;
+	obj.audit = obj.audit ? Tangular.compile(obj.audit) : null;
+	obj.called = 0;
 
 	if (obj.cache)
 		obj.cache = parseactioncache(obj, obj.cache);
@@ -1284,16 +1287,16 @@ exports.newaction = function(name, obj) {
 
 	if (obj.publish) {
 
-		var tmsschema = obj.publish == true ? (obj.input || obj.output) : obj.publish;
+		let tmsschema = obj.publish == true ? (obj.input || obj.output) : obj.publish;
 
 		if (typeof(tmsschema) === 'string') {
 			if (tmsschema[0] === '+')
 				tmsschema = (obj.input || obj.output) + ',' + tmsschema.substring(1);
 
-			var keys = tmsschema.split(',');
+			let keys = tmsschema.split(',');
 			obj.$publish = [];
-			for (var key of keys) {
-				var index = key.indexOf(':');
+			for (let key of keys) {
+				let index = key.indexOf(':');
 				obj.$publish.push(index === -1 ? key : key.substring(0, index));
 			}
 		}
@@ -1382,14 +1385,14 @@ ActionCaller.prototype.exec = function() {
 	$.id = action.id;
 	$.error = self.error;
 	$.controller = self.controller;
-	$.fields = action.fields;
 	$.user = self.options.user;
 	$.config = action.config || EMPTYOBJECT;
+
+	action.called++;
 
 	$.$callback = function(err, response) {
 
 		if (!err) {
-
 			if (action.jsoutput)
 				response = action.jsoutput.transform(response).response;
 
@@ -1406,11 +1409,17 @@ ActionCaller.prototype.exec = function() {
 			// close
 			self.cancel();
 		} else {
+
 			$.response[$.id] = response;
 			meta.response && self.finish && self.finish(response);
-			var key = '@' + $.id;
+
+			if (action.audit)
+				F.audit('actions', $, action.audit(null, $));
+
+			let key = '@' + $.id;
 			if (F.$events[key])
 				F.emit(key, $, response);
+
 			self.exec();
 		}
 	};

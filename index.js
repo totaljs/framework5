@@ -1450,6 +1450,11 @@ F.componentator = function(name, components, removeprev = true, attrs = '') {
 
 };
 
+F.syslog = function(msg) {
+	NOW = new Date();
+	console.log('INFO ======= ' + (NOW.format('yyyy-MM-dd HH:mm:ss')) + ': ' + msg);
+};
+
 F.error = function(err, name, url) {
 
 	if (!arguments.length)
