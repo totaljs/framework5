@@ -1255,7 +1255,7 @@ exports.newaction = function(name, obj) {
 	obj.options.csrf = obj.csrf;
 	obj.options.encrypt = obj.encrypt;
 	obj.options.compress = obj.compress;
-	obj.audit = obj.audit ? Tangular.compile(obj.audit) : null;
+	obj.audit = obj.audit === true ? NOOP : (obj.audit ? Tangular.compile(obj.audit) : null);
 	obj.called = 0;
 
 	if (obj.cache)
@@ -1414,7 +1414,7 @@ ActionCaller.prototype.exec = function() {
 			meta.response && self.finish && self.finish(response);
 
 			if (action.audit)
-				F.audit('actions', $, action.audit(null, $));
+				F.audit('actions', $, action.audit(null, $) || '');
 
 			let key = '@' + $.id;
 			if (F.$events[key])
