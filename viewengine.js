@@ -836,7 +836,7 @@ View.prototype.import = function() {
 				let ext = m.substring(m.length - 3);
 				if (ext === 'ico')
 					ext = 'x-icon';
-				builder += '<link rel="icon" href="' + F.virtualpath(m) + '" type="image/' + ext + '" />';
+				builder += '<link rel="icon" href="' + F.virtualpath('/' + m) + '" type="image/' + ext + '" />';
 				break;
 			default:
 
