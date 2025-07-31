@@ -37,6 +37,7 @@
 - added `called {Number}` property per action in the `F.actions` collection
 - fixed `CONF.$root` functionality
 - improved `F.backup()` by adding internal ignore list for `.DS_Store` and `.gitignore` files
+- fixed `CONF.$root` in proxies
 
 ========================
 0.0.12

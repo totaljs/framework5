@@ -865,6 +865,9 @@ Proxy.prototype.remove = function() {
 
 exports.proxy = function(url, target) {
 
+	// Apply proxy
+	url = F.virtualpath(url);
+
 	if (!target) {
 		let index = F.routes.proxies.TfindIndex('url', url.toLowerCase());
 		if (index !== -1)
