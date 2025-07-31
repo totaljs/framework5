@@ -627,7 +627,7 @@ Instance.prototype.reload = function(data) {
 				flow.$schema.unixsocket = data.unixsocket;
 			}
 
-			PROXIES[data.id] = F.proxy(data.proxypath, data.unixsocket);
+			PROXIES[data.id] = F.proxy((CONF.$root + meta.proxypath).replace(/\/{2,}/g, '/'), data.unixsocket);
 		}
 
 		for (let key in data)
@@ -1491,7 +1491,7 @@ function init_worker(meta, type, callback) {
 	}
 
 	if (meta.proxypath)
-		PROXIES[meta.id] = F.proxy(meta.proxypath, meta.unixsocket);
+		PROXIES[meta.id] = F.proxy((CONF.$root + meta.proxypath).replace(/\/{2,}/g, '/'), meta.unixsocket);
 
 	if (!worker.postMessage) {
 		worker.postMessage = worker.send;
