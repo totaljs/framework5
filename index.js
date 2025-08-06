@@ -760,7 +760,7 @@ F.load = async function(types, callback) {
 	if (typeof(types) === 'string')
 		types = types.split(',').trim();
 
-	var list = async (path, extension = 'js') => new Promise(resolve => F.TUtils.ls(path, files => resolve(files), (path, isdir) => isdir ? true : (path.indexOf('-bk') === -1 && path.indexOf('_bk') === -1 && F.TUtils.getExtension(path) === extension)));
+	var list = async (path, extension = 'js') => new Promise(resolve => F.TUtils.ls(path, files => resolve(files), (path, isdir) => isdir ? true : (!path.includes('-bk') && !path.includes('_bk') && F.TUtils.getExtension(path) === extension)));
 	var read = async (path) => new Promise(resolve => F.Fs.readFile(path, 'utf8', (err, response) => resolve(response ? response : '')));
 
 	var update = function(type, arr) {
@@ -827,7 +827,7 @@ F.load = async function(types, callback) {
 
 		for (let plugin of tmp) {
 
-			if (plugin.indexOf('-bk') !== -1 || plugin.indexOf('_bk') !== -1)
+			if (plugin.includes('-bk') || plugin.includes('_bk') || !plugin.endsWith('.js'))
 				continue;
 
 			files.push({ id: F.TUtils.getName(plugin).replace(/\.js$/, ''), type: 'plugins', filename: F.path.directory('plugins', plugin + '/index.js') });
