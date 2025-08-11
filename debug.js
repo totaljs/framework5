@@ -74,7 +74,7 @@ function runwatching() {
 	const REG_FILES = /(config|bundles\.debug|\.js|\.ts|\.flow|\.py|\.resource)+$/i;
 	const REG_PUBLIC = /\/public\//i;
 	const REG_INDEX = new RegExp(FILENAME.replace(/\.js$/, '') + '_.*?\\.js$');
-	const REG_EXTENSION = /\.(js|ts|py|resource|package|bundle|build|flow|url)$/i;
+	const REG_EXTENSION = /\.(js|ts|py|resource|package|bundle|build|flow|url|html)$/i;
 	const REG_RELOAD = /\.(js|ts|py|css|html|htm|jpg|png|gif|ico|svg|webp|resource)$/i;
 	const isRELOAD = !!options.livereload;
 	const SPEED = isRELOAD ? 1000 : 1500;
