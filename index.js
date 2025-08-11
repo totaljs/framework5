@@ -827,7 +827,7 @@ F.load = async function(types, callback) {
 
 		for (let plugin of tmp) {
 
-			if (plugin.includes('-bk') || plugin.includes('_bk') || !plugin.endsWith('.js'))
+			if (plugin.includes('-bk') || plugin.includes('_bk') || plugin.toLowerCase().includes('ds_store'))
 				continue;
 
 			files.push({ id: F.TUtils.getName(plugin).replace(/\.js$/, ''), type: 'plugins', filename: F.path.directory('plugins', plugin + '/index.js') });
