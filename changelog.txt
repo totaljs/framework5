@@ -4,7 +4,6 @@
 
 - fixed loading plugin files (only `.js` files will load)
 - removed loading of `.DS_STORE` files in plugins
-- added watcher for `extensions/*.html` files
 
 ========================
 0.0.13
