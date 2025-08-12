@@ -2047,7 +2047,7 @@ F.audit = function(name, $, message, type) {
 
 	if ($.user) {
 		data.userid = $.user.id;
-		data.username = $.user.name || $.user.nick || $.user.alias;
+		data.createdby = $.user.name || $.user.nick || $.user.alias;
 	}
 
 	if ($.controller) {
@@ -2063,7 +2063,7 @@ F.audit = function(name, $, message, type) {
 		data.type = type || 'info';
 
 	if ($.id)
-		data.schema = $.id;
+		data.action = $.id;
 
 	if ($.model)
 		data.data = JSON.stringify({ params: $.params, query: $.query, model: $.model }, auditjsonserialization);

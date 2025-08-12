@@ -5,6 +5,9 @@
 - fixed loading plugin files (only `.js` files will load)
 - removed loading of `.DS_STORE` files in plugins
 - added watcher for `extensions/*.html` files
+- __breaking change__: the audit logs object has been changed:
+	- `username` renamed to `createdby`
+	- `schema` renamed to `action`
 
 ========================
 0.0.13
