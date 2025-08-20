@@ -1,6 +1,6 @@
 // Total.js FlowStream module
 // The MIT License
-// Copyright 2021-2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2021-2025 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -1004,11 +1004,11 @@ function init_current(meta, callback, nested) {
 		if (meta.unixsocket && meta.proxypath) {
 			if (!F.isWindows)
 				F.Fs.unlink(meta.unixsocket, NOOP);
-			F.http({ load: 'none', unixsocket: meta.unixsocket, config: { $stats: false, $sourcemap: false }});
+			F.http({ load: 'none', unixsocket: meta.unixsocket, clear: false, config: { $stats: false, $sourcemap: false }});
 		} else {
 			F.config.$sourcemap = false;
 			F.config.$stats = false;
-			F.load('none');
+			F.load('none', null, false);
 		}
 	}
 

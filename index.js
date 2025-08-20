@@ -1,6 +1,6 @@
 // Total.js framework
 // The MIT License
-// Copyright 2012-2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2012-2025 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -106,6 +106,7 @@ global.DEF = {};
 		versions: {},
 		dependencies: {}, // temporary for module dependencies
 		other: {},
+		files: {},
 		cryptokeys: {}, // for crypto keys
 		internal: {}, // controllers/modules names for the routing
 		ready: {},
@@ -743,7 +744,7 @@ F.auth = function(fn) {
 		F.def.onAuthorize = fn;
 };
 
-F.load = async function(types, callback) {
+F.load = async function(types, callback, clear = true) {
 
 	if (!types)
 		types = '';
@@ -753,7 +754,9 @@ F.load = async function(types, callback) {
 	F.dir();
 
 	await F.TBundles.extract();
-	await F.clear(true);
+
+	if (clear)
+		await F.clear(true);
 
 	process.send && process.send('total:ready');
 
@@ -900,9 +903,10 @@ F.load = async function(types, callback) {
 	F.stats.compilation = Date.now() - beg;
 	F.stats.compiled = files.length;
 	F.isLoaded = true;
-	DEBUG && F.TSourceMap.refresh();
-	callback && callback();
 
+	DEBUG && F.TSourceMap.refresh();
+
+	callback && callback();
 	F.emit('ready');
 	F.emit('load');
 };
@@ -1167,6 +1171,7 @@ F.loadservices = function() {
 	F.internal.interval = setInterval(function() {
 
 		F.internal.ticks++;
+
 		global.NOW = new Date();
 
 		for (let key in F.flowstreams) {
@@ -1249,7 +1254,7 @@ F.http = function(opt) {
 		F.loadconfig(cfg);
 	}
 
-	F.load(opt.load || opt.type || '', () => F.httpload(opt));
+	F.load(opt.load || opt.type || '', () => F.httpload(opt), opt.clear);
 };
 
 F.httpload = function(opt) {
@@ -1872,12 +1877,11 @@ F.clear = function(init = true, callback) {
 	F.TUtils.ls(dir, function(files, directories) {
 
 		if (init) {
-			var arr = [];
+			let arr = [];
 			for (let file of files) {
-				var filename = file.substring(dir.length);
+				let filename = file.substring(dir.length);
 				if (plus && !filename.startsWith(plus))
 					continue;
-
 				if (filename.indexOf('/') === -1 && !filename.endsWith('.cache'))
 					arr.push(file);
 			}
