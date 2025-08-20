@@ -8,6 +8,8 @@
 - __breaking change__: the audit logs object has been changed:
 	- `username` renamed to `createdby`
 	- `schema` renamed to `action`
+- disabled auto-cleaning files in FlowStream workers
+- improved loading static files in release mode
 
 ========================
 0.0.13
