@@ -1,6 +1,6 @@
 // Total.js Controller
 // The MIT License
-// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2023-2025 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -891,11 +891,12 @@ Controller.prototype.autoclear = function(value) {
 
 Controller.prototype.resume = function() {
 
-	var ctrl = this;
+	let ctrl = this;
 
 	if (ctrl.isfile) {
 
-		var path = ctrl.uri.key;
+		let path = ctrl.uri.key;
+
 		if (CONF.$root)
 			path = path.substring(CONF.$root.length - 1);
 
@@ -1379,12 +1380,24 @@ function send_html(ctrl, path) {
 		return;
 	}
 
+	if (!DEBUG) {
+		if (F.temporary.files[ctrl.uri.cache]) {
+			F.temporary.files[ctrl.uri.cache].push(ctrl);
+			return;
+		}
+		F.temporary.files[ctrl.uri.cache] = [];
+	}
+
 	readfile(path, function(err, output) {
 
 		if (err) {
 
-			if (!DEBUG)
+			if (!DEBUG) {
 				F.temporary.notfound[ctrl.uri.cache] = 1;
+				for (let $ of F.temporary.files[ctrl.uri.cache])
+					$.fallback(404);
+				delete F.temporary.files[ctrl.uri.cache];
+			}
 
 			ctrl.fallback(404);
 			return;
@@ -1405,12 +1418,18 @@ function send_html(ctrl, path) {
 			let filename = F.path.tmp(F.clusterid + ctrl.uri.cache.substring(1).replace(REG_FILETMP, '-') + '-min.html');
 			F.Fs.writeFile(filename, output.body, function(err) {
 				if (err) {
+					err = err.toString();
 					F.temporary.notfound[ctrl.uri.cache] = 1;
-					ctrl.fallback(404, err.toString());
+					ctrl.fallback(404, err);
+					for (let $ of F.temporary.files[ctrl.uri.cache])
+						$.fallback(404, err);
 				} else {
 					F.temporary.minified[ctrl.uri.cache] = filename;
 					send_file(ctrl, filename, 'html');
+					for (let $ of F.temporary.files[ctrl.uri.cache])
+						send_file($, filename, 'html');
 				}
+				delete F.temporary.files[ctrl.uri.cache];
 			});
 		}
 	});
@@ -1429,12 +1448,24 @@ function send_css(ctrl, path) {
 		return;
 	}
 
+	if (!DEBUG) {
+		if (F.temporary.files[ctrl.uri.cache]) {
+			F.temporary.files[ctrl.uri.cache].push(ctrl);
+			return;
+		} else
+			F.temporary.files[ctrl.uri.cache] = [];
+	}
+
 	readfile(path, function(err, output) {
 
 		if (err) {
 
-			if (!DEBUG)
+			if (!DEBUG) {
+				for (let $ of F.temporary.files[ctrl.uri.cache])
+					$.fallback(404);
+				delete F.temporary.files[ctrl.uri.cache];
 				F.temporary.notfound[ctrl.uri.cache] = 1;
+			}
 
 			ctrl.fallback(404);
 			return;
@@ -1454,11 +1485,17 @@ function send_css(ctrl, path) {
 			F.Fs.writeFile(filename, output.body, function(err) {
 				if (err) {
 					F.temporary.notfound[ctrl.uri.cache] = 1;
-					ctrl.fallback(404, err.toString());
+					err = err.toString();
+					ctrl.fallback(404, err);
+					for (let $ of F.temporary.files[ctrl.uri.cache])
+						$.fallback(404, err);
 				} else {
 					F.temporary.minified[ctrl.uri.cache] = filename;
 					send_file(ctrl, filename, 'css');
+					for (let $ of F.temporary.files[ctrl.uri.cache])
+						send_file($, filename, 'css');
 				}
+				delete F.temporary.files[ctrl.uri.cache];
 			});
 		}
 	});
@@ -1477,12 +1514,24 @@ function send_js(ctrl, path) {
 		return;
 	}
 
+	if (!DEBUG) {
+		if (F.temporary.files[ctrl.uri.cache]) {
+			F.temporary.files[ctrl.uri.cache].push(ctrl);
+			return;
+		} else
+			F.temporary.files[ctrl.uri.cache] = [];
+	}
+
 	readfile(path, function(err, output) {
 
 		if (err) {
 
-			if (!DEBUG)
+			if (!DEBUG) {
+				for (let $ of F.temporary.files[ctrl.uri.cache])
+					$.fallback(404);
+				delete F.temporary.files[ctrl.uri.cache];
 				F.temporary.notfound[ctrl.uri.cache] = 1;
+			}
 
 			ctrl.fallback(404);
 			return;
@@ -1502,11 +1551,17 @@ function send_js(ctrl, path) {
 			F.Fs.writeFile(filename, output.body, function(err) {
 				if (err) {
 					F.temporary.notfound[ctrl.uri.cache] = 1;
-					ctrl.fallback(404, err.toString());
+					err = err.toString();
+					ctrl.fallback(404, err);
+					for (let $ of F.temporary.files[ctrl.uri.cache])
+						$.fallback(404, err);
 				} else {
 					F.temporary.minified[ctrl.uri.cache] = filename;
 					send_file(ctrl, filename, 'js');
+					for (let $ of F.temporary.files[ctrl.uri.cache])
+						send_file($, filename, 'js');
 				}
+				delete F.temporary.files[ctrl.uri.cache];
 			});
 		}
 	});
@@ -1520,7 +1575,7 @@ function send_file(ctrl, path, ext) {
 		return;
 	}
 
-	var cache = F.temporary.tmp[ctrl.uri.cache];
+	let cache = F.temporary.tmp[ctrl.uri.cache];
 
 	// HTTP Cache
 	if (ctrl.response.cache && cache && ctrl.notmodified(cache.date))
