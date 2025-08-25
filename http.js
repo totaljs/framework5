@@ -20,13 +20,6 @@ exports.listen = function(req, res) {
 
 	F.stats.request.request++;
 
-	// Not supported
-	if (req.method === 'HEAD') {
-		F.stats.request.blocked++;
-		req.destroy();
-		return;
-	}
-
 	var ctrl = new F.TController.Controller(req, res);
 
 	if (F.paused.length) {

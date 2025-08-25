@@ -396,8 +396,12 @@ Controller.prototype.flush = function() {
 				} else {
 					response.headers['content-encoding'] = 'gzip';
 					ctrl.res.writeHead(response.status, response.headers);
-					ctrl.res.end(buffer, 'utf8');
-					F.stats.performance.upload += buffer.length / 1024 / 1024;
+					if (ctrl.method === 'HEAD') {
+						ctrl.res.end();
+					} else {
+						ctrl.res.end(buffer, 'utf8');
+						F.stats.performance.upload += buffer.length / 1024 / 1024;
+					}
 					ctrl.free();
 				}
 			});
@@ -410,7 +414,10 @@ Controller.prototype.flush = function() {
 
 	try {
 		ctrl.res.writeHead(response.status, response.headers);
-		ctrl.res.end(buffer);
+		if (ctrl.method === 'HEAD')
+			ctrl.res.end();
+		else
+			ctrl.res.end(buffer);
 	} finally {
 		ctrl.free();
 	}
@@ -1647,9 +1654,14 @@ function send_file(ctrl, path, ext) {
 			ctrl.response.headers['content-length'] = (end - beg) + 1;
 			ctrl.response.headers['content-range'] = 'bytes ' + beg + '-' + end + '/' + cache.size;
 			ctrl.res.writeHead(206, ctrl.response.headers);
-			reader = F.Fs.createReadStream(path, { start: beg, end: end });
-			reader.pipe(ctrl.res);
-			F.stats.response.streaming++;
+
+			if (ctrl.method === 'HEAD') {
+				ctrl.res.end();
+			} else {
+				reader = F.Fs.createReadStream(path, { start: beg, end: end });
+				reader.pipe(ctrl.res);
+				F.stats.response.streaming++;
+			}
 
 		} else {
 
@@ -1660,12 +1672,15 @@ function send_file(ctrl, path, ext) {
 
 			ctrl.res.writeHead(ctrl.response.status, ctrl.response.headers);
 
-			if (compress)
-				reader.pipe(F.Zlib.createGzip(GZIP_FILE)).pipe(ctrl.res);
-			else
-				reader.pipe(ctrl.res);
-
-			F.stats.response.file++;
+			if (ctrl.method === 'HEAD') {
+				ctrl.res.end();
+			} else {
+				if (compress)
+					reader.pipe(F.Zlib.createGzip(GZIP_FILE)).pipe(ctrl.res);
+				else
+					reader.pipe(ctrl.res);
+				F.stats.response.file++;
+			}
 		}
 	};
 
