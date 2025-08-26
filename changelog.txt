@@ -11,6 +11,8 @@
 - disabled auto-cleaning files in FlowStream workers
 - improved loading static files in release mode
 - added support for `HEAD` method
+- fixed file routing
+- added support for handling specific file extensions in the form `ROUTE('FILE *.php', ...)`
 
 ========================
 0.0.13

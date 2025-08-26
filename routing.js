@@ -130,8 +130,13 @@ function Route(url, action, size) {
 
 		let types = t.url[t.url.length - 1];
 
-		// fixed filename
-		if (t.url2.indexOf('*') === -1) {
+		if (t.url2[0] !== '/' && !t.url2.includes('/')) {
+			// all extensions
+			t.all = true;
+		}
+
+		if (!t.url2.includes('*')) {
+			// fixed filename
 			t.fixed = true;
 		} else if (types === '*') {
 			t.url[t.url.length - 1] = '*';
@@ -319,7 +324,7 @@ Route.prototype.remove = function() {
 				F.routes.websockets.splice(index);
 			for (let conn of self.connections)
 				conn.destroy();
-			break;    
+			break;
 		case 'file':
 			index = F.routes.files.indexOf(self);
 			if (index !== -1)
@@ -442,6 +447,11 @@ exports.sort = function() {
 	cache = {};
 
 	for (let route of F.routes.files) {
+
+		if (route.all) {
+			for (let ext in route.ext)
+				cache['.' + ext] = route;
+		}
 
 		if (route.fixed) {
 			cache[route.url2] = route;
@@ -680,12 +690,17 @@ exports.lookupcors = function(ctrl) {
 exports.lookupfile = function(ctrl, auth = 0) {
 	if (F.routes.files.length) {
 
-		// fixed
+		// fixed name
 		let route = F.routes.filescache[ctrl.url];
 		if (route)
 			return route;
 
-		let key = '';
+		// fixed extension
+		route = F.routes.filescache['.' + ctrl.extension];
+		if (route)
+			return route;
+
+		let key = '/';
 		for (let i = 0; i < ctrl.split2.length - 1; i++)
 			key += (i ? '/' : '') + ctrl.split2[i];
 
