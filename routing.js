@@ -324,7 +324,7 @@ Route.prototype.remove = function() {
 				F.routes.websockets.splice(index);
 			for (let conn of self.connections)
 				conn.destroy();
-			break;
+			break;    
 		case 'file':
 			index = F.routes.files.indexOf(self);
 			if (index !== -1)
@@ -700,9 +700,12 @@ exports.lookupfile = function(ctrl, auth = 0) {
 		if (route)
 			return route;
 
-		let key = '/';
+		let key = '';
 		for (let i = 0; i < ctrl.split2.length - 1; i++)
 			key += (i ? '/' : '') + ctrl.split2[i];
+
+		if (!key)
+			key = '/';
 
 		let routes = F.routes.filescache[key];
 		if (routes)
