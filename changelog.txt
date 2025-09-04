@@ -13,6 +13,7 @@
 - added support for `HEAD` method
 - fixed file routing
 - added support for handling specific file extensions in the form `ROUTE('FILE *.php', ...)`
+- improved parsing `<links>` in the markdown parser
 
 ========================
 0.0.13
