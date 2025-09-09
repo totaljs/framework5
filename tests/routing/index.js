@@ -719,5 +719,39 @@ ON('ready', function () {
 		
 	});
 
+	Test.push('File routing', function (next) {
+		let arr = [];
+
+		arr.push(function (resume) {
+			RESTBuilder.GET(url + '/random/sample.txt').exec(function (err, res, output) {
+				Test.print('Files - All subdir txt files', !err && output.response === 'testall' ? null : 'Expected response "testall" is ' + output.response);
+				resume();
+			});
+		});
+
+		arr.push(function (resume) {
+			RESTBuilder.GET(url + '/sample.txt').exec(function (err, res, output) {
+				Test.print('Files - All root txt files', !err && output.response === 'testall' ? null : 'Expected response "testall" is ' + output.response);
+				resume();
+			});
+		});
+	
+		arr.push(function (resume) {
+			RESTBuilder.GET(url + '/rootfile.md').exec(function (err, res, output) {
+				Test.print('Files - All root files', !err && output.response === 'testroot' ? null : 'Expected response "testroot" is ' + output.response);
+				resume();
+			});
+		});
+	
+		arr.push(function (resume) {
+			RESTBuilder.GET(url + '/downloads/test.html').exec(function (err, res, output) {
+				Test.print('Files - All download files', !err && output.response === 'testfolder' ? null : 'Expected response "testfolder" is ' + output.response);
+				resume();
+			});
+		});
+
+		arr.async(next);
+	});
+
 	setTimeout(Test.run, 1000);
 });
