@@ -25,7 +25,6 @@ const REG_REPLACEARR = /\[\]/g;
 const REG_EMPTYBUFFER = /\0|%00|\\u0000/g;
 const REG_EMPTYBUFFER_TEST = /\0|%00|\\u0000/;
 const REG_GUID = (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-const REG_JPG = /jfif|exif/;
 const REG_WEBP = /jfif|webp|exif/;
 const REG_SVG = /xml|svg/i;
 // const REG_DOUBLESLASH = /\/{2}|\.{2,}|\.{1,}\/|/g;
@@ -5447,7 +5446,7 @@ MultipartParser.prototype.parse_head = function() {
 						break;
 					case 'image/jpeg':
 					case 'image/jpg':
-						self.current.header = REG_JPG;
+						self.current.header = 'jpeg';
 						self.current.measure = 'measureJPG';
 						break;
 					case 'image/png':
@@ -5538,6 +5537,8 @@ MultipartParser.prototype.parse_meta_check = function() {
 		if (self.current.header === 'office') {
 			var hex = self.buffer.toString('hex', 0, 3);
 			isinvalid = hex !== 'd0cf11' && hex !== '504b03';
+		} else if (self.current.header === 'jpeg') {
+			isinvalid = self.buffer.toString('hex', 0, 2) !== 'ffd8';
 		} else {
 			var check = '';
 			for (var i = 0; i < 30; i++) {
