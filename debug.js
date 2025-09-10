@@ -71,7 +71,7 @@ function runwatching() {
 
 	const FILENAME = F.TUtils.getName(process.argv[1] || 'index.js');
 	const VERSION = F.version_header;
-	const REG_FILES = /(config|bundles\.debug|\.js|\.ts|\.flow|\.py|\.resource)+$/i;
+	const REG_FILES = /(config|version|bundles\.debug|\.js|\.ts|\.flow|\.py|\.resource)+$/i;
 	const REG_PUBLIC = /\/public\//i;
 	const REG_INDEX = new RegExp(FILENAME.replace(/\.js$/, '') + '_.*?\\.js$');
 	const REG_EXTENSION = /\.(js|ts|py|resource|package|bundle|build|flow|url|html)$/i;

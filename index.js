@@ -792,6 +792,16 @@ F.load = async function(types, callback, clear = true) {
 		config && F.loadconfig(config);
 	}
 
+	if (!types.length || types.includes('version')) {
+		// It loads only the first line and converts it to a number.
+		let version = await read(F.path.root('version'));
+		if (version) {
+			version = version.split('\n')[0];
+			if (version)
+				F.config.version = MAIN.version = version.parseFloat();
+		}
+	}
+
 	if (!types.length || types.includes('resources')) {
 		let resources = await list(F.path.root('resources'), 'resource');
 		for (let resource of resources)

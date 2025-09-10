@@ -15,6 +15,7 @@
 - added support for handling specific file extensions in the form `ROUTE('FILE *.php', ...)`
 - improved parsing `<links>` in the markdown parser
 - fixed a check of the file body for JPEG files during the upload process
+- added `/version` file that can contain a version
 
 ========================
 0.0.13
