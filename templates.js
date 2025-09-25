@@ -117,7 +117,7 @@ exports.render = function(body, model, $) {
 
 function parse(body, $) {
 
-	if ($ && $.language)
+	if ($ && $.language != null)
 		body = F.translate($.language, body);
 
 	var helpers = {};

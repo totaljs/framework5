@@ -16,6 +16,7 @@
 - improved parsing `<links>` in the markdown parser
 - fixed a check of the file body for JPEG files during the upload process
 - added `/version` file that can contain a version
+- fixed language in the `TEMPLATE`
 
 ========================
 0.0.13
