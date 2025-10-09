@@ -591,7 +591,6 @@ function check_object(meta, error, value, response, stop, definitions, path, par
 						count++;
 					}
 				} else {
-
 					// check ref
 					if (prop.$ref) {
 						var ref = typeof(prop.$ref) === 'object' ? prop.$ref : readdef(prop.$ref, definitions);
@@ -599,11 +598,12 @@ function check_object(meta, error, value, response, stop, definitions, path, par
 							var newerror = new F.ErrorBuilder();
 							tmp = transform(ref, newerror, val, false, currentpath, partial);
 							if (newerror.items.length) {
-								for (var err of newerror.items) {
+								for (var err of newerror.items)
 									error.push2(err.name, err.path);
-								}
-							} else
+							} else {
+								count++;
 								response[key] = tmp;
+							}
 							continue;
 						} else
 							continue;
