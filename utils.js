@@ -4,8 +4,8 @@
 
 'use strict';
 
-const KeepAlive = new F.Http.Agent({ keepAlive: true, timeout: 120000 });
-const KeepAliveHttps = new F.Https.Agent({ keepAlive: true, timeout: 120000 });
+const KeepAlive = new F.Http.Agent({ keepAlive: true });
+const KeepAliveHttps = new F.Https.Agent({ keepAlive: true });
 
 // Flags
 const COMPRESS = { gzip: 1, deflate: 1 };
@@ -739,9 +739,9 @@ function _request(opt, callback) {
 		if (uri.protocol === 'https:') {
 			if (!uri.port)
 				uri.port = 443;
-			uri.agent = KeepAliveHttps;
+			uri.agent = typeof(options.keepalive) === 'boolean' ? KeepAliveHttps : options.keepalive instanceof F.Https.Agent ? options.keepalive : new F.Https.Agent(options.keepalive);
 		} else
-			uri.agent = KeepAlive;
+			uri.agent = typeof(options.keepalive) === 'boolean' ? KeepAlive : options.keepalive instanceof F.Http.Agent ? options.keepalive : new F.Http.Agent(options.keepalive);
 	} else
 		uri.agent = null;
 

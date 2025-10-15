@@ -894,8 +894,8 @@ function streamresponse(builder, callback) {
 	builder.exec(callback);
 }
 
-RESTP.keepalive = function() {
-	this.options.keepalive = true;
+RESTP.keepalive = function(val) {
+	this.options.keepalive = val == null ? true : val;
 	return this;
 };
 
