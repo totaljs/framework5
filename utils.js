@@ -2748,8 +2748,10 @@ SP.parseCSV = function(delimiter) {
 			}
 
 			if (c === delimiter) {
-				current = String.fromCharCode(97 + index);
-				index++;
+				if (tmp && tmp[current]) {
+					current = String.fromCharCode(97 + index);
+					index++;
+				}
 				continue;
 			}
 		}
