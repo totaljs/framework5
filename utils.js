@@ -2729,7 +2729,7 @@ SP.parseCSV = function(delimiter) {
 
 	var t = this;
 	var data = [];
-	var columns = [];
+	var keys = [];
 	var rows = t.split(REG_NEWLINE);
 
 	for (var i = 0; i < rows.length; i++) {
@@ -2738,9 +2738,10 @@ SP.parseCSV = function(delimiter) {
 		var cols = rows[i].split(delimiter);
 
 		for (var j = 0; j < cols.length; j++) {
-			var key = i === 0 ? generateColumnKey(j) : columns[j];
-			columns.push(key);
-			tmp[key] = cols[j];
+			if (i === 0) {
+				keys.push(generateColumnKey(j));
+			}
+			tmp[keys[j]] = cols[j];
 		}
 
 		data.push(tmp);
