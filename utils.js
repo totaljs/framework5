@@ -52,6 +52,7 @@ const REG_BASE = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/;
 const REG_BASE2 = /^|,([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/;
 const REG_NUMBER = /^[0-9,.]$/;
 const REG_WIN = /\\/g;
+const REG_NEWLINE = /[\r\n]+/;
 
 const NEWLINE = '\r\n';
 const DIACRITICSMAP = {};
@@ -2726,58 +2727,36 @@ SP.parseCSV = function(delimiter) {
 	if (!delimiter)
 		delimiter = ',';
 
-	var delimiterstring = '"';
 	var t = this;
-	var scope;
-	var tmp = {};
-	var index = 1;
 	var data = [];
-	var current = 'a';
+	var columns = [];
+	var rows = t.split(REG_NEWLINE);
 
-	for (var i = 0; i < t.length; i++) {
-		var c = t[i];
+	for (var i = 0; i < rows.length; i++) {
 
-		if (!scope) {
+		var tmp = {};
+		var cols = rows[i].split(delimiter);
 
-			if (c === '\n' || c === '\r') {
-				tmp && data.push(tmp);
-				index = 1;
-				current = 'a';
-				tmp = null;
-				continue;
-			}
-
-			if (c === delimiter) {
-				if (tmp && tmp[current]) {
-					current = String.fromCharCode(97 + index);
-					index++;
-				}
-				continue;
-			}
+		for (var j = 0; j < cols.length; j++) {
+			var key = i === 0 ? generateColumnKey(j) : columns[j];
+			columns.push(key);
+			tmp[key] = cols[j];
 		}
 
-		if (c === delimiterstring) {
-			// Check escaped quotes
-			if (scope && t[i + 1] === delimiterstring) {
-				i++;
-			} else {
-				scope = c === scope ? '' : c;
-				continue;
-			}
-		}
-
-		if (!tmp)
-			tmp = {};
-
-		if (tmp[current])
-			tmp[current] += c;
-		else
-			tmp[current] = c;
+		data.push(tmp);
 	}
 
-	tmp && data.push(tmp);
 	return data;
 };
+
+function generateColumnKey(index) {
+	var name = '';
+	while (index >= 0) {
+		name = String.fromCharCode(97 + (index % 26)) + name;
+		index = Math.floor(index / 26) - 1;
+	}
+	return name;
+}
 
 SP.parseTerminal = function(fields, fn, skip, take) {
 
