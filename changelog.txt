@@ -6,6 +6,7 @@
 - improved `keepalive` option in the `REQUEST()` method (it can contain HttpAgent or options for it)
 - updated `RESTBuilder.keepalive()` method by adding `val` argument
 - fixed column indexer in the CSV parser
+- fixed proxy timeout
 
 ========================
 0.0.14

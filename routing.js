@@ -1000,11 +1000,11 @@ function proxycreate(proxy, ctrl) {
 
 	request.$controller = ctrl;
 	request.$proxy = proxy;
-	request.$timeout = proxy.timeout || F.config.$proxytimeout;
+	request.$timeout = ctrl.timeout = proxy.$timeout || F.config.$proxytimeout;
 	request.iswebsocket = !!ctrl.iswebsocket;
 	request.$destroy = proxyerror;
 
-	if (!ctrl.iswebsocket && proxy.timeout) {
+	if (!ctrl.iswebsocket && request.$timeout) {
 		F.temporary.pending.push(ctrl);
 		F.TUtils.onfinished(ctrl.res, function() {
 			request.$destroyed = true;
