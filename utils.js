@@ -4043,6 +4043,8 @@ SP.slug = function(max) {
 	if (builder.length > 1) {
 		length = builder.length - 1;
 		return builder[length] === '-' ? builder.substring(0, length) : builder;
+	} else if (builder.length === 1) {
+		return builder;
 	} else if (!length)
 		return '';
 
