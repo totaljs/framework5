@@ -7,6 +7,7 @@
 - updated `RESTBuilder.keepalive()` method by adding `val` argument
 - fixed column indexer in the CSV parser
 - fixed proxy timeout
+- fixed string slug method
 
 ========================
 0.0.14
