@@ -4040,11 +4040,9 @@ SP.slug = function(max) {
 			builder += c;
 	}
 
-	if (builder.length > 1) {
+	if (builder.length > 0) {
 		length = builder.length - 1;
 		return builder[length] === '-' ? builder.substring(0, length) : builder;
-	} else if (builder.length === 1) {
-		return builder;
 	} else if (!length)
 		return '';
 
