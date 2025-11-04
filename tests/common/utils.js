@@ -23,6 +23,26 @@ Test.push('String.prototypes', function(next) {
 	response = value.trim();
 	Test.print('String.trim() ', response != correct ? 'Failed to trim' : null);
 
+	value = ' Total.js framework v5 ';
+	correct = 'total-js-framework-v5';
+	response = value.slug();
+	Test.print('String.slug() - Test 1', response != correct ? 'Slug failed' : null);
+
+	value = 'T';
+	correct = 't';
+	response = value.slug();
+	Test.print('String.slug() - Test 2', response != correct ? 'Slug failed' : null);
+
+	value = 'TT';
+	correct = 'tt';
+	response = value.slug();
+	Test.print('String.slug() - Test 3', response != correct ? 'Slug failed' : null);
+
+	value = 'TTT';
+	correct = 'ttt';
+	response = value.slug();
+	Test.print('String.slug() - Test 4', response != correct ? 'Slug failed' : null);
+
 	value = 'Hello';
 	correct = 'Hello';
 	response = value.parseHTML();
