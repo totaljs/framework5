@@ -857,7 +857,13 @@ View.prototype.import = function() {
 
 				if (m.includes('+')) {
 					let iscss = REG_CHECKCSS.test(m);
-					let path = '/' + F.TUtils.random_string(10).toLowerCase() + '-min.' + (iscss ? 'css' : 'js');
+					let key2 = 'file_' + HASH(m instanceof Array ? m.join('+') : m).toString(36);
+					let filename = F.temporary.merged[key2];
+					if (!filename) {
+						filename = F.TUtils.random_string(10).toLowerCase();
+						F.temporary.merged[key2] = filename;
+					}
+					let path = '/' + filename + '-min.' + (iscss ? 'css' : 'js');
 					F.merge(path, m);
 					if (iscss)
 						tmp = '<link rel="stylesheet" href="' + F.virtualpath(path) + version + '" />';

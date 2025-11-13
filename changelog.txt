@@ -8,6 +8,7 @@
 - fixed column indexer in the CSV parser
 - fixed proxy timeout
 - fixed string slug method
+- fixed an issue with generating file names when merging files directly in the view engine
 
 ========================
 0.0.14
