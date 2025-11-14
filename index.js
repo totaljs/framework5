@@ -1538,7 +1538,8 @@ F.merge = function(url) {
 	if (url[0] !== '/')
 		url = '/' + url;
 
-	url = F.virtualpath(url.toLowerCase());
+	// url = F.virtualpath(url.toLowerCase());
+	url = F.virtualpath(url);
 
 	var ext = F.TUtils.getExtension(url);
 	var key = url.substring(1).replace(/\//g, '-').replace(/\.(js|html|css)$/, '') + '-min.' + ext;
