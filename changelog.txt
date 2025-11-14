@@ -11,6 +11,7 @@
 - fixed an issue with generating file names when merging files directly in the view engine
 - fixed handling of case-sensitive file names
 - fixed unexpected errors with the stream when handling static files
+- added support for `.webmanifest` file extension
 
 ========================
 0.0.14

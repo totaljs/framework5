@@ -334,6 +334,7 @@ var CONTENTTYPES = {
 	m4a: 'audio/mp4a-latm',
 	m4v: 'video/x-m4v',
 	manifest: 'text/cache-manifest',
+	webmanifest: 'application/manifest+json',
 	md: 'text/x-markdown',
 	mid: 'audio/midi',
 	midi: 'audio/midi',

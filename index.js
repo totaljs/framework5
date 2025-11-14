@@ -359,7 +359,7 @@ function unlink(arr, callback) {
 	CONF.$httpmaxsize = 256; // kB
 	CONF.$httprangebuffer = 5120; // 5 MB
 	CONF.$httptimeout = 5; // 5 seconds
-	CONF.$httpfiles = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true, xsd: true, xsl: true, xslt: true, ipynb: true, ijsnb: true, log: true };
+	CONF.$httpfiles = { flac: true, jpg: true, jpeg: true, png: true, gif: true, ico: true, wasm: true, js: true, mjs: true, css: true, txt: true, xml: true, woff: true, woff2: true, otf: true, ttf: true, eot: true, svg: true, zip: true, rar: true, pdf: true, docx: true, xlsx: true, doc: true, xls: true, html: true, htm: true, appcache: true, manifest: true, map: true, ogv: true, ogg: true, mp4: true, mp3: true, webp: true, webm: true, swf: true, package: true, json: true, ui: true, md: true, m4v: true, jsx: true, heif: true, heic: true, ics: true, ts: true, m3u8: true, wav: true, xsd: true, xsl: true, xslt: true, ipynb: true, ijsnb: true, log: true, webmanifest: true };
 	CONF.$httpchecktypes = true; // for multipart data only
 	CONF.$httpmaxage = 60; // in seconds
 	CONF.$httpmaxkeys = 33;
