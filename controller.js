@@ -1659,6 +1659,14 @@ function send_file(ctrl, path, ext) {
 				ctrl.res.end();
 			} else {
 				reader = F.Fs.createReadStream(path, { start: beg, end: end });
+
+				// Unexpected error
+				reader.on('error', function(err) {
+					delete F.temporary.tmp[ctrl.uri.cache];
+					ctrl.destroyed = true;
+					ctrl.req.destroy();
+				});
+
 				reader.pipe(ctrl.res);
 				F.stats.response.streaming++;
 			}
@@ -1675,10 +1683,19 @@ function send_file(ctrl, path, ext) {
 			if (ctrl.method === 'HEAD') {
 				ctrl.res.end();
 			} else {
+
+				// Unexpected error
+				reader.on('error', function(err) {
+					delete F.temporary.tmp[ctrl.uri.cache];
+					ctrl.destroyed = true;
+					ctrl.req.destroy();
+				});
+
 				if (compress)
 					reader.pipe(F.Zlib.createGzip(GZIP_FILE)).pipe(ctrl.res);
 				else
 					reader.pipe(ctrl.res);
+
 				F.stats.response.file++;
 			}
 		}
