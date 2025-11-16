@@ -30,15 +30,15 @@ function Message(subject, body) {
 	self.subject = subject || '';
 	self.body = body || '';
 	self.type = 'html';
-	self.files;
+	// self.files;
 	self.email_to = [];
-	self.email_reply;
-	self.email_cc;
-	self.email_bcc;
+	// self.email_reply;
+	// self.email_cc;
+	// self.email_bcc;
 	self.email_from = '';
 	self.closed = false;
 	self.tls = false;
-	self.$callback;
+	// self.$callback;
 
 	// t.headers;
 	// t.$unsubscribe;
@@ -121,7 +121,7 @@ Message.prototype.attachment = function(filename, name, contentid) {
 
 	if (name) {
 		ext = F.TUtils.getExtension(name);
-		type = F.TUtils.contentTypes[ext];
+		type = F.TUtils.contentTypes[ext] || 'application/octet-stream';
 	}
 
 	var obj = {};
@@ -135,10 +135,10 @@ Message.prototype.attachment = function(filename, name, contentid) {
 		obj.contentid = contentid;
 	}
 
-	if (!self.attachments)
-		self.attachments = [];
+	if (!self.files)
+		self.files = [];
 
-	self.attachments.push(obj);
+	self.files.push(obj);
 	return self;
 };
 
@@ -165,10 +165,10 @@ Message.prototype.attachmentfs = function(storage, id, name, contentid) {
 		obj.contentid = contentid;
 	}
 
-	if (!self.attachments)
-		self.attachments = [];
+	if (!self.files)
+		self.files = [];
 
-	self.attachments.push(obj);
+	self.files.push(obj);
 	return self;
 };
 
@@ -344,9 +344,14 @@ Mailer.$writeattachment = function(obj) {
 			}
 		});
 	} else {
-		F.stats.performance.open++;
-		stream = F.Fs.createReadStream(attachment.filename, ATTACHMENT);
-		writeattachemnt_stream(attachment, obj, stream);
+
+		if (attachment.filename instanceof Buffer) {
+			writeattachemnt_stream(attachment, obj, attachment.filename);
+		} else {
+			F.stats.performance.open++;
+			stream = F.Fs.createReadStream(attachment.filename, ATTACHMENT);
+			writeattachemnt_stream(attachment, obj, stream);
+		}
 	}
 
 	return this;
@@ -371,15 +376,21 @@ function writeattachemnt_stream(attachment, obj, stream) {
 	message.push('Content-Type: ' + attachment.type + ';' + (isCalendar ? ' charset="utf-8"; method=REQUEST' : ''));
 	message.push('Content-Transfer-Encoding: base64');
 	message.push(CRLF);
+
 	Mailer.$writeline(obj, message.join(CRLF));
 
-	stream.$mailerdata = obj;
-	stream.on('data', writeattachmentbytes);
-
-	F.cleanup(stream, function() {
+	if (stream instanceof Buffer) {
+		writeattachmentbytesinline(obj, stream);
 		Mailer.$writeline(obj, CRLF);
 		Mailer.$writeattachment(obj);
-	});
+	} else {
+		stream.$mailerdata = obj;
+		stream.on('data', writeattachmentbytes);
+		F.cleanup(stream, function() {
+			Mailer.$writeline(obj, CRLF);
+			Mailer.$writeattachment(obj);
+		});
+	}
 }
 
 function writeattachmentbytes(chunk) {
@@ -396,6 +407,24 @@ function writeattachmentbytes(chunk) {
 			count = length;
 
 		Mailer.$writeline(this.$mailerdata, chunk.slice(beg, count).toString('base64'));
+		beg = count;
+	}
+}
+
+function writeattachmentbytesinline(mailerdata, chunk) {
+
+	var length = chunk.length;
+	var count = 0;
+	var beg = 0;
+
+	while (count < length) {
+
+		count += 68;
+
+		if (count > length)
+			count = length;
+
+		Mailer.$writeline(mailerdata, chunk.slice(beg, count).toString('base64'));
 		beg = count;
 	}
 }
@@ -447,7 +476,7 @@ Mailer.send = function(opt, messages, callback) {
 	obj.callback = callback;
 	obj.closed = false;
 	obj.message = null;
-	obj.attachments = null;
+	obj.files = null;
 	obj.count = 0;
 	obj.socket;
 	obj.tls = false;

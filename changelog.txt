@@ -12,6 +12,7 @@
 - fixed handling of case-sensitive file names
 - fixed unexpected errors with the stream when handling static files
 - added support for `.webmanifest` file extension
+- fixed sending mail attachments
 
 ========================
 0.0.14

@@ -388,7 +388,8 @@ var CONTENTTYPES = {
 	xsd: 'application/xml',
 	xslt: 'application/xslt+xml',
 	zip: 'application/zip',
-	'7zip': 'application/x-7z-compressed'
+	'7zip': 'application/x-7z-compressed',
+	yaml: 'application/x-yaml'
 };
 
 exports.diffarr = function(prop, db, form) {
