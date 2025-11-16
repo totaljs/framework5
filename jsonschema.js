@@ -513,9 +513,8 @@ function check_array(meta, error, value, stop, definitions, path, partial) {
 function check_object(meta, error, value, response, stop, definitions, path, partial) {
 
 	if (!value || typeof(value) !== 'object') {
-		if (meta.$$REQUIRED) {
+		if (meta.$$REQUIRED)
 			error.push(meta.$$ID, path);
-		}
 		return;
 	}
 
@@ -583,7 +582,6 @@ function check_object(meta, error, value, response, stop, definitions, path, par
 				break;
 
 			case 'object':
-
 				if (prop.properties) {
 					tmp = check_object(prop, error, val, null, null, definitions, currentpath, partial);
 					if (tmp != null) {
@@ -690,7 +688,8 @@ function transform(meta, error, value, stop, path, partial) {
 	if (stop && error.length)
 		return;
 
-	return output || {};
+	// return output || {}; // It always creates an empty object, which is not expected.
+	return output;
 }
 
 function register(schema) {

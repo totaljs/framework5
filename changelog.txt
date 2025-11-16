@@ -13,6 +13,7 @@
 - fixed unexpected errors with the stream when handling static files
 - added support for `.webmanifest` file extension
 - fixed sending mail attachments
+- fixed creating an empty object according to the nested JSON schema
 
 ========================
 0.0.14
