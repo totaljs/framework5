@@ -73,7 +73,7 @@ const REG_TIME = /am|pm/i;
 const REG_XMLKEY = /\[|\]|:|\.|_/g;
 const REG_HEADERPARSER = /(name|filename)=".*?"|content-type:\s[a-z0-9-./+]+/ig;
 const HEADEREND = Buffer.from('\r\n\r\n', 'ascii');
-const JSCHEMAS_NULLABLE = { json: 1, base64: 1, guid: 1, datauri: 1, uid: 1, string2: 1 };
+const JSCHEMAS_NULLABLE = { json: 1, base64: 1, guid: 1, datauri: 1, datauri2: 2, uid: 1, string2: 1 };
 
 const ARR_UA_OS = ['android', 'windows', 'ios', 'iphone', 'ubuntu', 'fedora', 'linux', 'mac os'];
 const ARR_UA_BROWSER = ['xbox', 'playstation', 'nintendo', 'appletv', 'fxios', 'opera', 'edge', 'vivaldi', 'chrome', 'firefox', 'kindle', 'safari'];
@@ -6041,6 +6041,7 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 			case 'icon':
 			case 'base64':
 			case 'datauri':
+			case 'datauri2':
 			case 'safestring':
 			case 'search':
 			case 'text':
