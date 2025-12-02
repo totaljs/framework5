@@ -934,23 +934,23 @@ FP.onreconfigure = function(instance, init) {
 FP.ondashboard = function(a, b, c, d) {
 	// Flow uses only the "a {Object}" argument
 	// this == instance
-	this.main.$events.dashboard && this.main.emit('dashboard', this, a, b, c, d);
+	this.main.$events && this.main.$events.dashboard && this.main.emit('dashboard', this, a, b, c, d);
 };
 
 FP.onstatus = function(a, b, c, d) {
 	// Flow uses only the "a {Object}" argument
 	// this == instance
-	this.main.$events.status && this.main.emit('status', this, a, b, c, d);
+	this.main.$events && this.main.$events.status && this.main.emit('status', this, a, b, c, d);
 };
 
 FP.onerror = function(a, b, c, d) {
 	// this == instance
-	this.main.$events.error && this.main.emit('error', this, a, b, c, d);
+	this.main.$events && this.main.$events.error && this.main.emit('error', this, a, b, c, d);
 };
 
 FP.ondebug = function(a, b, c, d) {
 	// this == instance
-	this.main.$events.debug && this.main.emit('debug', this, a, b, c, d);
+	this.main.$events && this.main.$events.debug && this.main.emit('debug', this, a, b, c, d);
 };
 
 function newlogger(callback) {
