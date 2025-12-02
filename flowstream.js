@@ -1,6 +1,6 @@
 // Total.js FlowStream
 // The MIT License
-// Copyright 2021-2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2021-2025 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 

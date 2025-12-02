@@ -1,6 +1,6 @@
 // Total.js Flow module
 // The MIT License
-// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2023-2025 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -14,17 +14,18 @@ FS.version = 40;
 FS.db = {};
 FS.worker = false;
 FS.instances = {};
+
 FS.onerror = function(err, source, id, componentid, stack) {
 
 	var flow = FS.db[this.id];
 	var empty = '---';
 	var output = '';
 
-	output += '|------------- FlowStreamError "' + id + '": ' + new Date().format('yyyy-MM-dd HH:mm:ss') + '\n';
+	output += '|------------- FlowStreamError "' + this.id + '": ' + new Date().format('yyyy-MM-dd HH:mm:ss') + '\n';
 	output += '| FlowStream: ' + flow.name + '\n';
 	output += '| Source: ' + (source || empty) + '\n';
-	output += '| Instance ID: ' + (id || empty) + '\n';
 	output += '| Component ID: ' + (componentid || empty) + '\n';
+	output += '| Instance ID: ' + (id || empty) + '\n';
 	output += '| ' + err.toString();
 
 	if (stack) {

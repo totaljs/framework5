@@ -1043,6 +1043,7 @@ function init_current(meta, callback, nested) {
 	};
 
 	if (!nested && Parent) {
+
 		Parent.on('message', function(msg) {
 
 			var id;
@@ -1889,8 +1890,12 @@ exports.client = function(flow, socket) {
 
 function MAKEFLOWSTREAM(meta) {
 
-	var flow = F.TFlowStream.create(meta.id, function(err, type, instance) {
-		this.proxy.error(err, type, instance);
+	var flow = F.TFlowStream.create(meta.id, function(err, type, componentid) {
+		if (isFLOWSTREAMWORKER) {
+			Parent.postMessage({ TYPE: 'stream/error', error: err.toString(), stack: err.stack, source: type, component: componentid });
+		} else {
+			this.$instance.onerror(err, type, null, componentid, err.stack);
+		}
 	});
 
 	var saveid = null;
@@ -2413,18 +2418,6 @@ function MAKEFLOWSTREAM(meta) {
 	if (meta.paused)
 		flow.pause(true);
 
-	flow.load(meta, function() {
-
-		if (flow.sources) {
-			Object.keys(flow.sources).wait(function(key, next) {
-				TMS.connect(flow, key, next);
-			});
-		}
-
-		flow.ready = true;
-		setImmediate(() => flow.proxy.done());
-	}, ASFILES);
-
 	flow.components = function(prepare_export) {
 
 		var self = this;
@@ -2765,6 +2758,20 @@ function MAKEFLOWSTREAM(meta) {
 			}
 		}
 	};
+
+	setImmediate(function() {
+		flow.load(meta, function() {
+
+			if (flow.sources) {
+				Object.keys(flow.sources).wait(function(key, next) {
+					TMS.connect(flow, key, next);
+				});
+			}
+
+			flow.ready = true;
+			setImmediate(() => flow.proxy.done());
+		}, ASFILES);
+	});
 
 	return flow;
 }
@@ -3355,7 +3362,7 @@ function makeunixsocket(id) {
 
 if (process.argv[1].endsWith('flow-flowstream.js')) {
 
-	isFLOWSTREAMWORKER = W.workerData || process.argv.includes('--fork');
+	isFLOWSTREAMWORKER = W.workerData || process.argv.includes('--fork') ? true : false;
 
 	if (process.argv.includes('--insecure')) {
 		process.env.NODE_TLS_REJECT_UNAUTHORIZED = '1';

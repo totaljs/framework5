@@ -15,6 +15,8 @@
 - fixed sending mail attachments
 - fixed creating an empty object according to the nested JSON schema
 - added a new JSON Schema type `DataURI2` that keeps a value as text
+- fixed handling unexpected errors in the FlowStream
+- improved error handling in the Flow engine
 
 ========================
 0.0.14
