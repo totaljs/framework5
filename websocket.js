@@ -1,6 +1,6 @@
 // Total.js WebSocket
 // The MIT License
-// Copyright 2016-2023 (c) Peter Širka <petersirka@gmail.com> & Jozef Gula <gula.jozef@gmail.com>
+// Copyright 2016-2025 (c) Peter Širka <petersirka@gmail.com> & Jozef Gula <gula.jozef@gmail.com>
 
 const SOCKET_RESPONSE = 'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {0}\r\n\r\n';
 const SOCKET_RESPONSE_COMPRESS = 'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: {0}\r\nSec-WebSocket-Extensions: permessage-deflate\r\n\r\n';
@@ -169,7 +169,7 @@ function websocket_ondata(chunk) {
 }
 
 function websocket_onerror(e) {
-	this.destroy && this.destroy();
+	this.destroy &&  this.destroy();
 	this.$controller && this.$controller.onerror(e);
 }
 
@@ -1348,7 +1348,7 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 WebSocketClient.prototype.ping = function(timeout) {
 	var self = this;
 	if (!self.isclosed && !self.timeout) {
-		self.timeout = setTimeout(wsclient_timeout, timeout || 3000);
+		self.timeout = setTimeout(wsclient_timeout, timeout || 3000, self);
 		self.socket.write(getWebSocketFrame(0, 'PING', 0x09, false, self.options.masking));
 		self.$ping = Date.now();
 	}
@@ -1651,6 +1651,9 @@ WebSocketClient.prototype.onerror = function(err) {
 		self.isclosed = true;
 		self.onclose();
 	}
+
+	if (self.options.reconnect)
+		wsclient_reconnect_timer(self);
 };
 
 WebSocketClient.prototype.onclose = function() {
@@ -1913,7 +1916,7 @@ WebSocketClient.prototype.api = function(schema, data, callback, timeout) {
 
 function wsclient_timeout(self) {
 	self.timeout = null;
-	self.onerror('Timeout');
+	self.onerror(new Error('Timeout'));
 }
 
 function wsclient_close() {

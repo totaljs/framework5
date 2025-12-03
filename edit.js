@@ -1,6 +1,6 @@
 // Total.js Edit
 // The MIT License
-// Copyright 2020-2024 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2020-2025 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -20,6 +20,7 @@ exports.init = function(url, dir) {
 	DIRECTORY = dir || F.directory;
 
 	var client = F.websocketclient();
+	var isopen = false;
 
 	client.options.reconnect = 10000;
 	client.options.reconnectserver = true;
@@ -62,12 +63,14 @@ exports.init = function(url, dir) {
 	});
 
 	client.on('open', function() {
+		isopen = true;
 		client.send({ TYPE: 'init', version: VERSION });
 	});
 
 	client.on('close', function(e) {
 
 		initilaized = false;
+		isopen = false;
 
 		if (e === 4004) {
 			console.log(HEADER + ': 404 project not found');
@@ -78,7 +81,8 @@ exports.init = function(url, dir) {
 
 		if (e === 4009) {
 			console.log(HEADER + ': 409 project is already open');
-			client.destroy();
+			// Tries again in 10 second interval
+			// client.destroy();
 			return;
 		}
 
@@ -89,6 +93,13 @@ exports.init = function(url, dir) {
 	});
 
 	client.connect(url.replace(/^http/, 'ws'));
+
+	setInterval(function() {
+
+		if (client && isopen)
+			client.ping();
+
+	}, 30000);
 
 };
 

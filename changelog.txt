@@ -17,6 +17,8 @@
 - added a new JSON Schema type `DataURI2` that keeps a value as text
 - fixed handling unexpected errors in the FlowStream
 - improved error handling in the Flow engine
+- fixed network connection problems in remote editing
+- fixed throwing of timeout error in WebSocketClient
 
 ========================
 0.0.14
