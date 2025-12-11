@@ -2,6 +2,8 @@
 0.0.16
 ========================
 
+- improved loading plugins
+- framework reads a `/config` file in `plugins`
 
 ========================
 0.0.15

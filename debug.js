@@ -75,6 +75,7 @@ function runwatching() {
 	const REG_PUBLIC = /\/public\//i;
 	const REG_INDEX = new RegExp(FILENAME.replace(/\.js$/, '') + '_.*?\\.js$');
 	const REG_EXTENSION = /\.(js|ts|py|resource|package|bundle|build|flow|url|html)$/i;
+	const REG_CONFIG = /\/config$/
 	const REG_RELOAD = /\.(js|ts|py|css|html|htm|jpg|png|gif|ico|svg|webp|resource)$/i;
 	const isRELOAD = !!options.livereload;
 	const SPEED = isRELOAD ? 1000 : 1500;
@@ -210,7 +211,7 @@ function runwatching() {
 			if (isdir)
 				return true;
 
-			if (!REG_PUBLIC.test(path) && REG_EXTENSION.test(path))
+			if (!REG_PUBLIC.test(path) && (REG_CONFIG.test(path) || REG_EXTENSION.test(path)))
 				return true;
 
 			return false;

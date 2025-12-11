@@ -787,8 +787,10 @@ F.load = async function(types, callback, clear = true) {
 		env && F.loadenv(env);
 	}
 
+	let config = null;
+
 	if (!types.length || types.includes('config')) {
-		let config = await read(F.path.root('config'));
+		config = await read(F.path.root('config'));
 		config && F.loadconfig(config);
 	}
 
@@ -823,8 +825,8 @@ F.load = async function(types, callback, clear = true) {
 	}
 
 	let loader = ['extensions', 'modules', 'actions', 'schemas', 'models', 'definitions', 'controllers', 'middleware', 'sources', 'scripts', 'transforms'];
-	var files = [];
-	var tmp;
+	let files = [];
+	let tmp;
 
 	for (let type of loader) {
 		if (!types.length || types.includes(type)) {
@@ -835,7 +837,9 @@ F.load = async function(types, callback, clear = true) {
 	}
 
 	if (!types.length || types.includes('plugins')) {
-		var plugins = async () => new Promise(resolve => F.Fs.readdir(F.path.directory('plugins'), (err, response) => resolve(response || [])));
+
+		let plugins = async () => new Promise(resolve => F.Fs.readdir(F.path.directory('plugins'), (err, response) => resolve(response || [])));
+
 		tmp = await plugins();
 
 		for (let plugin of tmp) {
@@ -843,7 +847,17 @@ F.load = async function(types, callback, clear = true) {
 			if (plugin.includes('-bk') || plugin.includes('_bk') || plugin.toLowerCase().includes('ds_store'))
 				continue;
 
-			files.push({ id: F.TUtils.getName(plugin).replace(/\.js$/, ''), type: 'plugins', filename: F.path.directory('plugins', plugin + '/index.js') });
+			let id = F.TUtils.getName(plugin).replace(/\.js$/, '');
+			let filename = F.path.directory('plugins', plugin + '/index.js');
+
+			if (await PATH.exists(filename))
+				files.push({ id: id, type: 'plugins', filename: filename });
+			else
+				continue;
+
+			filename = F.path.directory('plugins', plugin + '/config');
+			if (await PATH.exists(filename))
+				files.push({ id: id, type: 'config', filename: filename });
 
 			let loader = ['extensions', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware', 'transforms'];
 			for (let type of loader) {
@@ -856,7 +870,7 @@ F.load = async function(types, callback, clear = true) {
 
 	files.sort(function(a) {
 
-		if (a.type === 'module')
+		if (a.type === 'module' || a.type === 'config')
 			return -1;
 
 		if (a.type === 'middleware')
@@ -868,8 +882,13 @@ F.load = async function(types, callback, clear = true) {
 	for (let file of files) {
 
 		let tmp = null;
-
+		
 		switch (file.type) {
+			case 'config':
+				config = await read(file.filename);
+				console.log(config);
+				config && F.loadconfig(config);
+				break;
 			case 'modules':
 				tmp = require(file.filename);
 
