@@ -382,9 +382,10 @@ ErrorBuilder.prototype.push = function(err, path, index) {
 	return self;
 };
 
-ErrorBuilder.prototype.push2 = function(name, path, index) {
+ErrorBuilder.prototype.push2 = function(name, path, index, error) {
 	let self = this;
-	self.items.push({ name: self.prefix + name, error: '@', path: path, index: index });
+
+	self.items.push({ name: self.prefix + name, error: error || '@', path: path, index: index });
 
 	if (self.$throw) {
 		let errors = self.output();
@@ -563,7 +564,12 @@ RESTP.insecure = function() {
 };
 
 RESTP.error = function(err) {
-	this.$errorhandler = err;
+	this.$errormessage = err;
+	return this;
+};
+
+RESTP.logerror = function() {
+	this.$loggerror = true;
 	return this;
 };
 
@@ -904,7 +910,7 @@ RESTP.exec = function(callback) {
 	if (!callback)
 		callback = NOOP;
 
-	var self = this;
+	let self = this;
 
 	if (self.operation) {
 
@@ -939,15 +945,15 @@ RESTP.exec = function(callback) {
 	self.$callback = callback;
 
 	if (restbuilderupgrades.length) {
-		for (var i = 0; i < restbuilderupgrades.length; i++)
+		for (let i = 0; i < restbuilderupgrades.length; i++)
 			restbuilderupgrades[i](self);
 	}
 
-	var key;
+	let key;
 
 	if (self.$expire && !self.$nocache) {
 		key = 'restbuilder' + ((self.options.url || '') + (self.options.socketpath || '') + (self.options.path || '') + (self.options.body || '')).hash(true);
-		var data = F.cache.read(key);
+		let data = F.cache.read(key);
 		if (data) {
 			data = data.value;
 			if (self.$resolve) {
@@ -1053,7 +1059,7 @@ function restbuilder_callback(err, response) {
 		if (val instanceof Array && val.length && val[0] && val[0].error)
 			err = ErrorBuilder.assign(val);
 		else
-			err = null;
+			err = (new ErrorBuilder()).push2(output.status, undefined, undefined, response.body);
 	}
 
 	if (!err && key)
@@ -1078,6 +1084,12 @@ function restbuilder_callback(err, response) {
 		else
 			val = jsresponse.response;
 	}
+
+	if (err && self.$loggerror)
+		F.error(new Error(response.body || err.toString()), 'RESTBuilder', self.options.method + ' ' + (self.options.url || self.options.path));
+
+	if (self.$errormessage && err)
+		err = self.$errormessage;
 
 	if (self.$resolve) {
 

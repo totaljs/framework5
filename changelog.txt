@@ -4,6 +4,8 @@
 
 - improved loading plugins
 - framework reads a `/config` file in `plugins`
+- added `RESTBuilder.?.logerror()` method for printing errors into the console
+- added `API.?.logerror()` method for printing errors into the console
 
 ========================
 0.0.15

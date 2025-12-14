@@ -140,6 +140,11 @@ APICallProto.error = APICallProto.err = function(err, reverse) {
 	return this;
 };
 
+APICallProto.logerror = function() {
+	this.$loggerror = true;
+	return this;
+};
+
 APICallProto.callback = APICallProto.pipe = function($) {
 	var t = this;
 	t.$callback = typeof($) === 'function' ? $ : $.callback();
@@ -160,6 +165,9 @@ APICallProto.evaluate = function(err, response) {
 		else if (response instanceof Array && !response.length)
 			err = t.$error;
 	}
+
+	if (t.$logerror)
+		F.error(err, 'API: ' + t.options.name + ' --> ' + t.options.schema);
 
 	if (err) {
 		t.$callback_fail && t.$callback_fail(err);
