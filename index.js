@@ -2800,7 +2800,7 @@ F.loadstats = function() {
 
 	F.usage = function() {
 
-		var memory = process.memoryUsage();
+		let memory = process.memoryUsage();
 		stats.date = NOW;
 
 		if (stats.id != F.clusterid)
@@ -2831,8 +2831,8 @@ F.loadstats = function() {
 		stats.download = F.stats.request.size.floor(3);
 		stats.upload = F.stats.response.size.floor(3);
 
-		var err = F.errors[F.errors.length - 1];
-		var timeout = F.timeouts[F.timeouts.length - 1];
+		let err = F.errors[F.errors.length - 1];
+		let timeout = F.timeouts[F.timeouts.length - 1];
 
 		stats.lasterror = err ? (err.date.toJSON() + ' '  + (err.name ? (err.name + ' - ') : '') + err.error) : undefined;
 		stats.lasttimeout = timeout;
@@ -2881,7 +2881,7 @@ process.on('unhandledRejection', function(e) {
 });
 
 process.on('uncaughtException', function(e) {
-	var err = e + '';
+	let err = e + '';
 	if (err.indexOf('listen EADDRINUSE') !== -1) {
 		console.log('\nThe IP address and the PORT is already in use.\nYou must change the PORT\'s number or IP address.\n');
 		process.send && process.send('total:eaddrinuse');
