@@ -7,6 +7,7 @@
 - added `RESTBuilder.?.logerror()` method for printing errors into the console
 - added `API.?.logerror()` method for printing errors into the console
 - fixed handling of unexpected problems in the Flow with the main process becoming disconnected
+- fixed `uptime` value in the framework stats
 
 ========================
 0.0.15

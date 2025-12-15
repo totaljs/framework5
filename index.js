@@ -2827,7 +2827,7 @@ F.loadstats = function() {
 		stats.errors = F.stats.error;
 		stats.timeouts = F.stats.response.timeout;
 		stats.online = F.stats.performance.online;
-		stats.uptime = F.cache.count;
+		stats.uptime = F.internal.counter;
 		stats.download = F.stats.request.size.floor(3);
 		stats.upload = F.stats.response.size.floor(3);
 
