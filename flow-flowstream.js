@@ -97,7 +97,12 @@ Instance.prototype = {
 };
 
 Instance.prototype.postMessage = function(msg) {
-	this.flow.postMessage && this.flow.postMessage(msg);
+	if (this.flow.postMessage) {
+		// Try & Catch handles unexpected problems with the main process becoming disconnected.
+		try {
+			this.flow.postMessage(msg);
+		} catch {}
+	}
 };
 
 Instance.prototype.httprequest = function(opt, callback) {
