@@ -8,6 +8,7 @@
 - added `API.?.logerror()` method for printing errors into the console
 - fixed handling of unexpected problems in the Flow with the main process becoming disconnected
 - fixed `uptime` value in the framework stats
+- improved auditlogs by adding `files`
 
 ========================
 0.0.15

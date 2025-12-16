@@ -2099,8 +2099,14 @@ F.audit = function(name, $, message, type) {
 	if ($.id)
 		data.action = $.id;
 
-	if ($.model)
-		data.data = JSON.stringify({ params: $.params, query: $.query, model: $.model }, auditjsonserialization);
+	let files = [];
+
+	if ($.files && $.files.length) {
+		for (let file of $.files)
+			files.push({ name: file.name, filename: file.filename, size: file.size, width: file.width, height: file.height });
+	}
+
+	data.data = JSON.stringify({ params: $.params, query: $.query, model: $.model, files: files }, auditjsonserialization);
 
 	if (F.clusterid)
 		data.instance = F.clusterid;
