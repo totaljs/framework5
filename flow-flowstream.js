@@ -2882,19 +2882,19 @@ TMS.connect = function(fs, sourceid, callback) {
 		if (!client.tmsready)
 			return;
 
-		var publishers = {};
+		let publishers = {};
 
-		for (var key in fs.meta.flow) {
-			var instance = fs.meta.flow[key];
-			var com = fs.meta.components[instance.component];
+		for (let key in fs.meta.flow) {
+			let instance = fs.meta.flow[key];
+			let com = fs.meta.components[instance.component];
 			if (com && com.itemid === item.id && com.outputs && com.outputs.length) {
 				if (Object.keys(instance.connections).length)
 					publishers[com.schema.id] = 1;
 			}
 		}
 
-		var keys = Object.keys(publishers);
-		var cache = keys.join(',');
+		let keys = Object.keys(publishers);
+		let cache = keys.join(',');
 
 		if (!prev || prev !== cache) {
 			prev = cache;
@@ -2920,8 +2920,8 @@ TMS.connect = function(fs, sourceid, callback) {
 
 	client.on('message', function(msg) {
 
-		var type = msg.type || msg.TYPE;
-		var tmp;
+		let type = msg.type || msg.TYPE;
+		let tmp;
 
 		switch (type) {
 			case 'meta':
@@ -2974,18 +2974,18 @@ TMS.connect = function(fs, sourceid, callback) {
 
 			case 'publish':
 
-				if (fs.paused)
+				if (fs.paused || !fs.meta || !fs.meta.flow)
 					return;
 
 				tmp = client.publishers[msg.id];
 				if (tmp) {
 					// HACK: very fast validation
-					var err = new F.TBuilders.ErrorBuilder();
-					var data = F.TJSONSchema.transform(tmp, err, msg.data, true);
+					let err = new F.TBuilders.ErrorBuilder();
+					let data = F.TJSONSchema.transform(tmp, err, msg.data, true);
 					if (data) {
-						var id = 'pub' + item.id + 'X' + msg.id;
+						let id = 'pub' + item.id + 'X' + msg.id;
 						for (let key in fs.meta.flow) {
-							var flow = fs.meta.flow[key];
+							let flow = fs.meta.flow[key];
 							if (flow.component === id)
 								flow.process(data, client);
 						}

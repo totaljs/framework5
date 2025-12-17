@@ -10,6 +10,7 @@
 - fixed `uptime` value in the framework stats
 - improved auditlogs by adding `files`
 - fixed unexpected errors when compressing/decompressing data via WebSocket
+- fixed processing TMS data in the FlowStream
 
 ========================
 0.0.15
