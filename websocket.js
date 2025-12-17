@@ -488,7 +488,14 @@ Controller.prototype.parseinflate = function() {
 		ctrl.inflatechunks = [];
 		ctrl.inflatechunkslength = 0;
 		ctrl.inflatelock = true;
-		ctrl.inflate.write(buf);
+
+		try {
+			ctrl.inflate.write(buf);
+		} catch (e) {
+			// invalid block
+			self.onerror(e);
+			return;
+		}
 
 		if (!buf.$continue)
 			ctrl.inflate.write(Buffer.from(SOCKET_COMPRESS));
@@ -575,7 +582,15 @@ Controller.prototype.senddeflate = function() {
 		ctrl.deflatechunks = [];
 		ctrl.deflatechunkslength = 0;
 		ctrl.deflatelock = true;
-		ctrl.deflate.write(buf);
+
+		try {
+			ctrl.deflate.write(buf);
+		} catch (e) {
+			// invalid block
+			self.onerror(e);
+			return;
+		}
+
 		ctrl.deflate.flush(function() {
 			if (ctrl.deflatechunks) {
 				var data = concat(ctrl.deflatechunks, ctrl.deflatechunkslength);
