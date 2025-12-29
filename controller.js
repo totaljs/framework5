@@ -1617,7 +1617,7 @@ function send_file(ctrl, path, ext) {
 			ctrl.response.headers['cache-control'] = NOCACHE;
 
 		if (!cache)
-			cache = { date: stats.mtime.toUTCString(), size: stats.size };
+			cache = { date: (CONF.$httpcacheoffset ? stats.mtime.add(CONF.$httpcacheoffset) : stats.mtime).toUTCString(), size: stats.size };
 
 		ctrl.response.headers['last-modified'] = cache.date;
 		ctrl.response.headers.etag = '858' + F.config.$httpetag;

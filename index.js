@@ -364,6 +364,7 @@ function unlink(arr, callback) {
 	CONF.$httpmaxage = 60; // in seconds
 	CONF.$httpmaxkeys = 33;
 	CONF.$httpmaxkey = 25;
+	CONF.$httpcacheoffset = ''; // e.g. 1 minute
 	CONF.$blacklist = '';
 	CONF.$xpoweredby = 'Total.js';
 	CONF.$maxopenfiles = 100;

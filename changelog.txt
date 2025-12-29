@@ -11,6 +11,7 @@
 - improved auditlogs by adding `files`
 - fixed unexpected errors when compressing/decompressing data via WebSocket
 - fixed processing TMS data in the FlowStream
+- added a new config key `CONF.$httpcacheoffset` for extending `last-modified` header
 
 ========================
 0.0.15
