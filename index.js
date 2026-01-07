@@ -887,7 +887,6 @@ F.load = async function(types, callback, clear = true) {
 		switch (file.type) {
 			case 'config':
 				config = await read(file.filename);
-				console.log(config);
 				config && F.loadconfig(config);
 				break;
 			case 'modules':
@@ -1028,15 +1027,17 @@ F.download = function(url, filename, callback, timeout) {
 			return;
 		}
 
-		var stream = F.Fs.createWriteStream(filename);
+		let stream = F.Fs.createWriteStream(filename);
 
-		var done = function(err) {
+		let done = function(err) {
 			if (callback) {
 				callback(err, response);
 				callback = null;
 			}
 		};
 
+		response.size = 0;
+		response.stream.on('data', chunk => response.size += chunk.length);
 		response.stream.pipe(stream);
 		response.stream.on('error', done);
 		stream.on('error', done);
