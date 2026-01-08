@@ -2071,7 +2071,7 @@ function MAKEFLOWSTREAM(meta) {
 				let action = ACTION(msg.id, msg.data);
 				action.flow = flow;
 				action.callback(function(err, response) {
-					msg.error = err;
+					msg.error = err ? err.toString() : null;
 					msg.data = response;
 					msg.id = msg.callbackid;
 					msg.TYPE = 'flow/action';
