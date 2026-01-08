@@ -2071,8 +2071,9 @@ function MAKEFLOWSTREAM(meta) {
 				let action = ACTION(msg.id, msg.data);
 				action.flow = flow;
 				action.callback(function(err, response) {
-					msg.data = response;
 					msg.error = err;
+					msg.data = response;
+					msg.id = msg.callbackid;
 					msg.TYPE = 'flow/action';
 					flow.proxy.online && flow.proxy.send(msg, 1, clientid);
 					callback && callback(msg);
