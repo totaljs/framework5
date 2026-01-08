@@ -9,7 +9,7 @@ if (!global.F)
 
 const W = F.Worker;
 const Fork = F.Child.fork;
-const VERSION = 32;
+const VERSION = 33;
 const NOTIFYPATH = '/notify/';
 
 var isFLOWSTREAMWORKER = false;
@@ -2064,6 +2064,19 @@ function MAKEFLOWSTREAM(meta) {
 		var tmp;
 
 		switch (msg.TYPE) {
+
+			case 'action':
+				// NEW:
+				// Total.js actions
+				let action = ACTION(msg.id, msg.data);
+				action.flow = flow;
+				action.callback(function(err, response) {
+					msg.data = response;
+					msg.error = err;
+					flow.proxy.online && flow.proxy.send(msg, 1, clientid);
+					callback && callback(msg);
+				});
+				break;
 
 			case 'call':
 

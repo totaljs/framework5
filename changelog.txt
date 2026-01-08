@@ -13,6 +13,7 @@
 - fixed processing TMS data in the FlowStream
 - added a new config key `CONF.$httpcacheoffset` for extending `last-modified` header
 - exended `Total.download()` by adding `size {Number}` property to the response
+- extended FlowStream by adding the ability to execute Total.js actions
 
 ========================
 0.0.15
