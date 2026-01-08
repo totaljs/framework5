@@ -1472,6 +1472,7 @@ function init_current(meta, callback, nested) {
 		};
 	}
 
+	F.$events.flowstream && F.emit('flowstream', flow.$instance);
 	callback && callback(null, flow.$instance);
 	return flow.$instance;
 }
@@ -1692,6 +1693,7 @@ function init_worker(meta, type, callback) {
 	});
 
 	ischild && worker.send({ TYPE: 'init', data: meta });
+	F.$events.flowstream && F.emit('flowstream', worker.$instance);
 	callback && callback(null, worker.$instance);
 	return worker.$instance;
 }
