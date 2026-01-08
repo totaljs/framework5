@@ -2073,6 +2073,7 @@ function MAKEFLOWSTREAM(meta) {
 				action.callback(function(err, response) {
 					msg.data = response;
 					msg.error = err;
+					msg.TYPE = 'flow/action';
 					flow.proxy.online && flow.proxy.send(msg, 1, clientid);
 					callback && callback(msg);
 				});
