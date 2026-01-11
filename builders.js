@@ -157,7 +157,7 @@ Options.prototype.status = function(a, b, c, d) {
 	this.status2?.call(this, a, b, c, d);
 };
 
-Options.prototype.progress = function(){
+Options.prototype.progress = function(a, b, c, d) {
 	this.progress2?.call(this, a, b, c, d);
 };
 
@@ -258,7 +258,7 @@ Options.prototype.callback = Options.prototype.pipe = function(value) {
 		};
 	}
 
-	self.$callback(self.error.items.length ? self.error : null, value);
+	self.$callback.call(self, self.error.items.length ? self.error : null, value);
 };
 
 Options.prototype.done = function(arg) {
@@ -1405,6 +1405,7 @@ ActionCaller.prototype.exec = function() {
 	let type = meta.payload || (action.input ? '+' : '-');
 	let $ = self.$;
 
+	$.name = action.name;
 	$.id = action.id;
 	$.error = self.error;
 	$.controller = self.controller;
