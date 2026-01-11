@@ -153,7 +153,8 @@ Options.prototype.promisify = function(fn, a, b, c) {
 	});
 };
 
-Options.prototype.status = function() {};
+Options.prototype.status = NOOP;
+Options.prototype.progress = NOOP;
 
 Options.prototype.publish = function(value) {
 	var self = this;
@@ -1348,6 +1349,11 @@ ActionCaller.prototype.status = function(fn) {
 	return this;
 };
 
+ActionCaller.prototype.progress = function(fn) {
+	this.options.progress = fn;
+	return this;
+};
+
 ActionCaller.prototype.exec = function() {
 
 	let self = this;
@@ -1498,6 +1504,9 @@ ActionCaller.prototype.exec = function() {
 
 	if (self.options.status)
 		$.status = self.options.status;
+
+	if (self.options.progress)
+		$.progress = self.options.progress;
 
 	if (action.middleware) {
 		action.middleware.wait(function(name, next) {
