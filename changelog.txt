@@ -16,6 +16,7 @@
 - extended FlowStream by adding the ability to execute Total.js actions
 - added a new global event `ON('flowstream', function(instance) {`
 - added new action methods `$.progress(percentage)` and `ACTION().progress(console.log)` to measure percentage
+- fixed Total error handling
 
 ========================
 0.0.15

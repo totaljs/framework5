@@ -500,7 +500,7 @@ function unlink(arr, callback) {
 
 		if (err instanceof F.TBuilders.ErrorBuilder) {
 			if (!name)
-				name = err[0].name;
+				name = err.items[0].name;
 		} else if (!name && err.name)
 			name = err.name;
 
