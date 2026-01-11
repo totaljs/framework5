@@ -1538,9 +1538,9 @@ ActionCaller.prototype.finish = function(value) {
 			if (self.error.length)
 				$.invalid(self.error);
 			else
-				$.callback(value === undefined ? self.$.response : value);
+				$.callback.call(self.$, value === undefined ? self.$.response : value);
 		} else
-			self.options.callback(self.error.length ? self.error : null, value === undefined ? self.$.response : value);
+			self.options.callback.call(self.$, self.error.length ? self.error : null, value === undefined ? self.$.response : value);
 
 		self.options.callback = null;
 	}
