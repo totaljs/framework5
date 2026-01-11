@@ -153,8 +153,8 @@ Options.prototype.promisify = function(fn, a, b, c) {
 	});
 };
 
-Options.prototype.status = NOOP;
-Options.prototype.progress = NOOP;
+Options.prototype.status = function(){};
+Options.prototype.progress = function(){};
 
 Options.prototype.publish = function(value) {
 	var self = this;
