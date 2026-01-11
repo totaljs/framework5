@@ -153,8 +153,13 @@ Options.prototype.promisify = function(fn, a, b, c) {
 	});
 };
 
-Options.prototype.status = function(){};
-Options.prototype.progress = function(){};
+Options.prototype.status = function(a, b, c, d) {
+	this.status2?.call(this, a, b, c, d);
+};
+
+Options.prototype.progress = function(){
+	this.progress2?.call(this, a, b, c, d);
+};
 
 Options.prototype.publish = function(value) {
 	var self = this;
@@ -1503,10 +1508,10 @@ ActionCaller.prototype.exec = function() {
 		$.payload = payload;
 
 	if (self.options.status)
-		$.status = self.options.status;
+		$.status2 = self.options.status;
 
 	if (self.options.progress)
-		$.progress = self.options.progress;
+		$.progress2 = self.options.progress;
 
 	if (action.middleware) {
 		action.middleware.wait(function(name, next) {
