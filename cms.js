@@ -575,14 +575,30 @@ exports.compile = function(html, widgets, used) {
 		let endindex = html.indexOf('</script>', index);
 		let endhead = html.indexOf('>', index);
 		let head = html.substring(begindex, endhead);
-		let name = head.match(/name=".*?"/i)[0];
+		let uid = head.match(/id=".*?"/i);
 		let template = html.substring(html.indexOf('>', endhead) + 1, endindex);
+		let name = '';
 
-		name = name.substring(6, name.length - 1);
-		html = html.replace(html.substring(begindex, endindex + 9), '~WIDGET#' + response.tangular.length + '~');
-		response.tangular.push({ id: HASH(name).toString(36), name: name, type: 'nav', template: Tangular.compile(template) });
+		if (uid && uid[0]) {
+			uid = uid[0];
+			uid = uid.substring(4, uid.length - 1);
+			name = uid.capitalize();
+		} else {
+			uid = head.match(/name=".*?"/i);
+			if (uid && uid[0]) {
+				uid = uid[0];
+				uid = uid.substring(6, uid.length - 1);
+				name = uid.capitalize();
+				uid = HASH(uid).toString(36); // Backward compatibility with old CMS
+			}
+		}
+
+		if (name) {
+			html = html.replace(html.substring(begindex, endindex + 9), '~WIDGET#' + response.tangular.length + '~');
+			response.tangular.push({ id: uid, name: name, type: 'nav', template: Tangular.compile(template) });
+		}
+
 		index = begindex;
-
 	}
 
 	index = 0;
