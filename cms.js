@@ -548,6 +548,7 @@ exports.compile = function(html, widgets, used) {
 		opt.html = body.substring(body.lastIndexOf('~BEG~') + 5, body.lastIndexOf('~END~'));
 		opt.config = config || EMPTYOBJECT;
 		opt.render = widget.render;
+		opt.template = widget.ui ? widget.ui.template : '';
 		opt.beg = opt.body.substring(0, opt.body.indexOf('>') + 1);
 		opt.end = opt.body.substring(opt.body.lastIndexOf('<'));
 

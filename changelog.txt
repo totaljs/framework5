@@ -18,6 +18,7 @@
 - added new action methods `$.progress(percentage)` and `ACTION().progress(console.log)` to measure percentage
 - fixed Total error handling
 - improved compiling navigation in the CMS compiler
+- fixed filling of the `template` property in the CMS compiler
 
 ========================
 0.0.15
