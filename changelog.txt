@@ -19,6 +19,7 @@
 - fixed Total error handling
 - improved compiling navigation in the CMS compiler
 - fixed filling of the `template` property in the CMS compiler
+- added a new method `U.aistreamer(on_line, on_message)`
 
 ========================
 0.0.15

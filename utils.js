@@ -1565,6 +1565,27 @@ exports.streamer2 = function(beg, end, callback, skip, stream) {
 	return exports.streamer(beg, end, callback, skip, stream, true);
 };
 
+exports.aistreamer = function(online, onmessage) {
+	let buffer = '';
+	let c = '\n';
+	let date = onmessage != null;
+	return U.streamer(c, function(line) {
+		let obj = line.parseJSON(date);
+		if (obj) {
+			buffer += obj.message.content;
+			let index = 0;
+			while (index != -1) {
+				index = buffer.indexOf(c);
+				if (index != -1) {
+					online && online(buffer.substring(0, index));
+					buffer = buffer.substring(index + 1);
+				}
+			}
+			onmessage && onmessage(obj);
+		}
+	});
+};
+
 exports.filestreamer = function(filename, onbuffer, onend, size) {
 
 	if (typeof(onend) === 'number') {
