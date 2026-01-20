@@ -105,8 +105,8 @@ Instance.prototype.edit = function(proxy_socket_url = 'wss://flow.totaljs.com/{0
 
 	return WEBSOCKETCLIENT(function(client) {
 		instance.$remoteclient = client;
-		client.connect(proxy_url.format(instance.id));
-		Flow.client(instance, client);
+		client.connect(proxy_socket_url.format(instance.id));
+		Flow.client(instance.flow, client);
 	});
 
 };
