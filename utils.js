@@ -1566,24 +1566,62 @@ exports.streamer2 = function(beg, end, callback, skip, stream) {
 };
 
 exports.aistreamer = function(online, onmessage) {
-	let buffer = '';
-	let c = '\n';
+
+	let buffer = Buffer.alloc(0);
 	let date = onmessage != null;
-	return U.streamer(c, function(line) {
-		let obj = line.parseJSON(date);
-		if (obj) {
-			buffer += obj.message.content;
-			let index = 0;
-			while (index != -1) {
-				index = buffer.indexOf(c);
-				if (index != -1) {
-					online && online(buffer.substring(0, index));
-					buffer = buffer.substring(index + 1);
-				}
+	let chunks = [null, null];
+	let newline = Buffer.from('\n', 'utf8');
+	let print = '';
+	let obj = null;
+
+	let onmsg = function(msg) {
+
+		// Completions (OpenAI)
+		if (msg.startsWith('data:')) {
+			msg = msg.substring(6);
+			if (msg === '[DONE]')
+				print += '\n';
+			else {
+				obj = msg.parseJSON(date);
+				print += obj.choices?.[0]?.delta?.content || '';
 			}
-			onmessage && onmessage(obj);
+		} else {
+			// OLLAMA
+			obj = msg.parseJSON(date);
+			print += obj.message?.content || '';
+			if (obj.done)
+				print += '\n';
 		}
-	});
+
+		while (true) {
+			const index = print.indexOf('\n');
+			if (index === -1)
+				break;
+			online(print.substring(0, index));
+			print = print.substring(index + 1);
+		}
+		if (obj && onmessage)
+			onmessage(obj);
+	};
+
+	return function(chunk) {
+
+		chunks[0] = buffer;
+		chunks[1] = chunk;
+		buffer = Buffer.concat(chunks);
+
+		while (true) {
+			let index = buffer.indexOf(newline);
+			if (index === -1)
+				break;
+			let msg = buffer.toString('utf8', 0, index);
+			buffer = buffer.slice(index + 1)
+			if (msg)
+				onmsg(msg);
+		}
+
+		return;
+	};
 };
 
 exports.filestreamer = function(filename, onbuffer, onend, size) {
