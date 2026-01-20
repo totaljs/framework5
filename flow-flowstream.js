@@ -96,6 +96,21 @@ Instance.prototype = {
 	}
 };
 
+Instance.prototype.edit = function(proxy_socket_url = 'wss://flow.totaljs.com/{0}/') {
+
+	let instance = this;
+
+	if (instance.$remoteclient)
+		instance.$remoteclient.destroy();
+
+	return WEBSOCKETCLIENT(function(client) {
+		instance.$remoteclient = client;
+		client.connect(proxy_url.format(instance.id));
+		Flow.client(instance, client);
+	});
+
+};
+
 Instance.prototype.postMessage = function(msg) {
 	if (this.flow.postMessage) {
 		// Try & Catch handles unexpected problems with the main process becoming disconnected.
