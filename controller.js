@@ -115,7 +115,7 @@ function Controller(req, res) {
 Controller.prototype = {
 
 	get query() {
-		return this.$query || (this.$query = ctrl.uri.search.parseEncoded());
+		return this.$query || (this.$query = this.uri.search.parseEncoded());
 	},
 
 	set query(val) {
