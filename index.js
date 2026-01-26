@@ -55,6 +55,7 @@ global.DEF = {};
 	F.transformations = {};
 	F.consumption = {};
 	F.flowstreams = {};
+	F.aimodels = {};
 	F.filestorages = {};
 	F.jsonschemas = {};
 	F.querybuilders = {};
@@ -883,7 +884,7 @@ F.load = async function(types, callback, clear = true) {
 	for (let file of files) {
 
 		let tmp = null;
-		
+
 		switch (file.type) {
 			case 'config':
 				config = await read(file.filename);
@@ -2953,6 +2954,7 @@ process.on('message', function(msg, h) {
 	F.TJSONSchema = require('./jsonschema');
 	F.TCron = require('./cron');
 	F.TApi = require('./api');
+	F.TAIModel = require('./aimodel');
 	F.TBundles = require('./bundles');
 	F.TFileStorage = require('./filestorage');
 	F.TTemplates = require('./templates');

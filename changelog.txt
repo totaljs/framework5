@@ -21,6 +21,7 @@
 - fixed filling of the `template` property in the CMS compiler
 - added a new method `U.aistreamer(on_line, on_message)`
 - added `Flow.edit(proxy_socket_url)` method for the remote editing of the FlowStream
+- added a new global methods `AIMODEL()` and `NEWAIMODEL()`
 
 ========================
 0.0.15

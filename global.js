@@ -252,6 +252,10 @@ global.TMSCLIENT = F.TTMS.client;
 global.API = (name, schema, data, $) => F.TApi.exec(name, schema, data, $);
 global.NEWAPI = (name, callback) => F.TApi.newapi(name, callback);
 
+// AI
+global.AIMODEL = (name, schema, data, $) => F.TAIModel.exec(name, schema, data, $);
+global.NEWAIMODEL = (name, callback) => F.TAIModel.newai(name, callback);
+
 // NoSQL
 global.NOSQL = F.TNoSQL.nosql;
 
