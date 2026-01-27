@@ -23,6 +23,7 @@
 - added `Flow.edit(proxy_socket_url)` method for the remote editing of the FlowStream
 - added a new global methods `AIMODEL()` and `NEWAIMODEL()`
 - added `exec` command to the remote editing functionality
+- always set `cwd` directory for the current executed script
 
 ========================
 0.0.15
