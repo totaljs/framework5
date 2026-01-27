@@ -5,7 +5,7 @@
 'use strict';
 
 const SKIP = /\/\.git\//;
-const VERSION = 1;
+const VERSION = 2;
 const HEADER = '> Total.js Code Editor';
 const DIVIDER = '----------------------------------------------------';
 
@@ -64,7 +64,7 @@ exports.init = function(url, dir) {
 
 	client.on('open', function() {
 		isopen = true;
-		client.send({ TYPE: 'init', version: VERSION });
+		client.send({ TYPE: 'init', version: VERSION, total: F.version, node: F.version_node });
 	});
 
 	client.on('close', function(e) {
