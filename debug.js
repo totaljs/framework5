@@ -106,7 +106,6 @@ function runwatching() {
 				skipbundle = true;
 				F.directory = directory = F.path.join(directory, '.src');
 			}
-
 		} catch(e) {}
 
 		const fork = F.Child.fork;

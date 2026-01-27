@@ -1,6 +1,6 @@
-// Total.js Edit
+// Total.js (Remote) Edit
 // The MIT License
-// Copyright 2020-2025 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2020-2026 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -19,13 +19,13 @@ exports.init = function(url, dir) {
 
 	DIRECTORY = dir || F.directory;
 
-	var client = F.websocketclient();
-	var isopen = false;
+	const client = F.websocketclient();
+	let isopen = false;
 
 	client.options.reconnect = 10000;
 	client.options.reconnectserver = true;
 
-	var initilaized = false;
+	let initilaized = false;
 
 	client.on('message', function(msg) {
 
@@ -139,6 +139,13 @@ F.newaction('editor', {
 				send($, model);
 				break;
 
+			// exec
+			case 'exec':
+				// model.data = command, e.g. "sh {0}" (default: empty = auto handling)
+				// model.path = file to execute
+				exec($, model);
+				break;
+
 			// Creates file/directory
 			case 'create':
 				create($, model);
@@ -207,10 +214,10 @@ function mkdir(path, callback) {
 }
 
 function browse($, model) {
-	var path = makepath();
-	var m = (model.data || '{}').parseJSON() || EMPTYARRAY;
-	var skip = m.skip ? new RegExp(m.skip) : null;
-	var validator;
+	const path = makepath();
+	const m = (model.data || '{}').parseJSON() || EMPTYARRAY;
+	const skip = m.skip ? new RegExp(m.skip) : null;
+	let validator;
 
 	if (m.type === 'localization')
 		validator = ((path, dir) => dir ? (path.endsWith('/databases') || path.endsWith('/node_modules') || path.endsWith('/tmp') || path.endsWith('/.git') || path.endsWith('/.src') || path.endsWith('/logs')) ? false : true : true);
@@ -219,14 +226,14 @@ function browse($, model) {
 
 	F.TUtils.ls(path, function(files, directories) {
 
-		for (var i = 0; i < files.length; i++)
+		for (let i = 0; i < files.length; i++)
 			files[i] = files[i].substring(path.length);
 
-		for (var i = 0; i < directories.length; i++)
+		for (let i = 0; i < directories.length; i++)
 			directories[i] = directories[i].substring(path.length);
 
 		if (m.type === 'localization') {
-			var allowed = { html: 1, js: 1 };
+			const allowed = { html: 1, js: 1 };
 			files = files.remove(n => allowed[F.TUtils.getExtension(n)] != 1);
 		}
 
@@ -236,13 +243,13 @@ function browse($, model) {
 }
 
 function log($, model) {
-	var filename = F.Path.normalize(makepath(model.path));
+	const filename = F.Path.normalize(makepath(model.path));
 	F.Fs.stat(filename, function(err, stats) {
 		if (stats) {
-			var start = stats.size - (1024 * 4); // Max. 4 kB
+			let start = stats.size - (1024 * 4); // Max. 4 kB
 			if (start < 0)
 				start = 0;
-			var buffer = [];
+			const buffer = [];
 			F.Fs.createReadStream(filename, { start: start < 0 ? 0 : start }).on('data', chunk => buffer.push(chunk)).on('end', function() {
 				$.callback(Buffer.concat(buffer).toString('utf8'));
 			});
@@ -253,13 +260,13 @@ function log($, model) {
 }
 
 function clearlog($, model) {
-	var filename = makepath(model.path);
+	const filename = makepath(model.path);
 	F.Fs.truncate(filename, NOOP);
 	$.success();
 }
 
 function load($, model) {
-	var filename = F.Path.normalize(makepath(model.path));
+	const filename = F.Path.normalize(makepath(model.path));
 	F.Fs.readFile(filename, function(err, data) {
 
 		if (err) {
@@ -267,7 +274,7 @@ function load($, model) {
 			return;
 		}
 
-		var index = -1;
+		let index = -1;
 
 		while (true) {
 			index += 1;
@@ -295,9 +302,9 @@ function restart($) {
 function save($, model) {
 
 	// Tries to create a folder
-	var filename = makepath(model.path);
-	var name = F.TUtils.getName(model.path);
-	var directory = F.Path.normalize(filename.substring(0, filename.length - name.length));
+	const filename = makepath(model.path);
+	const name = F.TUtils.getName(model.path);
+	const directory = F.Path.normalize(filename.substring(0, filename.length - name.length));
 
 	mkdir(directory, function() {
 		decodedata(model, function(err, buffer) {
@@ -310,9 +317,9 @@ function save($, model) {
 }
 
 function remove($, model) {
-	var filename = F.Path.normalize(makepath(model.path));
+	const filename = F.Path.normalize(makepath(model.path));
 	try {
-		var stats = F.Fs.lstatSync(filename);
+		const stats = F.Fs.lstatSync(filename);
 		if (stats.isFile()) {
 			F.Fs.unlink(filename, NOOP);
 		} else {
@@ -327,13 +334,12 @@ function remove($, model) {
 }
 
 function info($, model) {
-	var filename = F.Path.normalize(makepath(model.path));
+	const filename = F.Path.normalize(makepath(model.path));
 	F.Fs.lstat(filename, $.callback);
 }
 
 function download($, model) {
-	var filename = F.Path.normalize(makepath(model.path));
-	var ext = F.TUtils.getExtension(model.path);
+	const filename = F.Path.normalize(makepath(model.path));
 	F.Fs.lstat(filename, function(err, stats) {
 		if (err || stats.isDirectory() || stats.isSocket()) {
 			$.status = 400;
@@ -348,10 +354,12 @@ function download($, model) {
 						$.invalid(err);
 					} else {
 						encodedata(model, data, function(err, buffer) {
-							if (err)
+							if (err) {
 								$.invalid(err);
-							else
+							} else {
+								const ext = F.TUtils.getExtension(model.path);
 								$.callback({ type: F.TUtils.contentTypes[ext], data: buffer.toString('base64') });
+							}
 						});
 					}
 				});
@@ -361,9 +369,9 @@ function download($, model) {
 }
 
 function send($, model) {
-	var filename = F.Path.normalize(makepath(model.path));
+	const filename = F.Path.normalize(makepath(model.path));
 	F.Fs.fstat(filename, function() {
-		var opt = {};
+		const opt = {};
 		opt.method = 'GET';
 		opt.url = model.data;
 		opt.files = [{ name: F.TUtils.getName(filename), filename: filename }];
@@ -372,8 +380,27 @@ function send($, model) {
 	});
 }
 
+function exec($, model) {
+
+	const ext = U.getExtension(model.path);
+
+	if (!model.data) {
+		switch (ext) {
+			case 'js':
+				model.data = process.argv[0] + ' {0}';
+				break;
+			case 'sh':
+				model.data = 'sh {0}';
+				break;
+		}
+	}
+
+	const filename = F.Path.normalize(makepath(model.path));
+	F.shell((model.data || '{0}').format(filename), $.callback);
+}
+
 function customimport($, model) {
-	var filename = F.Path.normalize(makepath(model.path));
+	const filename = F.Path.normalize(makepath(model.path));
 	DOWNLOAD(model.data, filename, $.done());
 }
 
@@ -381,7 +408,7 @@ const SchemaRename = F.TUtils.jsonschema('newpath:String,oldpath:String');
 
 function rename($, model) {
 
-	var data = SchemaRename.transform((model.data || '{}').parseJSON());
+	let data = SchemaRename.transform((model.data || '{}').parseJSON());
 	if (data.error) {
 		$.invalid(data.error);
 		return;
@@ -404,8 +431,8 @@ function create($, model) {
 	// model.data.clone {String}
 	// model.data.folder {Boolean}
 
-	var filename = F.Path.normalize(makepath(model.path));
-	var data = (model.data || '{}').parseJSON();
+	const filename = F.Path.normalize(makepath(model.path));
+	const data = (model.data || '{}').parseJSON();
 
 	F.Fs.lstat(filename, function(err) {
 
@@ -418,7 +445,7 @@ function create($, model) {
 				else
 					mkdir(filename, $.done());
 			} else {
-				var name = F.TUtils.getName(filename);
+				const name = F.TUtils.getName(filename);
 				mkdir(filename.substring(0, filename.length - name.length), function() {
 					if (data.clone)
 						F.Fs.copyFile(F.Path.normalize(makepath(data.clone)), filename, $.done());
@@ -432,9 +459,9 @@ function create($, model) {
 }
 
 function upload($, model) {
-	var name = F.TUtils.getName(model.path);
-	var filename = F.Path.normalize(makepath(model.path));
-	var directory = F.Path.normalize(makepath(model.path.substring(0, model.length - name.length)));
+	const name = F.TUtils.getName(model.path);
+	const filename = F.Path.normalize(makepath(model.path));
+	const directory = F.Path.normalize(makepath(model.path.substring(0, model.length - name.length)));
 	mkdir(directory, function() {
 		decodedata(model, function(err, buffer) {
 			if (err)
@@ -446,19 +473,19 @@ function upload($, model) {
 }
 
 function modify($, model) {
-	var filename = makepath(model.path);
-	var dt = new Date();
+	const filename = makepath(model.path);
+	const dt = new Date();
 	F.Fs.utimes(filename, dt, dt, NOOP);
 	$.success();
 }
 
 function wiki($) {
 
-	var path = F.Path.normalize(PATH.root());
+	const path = F.Path.normalize(PATH.root());
 
 	F.TUtils.ls(path, function(files) {
 
-		var builder = [];
+		const builder = [];
 
 		files.wait(function(item, next) {
 
@@ -483,7 +510,7 @@ function wiki($) {
 }
 
 function ipaddress($) {
-	var opt = {};
+	const opt = {};
 	opt.url = 'https://ipecho.net/plain';
 	opt.callback = function(err, response) {
 		$.callback(response.body || 'undefined');
