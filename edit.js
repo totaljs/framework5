@@ -396,7 +396,19 @@ function exec($, model) {
 	}
 
 	const filename = F.Path.normalize(makepath(model.path));
-	F.shell((model.data || '{0}').format(filename), $.callback);
+
+	F.shell((model.data || '{0}').format(filename), function(err, a, b) {
+		if (err) {
+			$.invalid(err);
+		} else {
+			let builder = [];
+			if (b)
+				builder.push(b);
+			if (a)
+				builder.push(a);
+			$.callback(builder.join('\n'));
+		}
+	});
 }
 
 function customimport($, model) {
