@@ -11,7 +11,6 @@ function AI(model) {
 	t.payload = {};
 	t.payload.model = model;
 	t.payload.messages = [];
-	t.response = [];
 }
 
 // Enables think mode
