@@ -24,6 +24,7 @@
 - added a new global methods `AIMODEL()` and `NEWAIMODEL()`
 - added `exec` command to the remote editing functionality
 - always set `cwd` directory for the current executed script
+- added `timeout {Number}` property into the `NEWACTION` method
 
 ========================
 0.0.15

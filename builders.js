@@ -1,6 +1,6 @@
 // Total.js Builders
 // The MIT License
-// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2023-2026 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -1405,6 +1405,7 @@ ActionCaller.prototype.exec = function() {
 	let type = meta.payload || (action.input ? '+' : '-');
 	let $ = self.$;
 
+	$.$end = false;
 	$.name = action.name;
 	$.id = action.id;
 	$.error = self.error;
@@ -1415,6 +1416,16 @@ ActionCaller.prototype.exec = function() {
 	action.called++;
 
 	$.$callback = function(err, response) {
+
+		if ($.$end)
+			return;
+
+		$.$end = true;
+
+		if ($.$timeout) {
+			clearTimeout($.$timeout);
+			$.$timeout = null;
+		}
 
 		if (!err) {
 			if (action.jsoutput)
@@ -1513,6 +1524,12 @@ ActionCaller.prototype.exec = function() {
 
 	if (self.options.progress)
 		$.progress2 = self.options.progress;
+
+	if (action.timeout) {
+		$.$timeout = setTimeout(function() {
+			$.invalid('Timeout.');
+		}, action.timeout);
+	}
 
 	if (action.middleware) {
 		action.middleware.wait(function(name, next) {
