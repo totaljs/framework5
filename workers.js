@@ -26,7 +26,7 @@ function process_thread() {
 	F.worker.postMessage = F.worker.send = function() {
 		if (Port)
 			Port.postMessage.apply(Port, arguments);
-		else
+		else if (process.send)
 			process.send.apply(process, arguments);
 	};
 
