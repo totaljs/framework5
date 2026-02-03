@@ -804,7 +804,7 @@ function Proxy(url, target) {
 	if (typeof(target) === 'function')
 		t.stream = target;
 	else if ((/^(https|http):\/\//).test(target))
-		t.target = new URL(target);
+		t.target = F.TUtils.parseURI(target);
 	else
 		t.target = { socketPath: target };
 

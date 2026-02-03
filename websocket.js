@@ -1238,12 +1238,12 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 	var secured = false;
 
 	if (typeof(url) === 'string') {
-		url = new URL(url);
+		url = F.TUtils.parseURI(url);
 		options.host = url.hostname;
-		options.path = url.pathname + url.search;
-		options.query = url.search.substring(1);
+		options.query = url.query;
 		secured = url.protocol === 'wss:';
 		options.port = url.port || (secured ? 443 : 80);
+		options.path = url.path;
 	} else {
 		options.socketPath = url.socket;
 		options.path = url.path;

@@ -494,7 +494,7 @@ exports.resolve = function(url, callback, param) {
 	let uri;
 
 	try {
-		uri = new URL(url);
+		uri = exports.parseURI(url);
 	} catch (e) {
 		callback(e);
 		return;
@@ -546,10 +546,10 @@ function parseProxy(p) {
 	if (p.indexOf('://') === -1)
 		p = 'http://' + p;
 
-	const obj = new URL(p);
+	const obj = exports.parseURI(p);
 
-	if (obj.username || obj.password)
-		obj._auth = 'Basic ' + Buffer.from(obj.username + ':' + obj.password).toString('base64');
+	if (obj.auth)
+		obj._auth = 'Basic ' + Buffer.from(obj.auth).toString('base64');
 
 	obj.port = +obj.port;
 
@@ -691,7 +691,7 @@ function _request(opt, callback) {
 		}
 	}
 
-	const uri = opt.unixsocket ? { socketPath: opt.unixsocket.socket, path: opt.unixsocket.path } : new URL(opt.url);
+	const uri = opt.unixsocket ? { socketPath: opt.unixsocket.socket, path: opt.unixsocket.path } : exports.parseURI(opt.url);
 
 	if ((opt.unixsocket && !uri.socketPath) || (!opt.unixsocket && (!uri.hostname || !uri.host))) {
 		options.response.canceled = true;
@@ -770,7 +770,7 @@ exports.request = function(opt, callback) {
 
 function request_resolve(err, uri, options, origin) {
 	if (!err) {
-		options.uri.ip = uri.ip;
+		options.uri.host = uri.host;
 		options.origin = origin;
 	}
 	request_call(options.uri, options);
@@ -867,8 +867,8 @@ function request_call(uri, options) {
 		opt.headers = uri.headers;
 		opt.method = uri.method;
 
-		if (uri.ip)
-			opt.headers.host = uri.ip;
+		if (uri.host)
+			opt.headers.host = uri.host;
 
 		if (options.proxy._auth)
 			opt.headers['Proxy-Authorization'] = options.proxy._auth;
@@ -989,11 +989,10 @@ function request_writefile(req, options, file, next) {
 		return;
 	}
 
-	var filedata = file.buffer || file.url;
-	var isbuffer = filedata instanceof Buffer;
-	var isurl = isbuffer ? false : typeof(filedata) === 'string' && filedata;
-
-	var filename = (isbuffer || isurl ? file.filename : exports.getName(file.filename));
+	const filedata = file.buffer || file.url;
+	const isbuffer = filedata instanceof Buffer;
+	const isurl = isbuffer ? false : typeof(filedata) === 'string' && filedata;
+	const filename = (isbuffer || isurl ? file.filename : exports.getName(file.filename));
 
 	req.write((options.first ? '' : NEWLINE) + '--' + options.boundary + NEWLINE + 'Content-Disposition: form-data; name="' + file.name + '"; filename="' + filename + '"' + NEWLINE + 'Content-Type: ' + exports.getContentType(exports.getExtension(filename)) + NEWLINE + NEWLINE);
 
@@ -1102,7 +1101,7 @@ function request_response(res) {
 		if (proto !== 'http:/' && proto !== 'https:')
 			loc = uri.protocol + '//' + uri.hostname + (uri.port && !SKI_PPORTS[uri.port] ? (':' + uri.port) : '') + loc;
 
-		var tmp = new URL(loc);
+		var tmp = exports.parseURI(loc);
 		tmp.headers = uri.headers;
 
 		// Transfers cookies
@@ -1123,7 +1122,7 @@ function request_response(res) {
 						cookie = cookie.substring(0, index);
 						index = cookie.indexOf('=');
 						if (index !== -1) {
-							var key = decodeURIComponent(cookie.substring(0, index));
+							const key = decodeURIComponent(cookie.substring(0, index));
 							options.cookies[key] = decodeURIComponent(cookie.substring(index + 1));
 							if (options.$totalinit.cookies)
 								options.$totalinit.cookies[key] = options.cookies[key];
@@ -1131,7 +1130,7 @@ function request_response(res) {
 					}
 				}
 
-				var builder = '';
+				let builder = '';
 				for (var m in options.cookies)
 					builder += (builder ? '; ' : '') + encodeURIComponent(m) + '=' + encodeURIComponent(options.cookies[m]);
 
@@ -1165,7 +1164,8 @@ function request_response(res) {
 		if (!options.resolve) {
 			res.removeAllListeners();
 			res = null;
-			return request_call(tmp, options);
+			request_call(tmp, options);
+			return;
 		}
 
 		exports.resolve(tmp, function(err, u, param, origin) {
@@ -6460,6 +6460,22 @@ exports.uidr = function() {
 	}
 
 	return builder + RANDOM_STRING[sum] + 'r'; // "r" version
+};
+
+exports.parseURI = function(url) {
+	const uri = new URL(url);
+	return {
+		auth: (uri.username || uri.password) ? ((uri.username || '') + ':' + (user.password || '')) : '',
+		port: uri.port,
+		search: uri.search,
+		hash: uri.hash,
+		pathname: uri.pathname,
+		href: uri.href,
+		protocol: uri.protocol,
+		hostname: uri.hostname,
+		host: uri.host,
+		path: uri.pathname + uri.search
+	};
 };
 
 exports.paginate = function(page, pages, max) {
