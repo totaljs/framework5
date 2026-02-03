@@ -10,17 +10,29 @@ const REG_TEXT = /^text\/(html|plain|xml)/;
 var cache = {};
 
 // Registers a new API type
-exports.newapi = function(type, callback) {
+exports.newapi = function(type, config, callback) {
 
-	if (typeof(type) === 'function') {
+	let t = typeof(type);
+
+	if (t === 'function') {
 		callback = type;
 		type = 'default';
+		config = null;
+	} else if (t === 'object') {
+		callback = config;
+		config = type;
+		type = 'default';
+	}
+
+	if (typeof(config) === 'function') {
+		callback = config;
+		config = null;
 	}
 
 	if (type.indexOf(',') !== -1) {
 		var arr = type.split(',').trim();
 		for (var m of arr)
-			exports.newapi(m, callback);
+			exports.newapi(m, config, callback);
 		return;
 	}
 
@@ -30,15 +42,17 @@ exports.newapi = function(type, callback) {
 	cache[lower] = lower;
 
 	if (callback)
-		F.apiservices[lower] = callback;
+		F.apiservices[lower] = { config, callback };
 	else
 		delete F.apiservices[lower];
 
 };
 
 function APIOptions(api) {
-	this.api = api;
-	this.retries = 0;
+	const t = this;
+	t.api = api;
+	t.retries = 0;
+	t.config = {};
 }
 
 APIOptions.prototype.retry = function() {
@@ -58,8 +72,8 @@ APICallProto.output = function(type) {
 };
 
 APICallProto.promise = function($) {
-	var t = this;
-	var promise = new Promise(function(resolve, reject) {
+	const t = this;
+	const promise = new Promise(function(resolve, reject) {
 		t.$callback = function(err, response) {
 			if (err) {
 				if ($ && $.invalid) {
@@ -75,7 +89,7 @@ APICallProto.promise = function($) {
 };
 
 APICallProto.audit = function($, message, type) {
-	var t = this;
+	const t = this;
 	t.$audit = function() {
 		// Dynamic arguments
 		if (message)
@@ -85,8 +99,15 @@ APICallProto.audit = function($, message, type) {
 	return t;
 };
 
+APICallProto.configure = function(opt) {
+	const t = this;
+	for (let key in opt)
+		t.options.config[key] = opt[key];
+	return t;
+};
+
 APICallProto.done = function($, callback) {
-	var t = this;
+	const t = this;
 	t.$callback = function(err, response) {
 		if (err)
 			$.invalid(err);
@@ -119,12 +140,12 @@ APICallProto.controller = function($) {
 
 APICallProto.file = function(filename, path, name) {
 
-	var t = this;
+	const t = this;
 
 	if (!t.options.files)
 		t.options.files = [];
 
-	var obj = { name: name || ('file' + t.options.files.length), filename: filename, path: path };
+	const obj = { name: name || ('file' + t.options.files.length), filename: filename, path: path };
 
 	if (t.options.files)
 		t.options.files.push(obj);
@@ -146,14 +167,14 @@ APICallProto.logerror = function() {
 };
 
 APICallProto.callback = APICallProto.pipe = function($) {
-	var t = this;
+	const t = this;
 	t.$callback = typeof($) === 'function' ? $ : $.callback();
 	return t;
 };
 
 APICallProto.evaluate = function(err, response) {
 
-	var t = this;
+	const t = this;
 	if (!err && t.$error) {
 		if (t.$error_reverse) {
 			if (response)
@@ -184,16 +205,24 @@ APICallProto.evaluate = function(err, response) {
 };
 
 function execapi(api) {
-	var conn = F.apiservices[cache[api.options.name]] || F.apiservices['*'];
-	if (conn)
-		conn.call(api, api.options, (err, response) => api.evaluate(err, response));
-	else
+	const conn = F.apiservices[cache[api.options.name]] || F.apiservices['*'];
+	if (conn) {
+
+		if (conn.config) {
+			for (let key in conn.config) {
+				if (api.options.config[key] === undefined)
+					api.options.config[key] = conn.config[key];
+			}
+		}
+
+		conn.callback.call(api, api.options, (err, response) => api.evaluate(err, response));
+	} else
 		api.evaluate('API is not initialized');
 }
 
 // Executes API
 exports.exec = function(name, schema, data, $) {
-	var api = new APICall();
+	const api = new APICall();
 	api.options.name = cache[name] || name;
 	api.options.schema = schema;
 	api.options.data = data;
@@ -212,7 +241,7 @@ exports.newapi('TotalAPI,TAPI', function(opt, next) {
 	if (opt.data && typeof(opt.data) !== 'object')
 		opt.data = { value: opt.data };
 
-	var req = {};
+	const req = {};
 
 	req.method = 'POST';
 	req.url = 'https://' + F.config.$tapiurl + '.api.totaljs.com/' + opt.schema + '/';
@@ -226,7 +255,7 @@ exports.newapi('TotalAPI,TAPI', function(opt, next) {
 	req.type = 'json';
 	req.timeout = 60000;
 	req.keepalive = true;
-	req.headers = { 'x-token': opt.token || F.config.totalapi || F.config.secret_totalapi || F.config.$tapisecret || '-', 'x-app': encodeURIComponent(F.config.name) };
+	req.headers = { 'x-token': opt.token || opt.config.token || F.config.totalapi || F.config.secret_totalapi || F.config.$tapisecret || '-', 'x-app': encodeURIComponent(F.config.name) };
 	req.custom = true;
 
 	req.callback = function(err, response) {
@@ -236,7 +265,7 @@ exports.newapi('TotalAPI,TAPI', function(opt, next) {
 			return;
 		}
 
-		var buffer = [];
+		const buffer = [];
 
 		// Error
 		if (response.status > 200) {
@@ -256,7 +285,8 @@ exports.newapi('TotalAPI,TAPI', function(opt, next) {
 				if (opt.output === 'base64') {
 					output = output.toString('base64');
 				} else if (opt.output !== 'binary' && opt.output !== 'buffer') {
-					var type = response.headers['content-type'];
+
+					const type = response.headers['content-type'];
 
 					if (REG_BINARY.test(type)) {
 						next(null, output);
@@ -292,20 +322,20 @@ exports.newapi('TotalAPI,TAPI', function(opt, next) {
 			}
 
 			var type = (response.headers['content-type'] || '').toLowerCase();
-			var index = type.lastIndexOf(';');
+			const index = type.lastIndexOf(';');
 			if (index !== -1)
 				type = type.substring(0, index);
 
-			var ext = type ? F.TUtils.getExtensionFromContentType(type) : 'bin';
-			var id = fsdata[1] || UID();
-			var filename = fsdata[2] || id + '.' + ext;
+			const ext = type ? F.TUtils.getExtensionFromContentType(type) : 'bin';
+			const id = fsdata[1] || UID();
+			const filename = fsdata[2] || id + '.' + ext;
 
 			response.stream.pause();
 			fs.save(id, filename, response.stream, next);
 			return;
 		}
 
-		var writer = F.Fs.createWriteStream(opt.output);
+		const writer = F.Fs.createWriteStream(opt.output);
 		response.stream.pipe(writer);
 		F.cleanup(writer, () => opt.next(null, opt.output));
 	};

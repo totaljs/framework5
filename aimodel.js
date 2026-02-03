@@ -7,6 +7,7 @@ function AI(model) {
 
 	t.options = {};
 	t.options.callback = NOOP;
+	t.config = {};
 
 	t.payload = {};
 	t.payload.model = model;
@@ -36,6 +37,13 @@ AI.prototype.message = function(role, content, merge) {
 	}
 
 	t.payload.messages.push({ role: role, content: content });
+	return t;
+};
+
+AI.prototype.configure = function(opt) {
+	const t = this;
+	for (let key in opt)
+		t.config[key] = opt[key];
 	return t;
 };
 
@@ -85,10 +93,16 @@ AI.prototype.callback = function(fn) {
 // Internal function
 AI.prototype.run = function() {
 	const t = this;
-	let fn = F.aimodels[t.payload.model];
-	if (fn)
-		fn(t);
-	else
+	let ai = F.aimodels[t.payload.model];
+	if (ai) {
+		if (ai.config) {
+			for (let key in ai.config) {
+				if (t.config[key] === undefined)
+					t.config[key] = ai.config[key];
+			}
+		}
+		ai.callback(t, t.options.callback);
+	} else
 		t.options.callback('AI model not found.');
 	return t;
 };
@@ -97,8 +111,14 @@ exports.exec = function(model) {
 	return new AI(model);
 };
 
-exports.newai = function (model, callback) {
+exports.newai = function(model, config, callback) {
+
+	if (typeof(config) === 'function') {
+		callback = config;
+		config = null;
+	}
+
 	const models = model.split(/,/).trim();
 	for (const m of models)
-		F.aimodels[m] = callback;
+		F.aimodels[m] = { config, callback };
 };

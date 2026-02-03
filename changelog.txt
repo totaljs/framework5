@@ -25,6 +25,7 @@
 - added `exec` command to the remote editing functionality
 - always set `cwd` directory for the current executed script
 - added `timeout {Number}` property into the `NEWACTION` method
+- extended `NEWAPI(type, [config], config)` by adding the `config` argument
 
 ========================
 0.0.15
