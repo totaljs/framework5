@@ -2942,6 +2942,7 @@ process.on('message', function(msg, h) {
 	F.Tls = F.require('node:tls');
 	F.Stream = F.require('node:stream');
 	F.Cluster = require('node:cluster');
+	F.Util = F.require('node:util');
 
 	// Total.js modules
 	F.TUtils = require('./utils');

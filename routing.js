@@ -804,7 +804,7 @@ function Proxy(url, target) {
 	if (typeof(target) === 'function')
 		t.stream = target;
 	else if ((/^(https|http):\/\//).test(target))
-		t.target = F.Url.parse(target);
+		t.target = new URL(target);
 	else
 		t.target = { socketPath: target };
 
@@ -887,20 +887,20 @@ exports.proxy = function(url, target) {
 	url = F.virtualpath(url);
 
 	if (!target) {
-		let index = F.routes.proxies.TfindIndex('url', url.toLowerCase());
+		const index = F.routes.proxies.TfindIndex('url', url.toLowerCase());
 		if (index !== -1)
 			F.routes.proxies.splice(index, 1);
 		return;
 	}
 
-	let proxy = new Proxy(url, target);
+	const proxy = new Proxy(url, target);
 	F.routes.proxies.push(proxy);
 	return proxy;
 };
 
 exports.lookupproxy = function(ctrl) {
-	for (var proxy of F.routes.proxies) {
-		var u = ctrl.uri.key.substring(0, proxy.url.length);
+	for (let proxy of F.routes.proxies) {
+		let u = ctrl.uri.key.substring(0, proxy.url.length);
 		if (u[u.length - 1] !== '/')
 			u += '/';
 		if (u === proxy.url && (!proxy.$check || proxy.$check(ctrl))) {
@@ -913,10 +913,10 @@ exports.lookupproxy = function(ctrl) {
 
 function proxyheadersws(header, headers) {
 
-	var output = [];
+	const output = [];
 
 	for (let key in headers) {
-		var value = headers[key];
+		const value = headers[key];
 		if (value instanceof Array) {
 			for (let item of value)
 				output.push(key + ': ' + item);

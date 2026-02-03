@@ -1225,7 +1225,7 @@ WebSocketClient.prototype.connect = function(url, protocol, origin) {
 
 WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 
-	var options = {};
+	const options = {};
 
 	self.url = url;
 	self.origin = origin;
@@ -1238,10 +1238,10 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 	var secured = false;
 
 	if (typeof(url) === 'string') {
-		url = F.Url.parse(url);
+		url = new URL(url);
 		options.host = url.hostname;
-		options.path = url.path;
-		options.query = url.query;
+		options.path = url.pathname + url.search;
+		options.query = url.search.substring(1);
 		secured = url.protocol === 'wss:';
 		options.port = url.port || (secured ? 443 : 80);
 	} else {
@@ -1284,7 +1284,8 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 	for (let key in self.headers)
 		options.headers[key] = self.headers[key];
 
-	var tmp = [];
+	const tmp = [];
+
 	for (let key in self.cookies)
 		tmp.push(key + '=' + self.cookies[key]);
 

@@ -26,6 +26,7 @@
 - always set `cwd` directory for the current executed script
 - added `timeout {Number}` property into the `NEWACTION` method
 - extended `NEWAPI(type, [config], config)` by adding the `config` argument
+- replaced `Url.parse()` with `new URL()`
 
 ========================
 0.0.15

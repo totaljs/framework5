@@ -491,16 +491,16 @@ exports.toURLEncode = function(value) {
 
 exports.resolve = function(url, callback, param) {
 
-	var uri;
+	let uri;
 
 	try {
-		uri = F.Url.parse(url);
+		uri = new URL(url);
 	} catch (e) {
 		callback(e);
 		return;
 	}
 
-	var cache = F.temporary.dnscache[uri.host];
+	const cache = F.temporary.dnscache[uri.host];
 
 	if (!callback)
 		return cache;
@@ -538,7 +538,7 @@ function keywordscleaner(c) {
 
 function parseProxy(p) {
 
-	var key = 'proxy_' + p;
+	const key = 'proxy_' + p;
 
 	if (F.temporary.utils[key])
 		return F.temporary.utils[key];
@@ -546,10 +546,10 @@ function parseProxy(p) {
 	if (p.indexOf('://') === -1)
 		p = 'http://' + p;
 
-	var obj = F.Url.parse(p);
+	const obj = new URL(p);
 
-	if (obj.auth)
-		obj._auth = 'Basic ' + Buffer.from(obj.auth).toString('base64');
+	if (obj.username || obj.password)
+		obj._auth = 'Basic ' + Buffer.from(obj.username + ':' + obj.password).toString('base64');
 
 	obj.port = +obj.port;
 
@@ -563,7 +563,7 @@ function parseProxy(p) {
 
 function _request(opt, callback) {
 
-	var options = { length: 0, timeout: opt.timeout == false || opt.timeout == 0 ? 0 : (opt.timeout || 8000), encoding: opt.encoding || 'utf8', callback: callback || opt.callback || NOOP, post: true, redirect: 0 };
+	const options = { length: 0, timeout: opt.timeout == false || opt.timeout == 0 ? 0 : (opt.timeout || 8000), encoding: opt.encoding || 'utf8', callback: callback || opt.callback || NOOP, post: true, redirect: 0 };
 	var proxy;
 
 	F.stats.performance.external++;
@@ -691,7 +691,7 @@ function _request(opt, callback) {
 		}
 	}
 
-	var uri = opt.unixsocket ? { socketPath: opt.unixsocket.socket, path: opt.unixsocket.path } : F.Url.parse(opt.url);
+	const uri = opt.unixsocket ? { socketPath: opt.unixsocket.socket, path: opt.unixsocket.path } : new URL(opt.url);
 
 	if ((opt.unixsocket && !uri.socketPath) || (!opt.unixsocket && (!uri.hostname || !uri.host))) {
 		options.response.canceled = true;
@@ -794,9 +794,9 @@ PAP.createConnection = function(pending) {
 
 PAP.createSocket = function(options, callback) {
 
-	var self = this;
-	var proxy = self.options.proxy;
-	var uri = self.options.uri;
+	const self = this;
+	const proxy = self.options.proxy;
+	const uri = self.options.uri;
 
 	PROXYOPTIONS.host = proxy.hostname;
 	PROXYOPTIONS.port = proxy.port;
@@ -805,7 +805,7 @@ PAP.createSocket = function(options, callback) {
 	if (proxy._auth)
 		PROXYOPTIONS.headers['Proxy-Authorization'] = proxy._auth;
 
-	var req = self.request(PROXYOPTIONS);
+	const req = self.request(PROXYOPTIONS);
 	req.setTimeout(10000);
 	req.on('response', proxyagent_response);
 	req.on('connect', function(res, socket) {
@@ -825,7 +825,7 @@ PAP.createSocket = function(options, callback) {
 	});
 
 	req.on('error', function(err) {
-		var e = new Error('Request Proxy "proxy {0} --> target {1}": {2}'.format(PROXYOPTIONS.host + ':' + proxy.port, PROXYOPTIONS.path, err.toString()));
+		const e = new Error('Request Proxy "proxy {0} --> target {1}": {2}'.format(PROXYOPTIONS.host + ':' + proxy.port, PROXYOPTIONS.path, err.toString()));
 		e.code = err.code;
 		req.destroy && req.destroy();
 		req = null;
@@ -1030,8 +1030,8 @@ function request_writefile(req, options, file, next) {
 
 function request_response(res) {
 
-	var options = this.$options;
-	var uri = this.$uri;
+	const options = this.$options;
+	const uri = this.$uri;
 
 	res._buffer = null;
 	res._bufferlength = 0;
@@ -1093,18 +1093,18 @@ function request_response(res) {
 
 		options.redirect++;
 
-		var loc = res.headers.location;
-		var proto = loc.substring(0, 6);
+		let loc = res.headers.location;
+		const proto = loc.substring(0, 6);
 
 		if (proto !== 'http:/' && proto !== 'https:')
 			loc = uri.protocol + '//' + uri.hostname + (uri.port && !SKI_PPORTS[uri.port] ? (':' + uri.port) : '') + loc;
 
-		var tmp = F.Url.parse(loc);
+		var tmp = new URL(loc);
 		tmp.headers = uri.headers;
 
 		// Transfers cookies
 		if (!options.nocookies) {
-			var cookies = res.headers['set-cookie'];
+			const cookies = res.headers['set-cookie'];
 			if (cookies) {
 
 				if (options.$totalinit.cook && !options.$totalinit.cookies)
@@ -1113,9 +1113,9 @@ function request_response(res) {
 				if (!options.cookies)
 					options.cookies = {};
 
-				for (var i = 0; i < cookies.length; i++) {
-					var cookie = cookies[i];
-					var index = cookie.indexOf(';');
+				for (let i = 0; i < cookies.length; i++) {
+					let cookie = cookies[i];
+					let index = cookie.indexOf(';');
 					if (index !== -1){
 						cookie = cookie.substring(0, index);
 						index = cookie.indexOf('=');
