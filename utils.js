@@ -770,7 +770,7 @@ exports.request = function(opt, callback) {
 
 function request_resolve(err, uri, options, origin) {
 	if (!err) {
-		options.uri.host = uri.host;
+		options.uri.ip = uri.ip;
 		options.origin = origin;
 	}
 	request_call(options.uri, options);
@@ -866,14 +866,17 @@ function request_call(uri, options) {
 		opt.path = uri.href;
 		opt.headers = uri.headers;
 		opt.method = uri.method;
-		opt.headers.host = uri.host;
+
+		if (uri.ip)
+			opt.headers.host = uri.ip;
+
 		if (options.proxy._auth)
 			opt.headers['Proxy-Authorization'] = options.proxy._auth;
 	} else
 		opt = uri;
 
-	var connection = uri.protocol === 'https:' ? F.Https : F.Http;
-	var req = opt.method === 'GET' ? connection.get(opt, request_response) : connection.request(opt, request_response);
+	const connection = uri.protocol === 'https:' ? F.Https : F.Http;
+	const req = opt.method === 'GET' ? connection.get(opt, request_response) : connection.request(opt, request_response);
 
 	req.$options = options;
 	req.$uri = uri;
@@ -1167,7 +1170,7 @@ function request_response(res) {
 
 		exports.resolve(tmp, function(err, u, param, origin) {
 			if (!err) {
-				tmp.host = u.host;
+				tmp.ip = u.host;
 				options.origin = origin;
 			}
 			res.removeAllListeners();
