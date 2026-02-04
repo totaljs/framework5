@@ -27,6 +27,7 @@
 - added `timeout {Number}` property into the `NEWACTION` method
 - extended `NEWAPI(type, [config], config)` by adding the `config` argument
 - replaced `Url.parse()` with `new URL()`
+- fixed `NEWFORK()` method
 
 ========================
 0.0.15

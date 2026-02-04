@@ -1,6 +1,6 @@
 // Total.js Workers
 // The MIT License
-// Copyright 2020-2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2023-2026 (c) Peter Širka <petersirka@gmail.com>
 
 const HEADER = { cwd: '' };
 
@@ -34,7 +34,7 @@ function process_thread() {
 		process.exit(code || 0);
 	};
 
-	var onmessage = function() {
+	const onmessage = function() {
 		F.worker.message && F.worker.message.apply(this, arguments);
 	};
 
@@ -49,8 +49,8 @@ function process_thread() {
 exports.createthread = function(name, data) {
 	if (!name)
 		return process_thread();
-	var filename = name[0] === '~' ? name.substring(1) : F.path.root('workers/' + name + '.js');
-	var worker = new F.Worker.Worker(filename, { workerData: data, cwd: HEADER, argv: ['--worker'] });
+	const filename = name[0] === '~' ? name.substring(1) : F.path.root('workers/' + name + '.js');
+	const worker = new F.Worker.Worker(filename, { workerData: data, cwd: HEADER, argv: ['--worker'] });
 	worker.kill = worker.exit = () => worker.terminate();
 	return worker;
 };
@@ -60,8 +60,8 @@ exports.createfork = function(name) {
 	if (!name)
 		return process_thread();
 
-	var filename = name[0] === '~' ? name.substring(1) : F.path.root('workers/' + name + '.js');
-	var fork = new F.Child.fork(filename, { cwd: HEADER, argv: ['--worker'] });
+	const filename = name[0] === '~' ? name.substring(1) : F.path.root('workers/' + name + '.js');
+	const fork = new F.Child.fork(filename, { cwd: HEADER.cwd, argv: ['--worker'] });
 	fork.postMessage = fork.send;
 	fork.terminate = () => fork.kill('SIGTERM');
 	return fork;
@@ -69,14 +69,14 @@ exports.createfork = function(name) {
 
 exports.createpool = function(name, count, isfork) {
 
-	var pool = {};
+	const pool = {};
 	pool.workers = [];
 	pool.pending = [];
 	pool.count = pool;
 	pool.next = function() {
 		for (let worker of pool.workers) {
 			if (worker.$released) {
-				let fn = pool.pending.shift();
+				const fn = pool.pending.shift();
 				if (fn) {
 					worker.removeAllListeners('message');
 					worker.$released = false;
@@ -91,9 +91,9 @@ exports.createpool = function(name, count, isfork) {
 
 	var release = function(worker) {
 		worker.on('exit', function() {
-			let index = pool.workers.indexOf(worker);
+			const index = pool.workers.indexOf(worker);
 			pool.workers.splice(index, 1);
-			let worker = isfork ? exports.createfork(name) : exports.createthread(name);
+			const worker = isfork ? exports.createfork(name) : exports.createthread(name);
 			worker.$pool = pool;
 			worker.release = release(worker);
 		});
@@ -105,8 +105,8 @@ exports.createpool = function(name, count, isfork) {
 
 	};
 
-	for (var i = 0; i < count; i++) {
-		var worker = isfork ? exports.createfork(name) : exports.createthread(name);
+	for (let i = 0; i < count; i++) {
+		const worker = isfork ? exports.createfork(name) : exports.createthread(name);
 		worker.$pool = pool;
 		worker.$released = true;
 		worker.release = release(worker);
