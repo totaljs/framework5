@@ -30,13 +30,27 @@ AI.prototype.message = function(role, content, merge) {
 	if (merge) {
 		for (let m of t.payload.messages) {
 			if (m.role === role) {
-				m.content += merge + content;
+
+				if (typeof(content) === 'object') {
+					for (let key in content)
+						m[key] = content[key];
+				} else
+					m.content += merge + content;
+
 				return this;
 			}
 		}
 	}
 
-	t.payload.messages.push({ role: role, content: content });
+	const msg = { role: role };
+
+	if (typeof(content) === 'object') {
+		for (let key in content)
+			msg[key] = content[key];
+	} else
+		msg.content = content;
+
+	t.payload.messages.push(msg);
 	return t;
 };
 
