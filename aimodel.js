@@ -69,6 +69,11 @@ AI.prototype.user = function(content, merge) {
 	return this.message('user', content, merge);
 };
 
+AI.prototype.prompt = function(content) {
+	this.payload.prompt = content;
+	return this;
+};
+
 AI.prototype.assistant = function(content, merge) {
 	return this.message('assistant', content, merge);
 };
