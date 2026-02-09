@@ -28,6 +28,7 @@
 - extended `NEWAPI(type, [config], config)` by adding the `config` argument
 - replaced `Url.parse()` with `new URL()`
 - fixed `NEWFORK()` method
+- fixed callback with `$` in the `ACTION().callback($)`
 
 ========================
 0.0.15

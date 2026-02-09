@@ -247,7 +247,7 @@ Options.prototype.successful = function(callback) {
 	};
 };
 
-Options.prototype.callback = Options.prototype.pipe = function(value) {
+Options.prototype.callback = Options.prototype.output = Options.prototype.pipe = function(value) {
 
 	var self = this;
 
@@ -1555,7 +1555,7 @@ ActionCaller.prototype.finish = function(value) {
 			if (self.error.length)
 				$.invalid(self.error);
 			else
-				$.callback.call(self.$, value === undefined ? self.$.response : value);
+				$.callback.call($, value === undefined ? self.$.response : value);
 		} else
 			self.options.callback.call(self.$, self.error.length ? self.error : null, value === undefined ? self.$.response : value);
 
