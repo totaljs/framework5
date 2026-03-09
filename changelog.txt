@@ -31,6 +31,7 @@
 - fixed callback with `$` in the `ACTION().callback($)`
 - fixed returing a default JSON schema object in actions
 - added support for nested inline action schemas in action schemas
+- fixed loading of `totalapi` key via `LOADCONFIG()`
 
 ========================
 0.0.15

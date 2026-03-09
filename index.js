@@ -559,6 +559,7 @@ F.loadconfig = function(value) {
 					key = 'secret_totalapi';
 				else
 					key = '$tapi';
+				cfg[key] = val;
 				break;
 			case '$tms':
 				break;
