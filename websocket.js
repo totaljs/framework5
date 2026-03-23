@@ -169,7 +169,7 @@ function websocket_ondata(chunk) {
 }
 
 function websocket_onerror(e) {
-	this.destroy &&  this.destroy();
+	this.destroy && this.destroy();
 	this.$controller && this.$controller.onerror(e);
 }
 
