@@ -63,7 +63,7 @@ exports.createfork = function(name) {
 	const filename = name[0] === '~' ? name.substring(1) : F.path.root('workers/' + name + '.js');
 	const fork = new F.Child.fork(filename, { cwd: HEADER.cwd, argv: ['--worker'] });
 	fork.postMessage = fork.send;
-	fork.terminate = () => fork.kill('SIGTERM');
+	fork.terminate = () => fork.kill('SIGKILL');
 	return fork;
 };
 

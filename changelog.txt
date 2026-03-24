@@ -32,6 +32,7 @@
 - fixed returing a default JSON schema object in actions
 - added support for nested inline action schemas in action schemas
 - fixed loading of `totalapi` key via `LOADCONFIG()`
+- changed `SIGTERM` for `SIGKILL` in the `NEWFORK()` method
 
 ========================
 0.0.15
