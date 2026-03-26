@@ -147,11 +147,21 @@ global.AJAX = function(url, data, callback) {
 		data = null;
 	}
 
-	if (!callback)
-		return new Promise((resolve, reject) => global.AJAX(url, data, (err, response) => err ? reject(err) : resolve(response)));
+	if (!callback) {
+		return new Promise(function(resolve, reject) {
+			global.AJAX(url, data, function(err, response) {
+				if (err) {
+					if (err instanceof Array)
+						err = ErrorBuilder.assign(err).reject();
+					reject(err);
+				} else
+					resolve(response);
+			});
+		});
+	}
 
-	var index = url.indexOf(' ');
-	var opt = {};
+	const index = url.indexOf(' ');
+	const opt = {};
 
 	if (index !== -1) {
 		opt.method = url.substring(0, index);
@@ -175,14 +185,14 @@ global.AJAX = function(url, data, callback) {
 			return;
 		}
 
-		var type = err ? '' : response.headers['content-type'] || '';
+		let type = err ? '' : response.headers['content-type'] || '';
 		if (type) {
-			var index = type.lastIndexOf(';');
+			const index = type.lastIndexOf(';');
 			if (index !== -1)
 				type = type.substring(0, index).trim();
 		}
 
-		var value = null;
+		let value = null;
 
 		switch (type.toLowerCase()) {
 			case 'text/xml':

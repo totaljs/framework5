@@ -34,6 +34,7 @@
 - fixed loading of `totalapi` key via `LOADCONFIG()`
 - changed `SIGTERM` for `SIGKILL` in the `NEWFORK()` method
 - extended `data` object in the `DEF.onAudit` delegate by adding `sessionid {String}` property
+- fixed promise in the `AJAX()` method
 
 ========================
 0.0.15
