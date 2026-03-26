@@ -35,6 +35,7 @@
 - changed `SIGTERM` for `SIGKILL` in the `NEWFORK()` method
 - extended `data` object in the `DEF.onAudit` delegate by adding `sessionid {String}` property
 - fixed promise in the `AJAX()` method
+- added `options.timeout {Number}` to the `WebSocketClient`
 
 ========================
 0.0.15

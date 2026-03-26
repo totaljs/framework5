@@ -1212,7 +1212,7 @@ function WebSocketClient() {
 
 	// type: json, text, binary
 	t.headers = {};
-	t.options = { type: 'json', size: 0, masking: false, compress: true, reconnect: 3000, encodedecode: false, encryptdecrypt: false, rejectunauthorized: false }; // key: Buffer, cert: Buffer, dhparam: Buffer
+	t.options = { type: 'json', size: 0, masking: false, compress: true, reconnect: 3000, encodedecode: false, encryptdecrypt: false, rejectunauthorized: false, timeout: 30000 }; // key: Buffer, cert: Buffer, dhparam: Buffer
 	t.cookies = {};
 
 	t.ondata2 = () => t.ondata();
@@ -1294,7 +1294,6 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 	F.stats.performance.online++;
 	self.req = (secured ? F.Https : F.Http).get(options);
 	self.req.$main = self;
-
 	self.req.on('error', function(e) {
 		self.$events.error && self.emit('error', e);
 		self.onclose();
@@ -1337,6 +1336,10 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 		}
 
 		self.closed = false;
+
+		if (self.options.timeout > 0)
+			self.socket.setKeepAlive(true, self.options.timeout);
+
 		self.socket.on('data', websocket_ondata);
 		self.socket.on('error', websocket_onerror);
 		self.socket.on('close', wsclient_close);
