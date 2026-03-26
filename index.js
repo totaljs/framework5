@@ -2086,6 +2086,7 @@ F.audit = function(name, $, message, type) {
 	var data = {};
 
 	if ($.user) {
+		data.sessionid = $.user.sessionid || $.sessionid || $.controller?.sessionid;
 		data.userid = $.user.id;
 		data.createdby = $.user.name || $.user.nick || $.user.alias;
 	}
