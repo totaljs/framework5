@@ -755,11 +755,11 @@ CMSRender.prototype._render = function(meta, layout, callback) {
 		layout = null;
 	}
 
-	var self = this;
-	var widgets = [];
-	var opt = {};
+	const self = this;
+	const widgets = [];
+	let opt = {};
 
-	for (var key in meta) {
+	for (const key in meta) {
 		if (key !== 'widgets')
 			opt[key] = meta[key];
 	}
@@ -775,9 +775,9 @@ CMSRender.prototype._render = function(meta, layout, callback) {
 		opt.template = item.template;
 		opt.cacheid = opt.id;
 
-		var render = item.render;
+		let render = item.render;
 		if (meta.widgets) {
-			var w = meta.widgets instanceof Array ? meta.widgets.findItem('id', item.id) : meta.widgets[item.id];
+			const w = meta.widgets instanceof Array ? meta.widgets.findItem('id', item.id) : meta.widgets[item.id];
 			if (w) {
 				render = w.render;
 				if (w.cache === 'url' && opt.url)
@@ -800,13 +800,13 @@ CMSRender.prototype._render = function(meta, layout, callback) {
 
 	}, function() {
 
-		var tangular = [];
+		const tangular = [];
 
 		// opt.inlinecache {Object} user defined cache
 
 		for (let i = 0; i < self.tangular.length; i++) {
 
-			let key = i + '';
+			const key = i + '';
 			let body = opt.inlinecache ? opt.inlinecache[key] : '';
 
 			if (!body) {
@@ -829,7 +829,7 @@ CMSRender.prototype._render = function(meta, layout, callback) {
 			tangular.push(body);
 		}
 
-		var html = self.toString(self.text, widgets, tangular, meta.body || '');
+		const html = self.toString(self.text, widgets, tangular, meta.body || '');
 		if (layout) {
 			meta.body = html;
 			layout.render(meta, callback);
