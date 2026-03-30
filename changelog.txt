@@ -36,6 +36,7 @@
 - extended `data` object in the `DEF.onAudit` delegate by adding `sessionid {String}` property
 - fixed promise in the `AJAX()` method
 - added `options.timeout {Number}` to the `WebSocketClient`
+- extended `U.chunker()` by adding `.load([callback])` method for loading existing chunks
 
 ========================
 0.0.15

@@ -5110,19 +5110,43 @@ function Chunker(name, max) {
 
 const CHP = Chunker.prototype;
 
+CHP.load = function(callback) {
+
+	const self = this;
+
+	if (!callback)
+		return new Promise(resolve => self.load(() => resolve()));
+
+	F.Fs.readdir(F.path.tmp(), function(err, files) {
+
+		if (err) {
+			callback(null, 0);
+			return;
+		}
+
+		for (let file of files) {
+			if (file.includes(self.name + '-')) {
+				self.index++;
+			}
+		}
+		callback(null, self.index);
+	});
+	return self;
+};
+
 CHP.append = CHP.write = function(obj) {
 
-	var self = this;
+	const self = this;
 	self.stack.push(obj);
 
-	var tmp = self.stack.length;
+	const tmp = self.stack.length;
 	if (tmp >= self.max) {
 
 		self.flushing++;
 		self.pages++;
 		self.count += tmp;
 
-		var index = (self.index++);
+		const index = (self.index++);
 
 		if (self.compress) {
 			F.Zlib.deflate(Buffer.from(JSON.stringify(self.stack), 'utf8'), function(err, buffer) {
@@ -5138,14 +5162,14 @@ CHP.append = CHP.write = function(obj) {
 };
 
 CHP.end = function() {
-	var self = this;
-	var tmp = self.stack.length;
+	const self = this;
+	const tmp = self.stack.length;
 	if (tmp) {
 		self.flushing++;
 		self.pages++;
 		self.count += tmp;
 
-		var index = (self.index++);
+		const index = (self.index++);
 
 		if (self.compress) {
 			F.Zlib.deflate(Buffer.from(JSON.stringify(self.stack), 'utf8'), function(err, buffer) {
