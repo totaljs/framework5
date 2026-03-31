@@ -893,11 +893,15 @@ Mailer.$send = function(obj, options, autosend) {
 					obj.logged = true;
 					Mailer.$writeline(obj, value);
 				} else {
-					var err = new Error('Forbidden.');
+					const err2 = new Error('Forbidden.');
 					Mailer.destroy(obj);
-					obj.callback && obj.callback(err);
+					obj.callback && obj.callback(err2);
 					obj.callback = null;
-					Mailer.$events.error && !obj.try && Mailer.emit('error', err, obj);
+					for (let m of obj.messages) {
+						if (m.$callback)
+							m.$callback(err2);
+					}
+					Mailer.$events.error && !obj.try && Mailer.emit('error', err2, obj);
 				}
 
 				return;
@@ -919,25 +923,34 @@ Mailer.$send = function(obj, options, autosend) {
 					return;
 				}
 
-				var err = line;
+				const err = line;
+				let iscallback = false;
 
 				Mailer.$events.error && !obj.try && Mailer.emit('error', err, obj);
 
 				if (obj.messagecallback) {
+					iscallback = true;
 					obj.messagecallback(err, obj.instance);
 					obj.messagecallback = null;
 				}
 
 				if (obj.messagecallback2) {
+					iscallback = true;
 					obj.messagecallback2(err, obj.instance);
 					obj.messagecallback2 = null;
 				}
 
 				if (obj.messages.length) {
 
-					console.log(obj);
+					for (let m of obj.messages) {
+						if (m.$callback) {
+							iscallback = true;
+							m.$callback(err);
+						}
+					}
 
-					F.error(err, 'SMTP error');
+					if (!iscallback)
+						F.error(err, 'SMTP error');
 
 					// a problem
 					obj.buffer = [];
