@@ -486,9 +486,25 @@ Mailer.send = function(opt, messages, callback) {
 		opt.port = 465;
 
 	if (!opt.server)  {
-		var err = new Error('No SMTP server configuration.');
-		callback && callback(err);
-		F.error(err, 'mail_smtp');
+		const err = new Error('No SMTP server configuration.');
+		let iscallback = false;
+
+
+		if (callback) {
+			iscallback = true;
+			callback(err);
+		}
+
+		for (let m of obj.messages) {
+			if (m.$callback) {
+				iscallback = true;
+				m.$callback(err);
+			}
+		}
+
+		if (!iscallback)
+			F.error(err, 'mail_smtp');
+
 		return self;
 	}
 
@@ -529,8 +545,17 @@ Mailer.send = function(opt, messages, callback) {
 		if (obj.try || err.stack.indexOf('ECONNRESET') !== -1)
 			return;
 
-		if (!obj.try && !is)
-			F.error(err, 'mail_smtp', opt.server);
+		if (!obj.try && !is) {
+			let iscallback = false;
+			for (let m of obj.messages) {
+				if (m.$callback) {
+					iscallback = true;
+					m.$callback(err);
+				}
+			}
+			if (!iscallback)
+				F.error(err, 'mail_smtp', opt.server);
+		}
 
 		if (obj === F.temporary.smtp[opt.server])
 			delete F.temporary.smtp[opt.server];
@@ -542,8 +567,17 @@ Mailer.send = function(opt, messages, callback) {
 
 		Mailer.destroy(obj);
 
-		if (!obj.try && !obj.callback)
-			F.error(err, 'mail_smtp', opt.server);
+		if (!obj.try && !obj.callback) {
+			let iscallback = false;
+			for (let m of obj.messages) {
+				if (m.$callback) {
+					iscallback = true;
+					m.$callback(err);
+				}
+			}
+			if (!iscallback)
+				F.error(err, 'mail_smtp', opt.server);
+		}
 
 		obj.callback && obj.callback(err);
 		obj.callback = null;
@@ -561,8 +595,17 @@ Mailer.send = function(opt, messages, callback) {
 			var err = F.TUtils.httpstatus(408);
 			Mailer.destroy(obj);
 
-			if (!obj.try && !obj.callback)
-				F.error(err, 'mail_smtp', opt.server);
+			if (!obj.try && !obj.callback) {
+				let iscallback = false;
+				for (let m of obj.messages) {
+					if (m.$callback) {
+						iscallback = true;
+						m.$callback(err);
+					}
+				}
+				if (!iscallback)
+					F.error(err, 'mail_smtp', opt.server);
+			}
 
 			obj.callback && obj.callback(err);
 			obj.callback = null;
@@ -891,6 +934,8 @@ Mailer.$send = function(obj, options, autosend) {
 				}
 
 				if (obj.messages.length) {
+
+					console.log(obj);
 
 					F.error(err, 'SMTP error');
 
