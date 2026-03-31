@@ -3,6 +3,7 @@
 ========================
 
 - fixed error handling in emails
+- improved returing `origin` in the CORS
 
 ========================
 0.0.16
