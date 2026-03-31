@@ -645,7 +645,7 @@ exports.lookupcors = function(ctrl) {
 		return false;
 	}
 
-	let origin = ctrl.headers.origin;
+	let origin = ctrl.headers.origin || '';
 
 	if (F.config.$cors !== '*' && !origin.endsWith(ctrl.headers.host)) {
 
