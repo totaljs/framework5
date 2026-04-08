@@ -212,7 +212,7 @@ Message.prototype.send2 = function(callback) {
 		data.subject = self.subject;
 		data.type = self.type;
 		data.body = self.body;
-		data.priority = self.$priotity;
+		data.priority = self.$priority;
 		data.unsubscribe = self.$unsubscribe;
 		data.confidential = self.$confidential;
 
