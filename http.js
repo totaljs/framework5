@@ -27,7 +27,7 @@ exports.listen = function(req, res) {
 		return;
 	}
 
-	if (F.config.$blacklist && F.config.$blacklist.indexOf(ctrl.ip) !== -1) {
+	if (F.config.$blacklist && F.config.$blacklist.includes(ctrl.ip)) {
 		F.stats.request.blocked++;
 		ctrl.fallback(400, 'IP address is blocked');
 		return;
