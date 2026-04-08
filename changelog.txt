@@ -4,6 +4,11 @@
 
 - fixed error handling in emails
 - improved returing `origin` in the CORS
+- fixed removing routes via `route.remove()` method
+- fixed `beautify` and `replacer` arguments in the `controller.json()`
+- fixed `mail` priority
+- fixed `kB` and `GB` units in the routing as upload limits
+- `DEBUG` is set according to the `process.env.NODE_ENV` variable
 
 ========================
 0.0.16
