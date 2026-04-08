@@ -300,7 +300,7 @@ Controller.prototype.json = function(value, beautify, replacer) {
 	response.headers['cache-control'] = NOCACHE;
 	response.headers.vary = 'Accept-Encoding, Last-Modified, User-Agent';
 	response.headers.expires = '-1';
-	response.value = JSON.stringify(value, beautify ? '\t' : null, replacer);
+	response.value = JSON.stringify(value, replacer, beautify ? '\t' : null);
 	ctrl.flush();
 	F.stats.response.json++;
 };
