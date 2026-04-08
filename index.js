@@ -23,7 +23,7 @@ Object.freeze(EMPTYARRAY);
 
 // Globals
 global.F = global.Total = {};
-global.DEBUG = true;
+global.DEBUG = process.env.NODE_ENV !== 'production';
 global.CONF = {};
 global.REPO = {};
 global.MAIN = {};
