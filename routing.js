@@ -321,14 +321,14 @@ Route.prototype.remove = function() {
 		case 'websocket':
 			index = F.routes.websockets.indexOf(self);
 			if (index !== -1)
-				F.routes.websockets.splice(index);
+				F.routes.websockets.splice(index, 1);
 			for (let conn of self.connections)
 				conn.destroy();
 			break;    
 		case 'file':
 			index = F.routes.files.indexOf(self);
 			if (index !== -1)
-				F.routes.files.splice(index);
+				F.routes.files.splice(index, 1);
 			break;
 		default:
 			if (self.apiendpoint) {
@@ -337,14 +337,14 @@ Route.prototype.remove = function() {
 					if (Object.keys(self.parent.api).length == 0) {
 						index = F.routes.routes.indexOf(self.parent);
 						if (index !== -1)
-							F.routes.routes.splice(index);
+							F.routes.routes.splice(index, 1);
 					}
 				} else {
 					delete self.api[self.apiendpoint];
 					if (Object.keys(self.api).length == 0) {
 						index = F.routes.routes.indexOf(self);
 						if (index !== -1)
-							F.routes.routes.splice(index);
+							F.routes.routes.splice(index, 1);
 					}
 				}
 			} else {
