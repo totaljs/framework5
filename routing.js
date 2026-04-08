@@ -37,12 +37,12 @@ function parseSizeTimeout(route, value) {
 				route.size = number;
 			break;
 		case 'kb':
-			number = number / 1024;
+			number = number * 1024;
 			if (route.size < number)
 				route.size = number;
 			break;
 		case 'gb':
-			number = (number * 1024 * 1024) * 1000;
+			number = number * 1024 * 1024 * 1024;
 			if (route.size < number)
 				route.size = number;
 			break;
