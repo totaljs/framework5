@@ -49,7 +49,6 @@ function Controller(req, res) {
 		ctrl.split2.push(path.toLowerCase());
 
 	ctrl.params = {};
-	ctrl.query = ctrl.uri.search.parseEncoded();
 	ctrl.files = [];
 	ctrl.body = {};
 
@@ -173,7 +172,7 @@ Controller.prototype = {
 	},
 
 	get address() {
-		return (this.protocol + '://' + this.headers?.host || '') + (this.req?.url || '');
+		return this.protocol + '://' + (this.headers?.host || '') + (this.req?.url || '');
 	}
 
 };
