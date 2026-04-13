@@ -1215,7 +1215,7 @@ F.loadservices = function() {
 				flow.service(F.internal.ticks);
 		}
 
-		if (F.internal.ticks == 6 || F.internal.ticks == 12)
+		if (F.internal.ticks == 3 || F.internal.ticks == 6 || F.internal.ticks == 12)
 			F.TWebSocket.ping();
 
 		// 1 minute

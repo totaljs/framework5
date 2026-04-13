@@ -9,6 +9,7 @@
 - fixed `mail` priority
 - fixed `kB` and `GB` units in the routing as upload limits
 - `DEBUG` is set according to the `process.env.NODE_ENV` variable
+- fixed server pinging of all WebSocket connections
 
 ========================
 0.0.16

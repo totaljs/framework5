@@ -605,10 +605,11 @@ Controller.prototype.senddeflate = function() {
 };
 
 Controller.prototype.ping = function(ts) {
-	var ctrl = this;
+	let ctrl = this;
+	ctrl.$ping = ts || Date.now();
+	ctrl.latency = null;
 	if (!ctrl.isclosed) {
 		try {
-			ctrl.$ping = ts || Date.now();
 			ctrl.socket.write(getWebSocketFrame(0, 'PING', 0x09, false, ctrl.masking));
 		} catch (e) {
 			// Socket error
@@ -1366,10 +1367,10 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 
 WebSocketClient.prototype.ping = function(timeout) {
 	var self = this;
+	self.$ping = Date.now();
 	if (!self.isclosed && !self.timeout) {
 		self.timeout = setTimeout(wsclient_timeout, timeout || 3000, self);
 		self.socket.write(getWebSocketFrame(0, 'PING', 0x09, false, self.options.masking));
-		self.$ping = Date.now();
 	}
 	return self;
 };
