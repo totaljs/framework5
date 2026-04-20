@@ -1171,8 +1171,8 @@ F.console = function() {
 	// global.THREAD && print('Thread        : ' + global.THREAD);
 	print('====================================================');
 	F.config.$root && print('Root          : ' + F.config.$root);
-	print('Directory     : ' + path.join(process.cwd(), F.Path.sep));
-	print('node_modules  : ' + path.join(nodemodules, F.Path.sep));
+	print('Directory     : ' + F.Path.join(process.cwd(), F.Path.sep));
+	print('node_modules  : ' + F.Path.join(nodemodules, F.Path.sep));
 	print('====================================================\n');
 
 	if (!F.isWorker && F.server) {
