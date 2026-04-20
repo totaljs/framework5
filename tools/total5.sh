@@ -44,7 +44,7 @@ for (const file of files) {
 	else if (file === 'controller.js')
 		source = source.replace(new RegExp(escapeRegExp(errorHtmlReadExpr), 'g'), inlineErrorHtmlExpr);
 
-	moduleEntries.push(`\t'/${file}': ${JSON.stringify(source)}`);
+	moduleEntries.push(`\t\t'/${file}': ${JSON.stringify(source)}`);
 }
 
 const outputBody = `// Total.js v5 framework bundle
@@ -65,7 +65,7 @@ const outputBody = `// Total.js v5 framework bundle
 \t})();
 
 \tconst MODULES = {
-${moduleEntries.join(',\n\n')}
+${moduleEntries.join(',\n')}
 \t};
 
 \tconst CACHE = Object.create(null);

@@ -1148,10 +1148,10 @@ F.console = function() {
 	if (!F.config.$imprint)
 		return;
 
-	var memory = process.memoryUsage();
-	var nodemodules = require.resolve('./index');
+	let memory = process.memoryUsage();
+	let nodemodules = require.resolve('./index');
 
-	nodemodules = nodemodules.substring(0, nodemodules.length - (8 + 7));
+	nodemodules = F.Path.dirname(nodemodules);
 
 	print('====================================================');
 	print('PID           : ' + process.pid);
@@ -1171,19 +1171,19 @@ F.console = function() {
 	// global.THREAD && print('Thread        : ' + global.THREAD);
 	print('====================================================');
 	F.config.$root && print('Root          : ' + F.config.$root);
-	print('Directory     : ' + process.cwd());
-	print('node_modules  : ' + nodemodules);
+	print('Directory     : ' + path.join(process.cwd(), F.Path.sep));
+	print('node_modules  : ' + path.join(nodemodules, F.Path.sep));
 	print('====================================================\n');
 
 	if (!F.isWorker && F.server) {
 
-		var hostname = F.unixsocket ? ('Socket: ' + F.unixsocket) : '{2}://{0}:{1}/'.format(F.config.$ip, F.config.$port, F.isHTTPS ? 'https' : 'http');
+		let hostname = F.unixsocket ? ('Socket: ' + F.unixsocket) : '{2}://{0}:{1}/'.format(F.config.$ip, F.config.$port, F.isHTTPS ? 'https' : 'http');
 
 		if (!F.unixsocket && F.ip === '0.0.0.0') {
-			var ni = F.Os.networkInterfaces();
+			let ni = F.Os.networkInterfaces();
 			if (ni.en0) {
-				for (var i = 0; i < ni.en0.length; i++) {
-					var nii = ni.en0[i];
+				for (let i = 0; i < ni.en0.length; i++) {
+					let nii = ni.en0[i];
 					// nii.family === 'IPv6' ||
 					if (nii.family === 'IPv4') {
 						hostname += '\n{2}://{0}:{1}/'.format(nii.address, F.port, F.isHTTPS ? 'https' : 'http');
