@@ -233,7 +233,7 @@ Instance.prototype.input = function(input, data, callback) {
 Instance.prototype.send = function(output, data) {
 	let msg = data instanceof Message ? data : this.newmessage();
 	msg.output = output;
-	msg.data = data;x
+	msg.data = data;
 	msg.send(output);
 };
 
