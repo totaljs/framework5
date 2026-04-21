@@ -11,6 +11,7 @@
 - `DEBUG` is set according to the `process.env.NODE_ENV` variable
 - fixed server pinging of all WebSocket connections
 - improved code
+- fixed typo in send method data assignment
 
 ========================
 0.0.16
