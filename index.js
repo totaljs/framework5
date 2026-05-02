@@ -3025,6 +3025,7 @@ process.on('message', function(msg, h) {
 	F.proxy = F.TRouting.proxy;
 
 	// Needed "F"
+	F.TProxy = require('./proxy');
 	F.TFlow = require('./flow');
 	F.TTMS = require('./tms');
 	F.TCMS = require('./cms');

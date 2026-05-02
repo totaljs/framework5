@@ -12,6 +12,8 @@
 - fixed server pinging of all WebSocket connections
 - improved code
 - fixed typo in send method data assignment
+- added `PROXYCLIENT(proxyserver, ip:port, [logger])` method
+- added `PROXYSERVER(endpoint, socketendpoint, [logger])` method
 
 ========================
 0.0.16

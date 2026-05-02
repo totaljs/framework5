@@ -12,6 +12,8 @@ global.EMIT = (name, a, b, c, d, e, f, g) => F.emit(name, a, b, c, d, e, f, g);
 global.OFF = (name, fn) => F.off(name, fn);
 global.ROUTE = F.TRouting.route;
 global.PROXY = F.TRouting.proxy;
+global.PROXYCLIENT = F.TProxy.client;
+global.PROXYSERVER = F.TProxy.server;
 global.print = console.log;
 global.Utils = F.TUtils;
 global.LOAD = F.load;
