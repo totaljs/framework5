@@ -78,6 +78,10 @@ AI.prototype.assistant = function(content, merge) {
 	return this.message('assistant', content, merge);
 };
 
+AI.prototype.tool = function(content, merge) {
+	return this.message('tool', content, merge);
+};
+
 AI.prototype.promise = function($) {
 	const t = this;
 	return new Promise(function(resolve, reject) {
