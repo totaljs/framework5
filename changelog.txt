@@ -14,6 +14,7 @@
 - fixed typo in send method data assignment
 - added `PROXYCLIENT(proxyserver, ip:port, [logger])` method
 - added `PROXYSERVER(endpoint, socketendpoint, [logger])` method
+- added `AIMODEL.tool(content, [merge])` method.
 
 ========================
 0.0.16
