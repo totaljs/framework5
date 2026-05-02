@@ -266,6 +266,7 @@ global.NEWAPI = (name, config, callback) => F.TApi.newapi(name, config, callback
 
 // AI
 global.AIMODEL = (name, schema, data, $) => F.TAIModel.exec(name, schema, data, $);
+global.AIPARSER = (provider) => F.TAIModel.parser(provider);
 global.NEWAIMODEL = (name, config, callback) => F.TAIModel.newai(name, config, callback);
 
 // NoSQL
