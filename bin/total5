@@ -41,7 +41,7 @@ FUNC.help = function() {
 	console.log('bundle <filename>                           : it makes a bundle from the current directory');
 	console.log('extract <filename>                          : it extracts a bundle into the current directory');
 	console.log('edit <url?id=project>                       : it opens remote editing of the current directory with the Total.js Code Editor');
-	console.log('proxyclient <server_endpoint> <local_port>  : It connects a local port with a remote totaljs proxy server');
+	console.log('proxy <server_endpoint> <local_port>  : It connects a local port with a remote totaljs proxy server');
 	console.log('8000                                        : it starts a web server on port "8000" for the current directory');
 	done();
 };
@@ -242,7 +242,7 @@ FUNC.server = function(port) {
 	F.http({ load: 'none', port: port || 8000 });
 };
 
-FUNC.proxyclient = function(endpoint, port) {
+FUNC.proxy = function(endpoint, port) {
 	require('../proxy').client(endpoint, port);
 };
 
