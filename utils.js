@@ -1,6 +1,6 @@
 // Total.js Utils
 // The MIT License
-// Copyright 2012-2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2012-2026 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -6293,6 +6293,7 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 		obj.required = required;
 
 	obj.errors = errors;
+	obj.aitool = jsonschemaaitool;
 	obj.transform = exports.jsonschematransform;
 	obj.validate = function(value, partial, path) {
 		let err = new F.TBuilders.ErrorBuilder();
@@ -6306,6 +6307,28 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 
 	return obj;
 };
+
+function jsonschemaaitool(name) {
+	let t = this;
+	let properties = {};
+	let required = t.required;
+	for (let key in t.properties) {
+		let prop = t.properties[key];
+		properties[key] = { type: prop.type, description: t.errors[key] };
+	}
+	return {
+		type: 'function',
+		function: {
+			name: name,
+			description: t.summary || t.description,
+			parameters: {
+				type: 'object',
+				properties: properties,
+				required: required || []
+			}
+		}
+	}
+}
 
 exports.jsonschematransform = function(value, partial, error, path) {
 

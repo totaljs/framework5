@@ -12,6 +12,7 @@ function AI(model) {
 	t.payload = {};
 	t.payload.model = model;
 	t.payload.messages = [];
+	t.payload.tools = [];
 }
 
 // Enables think mode
@@ -82,8 +83,9 @@ AI.prototype.assistant = function(content, merge) {
 	return this.message('assistant', content, merge);
 };
 
-AI.prototype.tool = function(content, merge) {
-	return this.message('tool', content, merge);
+AI.prototype.tool = function(content) {
+	this.payload.tools.push(content);
+	return this;
 };
 
 AI.prototype.promise = function($) {
@@ -133,7 +135,6 @@ AI.prototype.run = function() {
 		t.options.callback('AI model not found.');
 	return t;
 };
-
 
 function parseJSON(value) {
 	if (!value)
@@ -249,16 +250,17 @@ class AIStreamParser {
 		if (chunk == null)
 			return this.output();
 
-		if (Buffer.isBuffer(chunk) || typeof chunk === 'string')
+		if (chunk instanceof Buffer || typeof(chunk) === 'string' || chunk instanceof Uint8Array || chunk instanceof ArrayBuffer)
 			return this.writeBuffer(chunk);
 
-		if (typeof chunk === 'object')
+		if (typeof(chunk) === 'object')
 			return this.writeObject(chunk);
 
 		return this.output();
 	}
 
 	writeBuffer(chunk) {
+
 		this.appendBuffer(chunk);
 
 		let index;
@@ -278,11 +280,19 @@ class AIStreamParser {
 	}
 
 	appendBuffer(chunk) {
+
 		if (chunk == null)
 			return;
 
-		if (!Buffer.isBuffer(chunk))
+		if (Buffer.isBuffer(chunk)) {
+			// OK
+		} else if (chunk instanceof Uint8Array) {
+			chunk = Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength);
+		} else if (chunk instanceof ArrayBuffer) {
+			chunk = Buffer.from(chunk);
+		} else {
 			chunk = Buffer.from(String(chunk), 'utf8');
+		}
 
 		this.buffer = this.buffer.length ? Buffer.concat([this.buffer, chunk]) : chunk;
 	}
@@ -608,6 +618,15 @@ class AIStreamParser {
 
 			this.appendToolArguments(tool, fn.arguments || fn.args || fn.input || {});
 		}
+	}
+
+	reset() {
+		this.content = '';
+		this.tools = [];
+		this.reasoning = 'content';
+		this.buffer = Buffer.alloc(0);
+		this.toolmap = Object.create(null);
+		return this;
 	}
 }
 
