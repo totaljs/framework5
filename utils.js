@@ -6339,7 +6339,7 @@ function jsonschemaaitool(name) {
 	let required = t.required;
 	for (let key in t.properties) {
 		let prop = t.properties[key];
-		properties[key] = { type: prop.type, description: t.errors[key] };
+		properties[key] = { type: prop.type, description: t.errors ? (t.errors[key] || '') : '' };
 	}
 	return {
 		type: 'function',
