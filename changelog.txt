@@ -17,6 +17,7 @@
 - added `AIMODEL.tool(content, [merge])` method
 - added `AIPARSER(provider)` method for parsing AI responses
 - extended `String.prototype` by adding the `String.parseContext()` method to parse a specific text file format
+- added `ACTION().config(obj)` method
 
 ========================
 0.0.16

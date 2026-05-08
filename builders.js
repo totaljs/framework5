@@ -1339,6 +1339,12 @@ function ActionCaller() {
 	setImmediate(ActionCallerExec, self);
 }
 
+ActionCaller.prototype.config = function(value) {
+	this.options.config = value;
+	return this;
+};
+
+
 ActionCaller.prototype.debug = function() {
 	this.options.debug = true;
 	return this;
@@ -1412,6 +1418,20 @@ ActionCaller.prototype.exec = function() {
 	$.controller = self.controller;
 	$.user = self.options.user;
 	$.config = action.config || EMPTYOBJECT;
+	if (self.options.config) {
+
+		if ($.config === EMPTYOBJECT)
+			$.config = {};
+		else {
+			let tmp = $.config;
+			$.config = {};
+			for (let key in tmp)
+				$.config[key] = tmp[key];
+		}
+
+		for (let key in self.options.config)
+			$.config[key] = self.options.config[key];
+	}
 
 	action.called++;
 
