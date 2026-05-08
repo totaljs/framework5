@@ -6051,6 +6051,31 @@ function extractnested(str, minDepth = 0) {
 	return { text: out, parts };
 }
 
+SP.parseContext = function() {
+
+	const text = this;
+	const REG = /-{20,}\s*\n([\s\S]*?)\n-{20,}\s*\n([\s\S]*?)(?=\n-{20,}\s*\n|$)/g;
+	const output = [];
+
+	let match;
+
+	while ((match = REG.exec(text))) {
+		const header = {};
+		const body = match[2].trim();
+		for (const line of match[1].split('\n')) {
+			const index = line.indexOf(':');
+			if (index === -1)
+				continue;
+			const key = line.substring(0, index).trim().toLowerCase();
+			const value = line.substring(index + 1).trim();
+			header[key] = value;
+		}
+		output.push({ ...header, body });
+	}
+
+	return output;
+};
+
 SP.toJSONSchema = SP.parseSchema = function(name, url) {
 
 	let obj = {};
