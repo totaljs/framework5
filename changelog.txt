@@ -18,6 +18,7 @@
 - added `AIPARSER(provider)` method for parsing AI responses
 - extended `String.prototype` by adding the `String.parseContext()` method to parse a specific text file format
 - added `ACTION().config(obj)` method
+- added a new property `flow.instance.repo = {}` for storing additional data for Flow node instances
 
 ========================
 0.0.16

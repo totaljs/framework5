@@ -9,7 +9,7 @@ if (!global.F)
 
 const W = F.Worker;
 const Fork = F.Child.fork;
-const VERSION = 33;
+const VERSION = 34;
 const NOTIFYPATH = '/notify/';
 
 var isFLOWSTREAMWORKER = false;
@@ -1939,6 +1939,7 @@ function MAKEFLOWSTREAM(meta) {
 			tmp.offset = com.offset;
 			tmp.size = com.size;
 			tmp.meta = com.meta;
+			tmp.repo = com.repo;
 			tmp.schemaid = com.schemaid;
 			tmp.note = com.note;
 			tmp.schema = com.schema;
@@ -1994,6 +1995,7 @@ function MAKEFLOWSTREAM(meta) {
 		data.design = design;
 		data.variables = variables;
 		data.sources = sources;
+		data.flowstream = VERSION;
 		return data;
 	};
 

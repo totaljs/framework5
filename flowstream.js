@@ -1486,6 +1486,7 @@ FP._use = function(schema, callback, reinit, insert) {
 				fi.size = instance.size;
 				fi.tab = instance.tab;
 				fi.ts = ts;
+				fi.repo = instance.repo || {};
 				if (JSON.stringify(fi.config) !== JSON.stringify(instance.config)) {
 					F.TUtils.extend(fi.config, instance.config);
 					fi.configure && fi.configure(fi.config);
@@ -1579,6 +1580,10 @@ FP.initcomponent = function(key, component) {
 	instance.isinstance = true;
 	instance.stats = { pending: 0, input: 0, output: 0, duration: 0, destroyed: 0 };
 	instance.cache = {};
+
+	if (!instance.repo)
+		instance.repo = {};
+
 	instance.id = key;
 	instance.module = component;
 	instance.ready = false;
