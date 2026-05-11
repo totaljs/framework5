@@ -1486,7 +1486,13 @@ FP._use = function(schema, callback, reinit, insert) {
 				fi.size = instance.size;
 				fi.tab = instance.tab;
 				fi.ts = ts;
-				fi.repo = instance.repo || {};
+
+				// From the view of the designer is the "repo" not visible
+				if (instance.repo)
+					fi.repo = instance.repo;
+				else if (!fi.repo)
+					fi.repo = {};
+
 				if (JSON.stringify(fi.config) !== JSON.stringify(instance.config)) {
 					F.TUtils.extend(fi.config, instance.config);
 					fi.configure && fi.configure(fi.config);
