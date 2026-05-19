@@ -1627,7 +1627,7 @@ exports.aistreamer = function(online, onmessage) {
 	};
 };
 
-exports.filestreamer = function(filename, onbuffer, onend, size) {
+exports.filestreamer = function(filename, onbuffer, onend, size = 1024 * 16, offset = 0) {
 
 	if (typeof(onend) === 'number') {
 		size = onend;
@@ -1637,7 +1637,7 @@ exports.filestreamer = function(filename, onbuffer, onend, size) {
 	let Fd = null;
 
 	const read = function(offset) {
-		const buffer = Buffer.alloc(size || (1024 * 16));
+		const buffer = Buffer.alloc(size);
 		Total.Fs.read(Fd, buffer, 0, buffer.length, offset, function(err, bytes) {
 			if (err || !bytes) {
 				Total.Fs.close(Fd, NOOP);
@@ -1662,7 +1662,7 @@ exports.filestreamer = function(filename, onbuffer, onend, size) {
 		}
 
 		Fd = fd;
-		read(0);
+		read(offset);
 	});
 
 };
