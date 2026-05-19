@@ -20,6 +20,7 @@
 - added `ACTION().config(obj)` method
 - added a new property `flow.instance.repo = {}` for storing additional data for Flow node instances
 - fixed `Utils.filestreamer()` method
+- improved `Utils.filestreamer()` method by adding percentage
 
 ========================
 0.0.16

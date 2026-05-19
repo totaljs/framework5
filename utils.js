@@ -1635,6 +1635,7 @@ exports.filestreamer = function(filename, onbuffer, onend, size = 1024 * 16, off
 	}
 
 	let Fd = null;
+	let Stat = null;
 
 	const read = function(offset) {
 		const buffer = Buffer.alloc(size);
@@ -1643,26 +1644,32 @@ exports.filestreamer = function(filename, onbuffer, onend, size = 1024 * 16, off
 				Total.Fs.close(Fd, NOOP);
 				onend && onend(err);
 			} else {
-				onbuffer(buffer.length !== read ? buffer.slice(0, bytes) : buffer, function(stop) {
+				const buff = buffer.length !== read ? buffer.slice(0, bytes) : buffer;
+				Stat.read += buff.length;
+				onbuffer(buff, function(stop) {
 					if (stop === true) {
 						Total.Fs.close(Fd, NOOP);
 						onend && onend();
 					} else
 						read(offset + bytes);
-				});
+				}, (Stat.read * 100) / Stat.size);
 			}
 		});
 	};
 
-	Total.Fs.open(filename, function(err, fd) {
+	Total.Fs.lstat(filename, function(err, stat) {
 
 		if (err) {
 			onend && onend(err);
 			return;
 		}
 
-		Fd = fd;
-		read(offset);
+		Stat = stat;
+		Total.Fs.open(filename, function(err, fd) {
+			Fd = fd;
+			Stat.read = offset;
+			read(offset);
+		});
 	});
 
 };
