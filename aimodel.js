@@ -235,16 +235,166 @@ function createTool(id, name) {
 	};
 }
 
+function parseJSON(value) {
+	try {
+		return JSON.parse(value);
+	} catch (e) {
+		return null;
+	}
+}
+
+function createTool(id, name) {
+	return {
+		id: id || null,
+		name: name || null,
+		arguments: '',
+		input: null
+	};
+}
+
+function normalize(value) {
+
+	if (value == null)
+		return {};
+
+	if (typeof value === 'object')
+		return value;
+
+	if (typeof value !== 'string')
+		return value;
+
+	value = value.trim();
+
+	if (!value)
+		return {};
+
+	const json = parseJSON(value);
+
+	if (json)
+		return json;
+
+	return value;
+}
+
+function parseJSON(value) {
+	try {
+		return JSON.parse(value);
+	} catch (e) {
+		return null;
+	}
+}
+
+function createTool(id, name) {
+	return {
+		id: id || null,
+		name: name || null,
+		arguments: '',
+		input: null
+	};
+}
+
+function normalize(value) {
+
+	if (value == null)
+		return {};
+
+	if (typeof value === 'object')
+		return value;
+
+	if (typeof value !== 'string')
+		return value;
+
+	value = value.trim();
+
+	if (!value)
+		return {};
+
+	const json = parseJSON(value);
+
+	if (json)
+		return json;
+
+	return value;
+}
+
 class AIStreamParser {
 
-	constructor(provider) {
+	constructor(provider, ondata) {
 		this.provider = provider || 'generic';
+
 		this.content = '';
+		this.thinking = '';
 		this.tools = [];
 		this.reasoning = 'content';
+
 		this.buffer = Buffer.alloc(0);
 		this.toolmap = Object.create(null);
+
+		this.listeners = Object.create(null);
+		this.ondata = typeof ondata === 'function' ? ondata : null;
+
+		this.thinking_signature = null;
+		this.thought_signatures = [];
 	}
+
+	// ------------------------------------------------------------
+	// Events
+	// ------------------------------------------------------------
+
+	on(type, fn) {
+		if (!type || typeof fn !== 'function')
+			return this;
+
+		if (!this.listeners[type])
+			this.listeners[type] = [];
+
+		this.listeners[type].push(fn);
+		return this;
+	}
+
+	off(type, fn) {
+		const arr = this.listeners[type];
+
+		if (!arr)
+			return this;
+
+		const index = arr.indexOf(fn);
+
+		if (index !== -1)
+			arr.splice(index, 1);
+
+		return this;
+	}
+
+	emit(type, data) {
+		const event = {
+			type,
+			...data
+		};
+
+		if (this.ondata)
+			this.ondata(event);
+
+		const listeners = this.listeners[type];
+
+		if (listeners) {
+			for (const fn of listeners)
+				fn(event);
+		}
+
+		const all = this.listeners['*'];
+
+		if (all) {
+			for (const fn of all)
+				fn(event);
+		}
+
+		return event;
+	}
+
+	// ------------------------------------------------------------
+	// Public API
+	// ------------------------------------------------------------
 
 	write(chunk) {
 		if (chunk == null)
@@ -265,11 +415,11 @@ class AIStreamParser {
 
 		let index;
 
-		while ((index = this.buffer.indexOf(0x0A)) !== -1) { // \n
+		while ((index = this.buffer.indexOf(0x0A)) !== -1) {
 			let lineBuffer = this.buffer.subarray(0, index);
 			this.buffer = this.buffer.subarray(index + 1);
 
-			// CRLF support: remove \r
+			// CRLF support
 			if (lineBuffer.length && lineBuffer[lineBuffer.length - 1] === 0x0D)
 				lineBuffer = lineBuffer.subarray(0, lineBuffer.length - 1);
 
@@ -311,6 +461,7 @@ class AIStreamParser {
 			return;
 
 		const json = parseJSON(line);
+
 		if (json)
 			this.writeObject(json);
 	}
@@ -318,9 +469,17 @@ class AIStreamParser {
 	end() {
 		if (this.buffer.length)
 			this.processLineBuffer(this.buffer);
+
 		this.buffer = Buffer.alloc(0);
 		this.finalizeTools();
-		return this.output();
+
+		const output = this.output();
+
+		this.emit('done', {
+			output
+		});
+
+		return output;
 	}
 
 	writeObject(chunk) {
@@ -328,17 +487,21 @@ class AIStreamParser {
 			case 'ollama':
 				this.parseOllama(chunk);
 				break;
+
 			case 'openai_chat':
 			case 'openai':
 				this.parseOpenAI(chunk);
 				break;
+
 			case 'openai_responses':
 				this.parseOpenAIresponse(chunk);
 				break;
+
 			case 'claude':
 			case 'anthropic':
 				this.parseClaude(chunk);
 				break;
+
 			case 'gemini':
 			case 'google':
 				this.parseGemini(chunk);
@@ -348,15 +511,71 @@ class AIStreamParser {
 				this.parseGeneric(chunk);
 				break;
 		}
+
 		return this.output();
 	}
+
+	// ------------------------------------------------------------
+	// Accumulators
+	// ------------------------------------------------------------
 
 	addContent(value) {
 		if (!value)
 			return;
+
+		if (typeof value !== 'string')
+			value = String(value);
+
 		this.content += value;
+
+		this.emit('content', {
+			delta: value,
+			content: this.content,
+			reasoning: 'content'
+		});
+
 		if (!this.tools.length)
 			this.reasoning = 'content';
+	}
+
+	addThinking(value) {
+		if (!value)
+			return;
+
+		if (typeof value === 'object') {
+
+			if (Array.isArray(value)) {
+				for (const item of value)
+					this.addThinking(item);
+				return;
+			}
+
+			if (value.text != null)
+				value = value.text;
+			else if (value.summary != null)
+				value = value.summary;
+			else if (value.content != null)
+				value = value.content;
+			else if (value.value != null)
+				value = value.value;
+			else
+				value = JSON.stringify(value);
+		}
+
+		if (!value)
+			return;
+
+		if (typeof value !== 'string')
+			value = String(value);
+
+		this.thinking += value;
+		this.reasoning = 'thinking';
+
+		this.emit('thinking', {
+			delta: value,
+			thinking: this.thinking,
+			reasoning: 'thinking'
+		});
 	}
 
 	getTool(key, id, name) {
@@ -364,10 +583,13 @@ class AIStreamParser {
 		key = key || id || name || String(this.tools.length);
 
 		let tool = this.toolmap[key];
+		let isnew = false;
+
 		if (!tool) {
 			tool = createTool(id, name);
 			this.toolmap[key] = tool;
 			this.tools.push(tool);
+			isnew = true;
 		}
 
 		if (id)
@@ -377,6 +599,11 @@ class AIStreamParser {
 			tool.name = name;
 
 		this.reasoning = 'tool';
+
+		this.emit(isnew ? 'tool_start' : 'tool_update', {
+			tool: this.cloneTool(tool),
+			reasoning: 'tool'
+		});
 
 		return tool;
 	}
@@ -389,10 +616,36 @@ class AIStreamParser {
 		if (typeof value === 'object') {
 			tool.input = value;
 			tool.arguments = JSON.stringify(value);
+
+			this.emit('tool_arguments', {
+				tool: this.cloneTool(tool),
+				delta: value,
+				arguments: tool.input,
+				reasoning: 'tool'
+			});
+
 			return;
 		}
 
+		if (typeof value !== 'string')
+			value = String(value);
+
 		tool.arguments += value;
+
+		this.emit('tool_arguments', {
+			tool: this.cloneTool(tool),
+			delta: value,
+			arguments: tool.arguments,
+			reasoning: 'tool'
+		});
+	}
+
+	cloneTool(tool) {
+		return {
+			id: tool.id,
+			name: tool.name,
+			arguments: tool.input || normalize(tool.arguments)
+		};
 	}
 
 	finalizeTools() {
@@ -404,8 +657,10 @@ class AIStreamParser {
 
 	output() {
 		this.finalizeTools();
-		return {
+
+		const output = {
 			content: this.content,
+			thinking: this.thinking,
 			tools: this.tools.map(tool => ({
 				id: tool.id,
 				name: tool.name,
@@ -413,6 +668,14 @@ class AIStreamParser {
 			})),
 			reasoning: this.tools.length ? 'tool' : this.reasoning
 		};
+
+		if (this.thinking_signature)
+			output.thinking_signature = this.thinking_signature;
+
+		if (this.thought_signatures.length)
+			output.thought_signatures = this.thought_signatures;
+
+		return output;
 	}
 
 	// ------------------------------------------------------------
@@ -421,33 +684,79 @@ class AIStreamParser {
 
 	parseOllama(chunk) {
 
+		// Ollama OpenAI-compatible endpoint fallback
+		if (chunk.choices) {
+			this.parseOpenAI(chunk);
+			return;
+		}
+
 		const message = chunk.message || {};
 
+		// /api/chat thinking
+		if (message.thinking)
+			this.addThinking(message.thinking);
+
+		// /api/generate thinking
+		if (chunk.thinking)
+			this.addThinking(chunk.thinking);
+
+		// OpenAI-compatible / model-specific reasoning fields
+		if (message.reasoning_content)
+			this.addThinking(message.reasoning_content);
+
+		if (message.reasoning)
+			this.addThinking(message.reasoning);
+
+		if (message.reasoning_text)
+			this.addThinking(message.reasoning_text);
+
+		// /api/chat content
 		if (message.content)
 			this.addContent(message.content);
 
-		const calls = message.tool_calls || [];
+		// /api/generate content
+		if (chunk.response)
+			this.addContent(chunk.response);
+
+		const calls = message.tool_calls || chunk.tool_calls || [];
 
 		for (let i = 0; i < calls.length; i++) {
 			const call = calls[i];
-			const fn = call.function || {};
+			const fn = call.function || call;
 			const key = call.id || fn.name || `ollama_${i}`;
 
 			const tool = this.getTool(key, call.id, fn.name);
 
 			if (fn.arguments != null)
 				this.appendToolArguments(tool, fn.arguments);
+			else if (fn.args != null)
+				this.appendToolArguments(tool, fn.args);
+			else if (fn.input != null)
+				this.appendToolArguments(tool, fn.input);
 		}
 	}
 
 	// ------------------------------------------------------------
 	// OpenAI Chat Completions stream
 	// ------------------------------------------------------------
+
 	parseOpenAI(chunk) {
 		const choices = chunk.choices || [];
 
 		for (const choice of choices) {
 			const delta = choice.delta || {};
+
+			if (delta.reasoning_content)
+				this.addThinking(delta.reasoning_content);
+
+			if (delta.reasoning)
+				this.addThinking(delta.reasoning);
+
+			if (delta.thinking)
+				this.addThinking(delta.thinking);
+
+			if (delta.reasoning_text)
+				this.addThinking(delta.reasoning_text);
 
 			if (delta.content)
 				this.addContent(delta.content);
@@ -473,9 +782,17 @@ class AIStreamParser {
 
 	parseOpenAIresponse(chunk) {
 		switch (chunk.type) {
+
 			case 'response.output_text.delta':
 			case 'response.refusal.delta':
 				this.addContent(chunk.delta);
+				break;
+
+			case 'response.reasoning_summary_text.delta':
+			case 'response.reasoning_text.delta':
+			case 'response.reasoning_summary.delta':
+			case 'response.reasoning.delta':
+				this.addThinking(chunk.delta);
 				break;
 
 			case 'response.function_call_arguments.delta': {
@@ -488,6 +805,17 @@ class AIStreamParser {
 
 			case 'response.output_item.added': {
 				const item = chunk.item || {};
+
+				if (item.type === 'reasoning') {
+					if (item.summary)
+						this.addThinking(item.summary);
+
+					if (item.content)
+						this.addThinking(item.content);
+
+					if (item.text)
+						this.addThinking(item.text);
+				}
 
 				if (item.type === 'function_call') {
 					const key = item.id || item.call_id;
@@ -502,6 +830,17 @@ class AIStreamParser {
 
 			case 'response.output_item.done': {
 				const item = chunk.item || {};
+
+				if (item.type === 'reasoning') {
+					if (item.summary)
+						this.addThinking(item.summary);
+
+					if (item.content)
+						this.addThinking(item.content);
+
+					if (item.text)
+						this.addThinking(item.text);
+				}
 
 				if (item.type === 'function_call') {
 					const key = item.id || item.call_id;
@@ -525,6 +864,11 @@ class AIStreamParser {
 			case 'content_block_start': {
 				const block = chunk.content_block || {};
 
+				if (block.type === 'thinking') {
+					if (block.thinking)
+						this.addThinking(block.thinking);
+				}
+
 				if (block.type === 'tool_use') {
 					const key = block.id || `claude_${chunk.index || 0}`;
 					const tool = this.getTool(key, block.id, block.name);
@@ -538,6 +882,12 @@ class AIStreamParser {
 
 			case 'content_block_delta': {
 				const delta = chunk.delta || {};
+
+				if (delta.type === 'thinking_delta')
+					this.addThinking(delta.thinking);
+
+				if (delta.type === 'signature_delta')
+					this.thinking_signature = delta.signature;
 
 				if (delta.type === 'text_delta')
 					this.addContent(delta.text);
@@ -576,8 +926,15 @@ class AIStreamParser {
 			for (let i = 0; i < parts.length; i++) {
 				const part = parts[i];
 
-				if (part.text)
-					this.addContent(part.text);
+				if (part.thoughtSignature)
+					this.thought_signatures.push(part.thoughtSignature);
+
+				if (part.text) {
+					if (part.thought)
+						this.addThinking(part.text);
+					else
+						this.addContent(part.text);
+				}
 
 				if (part.functionCall) {
 					const fn = part.functionCall;
@@ -595,6 +952,31 @@ class AIStreamParser {
 	// ------------------------------------------------------------
 
 	parseGeneric(chunk) {
+
+		if (chunk.thinking)
+			this.addThinking(chunk.thinking);
+
+		if (chunk.reasoning)
+			this.addThinking(chunk.reasoning);
+
+		if (chunk.reasoning_content)
+			this.addThinking(chunk.reasoning_content);
+
+		if (chunk.reasoning_text)
+			this.addThinking(chunk.reasoning_text);
+
+		if (chunk.message?.thinking)
+			this.addThinking(chunk.message.thinking);
+
+		if (chunk.message?.reasoning)
+			this.addThinking(chunk.message.reasoning);
+
+		if (chunk.message?.reasoning_content)
+			this.addThinking(chunk.message.reasoning_content);
+
+		if (chunk.message?.reasoning_text)
+			this.addThinking(chunk.message.reasoning_text);
+
 		if (chunk.content)
 			this.addContent(chunk.content);
 
@@ -622,10 +1004,16 @@ class AIStreamParser {
 
 	reset() {
 		this.content = '';
+		this.thinking = '';
 		this.tools = [];
 		this.reasoning = 'content';
+
 		this.buffer = Buffer.alloc(0);
 		this.toolmap = Object.create(null);
+
+		this.thinking_signature = null;
+		this.thought_signatures = [];
+
 		return this;
 	}
 }
