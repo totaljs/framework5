@@ -1634,21 +1634,33 @@ exports.filestreamer = function(filename, onbuffer, onend, size) {
 		onend = null;
 	}
 
-	var Fd = null;
+	let Fd = null;
 
-	var read = function(offset) {
-		var buffer = Buffer.alloc(size || (1024 * 16));
+	const read = function(offset) {
+		const buffer = Buffer.alloc(size || (1024 * 16));
 		Total.Fs.read(Fd, buffer, 0, buffer.length, offset, function(err, bytes) {
 			if (err || !bytes) {
-				onend && onend(err);
 				Total.Fs.close(Fd, NOOP);
+				onend && onend(err);
 			} else {
-				onbuffer(buffer.length !== read ? buffer.slice(0, bytes) : buffer, next => read(offset + bytes));
+				onbuffer(buffer.length !== read ? buffer.slice(0, bytes) : buffer, function(stop) {
+					if (stop === true) {
+						Total.Fs.close(Fd, NOOP);
+						onend && onend();
+					} else
+						read(offset + bytes);
+				});
 			}
 		});
 	};
 
 	Total.Fs.open(filename, function(err, fd) {
+
+		if (err) {
+			onend && onend(err);
+			return;
+		}
+
 		Fd = fd;
 		read(0);
 	});
