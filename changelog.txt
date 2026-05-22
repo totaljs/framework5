@@ -21,6 +21,8 @@
 - added a new property `flow.instance.repo = {}` for storing additional data for Flow node instances
 - fixed `Utils.filestreamer()` method
 - improved `Utils.filestreamer()` method by adding percentage
+- fixed sending data to all outputs `$.send(null, [data])` in the FlowStream
+- fixed sending data to all outputs `instance.send(null, [data])` in the FlowStream
 
 ========================
 0.0.16

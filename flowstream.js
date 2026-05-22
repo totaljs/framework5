@@ -77,10 +77,10 @@ MP.emit = function(name, a, b, c, d, e, f, g) {
 	if (!self.$events)
 		return self;
 
-	var evt = self.$events[name];
+	const evt = self.$events[name];
 	if (evt) {
 
-		var clean = false;
+		let clean = false;
 
 		for (var e of evt) {
 			if (e.once)
@@ -89,7 +89,7 @@ MP.emit = function(name, a, b, c, d, e, f, g) {
 		}
 
 		if (clean) {
-			var index = 0;
+			let index = 0;
 			while (true) {
 				if (!evt[index])
 					break;
@@ -116,12 +116,12 @@ MP.emit2 = function(name, a, b, c, d, e, f, g) {
 	if (!self.$events)
 		return self;
 
-	var evt = self.$events[name];
+	const evt = self.$events[name];
 	if (evt) {
 
-		var clean = false;
+		let clean = false;
 
-		for (var e of evt) {
+		for (let e of evt) {
 			if (e.cloned < self.cloned) {
 				if (e.once)
 					clean = true;
@@ -130,9 +130,9 @@ MP.emit2 = function(name, a, b, c, d, e, f, g) {
 		}
 
 		if (clean) {
-			var index = 0;
+			let index = 0;
 			while (true) {
-				var e = evt[index];
+				let e = evt[index];
 				if (!e)
 					break;
 				if (e.cloned < self.cloned) {
@@ -151,10 +151,10 @@ MP.emit2 = function(name, a, b, c, d, e, f, g) {
 };
 
 MP.on = function(name, fn, once) {
-	var self = this;
+	const self = this;
 	if (!self.$events)
 		self.$events = {};
-	var obj = { cloned: self.cloned, fn: fn, once: once };
+	const obj = { cloned: self.cloned, fn: fn, once: once };
 	if (self.$events[name])
 		self.$events[name].push(obj);
 	else
@@ -167,7 +167,7 @@ MP.once = function(name, fn) {
 };
 
 MP.off = function(name, fn) {
-	var self = this;
+	const self = this;
 
 	if (!name) {
 		delete self.$events;
@@ -175,7 +175,7 @@ MP.off = function(name, fn) {
 	}
 
 	if (self.$events) {
-		var evt = self.$events[name];
+		let evt = self.$events[name];
 		if (evt) {
 			if (fn) {
 				evt = evt.remove(n => n.fn === fn);
@@ -189,8 +189,9 @@ MP.off = function(name, fn) {
 
 MP.clone = function() {
 
-	var self = this;
-	var obj = new Message();
+	const self = this;
+	const obj = new Message();
+
 	obj.previd = self.id;
 	obj.$events = self.$events;
 	obj.duration = self.duration;
@@ -218,9 +219,9 @@ MP.clone = function() {
 	obj.ref = self.ref;
 
 	if (obj.$events && obj.$events.timeout) {
-		var index = 0;
+		let index = 0;
 		while (true) {
-			var e = obj.$events.timeout[index];
+			let e = obj.$events.timeout[index];
 			if (e) {
 				if ((e.cloned + 1) < obj.cloned)
 					obj.$events.timeout.splice(index, 1);
@@ -263,9 +264,9 @@ MP.throw = function(a, b, c, d) {
 function variables(str, data, encoding) {
 
 	if (typeof(str) === 'object') {
-		var obj = {};
-		for (var key in str) {
-			var val = str[key];
+		const obj = {};
+		for (let key in str) {
+			let val = str[key];
 			if (typeof(val) === 'string')
 				obj[key] = variables.call(this, val, data, encoding);
 			else
@@ -277,16 +278,16 @@ function variables(str, data, encoding) {
 	if (typeof(str) !== 'string' || str.indexOf('{') === -1)
 		return str;
 
-	var main = this.main ? this.main : this;
+	const main = this.main ? this.main : this;
 
 	if (data == null || data == true)
 		data = this;
 
 	return str.replace(REG_ARGS, function(text) {
 
-		var l = text[1] === '{' ? 2 : 1;
-		var key = text.substring(l, text.length - l).trim();
-		var val = null;
+		const l = text[1] === '{' ? 2 : 1;
+		const key = text.substring(l, text.length - l).trim();
+		let val = null;
 
 		if (main.variables)
 			val = main.variables[key];
@@ -303,7 +304,7 @@ function variables(str, data, encoding) {
 				val = val.substring(0, val.length - 1);
 		}
 
-		var customencoding = typeof(encoding) === 'function';
+		const customencoding = typeof(encoding) === 'function';
 
 		if (!val && data != null && typeof(data) === 'object')
 			val = key.includes('.') ? F.TUtils.get(data, key) : data[key];
@@ -369,7 +370,7 @@ MP.send = function(outputindex, data, clonedata) {
 
 		if (self.instance.connections) {
 			for (let key in self.instance.connections)
-				count += self.send(key);
+				count += self.send(key, data, clonedata);
 		}
 
 		if (!count)
@@ -781,7 +782,7 @@ FP.inc = function(num) {
 
 FP.cleanforce = function() {
 
-	var self = this;
+	const self = this;
 
 	if (self.cleantimeout) {
 		clearTimeout(self.cleantimeout);
@@ -791,21 +792,21 @@ FP.cleanforce = function() {
 	if (!self.meta)
 		return self;
 
-	for (var key in self.meta.flow) {
+	for (let key in self.meta.flow) {
 		if (!BLACKLISTID[key]) {
-			var instance = self.meta.flow[key];
+			const instance = self.meta.flow[key];
 			if (instance.connections) {
 
-				for (var key2 in instance.connections) {
+				for (let key2 in instance.connections) {
 
-					var conns = instance.connections[key2];
-					var rem = {};
+					const conns = instance.connections[key2];
+					const rem = {};
 
-					for (var conn of conns) {
+					for (let conn of conns) {
 						if (conn) {
-							var target = self.meta.flow[conn.id];
+							const target = self.meta.flow[conn.id];
 							if (target) {
-								var com = self.meta.components[target.component];
+								let com = self.meta.components[target.component];
 								if (com) {
 									if (self.strict) {
 										if (target.inputs) {
@@ -821,7 +822,7 @@ FP.cleanforce = function() {
 						}
 					}
 
-					var arr = conns.remove(c => c == null || rem[c.id] === 1);
+					const arr = conns.remove(c => c == null || rem[c.id] === 1);
 					if (arr.length)
 						instance.connections[key2] = arr;
 					else
@@ -831,10 +832,10 @@ FP.cleanforce = function() {
 		}
 	}
 
-	var paused = self.meta.flow.paused;
+	const paused = self.meta.flow.paused;
 	if (paused) {
-		for (var key in paused) {
-			var arr = key.split(D);
+		for (let key in paused) {
+			const arr = key.split(D);
 			// arr[0] type
 			// arr[1] id
 			// arr[2] index
@@ -987,7 +988,6 @@ function newmiddleware(callback) {
 	return self;
 }
 
-
 function newmessage(data) {
 	var self = this;
 	var msg = new Message();
@@ -1047,40 +1047,48 @@ FP.ontrigger = function(outputindex, data, controller, events) {
 
 	// this == instance
 
-	var schema = this;
-	var self = schema.main;
-	var count = 0;
+	const schema = this;
+	const self = schema.main;
+	let count = 0;
 
 	if (self.paused)
 		return count;
 
 	if (schema && schema.ready && schema.component && schema.connections) {
-		var instance = self.meta.components[schema.component];
+
+		const instance = self.meta.components[schema.component];
+
+		if (outputindex == null) {
+			for (let key in schema.connections)
+				count += schema.send(key, data, controller, events);
+			return count;
+		}
+
 		if (instance && instance.connected && !instance.disabled && self.$can(false, schema.id, outputindex)) {
-			var conn = schema.connections[outputindex];
+			const conn = schema.connections[outputindex];
 			if (conn && conn.length) {
 
-				var ts = Date.now();
-				for (var i = 0; i < conn.length; i++) {
+				const ts = Date.now();
+				for (let i = 0; i < conn.length; i++) {
 
-					var m = conn[i];
-					var target = self.meta.flow[m.id];
+					const m = conn[i];
+					const target = self.meta.flow[m.id];
 
 					if (!target || (!target.message && !target['message_' + m.index]) || !self.$can(true, m.id, m.index))
 						continue;
 
-					var com = self.meta.components[target.component];
+					const com = self.meta.components[target.component];
 					if (!com)
 						continue;
 
 					if (target.isdestroyed || (data && data.instance && data.instance.isdestroyed))
 						continue;
 
-					var ismessage = data instanceof Message;
+					const ismessage = data instanceof Message;
 					if (ismessage && m.color && data.color && data.color !== m.color)
 						continue;
 
-					var message = ismessage ? data.clone() : new Message();
+					let message = ismessage ? data.clone() : new Message();
 
 					if (ismessage) {
 
@@ -1396,7 +1404,7 @@ FP.use = function(schema, callback, reinit) {
 
 FP._use = function(schema, callback, reinit, insert) {
 
-	var self = this;
+	let self = this;
 
 	if (self.loading) {
 		setTimeout(use, 200, self, schema, callback, reinit, insert);
@@ -1409,7 +1417,7 @@ FP._use = function(schema, callback, reinit, insert) {
 		schema = F.TUtils.clone(schema);
 
 	if (typeof(callback) === 'boolean') {
-		var tmp = reinit;
+		let tmp = reinit;
 		reinit = callback;
 		callback = tmp;
 	}
@@ -1418,12 +1426,12 @@ FP._use = function(schema, callback, reinit, insert) {
 	// schema.COMPONENT_ID.config = {};
 	// schema.COMPONENT_ID.connections = { '0': [{ id: 'COMPONENT_ID', index: '2' }] }
 
-	var err = new F.ErrorBuilder();
+	const err = new F.ErrorBuilder();
 
 	if (schema) {
 
-		var keys = Object.keys(schema);
-		var ts = Date.now();
+		const keys = Object.keys(schema);
+		const ts = Date.now();
 
 		if (!insert) {
 			if (self.meta.flow.paused)
@@ -1445,9 +1453,9 @@ FP._use = function(schema, callback, reinit, insert) {
 				return;
 			}
 
-			var current = self.meta.flow[key];
-			var instance = schema[key];
-			var component = instance.component ? self.meta.components[instance.component] : null;
+			const current = self.meta.flow[key];
+			const instance = schema[key];
+			const component = instance.component ? self.meta.components[instance.component] : null;
 
 			// Component not found
 			if (!component) {
@@ -1469,11 +1477,11 @@ FP._use = function(schema, callback, reinit, insert) {
 				return;
 			}
 
-			var fi = self.meta.flow[key];
+			const fi = self.meta.flow[key];
 
 			if (!fi || reinit) {
 				self.meta.flow[key] = instance;
-				var tmp = self.initcomponent(key, component);
+				let tmp = self.initcomponent(key, component);
 				if (tmp) {
 					tmp.ts = ts;
 					tmp.newbie = true;
@@ -1506,9 +1514,9 @@ FP._use = function(schema, callback, reinit, insert) {
 		}, function() {
 
 			if (!insert) {
-				for (var key in self.meta.flow) {
+				for (let key in self.meta.flow) {
 					if (!BLACKLISTID[key]) {
-						var instance = self.meta.flow[key];
+						const instance = self.meta.flow[key];
 						if (instance.ts !== ts) {
 							instance.ready = false;
 							instance.isdestroyed = true;
@@ -1526,8 +1534,8 @@ FP._use = function(schema, callback, reinit, insert) {
 				}
 			}
 
-			for (var key in self.meta.flow) {
-				var instance = self.meta.flow[key];
+			for (let key in self.meta.flow) {
+				const instance = self.meta.flow[key];
 				if (instance.newbie) {
 					if (instance.init) {
 						try {
@@ -1548,7 +1556,6 @@ FP._use = function(schema, callback, reinit, insert) {
 			}
 
 			self.inc(-1);
-
 			self.cleanforce();
 			self.$events.schema && self.emit('schema', self.meta.flow);
 			callback && callback(err.length ? err : null);
@@ -1566,8 +1573,8 @@ FP._use = function(schema, callback, reinit, insert) {
 
 FP.initcomponent = function(key, component) {
 
-	var self = this;
-	var instance = self.meta.flow[key];
+	const self = this;
+	const instance = self.meta.flow[key];
 
 	if (instance.ready) {
 
@@ -1599,7 +1606,7 @@ FP.initcomponent = function(key, component) {
 		delete instance.options;
 	}
 
-	var tmp = component.config;
+	let tmp = component.config;
 	if (tmp)
 		instance.config = instance.config ? F.TUtils.extend(F.TUtils.clone(tmp), instance.config) : F.TUtils.clone(tmp);
 
@@ -1888,10 +1895,10 @@ FP.find = function(id) {
 };
 
 FP.send = function(path, body) {
-	var self = this;
+	const self = this;
 	if (!self.paused && self.meta && self.meta.flow) {
 		path = path.split(D);
-		var instance = self.meta.flow[path[0]];
+		const instance = self.meta.flow[path[0]];
 		if (instance)
 			instance.send(path[1], body);
 		return !!instance;
