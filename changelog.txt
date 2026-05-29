@@ -23,6 +23,7 @@
 - improved `Utils.filestreamer()` method by adding percentage
 - fixed sending data to all outputs `$.send(null, [data])` in the FlowStream
 - fixed sending data to all outputs `instance.send(null, [data])` in the FlowStream
+- fixed removing WebSocket route
 
 ========================
 0.0.16

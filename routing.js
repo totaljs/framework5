@@ -322,8 +322,10 @@ Route.prototype.remove = function() {
 			index = F.routes.websockets.indexOf(self);
 			if (index !== -1)
 				F.routes.websockets.splice(index, 1);
-			for (let conn of self.connections)
-				conn.destroy();
+			if (self.connections instanceof Array) {
+				for (let conn of self.connections)
+					conn.destroy();
+			}
 			break;    
 		case 'file':
 			index = F.routes.files.indexOf(self);
