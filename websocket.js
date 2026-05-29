@@ -694,9 +694,9 @@ WebSocket.prototype.encrypt = function(enable) {
 };
 
 WebSocket.prototype.find = function(fn) {
-	var self = this;
-	for (var key in self.connections) {
-		var ctrl = self.connections[key];
+	let self = this;
+	for (let key in self.connections) {
+		let ctrl = self.connections[key];
 		if (fn(ctrl))
 			return ctrl;
 	}
@@ -704,7 +704,7 @@ WebSocket.prototype.find = function(fn) {
 
 WebSocket.prototype.send = function(message, comparer, replacer, params) {
 
-	var self = this;
+	let self = this;
 
 	if (message === undefined)
 		return self;
@@ -714,11 +714,11 @@ WebSocket.prototype.send = function(message, comparer, replacer, params) {
 		replacer = null;
 	}
 
-	var raw = false;
-	var data = null;
+	let raw = false;
+	let data = null;
 
-	for (var key in self.connections) {
-		var ctrl = self.connections[key];
+	for (let key in self.connections) {
+		let ctrl = self.connections[key];
 		if (data == null) {
 			if (ctrl.datatype === 'json') {
 				raw = true;
@@ -740,20 +740,20 @@ WebSocket.prototype.send = function(message, comparer, replacer, params) {
 // Ping all connections
 WebSocket.prototype.ping = function() {
 
-	var self = this;
+	let self = this;
 
 	self.$ping = true;
 	F.stats.other.websocketping++;
 
-	var ts = Date.now();
-	for (var key in self.connections)
+	let ts = Date.now();
+	for (let key in self.connections)
 		self.connections[key].ping(ts);
 
 	return self;
 };
 
 WebSocket.prototype.api = function(api) {
-	var self = this;
+	let self = this;
 
 	if (!api.startsWith('/@')) {
 		if (api[0] !== '@')
@@ -771,9 +771,9 @@ WebSocket.prototype.api = function(api) {
 
 WebSocket.prototype.close = function(code, message) {
 
-	var self = this;
+	let self = this;
 
-	for (var key in self.connections) {
+	for (let key in self.connections) {
 		self.connections[key].close(code, message);
 		delete self.connections[key];
 	}
@@ -783,13 +783,13 @@ WebSocket.prototype.close = function(code, message) {
 };
 
 WebSocket.prototype.error = function(err) {
-	var self = this;
+	let self = this;
 	F.error(typeof(err) === 'string' ? new Error(err) : err, self.name, self.url);
 };
 
 WebSocket.prototype.destroy = function() {
 
-	var self = this;
+	let self = this;
 
 	if (!self.connections)
 		return self;
@@ -800,15 +800,15 @@ WebSocket.prototype.destroy = function() {
 
 	setTimeout(function(self) {
 
-		for (var key in self.connections) {
-			var conn = self.connections[key];
+		for (let key in self.connections) {
+			let conn = self.connections[key];
 			if (conn) {
 				conn.isclosed2 = true;
 				conn.socket.removeAllListeners();
 			}
 		}
 
-		var index = self.route.connections.indexOf(self);
+		let index = self.route.connections.indexOf(self);
 		if (index !== -1)
 			self.route.connections.splice(index, 1);
 
