@@ -1595,7 +1595,7 @@ function send_file(ctrl, path, ext) {
 
 	var loadstats = function(err, stats, cache) {
 
-		if (err) {
+		if (err || (cache && cache.size === 0)) {
 
 			if (!DEBUG && ctrl.response.cache)
 				F.temporary.notfound[ctrl.uri.cache] = true;
@@ -1657,6 +1657,15 @@ function send_file(ctrl, path, ext) {
 			if (ctrl.method === 'HEAD') {
 				ctrl.res.end();
 			} else {
+
+				if (end > cache.size || beg > cache.size) {
+					// Unexpected file problem
+					delete F.temporary.tmp[ctrl.uri.cache];
+					ctrl.destroyed = true;
+					ctrl.req.destroy();
+					return;
+				}
+
 				reader = F.Fs.createReadStream(path, { start: beg, end: end });
 
 				// Unexpected error
