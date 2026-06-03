@@ -1,5 +1,5 @@
 // The MIT License
-// Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2023-2026 (c) Peter Širka <petersirka@gmail.com>
 
 const NEWLINE = '\r\n';
 
