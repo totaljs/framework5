@@ -1,6 +1,6 @@
 // Total.js Flow module
 // The MIT License
-// Copyright 2023-2025 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2023-2026 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -81,6 +81,7 @@ FS.reload = function(flow, restart = false) {
 	var instance = FS.instances[flow.id];
 	instance.workertype = flow.worker;
 	instance.proxypath = flow.proxypath;
+	instance.proxytimeout = flow.proxytimeout;
 
 	if (restart)
 		instance.restart();
@@ -141,6 +142,7 @@ FS.load = function(flow, callback) {
 	// flow.worker {String/Boolean}
 	// flow.memory {Number}
 	// flow.proxypath {String}
+	// flow.proxytimeout {Number}
 
 	if (FS.instances[flow.id]) {
 		FS.reload(flow);

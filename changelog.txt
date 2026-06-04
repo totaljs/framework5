@@ -3,6 +3,7 @@
 ========================
 
 - fixed handling static files
+- added `flow.proxytimeout {Number}` property
 
 ========================
 0.0.17

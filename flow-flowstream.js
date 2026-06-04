@@ -1,6 +1,6 @@
 // Total.js FlowStream module
 // The MIT License
-// Copyright 2021-2025 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2021-2026 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -648,6 +648,8 @@ Instance.prototype.reload = function(data) {
 			}
 
 			PROXIES[data.id] = F.proxy(data.proxypath, data.unixsocket);
+			data.proxytimeout && PROXIES[data.id].timeout(data.proxytimeout);
+
 		}
 
 		for (let key in data)
