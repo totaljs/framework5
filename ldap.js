@@ -85,12 +85,13 @@ const TYPES = {
 	Context: 128
 };
 
-function Reader(buffer, callback) {
+function Reader(buffer, callback, opt) {
 
 	if (buffer instanceof Array)
 		buffer = Buffer.concat(buffer);
 
-	var t = this;
+	const t = this;
+	t.opt = opt;
 	t.buffer = buffer;
 	t.size = t.buffer.length;
 	t.length = 0;
@@ -99,8 +100,8 @@ function Reader(buffer, callback) {
 	t.callback = callback;
 }
 
-Reader.parse = function(buffer, callback) {
-	var reader = new Reader(buffer, callback);
+Reader.parse = function(buffer, callback, opt) {
+	const reader = new Reader(buffer, callback, opt);
 	reader.parse();
 };
 
@@ -112,11 +113,11 @@ Reader.prototype = {
 
 Reader.prototype.readbyte = function(peek) {
 
-	var self = this;
+	const self = this;
 	if (self.size - self.offset < 1)
 		return null;
 
-	var b = self.buffer[self.offset] & 0xff;
+	const b = self.buffer[self.offset] & 0xff;
 
 	if (!peek)
 		self.offset += 1;
@@ -133,15 +134,48 @@ Reader.prototype.readattribute = function(attr) {
 	if (self.peek() === PROTOCOL.LBER_SET) {
 
 		if (self.readsequence(PROTOCOL.LBER_SET)) {
-			var end = self.offset + self.length;
+			let end = self.offset + self.length;
 			while (self.offset < end) {
 
-				var val = self.readstring(TYPES.OctetString, true);
+				let val = self.readstring(TYPES.OctetString, true);
+				let is = false;
 
-				if (id === 'objectGUID' || id === 'objectSid')
-					val = val.toString('hex');
-				else
-					val = val.toString('utf8');
+				if (self.opt.attributes) {
+					switch (self.opt.attributes[id]) {
+						case 'string':
+							val = val.toString('utf8');
+							is = true;
+							break;
+						case 'number':
+							val = val.toString('utf8').parseFloat();
+							is = true;
+							break;
+						case 'date':
+							val = val.toString('utf8').parseDate();
+							is = true;
+							break;
+						case 'hex':
+						case 'ascii':
+						case 'base16':
+						case 'base32':
+						case 'base64':
+						case 'utf8':
+							val = val.toString(self.opt.attributes[id]);
+							is = true;
+							break;
+						case 'buffer':
+						case 'binary':
+							is = true;
+							break;
+					}
+				}
+
+				if (!is) {
+					if (id === 'objectGUID' || id === 'objectSid')
+						val = val.toString('hex');
+					else
+						val = val.toString('utf8');
+				}
 
 				if (attr[id]) {
 					if (!(attr[id] instanceof Array))
@@ -705,6 +739,7 @@ exports.load = function(opt, callback) {
 	// opt.login {String} required for the "profile" type
 	// opt.dn {String}
 	// opt.noauth {Boolean} true skips auth
+	// opt.attributes = { prop1: 'buffer', prop2: 'hex', prop3: 'base64' }; types must be in lower-case
 
 	if (opt.callback)
 		callback = opt.callback;
@@ -732,7 +767,7 @@ exports.load = function(opt, callback) {
 			Reader.parse(buffer, function(err, response) {
 				callback(err, profile ? (response ? response[0] : null) : response);
 				meta.close();
-			});
+			}, opt);
 		};
 
 		meta.ondata(function(chunk) {
@@ -753,7 +788,7 @@ exports.load = function(opt, callback) {
 					}
 
 					auth = false;
-				});
+				}, opt);
 			} else {
 				buffer.push(chunk);
 				timeout && clearTimeout(timeout);
@@ -769,7 +804,7 @@ exports.load = function(opt, callback) {
 			// No emitted any data in "ondata" handler
 			Reader.parse(buffer, function(err) {
 				callback(err, profile ? null : EMPTYARRAY);
-			});
+			}, opt);
 
 		});
 
