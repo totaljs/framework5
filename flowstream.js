@@ -415,8 +415,6 @@ MP.send = function(outputindex, data, clonedata, check) {
 	if (self.transformation === '1')
 		self.transformation = '_' + tid;
 
-	let cloned = self.cloned;
-
 	for (let i = 0; i < outputs.length; i++) {
 
 		let output = outputs[i];
@@ -439,16 +437,13 @@ MP.send = function(outputindex, data, clonedata, check) {
 				}
 
 				let inputindex = output.index;
-				let message = cloned > 1 ? self.clone() : self;
+				let message = self.clone();
 
 				if (data != undefined)
 					message.data = data;
 
-				if (cloned > 1 && clonedata && message.data && typeof(message.data) === 'object')
+				if (clonedata && message.data && typeof(message.data) === 'object')
 					message.data = message.data instanceof Buffer ? Buffer.from(message.data) : F.TUtils.clone(message.data);
-
-				if (cloned === 1)
-					cloned++;
 
 				message.used++;
 				message.instance = schema;
