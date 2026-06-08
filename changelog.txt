@@ -4,6 +4,7 @@
 
 - fixed handling static files
 - added `flow.proxytimeout {Number}` property
+- extended the `message.send(output, data, [clone_data], [check(from, to, output, input)])` method by adding `check` argument
 
 ========================
 0.0.17

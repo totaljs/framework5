@@ -1,6 +1,6 @@
 // Total.js FlowStream
 // The MIT License
-// Copyright 2021-2025 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2021-2026 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -350,9 +350,9 @@ function timeouthandler(msg) {
 	msg.end();
 }
 
-MP.send = function(outputindex, data, clonedata) {
+MP.send = function(outputindex, data, clonedata, check) {
 
-	let self = this;
+	const self = this;
 
 	if (clonedata == null)
 		clonedata = self.main.cloning;
@@ -363,7 +363,6 @@ MP.send = function(outputindex, data, clonedata) {
 		return 0;
 	}
 
-	let outputs;
 	let count = 0;
 
 	if (outputindex == null) {
@@ -379,11 +378,8 @@ MP.send = function(outputindex, data, clonedata) {
 		return count;
 	}
 
-
-	let meta = self.main.meta;
-	let now = Date.now();
-
-	outputs = self.instance.connections ? (self.instance.connections[outputindex] || F.EMPTYARRAY) : F.EMPTYARRAY;
+	const now = Date.now();
+	const meta = self.main.meta;
 
 	if (self.processed === 0) {
 		self.processed = 1;
@@ -406,6 +402,7 @@ MP.send = function(outputindex, data, clonedata) {
 		return count;
 	}
 
+	let outputs = self.instance.connections ? (self.instance.connections[outputindex] || F.EMPTYARRAY) : F.EMPTYARRAY;
 	let tid = self.toid + D + outputindex + (self.color || '');
 
 	if (self.main.stats.traffic[tid]) {
@@ -418,6 +415,8 @@ MP.send = function(outputindex, data, clonedata) {
 	if (self.transformation === '1')
 		self.transformation = '_' + tid;
 
+	let cloned = self.cloned;
+
 	for (let i = 0; i < outputs.length; i++) {
 
 		let output = outputs[i];
@@ -425,22 +424,31 @@ MP.send = function(outputindex, data, clonedata) {
 		if (output.disabled || output.paused)
 			continue;
 
-		let schema = meta.flow[output.id];
+		const schema = meta.flow[output.id];
 		if (schema && (schema.message || schema['message_' + output.index]) && schema.component && schema.ready && self.main.$can(true, output.id, output.index)) {
-			let next = meta.components[schema.component];
+			const next = meta.components[schema.component];
 			if (next && next.connected && !next.isdestroyed && !next.disabled) {
 
 				if (output.color && self.color && self.color !== output.color)
 					continue;
 
+				if (check) {
+					// from, to, output, input
+					if (!check(self.to, schema, outputindex, output.index))
+						continue;
+				}
+
 				let inputindex = output.index;
-				let message = self.clone();
+				let message = cloned > 1 ? self.clone() : self;
 
 				if (data != undefined)
 					message.data = data;
 
-				if (clonedata && message.data && typeof(message.data) === 'object')
+				if (cloned > 1 && clonedata && message.data && typeof(message.data) === 'object')
 					message.data = message.data instanceof Buffer ? Buffer.from(message.data) : F.TUtils.clone(message.data);
+
+				if (cloned === 1)
+					cloned++;
 
 				message.used++;
 				message.instance = schema;
