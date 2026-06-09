@@ -1914,9 +1914,9 @@ exports.client = function(flow, socket) {
 
 function MAKEFLOWSTREAM(meta) {
 
-	var flow = F.TFlowStream.create(meta.id, function(err, type, componentid) {
+	var flow = F.TFlowStream.create(meta.id, function(err, type, componentid, instanceid) {
 		if (isFLOWSTREAMWORKER) {
-			Parent.postMessage({ TYPE: 'stream/error', error: err.toString(), stack: err.stack, source: type, component: componentid });
+			Parent.postMessage({ TYPE: 'stream/error', error: err.toString(), stack: err.stack, source: type, id: instanceid, component: componentid });
 		} else {
 			this.$instance.onerror(err, type, null, componentid, err.stack);
 		}

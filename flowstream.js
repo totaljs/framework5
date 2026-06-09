@@ -1730,7 +1730,6 @@ function sendmessage(instance, message, event) {
 	try {
 
 		var is = false;
-
 		var key = 'message_' + message.input;
 
 		if (instance[key]) {
@@ -1747,7 +1746,7 @@ function sendmessage(instance, message, event) {
 			message.destroy();
 
 	} catch (e) {
-		instance.main.error(e, 'instance_message', message.tocomponent);
+		instance.main.error(e, 'instance_message', message.tocomponent, message.toid);
 		message.destroy();
 	}
 }
