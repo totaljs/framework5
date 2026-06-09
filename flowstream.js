@@ -1747,7 +1747,7 @@ function sendmessage(instance, message, event) {
 			message.destroy();
 
 	} catch (e) {
-		instance.main.error(e, 'instance_message', message.to);
+		instance.main.error(e, 'instance_message', message.tocomponent);
 		message.destroy();
 	}
 }
