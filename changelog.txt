@@ -6,6 +6,7 @@
 - added `flow.proxytimeout {Number}` property
 - extended the `message.send(output, data, [clone_data], [check(from, to, output, input)])` method by adding `check` argument
 - extended `LDAP()` options by adding a new option `attributes = { thumbnailPhoto: 'buffer' }` for custom parsing data
+- fixed Flow error handling
 
 ========================
 0.0.17
