@@ -489,7 +489,6 @@ Mailer.send = function(opt, messages, callback) {
 		const err = new Error('No SMTP server configuration.');
 		let iscallback = false;
 
-
 		if (callback) {
 			iscallback = true;
 			callback(err);
