@@ -5,9 +5,9 @@
 exports.render = function(body, model, $) {
 	return new Promise(function(resolve, reject) {
 
-		var cache = F.temporary.templates;
-		var id = 'Ttemplate' + HASH(body) + ($ ? $.language : '');
-		var data = cache[id];
+		let cache = F.temporary.templates;
+		let id = 'Ttemplate' + HASH(body) + ($ ? $.language : '');
+		let data = cache[id];
 
 		if (data) {
 			try {
@@ -26,13 +26,13 @@ exports.render = function(body, model, $) {
 			// URL address or filename
 			data = cache[id];
 
-			var start = body.substring(0, 7);
+			let start = body.substring(0, 7);
 			// http://
 			// https:/
 
 			if (start === 'http://' || start === 'https:/') {
 				// download template
-				var opt = {};
+				let opt = {};
 				opt.url = body;
 				opt.method = 'GET';
 				opt.callback = function(err, response) {
@@ -67,9 +67,11 @@ exports.render = function(body, model, $) {
 				} else if (body[0] === '#') {
 					// plugins
 					body = PATH.plugins(body.substring(1));
+					if (!body.includes('.html'))
+						body += '.html';
 				} else {
 					body = F.path.templates(body);
-					if (body.indexOf('.html') === -1)
+					if (!body.includes('.html'))
 						body += '.html';
 				}
 
@@ -120,11 +122,11 @@ function parse(body, $) {
 	if ($ && $.language != null)
 		body = F.translate($.language, body);
 
-	var helpers = {};
-	var model = EMPTYOBJECT;
-	var strhelpers = '';
-	var beg = body.indexOf('<scr' + 'ipt>');
-	var end;
+	let helpers = {};
+	let model = EMPTYOBJECT;
+	let strhelpers = '';
+	let beg = body.indexOf('<scr' + 'ipt>');
+	let end;
 
 	// helpers
 	if (beg !== -1) {
@@ -144,7 +146,7 @@ function parse(body, $) {
 	if (strhelpers)
 		new Function('Thelpers', strhelpers)(helpers);
 
-	var output = {};
+	let output = {};
 	output.helpers = helpers;
 	output.template = Tangular.compile(body);
 	output.model = model;
