@@ -1,6 +1,6 @@
 // Debug module (Watcher)
 // The MIT License
-// Copyright 2012-2024 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2012-2026 (c) Peter Širka <petersirka@gmail.com>
 
 'use strict';
 
@@ -143,6 +143,7 @@ function runwatching() {
 
 		var WS = null;
 		var files = {};
+		var sizes = {};
 		var force = false;
 		var changes = [];
 		var app = null;
@@ -303,6 +304,19 @@ function runwatching() {
 						var ticks = stat.mtime.getTime();
 						if (files[filename] != null && files[filename] !== ticks) {
 
+							// Check filesize
+							let size = sizes[filename] || 0;
+							if (!size || size != stat.size) {
+
+								// This is because the file can only be copied slowly via the network.
+								if (size < stat.size) {
+									// Reload round for this file
+									sizes[filename] = stat.size;
+									next();
+									return;
+								}
+							}
+
 							if (filename.endsWith('.bundle') && files[filename.replace(/\.bundle$/, '.url')]) {
 								// Bundle from URL address
 								files[filename] = ticks;
@@ -321,6 +335,7 @@ function runwatching() {
 
 							var log = stamp.replace('#', files[filename] === 0 ? 'ADD' : 'UPD') + prefix + LIVERELOADCHANGE;
 							if (files[filename]) {
+								delete sizes[filename];
 								var tmp = isViewPublic(filename);
 								if (tmp) {
 									var skip = true;
