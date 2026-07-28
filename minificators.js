@@ -265,7 +265,6 @@ exports.html = function(html, ischunk) {
 		html = html.replace(REG_HTML_6, text => text.replace(/\s+/g, ' '));
 	}
 
-
 	for (let k in cache)
 		html = replacer(html, k, cache[k]);
 
@@ -544,10 +543,12 @@ function cssnested(css, id, variable) {
 			continue;
 		}
 
+		/*
+		// @NOTE: removed older LESS CSS variables
 		if (a === '@') {
 			begAt = index;
 			skip = true;
-		}
+		}*/
 
 		if (skip && !skipImport && (a === ';' || a === '{')) {
 			skipImport = a;

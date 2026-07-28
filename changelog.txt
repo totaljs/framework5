@@ -9,6 +9,7 @@
 - fixed Flow error handling
 - updated Total.js debug watcher to detect incomplete file writes
 - fixed current working directory in the HTTP server in the `total5` binary
+- fixed CSS minificator
 
 ========================
 0.0.17
