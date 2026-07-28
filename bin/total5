@@ -1,10 +1,10 @@
 #! /usr/bin/env node
 
-require('total5');
-
-const ARGS = process.argv; // TEST: ['-', '-', 'CMD']
 const DIR = process.cwd();
+const ARGS = process.argv; // TEST: ['-', '-', 'CMD']
 const DIVIDER = '----------------------------------------';
+
+require('total5');
 
 function done(err) {
 	err && console.error('ERROR:', err);

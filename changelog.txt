@@ -8,6 +8,7 @@
 - extended `LDAP()` options by adding a new option `attributes = { thumbnailPhoto: 'buffer' }` for custom parsing data
 - fixed Flow error handling
 - updated Total.js debug watcher to detect incomplete file writes
+- fixed current working directory in the HTTP server in the `total5` binary
 
 ========================
 0.0.17

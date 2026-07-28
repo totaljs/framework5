@@ -265,14 +265,8 @@ exports.html = function(html, ischunk) {
 		html = html.replace(REG_HTML_6, text => text.replace(/\s+/g, ' '));
 	}
 
-	html = html.replace(REG_HTML_9, '>').replace(REG_HTML_10, function(text) {
-		return text.trim().replace(/\s/g, '');
-	}).replace(REG_HTML_5, '><').replace(REG_HTML_4, function(text) {
-		var c = text[text.length - 1];
-		return c === '<' ? c : ' ' + c;
-	}).replace(REG_HTML_1, '').replace(REG_HTML_2, '');
 
-	for (var k in cache)
+	for (let k in cache)
 		html = replacer(html, k, cache[k]);
 
 	return exports.htmlcss(exports.htmljs(html));

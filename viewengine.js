@@ -265,7 +265,7 @@ exports.compile = function(name, content, debug = true) {
 	}
 
 	return fn;
-}
+};
 
 function trycatch(value, command, line) {
 	return DEBUG ? ('(function(){try{return ' + value + '}catch(e){throw new Error(unescape(\'' + escape(command) + '\') + \' - Line: ' + line + ' - \' + e.message.toString());}return $EMPTY})()') : value;
