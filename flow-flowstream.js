@@ -2216,9 +2216,12 @@ function MAKEFLOWSTREAM(meta) {
 				break;
 
 			case 'origin':
-				var origin = msg.body || '';
-				if (flow.$schema.origin !== origin) {
+				// @WARN: we can have multiple origins e.g. 127.0.0.1 or 0.0.0.0 or public IP or hostname.
+				let origin = msg.body || '';
+				let now = Date.now();
+				if ((!flow.originexpire || flow.originexpire < now) && flow.$schema.origin !== origin) {
 					flow.origin = flow.$schema.origin = origin;
+					flow.originexpire = now + 60000;
 					flow.proxy.refreshmeta();
 					save();
 				}
