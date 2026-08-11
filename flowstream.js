@@ -1497,6 +1497,7 @@ FP._use = function(schema, callback, reinit, insert) {
 				fi.size = instance.size;
 				fi.tab = instance.tab;
 				fi.ts = ts;
+				fi.note = instance.note;
 
 				// From the view of the designer is the "repo" not visible
 				if (instance.repo)
