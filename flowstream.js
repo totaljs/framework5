@@ -1496,8 +1496,8 @@ FP._use = function(schema, callback, reinit, insert) {
 				fi.offset = instance.offset;
 				fi.size = instance.size;
 				fi.tab = instance.tab;
-				fi.ts = ts;
 				fi.note = instance.note;
+				fi.ts = ts;
 
 				// From the view of the designer is the "repo" not visible
 				if (instance.repo)
