@@ -3,6 +3,7 @@
 ========================
 
 - fixed binding origin in the FlowStream
+- fixed `restart` FlowStream
 
 ========================
 0.0.18
