@@ -2659,6 +2659,9 @@ F.decrypt = function(value, key, tojson = true) {
 
 	if (F.config.$crypto) {
 
+		if (value && value.length % 2)
+			return null;
+
 		if (!F.temporary.cryptokeys[key])
 			F.temporary.cryptokeys[key] = Buffer.from(key);
 
