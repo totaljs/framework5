@@ -4,6 +4,7 @@
 
 - fixed binding origin in the FlowStream
 - fixed `restart` FlowStream
+- added an additional `check` for invalid hex values in `F.decrypt()`
 
 ========================
 0.0.18
