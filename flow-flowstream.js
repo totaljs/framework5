@@ -1414,6 +1414,7 @@ function init_current(meta, callback, nested) {
 
 		flow.proxy.restart = function() {
 			// nothing
+			Total.restart();
 		};
 
 		flow.proxy.remove = function() {
