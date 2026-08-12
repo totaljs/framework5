@@ -2662,9 +2662,12 @@ F.decrypt = function(value, key, tojson = true) {
 		if (!F.temporary.cryptokeys[key])
 			F.temporary.cryptokeys[key] = Buffer.from(key);
 
+		if (!value || value.length > 65536 || !/^[0-9a-fA-F]+$/.test(value))
+			return null;
+
 		var decipher = F.Crypto.createDecipheriv(F.config.$crypto, F.temporary.cryptokeys[key], F.config.$cryptoiv);
 		try {
-			CONCAT[0] = decipher.update(Buffer.from(value || '', 'hex'));
+			CONCAT[0] = decipher.update(Buffer.from(value, 'hex'));
 			CONCAT[1] = decipher.final();
 			response = Buffer.concat(CONCAT).toString('utf8');
 		} catch {
