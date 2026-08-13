@@ -2877,6 +2877,7 @@ F.loadstats = function() {
 
 	};
 
+	setTimeout(F.usage, 5000);
 };
 
 function httptuningperformance(socket) {

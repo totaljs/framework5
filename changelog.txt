@@ -5,6 +5,7 @@
 - fixed binding origin in the FlowStream
 - fixed `restart` FlowStream
 - added an additional `check` for invalid hex values in `F.decrypt()`
+- added loading stats after loading the framework (due to Flow)
 
 ========================
 0.0.18
