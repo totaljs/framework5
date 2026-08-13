@@ -2662,6 +2662,9 @@ F.decrypt = function(value, key, tojson = true) {
 		if (!F.temporary.cryptokeys[key])
 			F.temporary.cryptokeys[key] = Buffer.from(key);
 
+		if (value && value.length % 2 !== 0)
+			return null;
+
 		var decipher = F.Crypto.createDecipheriv(F.config.$crypto, F.temporary.cryptokeys[key], F.config.$cryptoiv);
 		try {
 			CONCAT[0] = decipher.update(Buffer.from(value || '', 'hex'));
