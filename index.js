@@ -864,6 +864,10 @@ F.load = async function(types, callback, clear = true) {
 			if (await PATH.exists(filename))
 				files.push({ id: id, type: 'config', filename: filename });
 
+			filename = F.path.directory('plugins', plugin + '/index.flow');
+			if (await PATH.exists(filename))
+				files.push({ id: id, type: 'flowstream', filename: filename });
+
 			let loader = ['extensions', 'controllers', 'actions', 'schemas', 'models', 'definitions', 'sources', 'flowstreams', 'middleware', 'transforms'];
 			for (let type of loader) {
 				tmp = await list(F.path.root('plugins/' + plugin + '/' + type), type === 'flowstreams' ? 'flow' : 'js');
@@ -878,7 +882,7 @@ F.load = async function(types, callback, clear = true) {
 		if (a.type === 'module' || a.type === 'config')
 			return -1;
 
-		if (a.type === 'middleware')
+		if (a.type === 'middleware' || a.type === 'flowstream')
 			return 1;
 
 		return 0;
@@ -922,6 +926,21 @@ F.load = async function(types, callback, clear = true) {
 			case 'middleware':
 				tmp = require(file.filename);
 				tmp.install && tmp.install();
+				break;
+			case 'flowstream':
+				let flowstream = await F.readfile(file.filename, 'utf8');
+				if (flowstream) {
+					flowstream = flowstream.parseJSON();
+					flowstream.id = file.id;
+					flowstream.name = TRANSLATE('default', F.plugins[file.id]?.name || file.id);
+					flowstream.directory = PATH.join(F.path.directory('plugins'), file.id);
+					F.TFlow.load(flowstream, function(err, flow) {
+						if (err)
+							Total.error(err, 'Plugin.{0}.flowstream'.format(file.id));
+						else
+							F.plugins[file.id].flowstream = flow;
+					});
+				}
 				break;
 		}
 	}

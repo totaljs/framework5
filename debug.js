@@ -211,6 +211,9 @@ function runwatching() {
 			if (isdir)
 				return true;
 
+			if (path.endsWith('index.flow'))
+				return false;
+
 			if (!REG_PUBLIC.test(path) && (REG_CONFIG.test(path) || REG_EXTENSION.test(path)))
 				return true;
 
