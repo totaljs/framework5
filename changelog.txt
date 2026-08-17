@@ -6,6 +6,10 @@
 - fixed `restart` FlowStream
 - added an additional `check` for invalid hex values in `F.decrypt()`
 - added loading stats after loading the framework (due to Flow)
+- added support for auto-loading `index.flow` file in the plugins folder
+- extended `NEWACTION` by adding a new handler: `onoutput: function(err, response, $)`
+- extended `NEWACTION` by adding a new handler: `oninput: function($)`
+- extended action's `$` by adding `$.input` property (alias for the `$.model`)
 
 ========================
 0.0.18

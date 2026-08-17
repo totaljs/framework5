@@ -39,11 +39,19 @@ Options.prototype = {
 		return this.payload;
 	},
 
+	get input() {
+		return this.payload;
+	},
+
 	set value(value) {
 		this.payload = value;
 	},
 
 	set model(value) {
+		this.payload = value;
+	},
+
+	set input(value) {
 		this.payload = value;
 	},
 
@@ -1418,6 +1426,8 @@ ActionCaller.prototype.exec = function() {
 	$.controller = self.controller;
 	$.user = self.options.user;
 	$.config = action.config || EMPTYOBJECT;
+	$.action = action;
+
 	if (self.options.config) {
 
 		if ($.config === EMPTYOBJECT)
@@ -1467,6 +1477,7 @@ ActionCaller.prototype.exec = function() {
 
 			$.response[$.id] = response;
 			meta.response && self.finish && self.finish(response);
+			action.onoutput && action.onoutput(self.error.length ? self.error : null, response === undefined ? $.response : response, $);
 
 			if (action.audit)
 				F.audit('actions', $, action.audit(null, $) || '');
@@ -1500,10 +1511,10 @@ ActionCaller.prototype.exec = function() {
 			return;
 	}
 
-	var params = self.options.params || EMPTYOBJECT;
-	var query = self.options.query || EMPTYOBJECT;
-	var payload = self.options.payload || (action.extend ? {} : EMPTYOBJECT);
-	var response = null;
+	let params = self.options.params || EMPTYOBJECT;
+	let query = self.options.query || EMPTYOBJECT;
+	let payload = self.options.payload || (action.extend ? {} : EMPTYOBJECT);
+	let response = null;
 
 	if (action.jsquery) {
 		self.error.prefix = 'query.';
@@ -1560,9 +1571,14 @@ ActionCaller.prototype.exec = function() {
 				Total.error('The middleware "{0}" not found.'.format(name), action.id, $.url);
 				next();
 			}
-		}, () => action.action($, $.payload));
-	} else
+		}, function() {
+			action.oninput && action.oninput($);
+			action.action($, $.payload);
+		});
+	} else {
+		action.oninput && action.oninput($);
 		action.action($, $.payload);
+	}
 };
 
 ActionCaller.prototype.finish = function(value) {

@@ -1308,9 +1308,7 @@ function execute(ctrl, skipmiddleware) {
 
 						ctrl.params = params;
 						ctrl.query = query ? query.parseEncoded() : {};
-
-						if (body)
-							ctrl.body = body;
+						ctrl.body = body;
 
 						if (F.$events.controller) {
 							F.emit('controller', ctrl);
