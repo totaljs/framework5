@@ -293,7 +293,7 @@ Options.prototype.output = function(name) {
 };
 
 function $errorhandling(self) {
-	self.$callback(true);
+	self.$callback(self.error);
 }
 
 Options.prototype.invalid = function(error, path, index) {
