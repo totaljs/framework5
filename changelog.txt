@@ -10,6 +10,7 @@
 - extended `NEWACTION` by adding a new handler: `onoutput: function(err, response, $)`
 - extended `NEWACTION` by adding a new handler: `oninput: function($)`
 - extended action's `$` by adding `$.input` property (alias for the `$.model`)
+- fixed handling errors in the `NEWTRANSFORM()` method
 
 ========================
 0.0.18
