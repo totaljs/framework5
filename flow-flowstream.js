@@ -2616,8 +2616,9 @@ function MAKEFLOWSTREAM(meta) {
 			return url ? (hostname + url) : hostname;
 		};
 
-		instance.save = function() {
-			var item = {};
+		instance.save = function(redraw = true) {
+
+			let item = {};
 			item.x = instance.x;
 			item.y = instance.y;
 			item.size = instance.size;
@@ -2634,7 +2635,7 @@ function MAKEFLOWSTREAM(meta) {
 				save();
 			}
 
-			flow.proxy.online && flow.proxy.send({ TYPE: 'flow/redraw', id: instance.id, data: item });
+			redraw && flow.proxy.online && flow.proxy.send({ TYPE: 'flow/redraw', id: instance.id, data: item });
 		};
 
 		instance.newvariables = function(data) {

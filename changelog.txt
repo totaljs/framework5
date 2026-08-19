@@ -11,6 +11,7 @@
 - extended `NEWACTION` by adding a new handler: `oninput: function($)`
 - extended action's `$` by adding `$.input` property (alias for the `$.model`)
 - fixed handling errors in the `NEWTRANSFORM()` method
+- extended `flowinstance.save(redraw = true)` method by adding `redraw` argument
 
 ========================
 0.0.18
