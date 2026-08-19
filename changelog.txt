@@ -13,6 +13,7 @@
 - fixed handling errors in the `NEWTRANSFORM()` method
 - extended `flowinstance.save(redraw = true)` method by adding `redraw` argument
 - removed watcher for the `.flow` files
+- fixed CSS compiler
 
 ========================
 0.0.18

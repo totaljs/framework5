@@ -543,12 +543,10 @@ function cssnested(css, id, variable) {
 			continue;
 		}
 
-		/*
-		// @NOTE: removed older LESS CSS variables
 		if (a === '@') {
 			begAt = index;
 			skip = true;
-		}*/
+		}
 
 		if (skip && !skipImport && (a === ';' || a === '{')) {
 			skipImport = a;
