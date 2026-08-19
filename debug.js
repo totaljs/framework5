@@ -71,10 +71,10 @@ function runwatching() {
 
 	const FILENAME = F.TUtils.getName(process.argv[1] || 'index.js');
 	const VERSION = F.version_header;
-	const REG_FILES = /(config|version|bundles\.debug|\.js|\.ts|\.flow|\.py|\.resource)+$/i;
+	const REG_FILES = /(config|version|bundles\.debug|\.js|\.ts|\.py|\.resource)+$/i;
 	const REG_PUBLIC = /\/public\//i;
 	const REG_INDEX = new RegExp(FILENAME.replace(/\.js$/, '') + '_.*?\\.js$');
-	const REG_EXTENSION = /\.(js|ts|py|resource|package|bundle|build|flow|url|html)$/i;
+	const REG_EXTENSION = /\.(js|ts|py|resource|package|bundle|build|url|html)$/i;
 	const REG_CONFIG = /\/config$/
 	const REG_RELOAD = /\.(js|ts|py|css|html|htm|jpg|png|gif|ico|svg|webp|resource)$/i;
 	const isRELOAD = !!options.livereload;
@@ -122,7 +122,6 @@ function runwatching() {
 			F.Path.join(directory, 'workers'),
 			F.Path.join(directory, 'middleware'),
 			F.Path.join(directory, 'bundles'),
-			F.Path.join(directory, 'flowstreams'),
 			F.Path.join(directory, 'transforms'),
 			F.Path.join(directory, 'startup'),
 			F.Path.join(directory, 'plugins')
@@ -210,9 +209,6 @@ function runwatching() {
 
 			if (isdir)
 				return true;
-
-			if (path.endsWith('index.flow'))
-				return false;
 
 			if (!REG_PUBLIC.test(path) && (REG_CONFIG.test(path) || REG_EXTENSION.test(path)))
 				return true;
