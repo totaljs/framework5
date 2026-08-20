@@ -1038,7 +1038,7 @@ function init_current(meta, callback, nested) {
 	flow.env = meta.env;
 	flow.origin = meta.origin;
 	flow.proxypath = meta.proxypath || '';
-	flow.proxy.online = false;
+	flow.proxy.online = 0;
 	flow.proxy.ping = 0;
 
 	if (meta.import) {
@@ -1285,7 +1285,7 @@ function init_current(meta, callback, nested) {
 					break;
 
 				case 'ui/newclient':
-					flow.proxy.online = true;
+					flow.proxy.online = msg.online || (flow.proxy.online + 1);
 					flow.proxy.newclient(msg.clientid);
 					break;
 
@@ -1791,17 +1791,32 @@ exports.socket = function(flow, socket, verify, check) {
 	}
 
 	flow.$socket = socket;
+	let timeout = null;
+
+	var refreshonline = function() {
+		clearTimeout(timeout);
+		timeout = null;
+		let response = [];
+		for (let key in socket.connections) {
+			let client = socket.connections[key];
+			response.push({ id: client?.user?.id, name: client?.user?.name, ip: client.ip, ua: client.ua });
+		}
+		socket.send({ TYPE: 'flow/online', online: response });
+	}
 
 	var newclient = function(client) {
 
 		client.isflowstreamready = true;
 
 		if (flow.isworkerthread) {
-			flow.postMessage2({ TYPE: 'ui/newclient', clientid: client.id });
+			flow.postMessage2({ TYPE: 'ui/newclient', clientid: client.id, online: socket.online });
 		} else {
-			flow.proxy.online = true;
+			flow.proxy.online = socket.online;
 			flow.proxy.newclient(client.id);
 		}
+
+		timeout && clearTimeout(timeout);
+		timeout = setTimeout(refreshonline, 1000);
 
 	};
 
@@ -1817,18 +1832,20 @@ exports.socket = function(flow, socket, verify, check) {
 		delete flow.$socket;
 
 		if (flow.isworkerthread)
-			flow.postMessage2({ TYPE: 'ui/online', online: false });
+			flow.postMessage2({ TYPE: 'ui/online', online: 0 });
 		else
-			flow.proxy.online = false;
+			flow.proxy.online = 0;
 	});
 
 	socket.on('close', function(client) {
 		if (client.isflowstreamready) {
-			var is = socket.online > 0;
+			let count = socket.online;
 			if (flow.isworkerthread)
-				flow.postMessage2({ TYPE: 'ui/online', online: is });
+				flow.postMessage2({ TYPE: 'ui/online', online: count });
 			else
-				flow.proxy.online = is;
+				flow.proxy.online = count;
+			timeout && clearTimeout(timeout);
+			timeout = setTimeout(refreshonline, 1000);
 		}
 	});
 
@@ -1886,9 +1903,9 @@ exports.client = function(flow, socket) {
 
 	socket.on('close', function() {
 		if (flow.isworkerthread)
-			flow.postMessage2({ TYPE: 'ui/online', online: false });
+			flow.postMessage2({ TYPE: 'ui/online', online: socket.online });
 		else
-			flow.proxy.online = false;
+			flow.proxy.online = socket.online;
 	});
 
 	socket.on('message', function(msg) {
@@ -1896,7 +1913,7 @@ exports.client = function(flow, socket) {
 			if (flow.isworkerthread) {
 				flow.postMessage2({ TYPE: 'ui/newclient', clientid: clientid });
 			} else {
-				flow.proxy.online = true;
+				flow.proxy.online = socket.online;
 				flow.proxy.newclient(clientid);
 			}
 		} else {
@@ -2108,7 +2125,7 @@ function MAKEFLOWSTREAM(meta) {
 
 				// Executes "exports.call"
 				if (msg.id[0] === '@') {
-					instance = flow.meta.components[msg.id.substring(1)];
+					instance = flow?.meta?.components[msg.id.substring(1)];
 					if (instance && instance.call) {
 						msg.id = msg.callbackid;
 						msg.TYPE = 'flow/call';
@@ -2121,7 +2138,7 @@ function MAKEFLOWSTREAM(meta) {
 					return;
 				}
 
-				instance = flow.meta.flow[msg.id];
+				instance = flow?.meta?.flow[msg.id];
 				if (instance && instance.call) {
 					msg.id = msg.callbackid;
 					msg.TYPE = 'flow/call';
@@ -2517,6 +2534,7 @@ function MAKEFLOWSTREAM(meta) {
 
 		flow.stats.memory = memory;
 		flow.stats.errors = flow.errors.length;
+		flow.stats.online = flow.proxy.online;
 
 		// Each 9 seconds
 		if (notifier % 3 === 0) {

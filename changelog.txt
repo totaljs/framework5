@@ -14,6 +14,7 @@
 - extended `flowinstance.save(redraw = true)` method by adding `redraw` argument
 - removed watcher for the `.flow` files
 - fixed CSS compiler
+- improved FlowStream stats by adding `online` editors
 
 ========================
 0.0.18
