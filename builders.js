@@ -105,6 +105,10 @@ Options.prototype = {
 
 	get ua() {
 		return this.controller ? this.controller.ua : null;
+	},
+
+	get xhr() {
+		return this.controller ? this.controller.xhr : null;
 	}
 };
 

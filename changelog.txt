@@ -18,6 +18,7 @@
 - extended FlowStream by adding `instance.activity(key, name, [progress])` method
 - extended `NEWACTION.route` option by adding support for `true` that adds `API ?` value
 - fixed directory in the start information
+- added `.xhr` property in the `$` Options
 
 ========================
 0.0.18
