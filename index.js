@@ -1156,6 +1156,8 @@ F.shell = function(cmd, callback, cwd) {
 	if (F.config.$shell)
 		args.shell = F.config.$shell;
 
+	args.maxBuffer = 1024 * 1024 * 100; // 100 MB
+
 	if (callback)
 		F.Child.exec(cmd, args, callback);
 	else
