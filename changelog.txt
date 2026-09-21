@@ -20,6 +20,7 @@
 - fixed directory in the start information
 - added `.xhr` property in the `$` Options
 - extended `SHELL()` method by increasing `maxBuffer` to `100 MB`
+- fixed initializing `TMSCLIENT`
 
 ========================
 0.0.18

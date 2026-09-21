@@ -1,6 +1,6 @@
 // Total.js TMS
 // The MIT License
-// Copyright 2022-2023 (c) Peter Širka <petersirka@gmail.com>
+// Copyright 2022-2026 (c) Peter Širka <petersirka@gmail.com>
 
 const ErrorBuilder = F.TBuilders.ErrorBuilder;
 
@@ -127,7 +127,6 @@ exports.client = function(url, token, callback) {
 		client.headers['x-token'] = token;
 
 	client.options.reconnectserver = true;
-	client.connect(url.replace(/^http/, 'ws'));
 	client.ready = false;
 
 	client.on('destroy', function() {
@@ -147,9 +146,15 @@ exports.client = function(url, token, callback) {
 		timeout = null;
 	});
 
-	client.on('close', function() {
+	client.on('close', function(e) {
 		isopen = false;
 		client.ready = false;
+
+		if (callback) {
+			callback(e);
+			callback = null;
+		}
+
 	});
 
 	client.on('message', function(msg) {
@@ -230,6 +235,7 @@ exports.client = function(url, token, callback) {
 			client.send({ type: 'subscribers', subscribers: keys });
 	};
 
+	client.connect(url.replace(/^http/, 'ws'));
 	return client;
 };
 
