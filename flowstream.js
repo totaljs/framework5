@@ -847,6 +847,12 @@ FP.cleanforce = function() {
 		}
 	}
 
+	// Clear cache
+	for (let key in self.meta.cache) {
+		if (!self.meta.flow[key])
+			delete self.meta.cache;
+	}
+
 	var fn = key => self.meta.flow[key] == null;
 	self.logger = self.logger.remove(fn);
 	self.middleware = self.middleware.remove(fn);
@@ -1609,7 +1615,11 @@ FP.initcomponent = function(key, component) {
 
 	instance.isinstance = true;
 	instance.stats = { pending: 0, input: 0, output: 0, duration: 0, destroyed: 0 };
-	instance.cache = {};
+
+	if (!self.meta.cache[key])
+		self.meta.cache[key] = {};
+
+	instance.cache = self.meta.cache[key];
 
 	if (!instance.repo)
 		instance.repo = {};

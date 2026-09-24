@@ -21,6 +21,7 @@
 - added `.xhr` property in the `$` Options
 - extended `SHELL()` method by increasing `maxBuffer` to `100 MB`
 - fixed initializing `TMSCLIENT`
+- added FlowStream node persistent in-memory cache `instance.cache`
 
 ========================
 0.0.18
