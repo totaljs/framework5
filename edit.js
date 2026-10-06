@@ -25,7 +25,7 @@ exports.init = function(url, dir) {
 	client.options.reconnect = 10000;
 	client.options.reconnectserver = true;
 
-	let initilaized = false;
+	let initialized = false;
 
 	client.on('message', function(msg) {
 
@@ -42,11 +42,11 @@ exports.init = function(url, dir) {
 			console.log(HEADER + ': Welcome to "' + msg.name + ' (' + msg.version + ')"');
 			console.log('> Project: "' + msg.project + '"');
 			console.log(DIVIDER);
-			initilaized = true;
+			initialized = true;
 			return;
 		}
 
-		if (!initilaized)
+		if (!initialized)
 			return;
 
 		F.action('editor', msg).callback(function(err, response) {
@@ -69,7 +69,7 @@ exports.init = function(url, dir) {
 
 	client.on('close', function(e) {
 
-		initilaized = false;
+		initialized = false;
 		isopen = false;
 
 		if (e === 4004) {
