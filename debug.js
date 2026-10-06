@@ -33,6 +33,7 @@ module.exports = function(opt) {
 	// options.limit = 10;
 	// options.timeout = 5000;
 	// options.edit = 'wss://.....com/?id=myprojectname'
+	// options.editmcp = 'wss://.....com/?id=myprojectname'
 
 };
 
@@ -556,7 +557,10 @@ function init() {
 
 	if (Meta.isWatcher) {
 		if (options.edit) {
-			require('./edit').init(options.edit.replace(/^http/, 'ws'));
+			require('./edit').init(options.edit);
+			setTimeout(runwatching, 1000);
+		} else if (options.editmcp) {
+			require('./edit-mcp').init(options.editmcp);
 			setTimeout(runwatching, 1000);
 		} else
 			setImmediate(runwatching);
