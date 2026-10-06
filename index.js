@@ -2961,6 +2961,7 @@ process.on('message', function(msg, h) {
 	// Node.js modules
 	F.Zlib = F.require('node:zlib');
 	F.Fs = F.require('node:fs');
+	F.FsPromises = require('node:fs/promises');
 	F.Path = F.require('node:path');
 	F.Http = F.require('node:http');
 	F.Https = F.require('node:https');

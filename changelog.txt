@@ -3,6 +3,7 @@
 ========================
 
 - extended stats by adding `app` property
+- added `Total.FsPromises` a link to the `node:fs/promises`
 
 ========================
 0.0.19
