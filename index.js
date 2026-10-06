@@ -2823,11 +2823,12 @@ F.loadstats = function() {
 	stats.version.node = process.version;
 	stats.version.total = F.version_header;
 	stats.version.build = F.version;
-	stats.version.app = F.config.version;
+
 	stats.pid = process.pid;
 	stats.thread = global.THREAD;
 	stats.mode = DEBUG ? 'debug' : 'release';
 	stats.overload = 0;
+	stats.app = {};
 
 	main.pid = process.pid;
 	main.date = NOW;
@@ -2836,6 +2837,10 @@ F.loadstats = function() {
 	main.stats = [stats];
 
 	F.usage = function() {
+
+		stats.version.app = F.config.version;
+		stats.app.name = F.config.name;
+		stats.app.url = F.config.url;
 
 		let memory = process.memoryUsage();
 		stats.date = NOW;
