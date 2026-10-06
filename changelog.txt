@@ -4,6 +4,9 @@
 
 - extended stats by adding `app` property
 - added `Total.FsPromises` a link to the `node:fs/promises`
+- added `mcp` module
+	- `CONF.$mcp = true` activates MCP route `POST /$mcp/`
+	- Any `NEWACTION` with the `mcp: true` property will be available in the endpoint
 
 ========================
 0.0.19

@@ -1337,7 +1337,7 @@ exports.newaction = function(name, obj) {
 		F.TTMS.newpublish(name, tmsschema);
 	}
 
-	F.makesourcemap && F.makesourcemap();
+	Total.mcp?.refresh();
 	return obj;
 };
 

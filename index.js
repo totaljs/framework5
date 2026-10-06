@@ -408,7 +408,8 @@ function unlink(arr, callback) {
 	CONF.$tapilogger = false;
 	CONF.$imprint = true;
 
-	CONF.$tms = false;
+	CONF.$mcp = false; // Enables MCP route `POST /$mcp/`
+	CONF.$tms = false; // Enables TMS route `SOCKET /$tms/`
 	CONF.$tmsmaxsize = 256; // kB
 	CONF.$tmsurl = '/$tms/';
 	CONF.$tmsclearblocked = 60; // in minutes
