@@ -3000,6 +3000,7 @@ process.on('message', function(msg, h) {
 	F.TWorkers = require('./workers');
 	F.TFlowStream = require('./flowstream');
 	F.TCluster = require('./cluster');
+	F.TMcp = require('./mcp');
 
 	// Settings
 	// F.directory = F.TUtils.$normalize(require.main ? F.Path.dirname(require.main.filename) : process.cwd());

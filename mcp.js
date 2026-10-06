@@ -341,5 +341,7 @@ Total.mcp.refresh = function() {
 	Total.mcp.timeout = setTimeout(Total.mcp.refreshforce, 200);
 };
 
-ON('ready', initroute);
-ON('configure', initroute);
+setImmediate(function() {
+	Total.on('ready', initroute);
+	Total.on('configure', initroute);
+});
