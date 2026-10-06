@@ -117,35 +117,33 @@ function initroute() {
 	if (!CONF.$mcp)
 		return;
 
-	Total.mcp.route = ROUTE('POST /$mcp/ <10MB', function($) {
+	Total.mcp.route = ROUTE('-POST /$mcp/ <10MB', function($) {
 
 		let data = $.body;
 		let response = {};
 
-		if (token) {
+		if (Total.mcp.auth) {
 			let auth = ($.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
-			if (auth !== token) {
-				let opt = new F.TBuilders.Options($);
-				opt.TYPE = 'auth';
-				opt.query = $.query;
-				opt.next = opt.callback;
-				opt.token = opt.auth = auth;
-				opt.$callback = function(err, response) {
-					if (err) {
-						$.response.status = 401;
-						$.json({
-							jsonrpc: '2.0',
-							id: data && data.id !== undefined ? data.id : null,
-							error: { code: -32001, message: 'Unauthorized' }
-						});
-					} else {
-						$.user = response;
-						Total.mcp.exec($);
-					}
-				};
-				Total.mcp.auth(opt);
-				return;
-			}
+			let opt = new F.TBuilders.Options($);
+			opt.TYPE = 'auth';
+			opt.query = $.query;
+			opt.next = opt.callback;
+			opt.token = opt.auth = auth;
+			opt.$callback = function(err, response) {
+				if (err) {
+					$.response.status = 401;
+					$.json({
+						jsonrpc: '2.0',
+						id: data && data.id !== undefined ? data.id : null,
+						error: { code: -32001, message: 'Unauthorized' }
+					});
+				} else {
+					$.user = response;
+					Total.mcp.exec($);
+				}
+			};
+			Total.mcp.auth(opt);
+			return;
 		}
 
 		Total.mcp.exec($);
