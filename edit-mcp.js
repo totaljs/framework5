@@ -11,6 +11,7 @@ const DIVIDER = '----------------------------------------------------';
 const VERSION = 1;
 const ADMIN = { id: 'ai', name: 'AI', sa: true };
 const WSCLIENTS = [];
+const ERR_OFFLINE = 'App is offline.';
 
 if (!REVISIONS.paths)
 	REVISIONS.paths = {};
@@ -20,7 +21,7 @@ let isPROXY = false;
 function findclient($) {
 	// MCP REST endpoint and ?id=APPID
 	// All MCP websocket clients contains ?id=APPID
-	let id = $.query.id || $.params.id;
+	let id = $.config.id;
 	for (let client of WSCLIENTS) {
 		if (client.query.id === id) {
 			if (!client.callbacks)
@@ -30,7 +31,7 @@ function findclient($) {
 	}
 }
 
-NEWACTION('App.info', {
+NEWACTION('App_info', {
 	summary: 'Returns general information about the current project, including its name, framework, version, runtime, and other relevant project metadata. Use it to understand the project environment before inspecting or modifying the project.',
 	output: 'name,version,hostname,framework,node,platform',
 	internal: 'mcp',
@@ -42,9 +43,9 @@ NEWACTION('App.info', {
 			if (client) {
 				let id = GUID(10);
 				client.callbacks[id] = $;
-				client.send({ id: id, name: $.name });
+				client.send({ id: id, name: $.id });
 			} else
-				$.invalid(404);
+				$.invalid(ERR_OFFLINE);
 			return;
 		}
 
@@ -53,10 +54,12 @@ NEWACTION('App.info', {
 			stats = (await Total.readfile(process.mainModule.filename + '.json', 'utf8')).parseJSON(true);
 		} catch {}
 
+		let app = stats?.stats[0]?.app;
+
 		let response = {};
-		response.name = stats?.stats[0]?.name;
-		response.version = CONF.version;
-		response.hostname = stats?.stats[0]?.url;
+		response.name = app?.name;
+		response.version = stats?.stats[0]?.version?.app;
+		response.hostname = app?.url;
 		response.framework = 'Total.js v' + Total.version_header + ' (build ' + Total.version + ')';
 		response.node = process.version;
 		response.platform = Total.Os.platform();
@@ -64,7 +67,7 @@ NEWACTION('App.info', {
 	}
 });
 
-NEWACTION('App.tree', {
+NEWACTION('App_tree', {
 	summary: 'Returns the project directory structure as a flat list of files and directories. Use this tool to inspect the project structure and locate files before reading or modifying them. File contents are not included.',
 	output: 'items:[path,type,size:Number,modified:Date]',
 	internal: 'mcp',
@@ -76,9 +79,9 @@ NEWACTION('App.tree', {
 			if (client) {
 				let id = GUID(10);
 				client.callbacks[id] = $;
-				client.send({ id: id, name: $.name });
+				client.send({ id: id, name: $.id });
 			} else
-				$.invalid(404);
+				$.invalid(ERR_OFFLINE);
 			return;
 		}
 
@@ -102,6 +105,9 @@ NEWACTION('App.tree', {
 
 			path = path.substring(root.length);
 
+			if (path.startsWith('/.git/'))
+				return false;
+
 			if (path.startsWith('/index.js'))
 				return false;
 
@@ -117,7 +123,7 @@ NEWACTION('App.tree', {
 	}
 });
 
-NEWACTION('App.read', {
+NEWACTION('App_read', {
 	summary: 'Reads the contents of one or more project files. Use it to inspect existing code and configuration before making changes.',
 	input: '*paths:[String]',
 	mpc: true,
@@ -130,9 +136,9 @@ NEWACTION('App.read', {
 			if (client) {
 				let id = GUID(10);
 				client.callbacks[id] = $;
-				client.send({ id: id, name: $.name, input: model });
+				client.send({ id: id, name: $.id, input: model });
 			} else
-				$.invalid(404);
+				$.invalid(ERR_OFFLINE);
 			return;
 		}
 
@@ -158,7 +164,7 @@ NEWACTION('App.read', {
 	}
 });
 
-NEWACTION('App.write', {
+NEWACTION('App_write', {
 	summary: 'Creates or replaces a project file with the provided content. Use it to create new files or modify existing files.',
 	input: '*path,content',
 	output: 'path,revision:Number,created:Boolean',
@@ -171,9 +177,9 @@ NEWACTION('App.write', {
 			if (client) {
 				let id = GUID(10);
 				client.callbacks[id] = $;
-				client.send({ id: id, name: $.name, input: model });
+				client.send({ id: id, name: $.id, input: model });
 			} else
-				$.invalid(404);
+				$.invalid(ERR_OFFLINE);
 			return;
 		}
 
@@ -231,7 +237,7 @@ NEWACTION('App.write', {
 
 });
 
-NEWACTION('App.delete', {
+NEWACTION('App_delete', {
 	summary: 'Deletes a file or directory from the project. Use it only when the requested project change requires removing existing content.',
 	input: '*path',
 	output: 'path,error:String2,deleted:Boolean',
@@ -244,9 +250,9 @@ NEWACTION('App.delete', {
 			if (client) {
 				let id = GUID(10);
 				client.callbacks[id] = $;
-				client.send({ id: id, name: $.name, input: model });
+				client.send({ id: id, name: $.id, input: model });
 			} else
-				$.invalid(404);
+				$.invalid(ERR_OFFLINE);
 			return;
 		}
 
@@ -304,7 +310,7 @@ NEWACTION('App.delete', {
 	}
 });
 
-NEWACTION('App.restore', {
+NEWACTION('App_restore', {
 	summary: 'Restores a file from a historical revision. Use it to recover a previous version of a modified or deleted file.',
 	input: '*path,*revision:Number',
 	mpc: true,
@@ -317,9 +323,9 @@ NEWACTION('App.restore', {
 			if (client) {
 				let id = GUID(10);
 				client.callbacks[id] = $;
-				client.send({ id: id, name: $.name, input: model });
+				client.send({ id: id, name: $.id, input: model });
 			} else
-				$.invalid(404);
+				$.invalid(ERR_OFFLINE);
 			return;
 		}
 
@@ -328,7 +334,7 @@ NEWACTION('App.restore', {
 		const backup = PATH.root('revisions');
 
 		try {
-			model.content = await Total.FsPromises.readFile(PATH.join(backup, HASH(key, true) + '_{0}.rev'.format(model.revision)), 'utf8');
+			model.content = await Total.FsPromises.readFile(PATH.join(backup, HASH(model.path, true) + '_{0}.rev'.format(model.revision)), 'utf8');
 		} catch (e) {
 			model.error = 'REVISION_NOT_FOUND';
 		}
@@ -337,7 +343,7 @@ NEWACTION('App.restore', {
 	}
 });
 
-NEWACTION('App.move', {
+NEWACTION('App_move', {
 	summary: 'Moves or renames a file or directory within the project. Use it to change the location or name of existing project files and directories.',
 	input: '*from,*to',
 	output: 'from,to,error:String2,moved:Boolean',
@@ -350,9 +356,9 @@ NEWACTION('App.move', {
 			if (client) {
 				let id = GUID(10);
 				client.callbacks[id] = $;
-				client.send({ id: id, name: $.name, input: model });
+				client.send({ id: id, name: $.id, input: model });
 			} else
-				$.invalid(404);
+				$.invalid(ERR_OFFLINE);
 			return;
 		}
 
@@ -441,7 +447,7 @@ NEWACTION('App.move', {
 	}
 });
 
-NEWACTION('App.restart', {
+NEWACTION('App_restart', {
 	summary: 'Forces a restart of the running project application. Use it only when an explicit restart is needed, as file changes are normally detected and restarted automatically by the project watcher.',
 	internal: 'mcp',
 	output: 'success:Boolean',
@@ -453,9 +459,9 @@ NEWACTION('App.restart', {
 			if (client) {
 				let id = GUID(10);
 				client.callbacks[id] = $;
-				client.send({ id: id, name: $.name });
+				client.send({ id: id, name: $.id });
 			} else
-				$.invalid(404);
+				$.invalid(ERR_OFFLINE);
 			return;
 		}
 
@@ -464,7 +470,7 @@ NEWACTION('App.restart', {
 	}
 });
 
-NEWACTION('App.mkdir', {
+NEWACTION('App_mkdir', {
 	summary: 'Creates a directory at the specified project-relative path, including any missing parent directories.',
 	input: '*path',
 	output: 'path,error:String2,created:Boolean',
@@ -477,9 +483,9 @@ NEWACTION('App.mkdir', {
 			if (client) {
 				let id = GUID(10);
 				client.callbacks[id] = $;
-				client.send({ id: id, name: $.name, input: model });
+				client.send({ id: id, name: $.id, input: model });
 			} else
-				$.invalid(404);
+				$.invalid(ERR_OFFLINE);
 			return;
 		}
 
@@ -494,7 +500,7 @@ NEWACTION('App.mkdir', {
 	}
 });
 
-NEWACTION('App.logs', {
+NEWACTION('App_logs', {
 	summary: 'Returns the latest 4 KB of the project\'s console output and runtime logs. Use this action to inspect recent errors, warnings, application output, and runtime behavior after making changes.',
 	output: 'output,truncated:Boolean',
 	internal: 'mcp',
@@ -506,9 +512,9 @@ NEWACTION('App.logs', {
 			if (client) {
 				let id = GUID(10);
 				client.callbacks[id] = $;
-				client.send({ id: id, name: $.name });
+				client.send({ id: id, name: $.id });
 			} else
-				$.invalid(404);
+				$.invalid(ERR_OFFLINE);
 			return;
 		}
 
@@ -540,10 +546,10 @@ NEWACTION('App.logs', {
 	}
 });
 
-NEWACTION('App.search', {
-	summary: 'Searches for text across project files and returns matching file paths, line numbers, and matching lines. Use it to locate code, references, routes, functions, variables, or configuration before reading or modifying files.',
+NEWACTION('App_search', {
+	summary: 'Searches for text across project files and returns matching file paths, line numbers, character indexes and matching lines. Use it to locate code, references, routes, functions, variables, or configuration before reading or modifying files.',
 	input: '*search',
-	output: 'items:[path,line:Number,text],truncated:Boolean',
+	output: 'items:[path,line:Number,ch:Number,text],truncated:Boolean',
 	internal: 'mcp',
 	action: function($, model) {
 
@@ -553,9 +559,9 @@ NEWACTION('App.search', {
 			if (client) {
 				let id = GUID(10);
 				client.callbacks[id] = $;
-				client.send({ id: id, name: $.name, input: model });
+				client.send({ id: id, name: $.id, input: model });
 			} else
-				$.invalid(404);
+				$.invalid(ERR_OFFLINE);
 			return;
 		}
 
@@ -708,7 +714,7 @@ exports.init = function(url) {
 
 		if (msg.TYPE === 'init') {
 			console.log(DIVIDER);
-			console.log(HEADER + ': MCP remoted edit "' + msg.name + ' (' + msg.version + ')"');
+			console.log(HEADER + ': ' + msg.name + ' (' + msg.version + ')');
 			console.log(DIVIDER);
 			initialized = true;
 			return;
@@ -740,7 +746,7 @@ exports.init = function(url) {
 		}
 
 		try {
-			res.output = await ACTION(key, msg.input).user(ADMIN).promise();
+			res.output = await ACTION(msg.name, msg.input).user(ADMIN).promise();
 		} catch (e) {
 			res.error = e.toString();
 		}
@@ -794,6 +800,7 @@ exports.proxy = function(socket) {
 			// client.query.id --> APPID
 			console.log('MCP edit --> connected:', client.ip, client.query.id);
 			WSCLIENTS.push(client);
+			client.send({ TYPE: 'init', name: CONF.name, version: CONF.version });
 			return;
 		}
 

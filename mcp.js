@@ -24,7 +24,7 @@ const ADMIN = { id: 'ai', name: 'AI', sa: true };
 Total.mcp = {};
 Total.mcp.tools = [];
 Total.mcp.map = {};
-Total.mcp.versions = ['2025-11-25', '2025-06-18', '2025-03-26'];
+Total.mcp.versions = ['2026-07-28', '2025-11-25', '2025-06-18', '2025-03-26'];
 
 Total.mcp.auth = function($) {
 	$.success(ADMIN);
@@ -102,6 +102,7 @@ function toolerror(response, message) {
 		message = message == null ? 'Tool execution failed' : String(message);
 
 	response.result = {
+		resultType: 'complete',
 		content: [{ type: 'text', text: message }],
 		isError: true
 	};
@@ -117,10 +118,10 @@ function initroute() {
 	if (!CONF.$mcp)
 		return;
 
-	Total.mcp.route = ROUTE('-POST /$mcp/ <10MB', function($) {
+	Total.mcp.route = ROUTE('POST /$mcp/ <10MB', function($) {
 
 		let data = $.body;
-		let response = {};
+
 
 		if (Total.mcp.auth) {
 			let auth = ($.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
@@ -166,6 +167,7 @@ Total.mcp.exec = async function($) {
 		return;
 	}
 
+	const response = {};
 	response.jsonrpc = '2.0';
 	response.id = data.id;
 
@@ -192,6 +194,7 @@ Total.mcp.exec = async function($) {
 
 	if (data.method === 'server/discover') {
 		response.result = {
+			resultType: 'complete',
 			supportedVersions: ['2026-07-28'],
 			capabilities: {
 				tools: {}
@@ -215,7 +218,10 @@ Total.mcp.exec = async function($) {
 
 	if (data.method === 'tools/list') {
 		response.result = {
-			tools: Total.mcp.tools
+			resultType: 'complete',
+			tools: Total.mcp.tools,
+			ttlMs: 0,
+			cacheScope: 'private'
 		};
 		$.json(response);
 		return;
@@ -247,6 +253,8 @@ Total.mcp.exec = async function($) {
 		let input = Object.prototype.hasOwnProperty.call(args, 'input') ? args.input : args.data;
 		let builder = ACTION(key, input);
 
+		builder.config({ id: $.query.id });
+
 		if (args.query)
 			builder.query(args.query);
 
@@ -266,6 +274,7 @@ Total.mcp.exec = async function($) {
 				text = String(output);
 
 			response.result = {
+				resultType: 'complete',
 				content: [{ type: 'text', text: text }]
 			};
 
@@ -295,6 +304,7 @@ Total.mcp.refreshforce = function() {
 	for (let key in Total.actions) {
 
 		let action = Total.actions[key];
+
 		if (!action.mcp)
 			continue;
 
