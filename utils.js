@@ -6337,7 +6337,8 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 		obj.required = required;
 
 	obj.errors = errors;
-	obj.aitool = jsonschemaaitool;
+	obj.toAITool = jsonschemaaitool;
+	obj.toAIObject = jsonschemaaiobject;
 	obj.transform = exports.jsonschematransform;
 	obj.validate = function(value, partial, path) {
 		let err = new F.TBuilders.ErrorBuilder();
@@ -6351,6 +6352,18 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 
 	return obj;
 };
+
+function jsonschemaaiobject(name, description) {
+	let prop = {};
+	prop.name = name;
+	prop.description = description;
+	prop.properties = Total.TMcp.convert(this);
+	prop.type = 'object';
+	prop.additionalProperties = false;
+	if (this.required && this.required.length)
+		prop.required = this.required;
+	return prop;
+}
 
 function jsonschemaaitool(name) {
 	let t = this;
@@ -6368,7 +6381,8 @@ function jsonschemaaitool(name) {
 			parameters: {
 				type: 'object',
 				properties: properties,
-				required: required || []
+				required: required || [],
+				additionalProperties: false
 			}
 		}
 	}
