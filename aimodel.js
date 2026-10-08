@@ -329,6 +329,7 @@ class AIStreamParser {
 
 		this.buffer = Buffer.alloc(0);
 		this.toolmap = Object.create(null);
+		this.toolblocks = Object.create(null);
 
 		this.listeners = Object.create(null);
 		this.ondata = typeof ondata === 'function' ? ondata : null;
@@ -397,6 +398,7 @@ class AIStreamParser {
 	// ------------------------------------------------------------
 
 	write(chunk) {
+
 		if (chunk == null)
 			return this.output();
 
@@ -630,7 +632,29 @@ class AIStreamParser {
 		if (typeof value !== 'string')
 			value = String(value);
 
+		// `output()` can normalize an incomplete stream fragment. Clear that
+		// cached value when a later argument fragment arrives.
+		tool.input = null;
 		tool.arguments += value;
+
+		this.emit('tool_arguments', {
+			tool: this.cloneTool(tool),
+			delta: value,
+			arguments: tool.arguments,
+			reasoning: 'tool'
+		});
+	}
+
+	setToolArguments(tool, value) {
+
+		if (value == null)
+			return;
+
+		if (typeof value !== 'string')
+			value = JSON.stringify(value);
+
+		tool.arguments = value;
+		tool.input = null;
 
 		this.emit('tool_arguments', {
 			tool: this.cloneTool(tool),
@@ -723,7 +747,9 @@ class AIStreamParser {
 		for (let i = 0; i < calls.length; i++) {
 			const call = calls[i];
 			const fn = call.function || call;
-			const key = call.id || fn.name || `ollama_${i}`;
+			// Ollama can return more than one call with the same function name.
+			// The position in the tool_calls array is the stable fallback key.
+			const key = `ollama_${call.index != null ? call.index : i}`;
 
 			const tool = this.getTool(key, call.id, fn.name);
 
@@ -741,10 +767,11 @@ class AIStreamParser {
 	// ------------------------------------------------------------
 
 	parseOpenAI(chunk) {
+
 		const choices = chunk.choices || [];
 
 		for (const choice of choices) {
-			const delta = choice.delta || {};
+			const delta = choice.delta || choice.message || {};
 
 			if (delta.reasoning_content)
 				this.addThinking(delta.reasoning_content);
@@ -766,7 +793,9 @@ class AIStreamParser {
 			for (const call of calls) {
 				const index = call.index != null ? call.index : 0;
 				const fn = call.function || {};
-				const key = call.id || `openai_chat_${index}`;
+				// The id is usually sent only with the first streamed fragment.
+				// The index is present on every fragment and must be the stable key.
+				const key = call.index != null ? `openai_chat_${index}` : (call.id || `openai_chat_${index}`);
 
 				const tool = this.getTool(key, call.id, fn.name);
 
@@ -803,6 +832,15 @@ class AIStreamParser {
 				break;
 			}
 
+			case 'response.function_call_arguments.done': {
+				const key = chunk.item_id || chunk.call_id || `openai_response_${chunk.output_index || 0}`;
+				const tool = this.getTool(key, chunk.call_id || chunk.item_id, chunk.name);
+
+				// This event contains the complete canonical argument string.
+				this.setToolArguments(tool, chunk.arguments);
+				break;
+			}
+
 			case 'response.output_item.added': {
 				const item = chunk.item || {};
 
@@ -822,7 +860,7 @@ class AIStreamParser {
 					const tool = this.getTool(key, item.call_id || item.id, item.name);
 
 					if (item.arguments)
-						this.appendToolArguments(tool, item.arguments);
+						this.setToolArguments(tool, item.arguments);
 				}
 
 				break;
@@ -847,7 +885,7 @@ class AIStreamParser {
 					const tool = this.getTool(key, item.call_id || item.id, item.name);
 
 					if (item.arguments)
-						this.appendToolArguments(tool, item.arguments);
+						this.setToolArguments(tool, item.arguments);
 				}
 
 				break;
@@ -870,10 +908,12 @@ class AIStreamParser {
 				}
 
 				if (block.type === 'tool_use') {
-					const key = block.id || `claude_${chunk.index || 0}`;
+					const index = chunk.index || 0;
+					const key = block.id || `claude_${index}`;
+					this.toolblocks[index] = key;
 					const tool = this.getTool(key, block.id, block.name);
 
-					if (block.input)
+					if (block.input && (typeof block.input !== 'object' || Object.keys(block.input).length))
 						this.appendToolArguments(tool, block.input);
 				}
 
@@ -893,7 +933,8 @@ class AIStreamParser {
 					this.addContent(delta.text);
 
 				if (delta.type === 'input_json_delta') {
-					const key = `claude_${chunk.index || 0}`;
+					const index = chunk.index || 0;
+					const key = this.toolblocks[index] || `claude_${index}`;
 					const tool = this.getTool(key, null, null);
 
 					this.appendToolArguments(tool, delta.partial_json);
@@ -920,7 +961,8 @@ class AIStreamParser {
 	parseGemini(chunk) {
 		const candidates = chunk.candidates || [];
 
-		for (const candidate of candidates) {
+		for (let candidateIndex = 0; candidateIndex < candidates.length; candidateIndex++) {
+			const candidate = candidates[candidateIndex];
 			const parts = candidate.content?.parts || [];
 
 			for (let i = 0; i < parts.length; i++) {
@@ -938,9 +980,9 @@ class AIStreamParser {
 
 				if (part.functionCall) {
 					const fn = part.functionCall;
-					const key = `gemini_${i}_${fn.name}`;
+					const key = `gemini_${candidateIndex}_${i}`;
 
-					const tool = this.getTool(key, key, fn.name);
+					const tool = this.getTool(key, fn.id || key, fn.name);
 					this.appendToolArguments(tool, fn.args || {});
 				}
 			}
@@ -1010,6 +1052,7 @@ class AIStreamParser {
 
 		this.buffer = Buffer.alloc(0);
 		this.toolmap = Object.create(null);
+		this.toolblocks = Object.create(null);
 
 		this.thinking_signature = null;
 		this.thought_signatures = [];

@@ -7,6 +7,9 @@
 - added `mcp` module
 	- `CONF.$mcp = true` activates MCP route `POST /$mcp/`
 	- Any `NEWACTION` with the `mcp: true` property will be available in the endpoint
+- added a new method `JSONSchema.toAIObject(name, [description])`
+- added a new method `JSONSchema.toAITool(name)`
+- fixed `AIPARSER()` with tool calling
 
 ========================
 0.0.19
