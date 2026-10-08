@@ -83,13 +83,16 @@ function section(properties, required, name, schema, description, forceString) {
 	properties[name] = {
 		type: 'object',
 		description: description,
-		properties: convert(schema, forceString)
+		properties: convert(schema, forceString),
+		additionalProperties: false
 	};
 	if (schema.required && schema.required.length) {
 		properties[name].required = schema.required;
 		required.push(name);
 	}
 }
+
+exports.convert = convert;
 
 function rpcerror($, response, code, message) {
 	response.error = { code: code, message: message };

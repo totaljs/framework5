@@ -32,8 +32,13 @@ function findclient($) {
 }
 
 NEWACTION('App_info', {
-	summary: 'Returns general information about the current project, including its name, framework, version, runtime, and other relevant project metadata. Use it to understand the project environment before inspecting or modifying the project.',
-	output: 'name,version,hostname,framework,node,platform',
+	summary: `Returns general information about the current project, including its name, framework, version, runtime, and other relevant project metadata. Use it to understand the project environment before inspecting or modifying the project.
+
+IMPORTANT: When documentation is provided, consult the documentation
+before implementing or modifying framework-specific code. Follow links
+from the documentation as needed and prefer it over assumptions or
+general framework knowledge.`,
+	output: 'name,version,hostname,framework,node,platform,documentation',
 	internal: 'mcp',
 	action: async function($) {
 
@@ -57,6 +62,7 @@ NEWACTION('App_info', {
 		let app = stats?.stats[0]?.app;
 
 		let response = {};
+		response.documentation = 'https://github.com/totaljs/aicontext/blob/main/readme.md';
 		response.name = app?.name;
 		response.version = stats?.stats[0]?.version?.app;
 		response.hostname = app?.url;
@@ -126,8 +132,8 @@ NEWACTION('App_tree', {
 NEWACTION('App_read', {
 	summary: 'Reads the contents of one or more project files. Use it to inspect existing code and configuration before making changes.',
 	input: '*paths:[String]',
-	mpc: true,
 	output: 'items:[path,error:String2,content,revision:Number]',
+	internal: 'mcp',
 	action: async function($, model) {
 
 		// WS Client
@@ -165,8 +171,8 @@ NEWACTION('App_read', {
 });
 
 NEWACTION('App_write', {
-	summary: 'Creates or replaces a project file with the provided content. Use it to create new files or modify existing files.',
-	input: '*path,content',
+	summary: 'Creates or replaces a file in the application. Missing parent directories are created automatically. Use it to create new files or modify existing files. The file path must not end with a trailing slash "/".',
+	input: '*path // Path to the file relative to the application root, content',
 	output: 'path,revision:Number,created:Boolean',
 	internal: 'mcp',
 	action: async function($, model) {
@@ -313,8 +319,8 @@ NEWACTION('App_delete', {
 NEWACTION('App_restore', {
 	summary: 'Restores a file from a historical revision. Use it to recover a previous version of a modified or deleted file.',
 	input: '*path,*revision:Number',
-	mpc: true,
-	output: '',
+	output: 'content,error:String2',
+	internal: 'mcp',
 	action: async function($, model) {
 
 		// WS Client
@@ -449,8 +455,8 @@ NEWACTION('App_move', {
 
 NEWACTION('App_restart', {
 	summary: 'Forces a restart of the running project application. Use it only when an explicit restart is needed, as file changes are normally detected and restarted automatically by the project watcher.',
-	internal: 'mcp',
 	output: 'success:Boolean',
+	internal: 'mcp',
 	action: function($) {
 
 		// WS Client
