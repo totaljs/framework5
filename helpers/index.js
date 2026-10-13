@@ -18,6 +18,7 @@ const options = {};
 // options.livereload = 'https://yourhostname';
 // options.watcher = false; // disables watcher
 // options.edit = 'wss://www.yourcodeinstance.com/?id=projectname'
+// options.editmcp = 'https://yourtotalmcpserverinstance.com/?id=admin'
 
 options.release = process.argv.includes('--release');
 
