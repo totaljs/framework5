@@ -10,6 +10,7 @@
 - added a new method `JSONSchema.toAIObject(name, [description])`
 - added a new method `JSONSchema.toAITool(name)`
 - fixed `AIPARSER()` with tool calling
+- added a new controller method `$.content(value, content_type)`
 
 ========================
 0.0.19

@@ -251,8 +251,23 @@ Controller.prototype.xml = function(value) {
 	F.stats.response.xml++;
 };
 
+Controller.prototype.content = function(value, type) {
+	let ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
+	ctrl.response.headers['content-type'] = type || 'application/octet-stream';
+
+	if (value != null)
+		ctrl.response.value = value;
+
+	ctrl.flush();
+	F.stats.response.custom++;
+};
+
 Controller.prototype.text = Controller.prototype.plain = function(value) {
-	var ctrl = this;
+	let ctrl = this;
 
 	if (ctrl.destroyed)
 		return;
