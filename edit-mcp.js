@@ -243,6 +243,37 @@ NEWACTION('App_write', {
 
 });
 
+NEWACTION('App_shell', {
+	summary: 'Executes a shell command on the remote computer in the remote project root and returns its output or error. Use it to inspect the environment, run project commands, build, test, or manage the remote project.',
+	input: '*cmd',
+	output: 'response,error:String2',
+	internal: 'mcp',
+	action: async function($, model) {
+
+		// WS Client
+		if (isPROXY) {
+			const client = findclient($);
+			if (client) {
+				let id = GUID(10);
+				client.callbacks[id] = $;
+				client.send({ id: id, name: $.id, input: model });
+			} else
+				$.invalid(ERR_OFFLINE);
+			return;
+		}
+
+		try {
+			const response = await SHELL(model.cmd, PATH.root());
+			$.callback({ response: response });
+		} catch (e) {
+			$.callback({
+				response: e.stdout || '',
+				error: e.stderr || e.message || String(e)
+			});
+		}
+	}
+});
+
 NEWACTION('App_delete', {
 	summary: 'Deletes a file or directory from the project. Use it only when the requested project change requires removing existing content.',
 	input: '*path',
