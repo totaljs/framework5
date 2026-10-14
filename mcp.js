@@ -121,7 +121,7 @@ function initroute() {
 	if (!CONF.$mcp)
 		return;
 
-	Total.mcp.route = ROUTE('POST /$mcp/ <10MB', function($) {
+	Total.mcp.route = ROUTE('POST /$mcp/ <10MB <300s', function($) {
 
 		let data = $.body;
 
@@ -305,46 +305,49 @@ Total.mcp.refreshforce = function() {
 	Total.mcp.map = {};
 
 	for (let key in Total.actions) {
-
 		let action = Total.actions[key];
-
-		if (!action.mcp)
-			continue;
-
-		let obj = {};
-		obj.name = toolname(key);
-		Total.mcp.map[obj.name] = key;
-		obj.description = action.summary || action.name;
-
-		let properties = {};
-		let required = [];
-
-		if (action.jsinput)
-			section(properties, required, 'input', action.jsinput, 'Payload (request body) passed to this action.');
-
-		if (action.jsquery)
-			section(properties, required, 'query', action.jsquery, 'URL query parameters passed to this action.');
-
-		if (action.jsparams)
-			section(properties, required, 'params', action.jsparams, 'URL params passed to this action.', true);
-
-		obj.inputSchema = {
-			type: 'object',
-			properties: properties,
-			required: required
-		};
-
-		if (action.jsoutput) {
-			obj.outputSchema = {
-				type: 'object',
-				properties: convert(action.jsoutput),
-				required: action.jsoutput.required || EMPTYARRAY
-			};
+		if (action.mcp) {
+			let obj = Total.mcp.convert(action);
+			Total.mcp.map[obj.name] = key;
+			Total.mcp.tools.push(obj);
 		}
-
-		Total.mcp.tools.push(obj);
 	}
 
+};
+
+Total.mcp.convert = function(action) {
+
+	let obj = {};
+	obj.name = toolname(action.id);
+	obj.description = action.summary || action.name;
+
+	let properties = {};
+	let required = [];
+
+	if (action.jsinput)
+		section(properties, required, 'input', action.jsinput, 'Payload (request body) passed to this action.');
+
+	if (action.jsquery)
+		section(properties, required, 'query', action.jsquery, 'URL query parameters passed to this action.');
+
+	if (action.jsparams)
+		section(properties, required, 'params', action.jsparams, 'URL params passed to this action.', true);
+
+	obj.inputSchema = {
+		type: 'object',
+		properties: properties,
+		required: required
+	};
+
+	if (action.jsoutput) {
+		obj.outputSchema = {
+			type: 'object',
+			properties: convert(action.jsoutput),
+			required: action.jsoutput.required || EMPTYARRAY
+		};
+	}
+
+	return obj;
 };
 
 Total.mcp.refresh = function() {

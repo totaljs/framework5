@@ -12,6 +12,7 @@ const VERSION = 1;
 const ADMIN = { id: 'ai', name: 'AI', sa: true };
 const WSCLIENTS = [];
 const ERR_OFFLINE = 'App is offline.';
+const RULE = 'mcp';
 
 if (!REVISIONS.paths)
 	REVISIONS.paths = {};
@@ -39,7 +40,7 @@ before implementing or modifying framework-specific code. Follow links
 from the documentation as needed and prefer it over assumptions or
 general framework knowledge.`,
 	output: 'name,version,hostname,framework,node,platform,documentation',
-	internal: 'mcp',
+	internal: RULE,
 	action: async function($) {
 
 		// WS Client
@@ -76,7 +77,7 @@ general framework knowledge.`,
 NEWACTION('App_tree', {
 	summary: 'Returns the project directory structure as a flat list of files and directories. Use this tool to inspect the project structure and locate files before reading or modifying them. File contents are not included.',
 	output: 'items:[path,type,size:Number,modified:Date]',
-	internal: 'mcp',
+	internal: RULE,
 	action: function($) {
 
 		// WS Client
@@ -133,7 +134,7 @@ NEWACTION('App_read', {
 	summary: 'Reads the contents of one or more project files. Use it to inspect existing code and configuration before making changes.',
 	input: '*paths:[String]',
 	output: 'items:[path,error:String2,content,revision:Number]',
-	internal: 'mcp',
+	internal: RULE,
 	action: async function($, model) {
 
 		// WS Client
@@ -174,7 +175,7 @@ NEWACTION('App_write', {
 	summary: 'Creates or replaces a file in the application. Missing parent directories are created automatically. Use it to create new files or modify existing files. The file path must not end with a trailing slash "/".',
 	input: '*path // Path to the file relative to the application root, content',
 	output: 'path,revision:Number,created:Boolean',
-	internal: 'mcp',
+	internal: RULE,
 	action: async function($, model) {
 
 		// WS Client
@@ -247,7 +248,7 @@ NEWACTION('App_shell', {
 	summary: 'Executes a shell command on the remote computer in the remote project root and returns its output or error. Use it to inspect the environment, run project commands, build, test, or manage the remote project.',
 	input: '*cmd',
 	output: 'response,error:String2',
-	internal: 'mcp',
+	internal: RULE,
 	action: async function($, model) {
 
 		// WS Client
@@ -278,7 +279,7 @@ NEWACTION('App_delete', {
 	summary: 'Deletes a file or directory from the project. Use it only when the requested project change requires removing existing content.',
 	input: '*path',
 	output: 'path,error:String2,deleted:Boolean',
-	internal: 'mcp',
+	internal: RULE,
 	action: async function($, model) {
 
 		// WS Client
@@ -351,7 +352,7 @@ NEWACTION('App_restore', {
 	summary: 'Restores a file from a historical revision. Use it to recover a previous version of a modified or deleted file.',
 	input: '*path,*revision:Number',
 	output: 'content,error:String2',
-	internal: 'mcp',
+	internal: RULE,
 	action: async function($, model) {
 
 		// WS Client
@@ -384,7 +385,7 @@ NEWACTION('App_move', {
 	summary: 'Moves or renames a file or directory within the project. Use it to change the location or name of existing project files and directories.',
 	input: '*from,*to',
 	output: 'from,to,error:String2,moved:Boolean',
-	internal: 'mcp',
+	internal: RULE,
 	action: async function($, model) {
 
 		// WS Client
@@ -487,7 +488,7 @@ NEWACTION('App_move', {
 NEWACTION('App_restart', {
 	summary: 'Forces a restart of the running project application. Use it only when an explicit restart is needed, as file changes are normally detected and restarted automatically by the project watcher.',
 	output: 'success:Boolean',
-	internal: 'mcp',
+	internal: RULE,
 	action: function($) {
 
 		// WS Client
@@ -511,7 +512,7 @@ NEWACTION('App_mkdir', {
 	summary: 'Creates a directory at the specified project-relative path, including any missing parent directories.',
 	input: '*path',
 	output: 'path,error:String2,created:Boolean',
-	internal: 'mcp',
+	internal: RULE,
 	action: function($, model) {
 
 		// WS Client
@@ -540,7 +541,7 @@ NEWACTION('App_mkdir', {
 NEWACTION('App_logs', {
 	summary: 'Returns the latest 4 KB of the project\'s console output and runtime logs. Use this action to inspect recent errors, warnings, application output, and runtime behavior after making changes.',
 	output: 'output,truncated:Boolean',
-	internal: 'mcp',
+	internal: RULE,
 	action: function($) {
 
 		// WS Client
@@ -587,7 +588,7 @@ NEWACTION('App_search', {
 	summary: 'Searches for text across project files and returns matching file paths, line numbers, character indexes and matching lines. Use it to locate code, references, routes, functions, variables, or configuration before reading or modifying files.',
 	input: '*search',
 	output: 'items:[path,line:Number,ch:Number,text],truncated:Boolean',
-	internal: 'mcp',
+	internal: RULE,
 	action: function($, model) {
 
 		// WS Client

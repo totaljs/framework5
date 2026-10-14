@@ -1287,6 +1287,7 @@ exports.newaction = function(name, obj) {
 	obj.options.compress = obj.compress;
 	obj.audit = obj.audit === true ? NOOP : (obj.audit ? Tangular.compile(obj.audit) : null);
 	obj.called = 0;
+	obj.toAITool = () => Total.mcp.convert(obj);
 
 	if (obj.cache)
 		obj.cache = parseactioncache(obj, obj.cache);
