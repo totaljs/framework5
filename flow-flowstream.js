@@ -2205,6 +2205,7 @@ function MAKEFLOWSTREAM(meta) {
 
 			case 'reset':
 				flow.errors.length = 0;
+				flow.$events.reset && flow.emit('reset');
 				msg.TYPE = 'flow/reset';
 				flow.proxy.online && flow.proxy.send(msg, 0, clientid);
 				callback && callback(msg);
