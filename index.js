@@ -1270,7 +1270,6 @@ F.loadservices = function() {
 		// One pass: the requests that are still alive are moved to the front of the same array (splice() moves the rest of the array each time)
 		let pending = F.temporary.pending;
 		let count = 0;
-		let logged = 0;
 
 		for (let index = 0; index < pending.length; index++) {
 
@@ -1286,14 +1285,8 @@ F.loadservices = function() {
 
 				F.stats.response.timeout++;
 
-				// Only the last 5 timeouts are kept, so a pass stores at most 5 of them (the date is serialized only when the stats are read)
-				if (logged < 5) {
-					if (!logged)
-						NOW = new Date();
-					logged++;
-					if (F.timeouts.push({ date: NOW, url: ctrl.url }) > 5)
-						F.timeouts.shift();
-				}
+				if (F.timeouts.push((NOW = new Date()).toJSON() + ' ' + ctrl.url) > 5)
+					F.timeouts.shift();
 
 				ctrl.fallback(408);
 				continue;
@@ -2902,7 +2895,7 @@ F.loadstats = function() {
 		let timeout = F.timeouts[F.timeouts.length - 1];
 
 		stats.lasterror = err ? (err.date.toJSON() + ' '  + (err.name ? (err.name + ' - ') : '') + err.error) : undefined;
-		stats.lasttimeout = timeout ? (timeout.date.toJSON() + ' ' + timeout.url) : undefined;
+		stats.lasttimeout = timeout;
 
 		if ((stats.usage > 80 || stats.memory > 600 || stats.pending > 1000) && lastwarning !== NOW.getHours()) {
 			lastwarning = NOW.getHours();
