@@ -920,7 +920,7 @@ QBP.gridfields = function(fields, allowed) {
 		}
 	}
 
-	if (!count)
+	if (count)
 		t.options.fields = newfields;
 
 	return t;

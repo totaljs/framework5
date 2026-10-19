@@ -14,7 +14,7 @@ tests.push('routing/index.js');
 tests.push('schemas/index.js');
 tests.push('server/index.js');
 tests.push('staticfiles/index.js');
-// tests.push('common/cron.js');
+tests.push('common/fixes.js');
 
 console.log('==========================================');
 console.log('Total.js v5 unit tests');

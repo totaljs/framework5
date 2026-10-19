@@ -12,6 +12,19 @@
 - fixed `AIPARSER()` with tool calling
 - added a new controller method `$.content(value, content_type)`
 - added a new event `reset` in the FlowStream
+- fixed `CRON()` with the step form (`*/15`, `5/20`): it matches the values of the step and not every value
+- fixed the `limit` argument of `setTimeout2()`
+- fixed `AJAX()` for the answers with `application/xml` and `text/xml`
+- fixed `F.python()` without a callback (the promise resolves with the output) and `F.pipinstall()` without a callback
+- fixed `LOGMAIL()` with an object as the body
+- fixed `IMPORT()`: an answer with the status 400 or more, or a file that is not a module, gives an error
+- fixed the tunnel client (`proxy.js`): the types of the messages "error" and "abort"
+- fixed the controller method `$.href()`
+- fixed `QueryBuilder.gridfields()`: the accepted fields are applied
+- fixed the handling of the pending requests (a single pass instead of `splice()` for each finished request)
+- fixed `LDAP()`: a bind with a status other than 0 gives an error even when the server sends no text
+- added support for the `cache` option of `NEWACTION()` (the response is kept for the same `query`, `params`, `input`, `user` or `language`)
+- added the compact schema types `json` and `ip` (the values are validated)
 
 ========================
 0.0.19

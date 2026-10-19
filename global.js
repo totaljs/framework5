@@ -199,7 +199,7 @@ global.AJAX = function(url, data, callback) {
 		switch (type.toLowerCase()) {
 			case 'text/xml':
 			case 'application/xml':
-				value = response.body ? response.body.parseXML(self.$replace ? true : false) : {};
+				value = response.body ? DEF.parsers.xml(response.body) : {};
 				break;
 			case 'application/x-www-form-urlencoded':
 				value = response.body ? DEF.parsers.urlencoded(response.body) : {};
@@ -305,7 +305,7 @@ global.setTimeout2 = function(id, callback, timeout, limit, a, b, c, d, e) {
 			clearTimeout(cache.timer);
 			cache.count++;
 		} else
-			cache = internal[key] = {};
+			cache = internal[key] = { count: 0 };
 
 		cache.callback = callback;
 		cache.timer = setTimeout(timeout2, timeout, key, a, b, c, d, e);

@@ -1081,8 +1081,8 @@ Controller.prototype.$route = function() {
 
 };
 
-Controller.prototype.href = function(key, value) {
-	return F.TViewEngine.prototype.href.call(this, key, value);
+Controller.prototype.href = function() {
+	return F.TViewEngine.View.prototype.href.apply(this, arguments);
 };
 
 function readfile(filename, callback) {

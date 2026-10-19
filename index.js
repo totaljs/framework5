@@ -1017,10 +1017,22 @@ F.import = function(url, callback) {
 
 	F.download(url, filename, function(err, response) {
 		var m;
-		if (!err) {
-			m = require(filename);
-			F.temporary.dependencies[url] = 1;
+
+		// An error page is not a module
+		if (!err && response && response.status >= 400) {
+			err = new Error('The address answered with the status ' + response.status);
+			F.Fs.unlink(filename, NOOP);
 		}
+
+		if (!err) {
+			try {
+				m = require(filename);
+				F.temporary.dependencies[url] = 1;
+			} catch (e) {
+				err = e;
+			}
+		}
+
 		callback && callback(err, m, response);
 	});
 };
@@ -1087,14 +1099,14 @@ F.cleanup = function(stream, callback) {
 
 F.python = function(filename, callback) {
 	if (!callback)
-		return new Promise((resolve, reject) => F.python(filename, (err, response) => err ? reject(err) : response));
+		return new Promise((resolve, reject) => F.python(filename, (err, response) => err ? reject(err) : resolve(response)));
 	F.Child.exec(F.config.$python + ' ' + filename, { cwd: F.Path.dirname(filename) }, callback);
 };
 
 F.pipinstall = function(name, callback) {
 
 	if (!callback)
-		return new Promise((resolve, reject) => F.npminstall(name, err => err ? reject(err) : resolve()));
+		return new Promise((resolve, reject) => F.pipinstall(name, err => err ? reject(err) : resolve()));
 
 	var args = {};
 	args.cwd = F.directory;
@@ -1255,31 +1267,36 @@ F.loadservices = function() {
 			return;
 		}
 
-		let index = 0;
+		// One pass: the requests that are still alive are moved to the front of the same array (splice() moves the rest of the array each time)
+		let pending = F.temporary.pending;
+		let count = 0;
 
-		while (true) {
-			let ctrl = F.temporary.pending[index];
-			if (ctrl) {
-				if (ctrl.destroyed || ctrl.res.headersSent || ctrl.res.writableEnded) {
-					F.temporary.pending.splice(index, 1);
-				} else if (ctrl.timeout <= 0) {
+		for (let index = 0; index < pending.length; index++) {
 
-					F.stats.response.timeout++;
+			let ctrl = pending[index];
 
-					if (F.timeouts.push((NOW = new Date()).toJSON() + ' ' + ctrl.url) > 5)
-						F.timeouts.shift();
+			if (!ctrl)
+				continue;
 
-					ctrl.fallback(408);
-					F.temporary.pending.splice(index, 1);
-				} else {
-					F.stats.request.pending++;
-					ctrl.timeout -= 5; // 5 seconds
-					index++;
-				}
-			} else
-				break;
+			if (ctrl.destroyed || ctrl.res.headersSent || ctrl.res.writableEnded)
+				continue;
+
+			if (ctrl.timeout <= 0) {
+
+				F.stats.response.timeout++;
+
+				if (F.timeouts.push((NOW = new Date()).toJSON() + ' ' + ctrl.url) > 5)
+					F.timeouts.shift();
+
+				ctrl.fallback(408);
+				continue;
+			}
+
+			ctrl.timeout -= 5; // 5 seconds
+			pending[count++] = ctrl;
 		}
 
+		pending.length = count;
 		F.stats.request.pending = F.temporary.pending.length;
 
 	}, 5000);
@@ -2737,7 +2754,7 @@ F.logmail = function(email, subject, body, callback) {
 	if (!subject)
 		subject = F.config.name;
 
-	var body = '<!DOCTYPE html><html><head><title>' + subject + '</title><meta charset="utf-8" /></head><body><pre style="max-width:600px;font-size:13px;line-height:16px;white-space:pre-line">' + (typeof(body) === 'object' ? JSON.stringify(body).escape() : body) + '</pre></body></html>';
+	var body = '<!DOCTYPE html><html><head><title>' + subject + '</title><meta charset="utf-8" /></head><body><pre style="max-width:600px;font-size:13px;line-height:16px;white-space:pre-line">' + (typeof(body) === 'object' ? JSON.stringify(body).encode() : body) + '</pre></body></html>';
 	return F.def.onMail(email, subject, body, callback);
 };
 
