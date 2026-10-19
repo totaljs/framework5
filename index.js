@@ -1270,6 +1270,7 @@ F.loadservices = function() {
 		// One pass: the requests that are still alive are moved to the front of the same array (splice() moves the rest of the array each time)
 		let pending = F.temporary.pending;
 		let count = 0;
+		let logged = 0;
 
 		for (let index = 0; index < pending.length; index++) {
 
@@ -1285,8 +1286,14 @@ F.loadservices = function() {
 
 				F.stats.response.timeout++;
 
-				if (F.timeouts.push((NOW = new Date()).toJSON() + ' ' + ctrl.url) > 5)
-					F.timeouts.shift();
+				// Only the last 5 timeouts are kept, so a pass writes at most 5 lines (many timeouts do not create a string for each request)
+				if (logged < 5) {
+					if (!logged)
+						NOW = new Date();
+					logged++;
+					if (F.timeouts.push(NOW.toJSON() + ' ' + ctrl.url) > 5)
+						F.timeouts.shift();
+				}
 
 				ctrl.fallback(408);
 				continue;
