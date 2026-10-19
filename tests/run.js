@@ -7,6 +7,7 @@ tests.push('aimodel.js');
 // tests.push('common/utils.js');
 // tests.push('tms/index.js');
 tests.push('common/htmlparser.js');
+tests.push('common/mail-attachments.js');
 tests.push('minificators/index.js');
 tests.push('nosql/index.js');
 tests.push('proxy/index.js');
