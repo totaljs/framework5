@@ -15,10 +15,10 @@
 	BUFFER_END.writeUInt8(2);
 
 	const BUFFER_ERROR = Buffer.alloc(1);
-	BUFFER_END.writeUInt8(3);
+	BUFFER_ERROR.writeUInt8(3);
 
 	const BUFFER_ABORT = Buffer.alloc(1);
-	BUFFER_END.writeUInt8(4);
+	BUFFER_ABORT.writeUInt8(4);
 
 	const REG_ANSI = /\x1B\[[0-?]*[ -/]*[@-~]/g;
 	const Pending = {};

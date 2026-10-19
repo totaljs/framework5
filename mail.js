@@ -150,7 +150,7 @@ Message.prototype.attachmentfs = function(storage, id, name, contentid) {
 
 	if (name) {
 		ext = F.TUtils.getExtension(name);
-		type = F.TUtils.contentTypes[ext];
+		type = F.TUtils.contentTypes[ext] || 'application/octet-stream';
 	}
 
 	var obj = {};
@@ -328,7 +328,7 @@ Mailer.$writeattachment = function(obj) {
 	var stream;
 
 	if (attachment.storage) {
-		FILESTORAGE(attachment.storage).readbase64(attachment.filename, function(err, meta) {
+		FILESTORAGE(attachment.storage).readbuffer(attachment.filename, function(err, buffer, meta) {
 			if (err) {
 				F.error(err, 'Mail.filestorage()', attachment.filename);
 				Mailer.$writeattachment(obj);
@@ -336,11 +336,11 @@ Mailer.$writeattachment = function(obj) {
 
 				if (!attachment.name) {
 					attachment.name = meta.name;
-					attachment.type = meta.type;
+					attachment.type = meta.type || 'application/octet-stream';
 					attachment.extension = meta.ext;
 				}
 
-				writeattachemnt_stream(attachment, obj, meta.stream);
+				writeattachemnt_stream(attachment, obj, buffer);
 			}
 		});
 	} else {
@@ -413,20 +413,12 @@ function writeattachmentbytes(chunk) {
 
 function writeattachmentbytesinline(mailerdata, chunk) {
 
-	var length = chunk.length;
-	var count = 0;
-	var beg = 0;
+	// The Base64 of the whole Buffer is split into lines (splitting the bytes would add padding to each line)
+	var value = chunk.toString('base64');
+	var length = value.length;
 
-	while (count < length) {
-
-		count += 68;
-
-		if (count > length)
-			count = length;
-
-		Mailer.$writeline(mailerdata, chunk.slice(beg, count).toString('base64'));
-		beg = count;
-	}
+	for (var index = 0; index < length; index += 68)
+		Mailer.$writeline(mailerdata, value.substring(index, index + 68));
 }
 
 Mailer.try = function(options, callback) {

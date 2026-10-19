@@ -240,8 +240,9 @@ Reader.prototype.parse = function() {
 			obj.dn = self.readstring();
 			obj.error = self.readstring();
 
-			if (obj.error) {
-				self.callback(obj.error, null);
+			// A bind that was not successful (the status is not 0) ends here, also when the server sends no diagnostic text (OpenLDAP: 49)
+			if (obj.error || obj.status) {
+				self.callback(obj.error || ('LDAP bind error ' + obj.status), null);
 				return;
 			}
 

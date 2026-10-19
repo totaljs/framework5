@@ -1428,6 +1428,7 @@ ActionCaller.prototype.exec = function() {
 	let $ = self.$;
 
 	$.$end = false;
+	$.$cached = false;
 	$.name = action.name;
 	$.id = action.id;
 	$.error = self.error;
@@ -1465,7 +1466,7 @@ ActionCaller.prototype.exec = function() {
 			$.$timeout = null;
 		}
 
-		if (!err) {
+		if (!err && !$.$cached) {
 			if (action.jsoutput)
 				response = action.jsoutput.transform(response).response || {};
 
@@ -1476,6 +1477,10 @@ ActionCaller.prototype.exec = function() {
 					$.payload[action.extend] = response;
 				response = $.payload;
 			}
+
+			// The "cache" option of the action: the final response is kept for the next call with the same key
+			if (action.cache && response !== undefined)
+				action.cache($, response);
 		}
 
 		if (err) {
@@ -1563,6 +1568,16 @@ ActionCaller.prototype.exec = function() {
 
 	if (self.options.progress)
 		$.progress2 = self.options.progress;
+
+	// The "cache" option of the action: a cached response skips the middleware and the action
+	if (action.cache) {
+		let cached = action.cache($);
+		if (cached !== undefined) {
+			$.$cached = true;
+			$.$callback(null, cached && typeof(cached) === 'object' ? CLONE(cached) : cached);
+			return;
+		}
+	}
 
 	if (action.timeout) {
 		$.$timeout = setTimeout(function() {

@@ -7,6 +7,9 @@
 const Days = ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa'];
 
 // The method compares date with parsed cron data
+// The first value of each field: minute, hour, day of the month, month, day of the week
+const CRON_MIN = [0, 0, 1, 1, 0];
+
 function cronexec(output, date) {
 
 	var m = date.getMinutes();
@@ -28,7 +31,10 @@ function cronexec(output, date) {
 				break;
 			}
 		} else if (m.type === 'every') {
-			if (m.value[i] !== '*' && m.value[i] % val !== 0) {
+			// m.value = [start, step] where the start is "*" or a number: "*/15" or "5/15"
+			var step = m.value[1];
+			var start = m.value[0] === '*' ? CRON_MIN[i] : m.value[0];
+			if (!step || val < start || (val - start) % step !== 0) {
 				is = false;
 				break;
 			}
