@@ -1616,6 +1616,9 @@ FP.initcomponent = function(key, component) {
 	instance.isinstance = true;
 	instance.stats = { pending: 0, input: 0, output: 0, duration: 0, destroyed: 0 };
 
+	if (!self.meta.cache)
+		self.meta.cache = {};
+
 	if (!self.meta.cache[key])
 		self.meta.cache[key] = {};
 
