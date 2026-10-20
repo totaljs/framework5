@@ -324,7 +324,7 @@ function prepare(command, dcommand, functions) {
 			return 'self.safehtml(' + command + ')';
 
 		case 'csrf':
-			return 'self.csrf()';
+			return '(controller?controller.csrf():$EMPTY)';
 
 		case 'root':
 			var r = F.config.$root;

@@ -39,13 +39,23 @@ exports.measureJPG = function(buffer) {
 	if (jpeg) {
 		o += 2;
 		while (o < len) {
-			while (0xff != buffer[o]) o++;
-			while (0xff == buffer[o]) o++;
+
+			// A damaged file must not loop forever: stay inside the buffer
+			while (o < len && 0xff != buffer[o]) o++;
+			while (o < len && 0xff == buffer[o]) o++;
+
+			if (o >= len)
+				break;
+
 			if (SOF[buffer[o]])
 				return { width: u16(buffer, o + 6), height: u16(buffer, o + 4) };
-			else
-				o += u16(buffer, ++o);
 
+			// The length of a segment includes its own two bytes: less than 2 is not valid
+			var size = u16(buffer, o + 1);
+			if (!(size >= 2))
+				break;
+
+			o += size;
 		}
 	}
 
