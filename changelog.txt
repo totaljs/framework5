@@ -27,6 +27,7 @@
 - added the compact schema types `json` and `ip` (the values are validated)
 - fixed `attachmentfs()` in the mail: the file of the storage is read as a Buffer and the message is completed (it threw a `TypeError` and the SMTP connection stayed open)
 - fixed `attachment()` with a `Buffer` in the mail: the Base64 of the whole Buffer is split into lines (the bytes were split into pieces of 68 bytes and each one got its own padding)
+- fixed `@{hostname()}` view engine command
 
 ========================
 0.0.19
