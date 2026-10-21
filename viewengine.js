@@ -278,12 +278,12 @@ function parseplus(builder) {
 
 function prepare(command, dcommand, functions) {
 
-	var a = command.indexOf('.');
-	var b = command.indexOf('(');
-	var c = command.indexOf('[');
+	let a = command.indexOf('.');
+	let b = command.indexOf('(');
+	let c = command.indexOf('[');
 
-	var max = [];
-	var tmp = 0;
+	let max = [];
+	let tmp = 0;
 
 	if (a !== -1)
 		max.push(a);
@@ -294,12 +294,12 @@ function prepare(command, dcommand, functions) {
 	if (c !== -1)
 		max.push(c);
 
-	var index = Math.min.apply(this, max);
+	let index = Math.min.apply(this, max);
 
 	if (index === -1)
 		index = command.length;
 
-	var name = command.substring(0, index);
+	let name = command.substring(0, index);
 	if (name === dcommand)
 		return 'self.safehtml(' + command + ', 1)';
 
@@ -327,7 +327,7 @@ function prepare(command, dcommand, functions) {
 			return 'self.csrf()';
 
 		case 'root':
-			var r = F.config.$root;
+			let r = F.config.$root;
 			return '\'' + (r ? r.substring(0, r.length - 1) : r) + '\'';
 
 		case 'CONF':
@@ -372,9 +372,8 @@ function prepare(command, dcommand, functions) {
 		case '!session':
 		case '!user':
 			return 'self.safehtml(' + command.substring(1) + ')';
-		case 'host':
 		case 'hostname':
-			return 'self.hostname';
+			return 'self.' + command;
 		case 'href':
 			return command.includes('(') ? ('self.' + command) : 'self.href()';
 		case 'url':
