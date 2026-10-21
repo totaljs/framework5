@@ -188,7 +188,7 @@ Total.mcp.exec = async function($) {
 			},
 			serverInfo: {
 				name: CONF.name,
-				version: CONF.version
+				version: (CONF.version) + ''
 			}
 		};
 		$.json(response);
@@ -205,7 +205,7 @@ Total.mcp.exec = async function($) {
 			_meta: {
 				"io.modelcontextprotocol/serverInfo": {
 					name: CONF.name,
-					version: CONF.version
+					version: (CONF.version) + ''
 				}
 			}
 		};
@@ -222,10 +222,10 @@ Total.mcp.exec = async function($) {
 	if (data.method === 'tools/list') {
 		response.result = {
 			resultType: 'complete',
-			tools: Total.mcp.tools,
-			ttlMs: 0,
-			cacheScope: 'private'
+			tools: Total.mcp.tools
 		};
+		// ttlMs: 0,
+		// cacheScope: 'private'
 		$.json(response);
 		return;
 	}
