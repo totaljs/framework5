@@ -2,6 +2,7 @@
 // The MIT License
 // Copyright 2023 (c) Peter Širka <petersirka@gmail.com>
 
+const REG_JSONKEY = /[^a-z0-9_]/i;
 const REG_FIELDS_CLEANER = /"|`|\||'|\s/g;
 
 var LANGUAGE_SKIP = '_';
@@ -1178,7 +1179,90 @@ QBP.autoquery = function(query, schema, defsort, maxlimit) {
 			if ((skipped && skipped[name]) || (!allowed.meta[name]))
 				continue;
 
-			t.sort(allowed.fields[name], item[index + 1] === 'd');
+			t.sort(allowed.fields[name], index !== -1 && item.substring(index + 1).toLowerCase() === 'desc');
+			count++;
+		}
+
+		if (!count && defsort)
+			t.gridsort(defsort, allowed.fields);
+
+	} else if (defsort)
+		t.gridsort(defsort, allowed.fields);
+
+	maxlimit && t.paginate(query.page, query.limit, maxlimit);
+	return t;
+};
+
+// Works like autoquery() but for properties stored in a JSON column
+// Usage: .autoqueryjson($, 'data', 'id,name,email,age:Number,dtcreated:Date,tags:[string]', 'dtcreated_desc', 100)
+// The builder doesn't generate any SQL. Fields, filters and sorting use the neutral name "json:column:property:type"
+// and each database adapter translates it into its own syntax.
+QBP.autoqueryjson = function($, column, schema, defsort, maxlimit) {
+
+	let t = this;
+	let query = $ && $.query && typeof($.query) === 'object' ? $.query : ($ || {});
+
+	if (!column || REG_JSONKEY.test(column))
+		throw new Error('QueryBuilder.autoqueryjson(): invalid column name "' + column + '"');
+
+	let key = 'QBJ' + column + '|' + schema;
+	let allowed = F.temporary.querybuilders[key];
+
+	if (!allowed) {
+
+		let fields = {};
+		let filter = [];
+
+		for (let field of schema.split(',').trim()) {
+
+			let k = field.split(':').trim();
+			let name = k[0];
+
+			if (!name || REG_JSONKEY.test(name))
+				continue;
+
+			let type = (k[1] || 'string').toLowerCase();
+			fields[name] = 'json:' + column + ':' + name + ':' + type;
+			filter.push({ name: name, type: type });
+		}
+
+		allowed = F.temporary.querybuilders[key] = { fields: fields, filter: filter };
+	}
+
+	let fieldscount = 0;
+
+	if (!t.options.fields)
+		t.options.fields = [];
+
+	if (query.fields) {
+		for (let field of query.fields.replace(REG_FIELDS_CLEANER, '').split(',')) {
+			if (allowed.fields[field]) {
+				t.options.fields.push(allowed.fields[field]);
+				fieldscount++;
+			}
+		}
+	}
+
+	if (!fieldscount) {
+		for (let item of allowed.filter)
+			t.options.fields.push(allowed.fields[item.name]);
+	}
+
+	for (let item of allowed.filter)
+		t.gridfilter(item.name, query, item.type, allowed.fields[item.name]);
+
+	if (query.sort) {
+
+		let count = 0;
+
+		for (let item of query.sort.split(',')) {
+			let index = item.lastIndexOf('_');
+			let name = index === -1 ? item : item.substring(0, index);
+
+			if (!allowed.fields[name])
+				continue;
+
+			t.sort(allowed.fields[name], index !== -1 && item.substring(index + 1).toLowerCase() === 'desc');
 			count++;
 		}
 
