@@ -489,12 +489,41 @@ exports.toURLEncode = function(value) {
 	return builder.length ? builder.join('&') : '';
 };
 
+const REG_HOST_NUMERIC = /^(0x[0-9a-f]+|[0-9]+)(\.(0x[0-9a-f]+|[0-9]+))*$/i;
+const REG_HOST_IPV4 = /^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$/;
+
+// Accepts plain hostnames and canonical IP literals only. It rejects NUL bytes, non-ASCII characters
+// and non-canonical IPv4 forms (0127.0.0.1, 0x7f.1, 2130706433, 127.1) which Node.js, certificate
+// checks and the OS can interpret differently.
+exports.validhost = function(host) {
+
+	if (!host || typeof(host) !== 'string' || /[^\x21-\x7e]/.test(host))
+		return false;
+
+	return REG_HOST_NUMERIC.test(host) ? REG_HOST_IPV4.test(host) : true;
+};
+
+// Converts a host to its canonical ASCII form (punycode for international names, canonical dotted IPv4)
+// and returns an empty string when the host is not valid.
+exports.tohost = function(host) {
+
+	if (!host || typeof(host) !== 'string')
+		return '';
+
+	if (host.indexOf(':') === -1)
+		host = F.Url.domainToASCII(host);
+
+	return exports.validhost(host) ? host : '';
+};
+
 exports.resolve = function(url, callback, param) {
 
 	let uri;
 
 	try {
 		uri = exports.parseURI(url);
+		if (!exports.validhost(uri.hostname))
+			throw new Error('Invalid hostname');
 	} catch (e) {
 		callback(e);
 		return;
@@ -5920,6 +5949,15 @@ exports.connect = function(opt, callback) {
 	meta.tls = tls;
 
 	delete opt.tls;
+
+	if (opt.host) {
+		opt.host = exports.tohost(opt.host);
+		if (!opt.host) {
+			meta.destroy = meta.close = NOOP;
+			callback && setImmediate(callback, new Error('Invalid hostname'));
+			return meta;
+		}
+	}
 
 	var close = function() {
 
