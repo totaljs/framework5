@@ -477,8 +477,13 @@ Mailer.send = function(opt, messages, callback) {
 	if (opt.secure && !opt.port)
 		opt.port = 465;
 
-	if (!opt.server)  {
-		const err = new Error('No SMTP server configuration.');
+	const server = opt.server ? F.TUtils.tohost(opt.server) : '';
+
+	if (server && server !== opt.server)
+		opt = Object.assign({}, opt, { server: server });
+
+	if (!server)  {
+		const err = new Error(opt.server ? 'Invalid SMTP server hostname.' : 'No SMTP server configuration.');
 		let iscallback = false;
 
 		if (callback) {
