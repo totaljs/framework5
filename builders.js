@@ -670,6 +670,11 @@ RESTP.file = function(name, filename, buffer) {
 	return self;
 };
 
+RESTP.signal = function(signal) {
+	this.options.signal = signal;
+	return this;
+};
+
 RESTP.timeout = function(number) {
 	this.options.timeout = number;
 	return this;
@@ -969,7 +974,7 @@ RESTP.exec = function(callback) {
 
 	let key;
 
-	if (self.$expire && !self.$nocache) {
+	if (self.$expire && !self.$nocache && !self.options.signal?.aborted) {
 		key = 'restbuilder' + ((self.options.url || '') + (self.options.socketpath || '') + (self.options.path || '') + (self.options.body || '')).hash(true);
 		let data = F.cache.read(key);
 		if (data) {

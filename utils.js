@@ -590,6 +590,74 @@ function parseProxy(p) {
 	return F.temporary.utils[key] = obj;
 }
 
+function request_signal_cleanup(options) {
+	if (options.signal) {
+		options.signal.removeEventListener('abort', options.abort);
+		options.signal = null;
+	}
+	if (options.signalstream) {
+		options.signalstream.removeListener('end', options.signalend);
+		options.signalstream.removeListener('close', options.signalend);
+		options.signalstream = null;
+	}
+	options.request = options.proxyrequest = options.proxysocket = options.uploadstream = options.decoder = options.resstream = null;
+}
+
+function request_signal_abort(options) {
+	if (!options.signal)
+		return;
+	var callback = options.callback;
+	var err = new Error('The operation was aborted');
+	err.name = 'AbortError';
+	err.code = 'ABORT_ERR';
+	err.cause = options.signal.reason;
+
+	options.callback = null;
+	options.canceled = options.iserror = true;
+	options.response.canceled = true;
+	if (!options.signaldelivered)
+		options.response.status = 0;
+	if (options.timeoutid) {
+		clearTimeout(options.timeoutid);
+		options.timeoutid = null;
+	}
+
+	// Destroy only this operation's transports, never a shared keep-alive agent.
+	for (var stream of [options.request, options.proxyrequest, options.proxysocket, options.uploadstream, options.decoder, options.resstream]) {
+		if (stream && !stream.destroyed) {
+			stream.once('error', NOOP);
+			stream.destroy(err);
+		}
+	}
+	request_signal_cleanup(options);
+	callback && callback(err, options.response);
+}
+
+function request_signal_init(options, signal) {
+	options.signal = signal;
+	var handler = options.callback;
+	options.callback = function(err, response) {
+		if (options.signaldelivered)
+			return;
+		options.signaldelivered = true;
+		if (!err && response.stream && options.signal) {
+			options.signalstream = response.stream;
+			options.signalend = () => request_signal_cleanup(options);
+			response.stream.once('end', options.signalend);
+			response.stream.once('close', options.signalend);
+		} else
+			request_signal_cleanup(options);
+		handler(err, response);
+	};
+	options.abort = () => request_signal_abort(options);
+	if (options.signal.aborted) {
+		options.abort();
+		return true;
+	}
+	options.signal.addEventListener('abort', options.abort, { once: true });
+	return false;
+}
+
 function _request(opt, callback) {
 
 	const options = { length: 0, timeout: opt.timeout == false || opt.timeout == 0 ? 0 : (opt.timeout || 8000), encoding: opt.encoding || 'utf8', callback: callback || opt.callback || NOOP, post: true, redirect: 0 };
@@ -628,6 +696,9 @@ function _request(opt, callback) {
 
 	options.response = opt.response ? opt.response : {};
 	options.response.body = '';
+	if (opt.signal?.aborted && request_signal_init(options, opt.signal))
+		return;
+
 	options.iserror = false;
 
 	if (opt.resolve || opt.dnscache)
@@ -724,7 +795,7 @@ function _request(opt, callback) {
 
 	if ((opt.unixsocket && !uri.socketPath) || (!opt.unixsocket && (!uri.hostname || !uri.host))) {
 		options.response.canceled = true;
-		opt.callback && opt.callback('Invalid hostname', options.response);
+		options.callback && options.callback('Invalid hostname', options.response);
 		return;
 	}
 
@@ -774,8 +845,11 @@ function _request(opt, callback) {
 			uri.agent = typeof(options.keepalive) === 'boolean' ? KeepAliveHttps : options.keepalive instanceof F.Https.Agent ? options.keepalive : new F.Https.Agent(options.keepalive);
 		} else
 			uri.agent = typeof(options.keepalive) === 'boolean' ? KeepAlive : options.keepalive instanceof F.Http.Agent ? options.keepalive : new F.Http.Agent(options.keepalive);
-	} else
+	} else if (!proxy || uri.protocol !== 'https:')
 		uri.agent = null;
+
+	if (opt.signal && request_signal_init(options, opt.signal))
+		return;
 
 	if (proxy)
 		request_call(uri, options);
@@ -817,6 +891,10 @@ const PAP = ProxyAgent.prototype;
 PAP.createConnection = function(pending) {
 	var self = this;
 	self.createSocket(pending, function(socket) {
+		if (pending.request.destroyed || self.options?.canceled) {
+			socket.destroy();
+			return;
+		}
 		pending.request.onSocket(socket);
 	});
 };
@@ -835,9 +913,18 @@ PAP.createSocket = function(options, callback) {
 		PROXYOPTIONS.headers['Proxy-Authorization'] = proxy._auth;
 
 	const req = self.request(PROXYOPTIONS);
+	if (self.options.signal)
+		self.options.proxyrequest = req;
 	req.setTimeout(10000);
 	req.on('response', proxyagent_response);
 	req.on('connect', function(res, socket) {
+
+		if (!self.options || self.options.canceled) {
+			socket.destroy();
+			return;
+		}
+		if (self.options.signal)
+			self.options.proxysocket = socket;
 
 		if (res.statusCode === 200) {
 			socket.$req = req;
@@ -846,7 +933,6 @@ PAP.createSocket = function(options, callback) {
 			var err = new Error('Proxy could not be established (maybe a problem in auth), code: ' + res.statusCode);
 			err.code = 'ECONNRESET';
 			req.destroy && req.destroy();
-			req = null;
 			self.requests = null;
 			self.options = null;
 		}
@@ -857,7 +943,6 @@ PAP.createSocket = function(options, callback) {
 		const e = new Error('Request Proxy "proxy {0} --> target {1}": {2}'.format(PROXYOPTIONS.host + ':' + proxy.port, PROXYOPTIONS.path, err.toString()));
 		e.code = err.code;
 		req.destroy && req.destroy();
-		req = null;
 		self.requests = null;
 		self.options = null;
 	});
@@ -876,6 +961,10 @@ PAP.addRequest = function(req, options) {
 function createSecureSocket(options, callback) {
 	var self = this;
 	PAP.createSocket.call(self, options, function(socket) {
+		if (!self.options || self.options.canceled) {
+			socket.destroy();
+			return;
+		}
 		PROXYTLS.servername = self.options.uri.hostname;
 		PROXYTLS.headers = self.options.uri.headers;
 		PROXYTLS.socket = socket;
@@ -885,6 +974,9 @@ function createSecureSocket(options, callback) {
 }
 
 function request_call(uri, options) {
+
+	if (options.canceled)
+		return;
 
 	var opt;
 
@@ -905,10 +997,29 @@ function request_call(uri, options) {
 		opt = uri;
 
 	const connection = uri.protocol === 'https:' ? F.Https : F.Http;
-	const req = opt.method === 'GET' ? connection.get(opt, request_response) : connection.request(opt, request_response);
+	var req;
+
+	try {
+		req = opt.method === 'GET' ? connection.get(opt, request_response) : connection.request(opt, request_response);
+	} catch (err) {
+		if (!options.signal)
+			throw err;
+		var callback = options.callback;
+		options.callback = null;
+		callback && callback(err, options.response);
+		return;
+	}
 
 	req.$options = options;
 	req.$uri = uri;
+	if (options.signal)
+		options.request = req;
+
+	if (options.canceled) {
+		req.on('error', NOOP);
+		req.destroy();
+		return;
+	}
 
 	if (!options.callback) {
 		req.on('error', NOOP);
@@ -945,7 +1056,7 @@ function request_call(uri, options) {
 						try {
 							req.write((options.first ? '' : NEWLINE) + '--' + options.boundary + NEWLINE + 'Content-Disposition: form-data; name="' + key + '"' + NEWLINE + NEWLINE + value);
 						} catch (e) {
-							request_process_error.apply(req, e);
+							request_process_error.call(req, e);
 							break;
 						}
 						if (options.first)
@@ -958,7 +1069,7 @@ function request_call(uri, options) {
 		});
 	} else {
 		if (options.opt.compress)
-			F.Zlib[options.opt.compress](options.body, (err, buffer) => req.end(buffer));
+			F.Zlib[options.opt.compress](options.body, (err, buffer) => !options.canceled && req.end(buffer));
 		else
 			req.end(options.body);
 	}
@@ -1032,7 +1143,7 @@ function request_writefile(req, options, file, next) {
 		try {
 			req.write(filedata);
 		} catch (e) {
-			request_process_error.apply(req, e);
+			request_process_error.call(req, e);
 		}
 		next();
 	} else if (isurl) {
@@ -1041,12 +1152,20 @@ function request_writefile(req, options, file, next) {
 		opt.method = 'GET';
 		opt.custom = true;
 		opt.url = filedata;
+		opt.signal = options.opt.signal;
 		opt.callback = function(err, response) {
+			if (options.canceled) {
+				response && response.stream && response.stream.destroy();
+				next();
+				return;
+			}
 			if (response && response.stream) {
+				if (options.signal)
+					options.uploadstream = response.stream;
 				response.stream.on('close', next);
 				response.stream.pipe(req, STREAMPIPE);
 			} else {
-				err && request_process_error.apply(req, err);
+				err && request_process_error.call(req, err);
 				next();
 			}
 		};
@@ -1054,6 +1173,8 @@ function request_writefile(req, options, file, next) {
 	} else {
 		F.stats.performance.open++;
 		var stream = F.Fs.createReadStream(file.path || file.filename);
+		if (options.signal)
+			options.uploadstream = stream;
 		stream.once('close', next);
 		stream.pipe(req, STREAMPIPE);
 	}
@@ -1063,6 +1184,14 @@ function request_response(res) {
 
 	const options = this.$options;
 	const uri = this.$uri;
+
+	if (options.canceled) {
+		res.on('error', NOOP);
+		res.destroy();
+		return;
+	}
+	if (options.signal)
+		options.resstream = res;
 
 	res._buffer = null;
 	res._bufferlength = 0;
@@ -1253,8 +1382,6 @@ function request_response(res) {
 		return;
 	}
 
-	options.timeoutid && res.once('data', request_process_ok);
-
 	var encoding = res.headers['content-encoding'] || '';
 	if (encoding)
 		encoding = encoding.split(',')[0];
@@ -1268,8 +1395,11 @@ function request_response(res) {
 		options.callback && options.callback(null, options.response);
 		options.callback = null;
 	} else {
+		options.timeoutid && res.once('data', request_process_ok);
 		if (COMPRESS[encoding]) {
 			var zlib = encoding === 'gzip' ? F.Zlib.createGunzip() : F.Zlib.createInflate();
+			if (options.signal)
+				options.decoder = zlib;
 			zlib._buffer = res.buffer;
 			zlib.headers = res.headers;
 			zlib.statusCode = res.statusCode;
