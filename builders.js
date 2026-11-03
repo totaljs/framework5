@@ -1434,6 +1434,7 @@ ActionCaller.prototype.exec = function() {
 	$.error = self.error;
 	$.controller = self.controller;
 	$.user = self.options.user;
+	$.env = self.options.env;
 	$.config = action.config || EMPTYOBJECT;
 	$.meta = action;
 
@@ -1629,11 +1630,19 @@ ActionCaller.prototype.cancel = function() {
 };
 
 ActionCaller.prototype.payload = function(value) {
+
+	if (value instanceof Options)
+		value = value.payload;
+
 	this.options.payload = value;
 	return this;
 };
 
 ActionCaller.prototype.query = function(value) {
+
+	if (value instanceof Options)
+		value = value.query;
+
 	this.options.query = value;
 	return this;
 };
@@ -1647,12 +1656,29 @@ ActionCaller.prototype.user = function(value) {
 	return this;
 };
 
+ActionCaller.prototype.env = function(value) {
+
+	if (value instanceof Options)
+		value = value.env;
+
+	this.options.env = value;
+	return this;
+};
+
 ActionCaller.prototype.language = function(value) {
+
+	if (value instanceof Options)
+		value = value.language;
+
 	this.options.language = value;
 	return this;
 };
 
 ActionCaller.prototype.error = function(value) {
+
+	if (value instanceof Options)
+		value = value.error;
+
 	this.options.error = value;
 	return this;
 };

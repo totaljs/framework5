@@ -9,7 +9,7 @@ const CONCAT = [];
 const HEADER = '> Total.js MCP proxy';
 const DIVIDER = '----------------------------------------------------';
 const VERSION = 1;
-const ADMIN = { id: 'ai', name: 'AI', sa: true };
+const ADMIN = new User({ id: 'ai', name: 'AI', sa: true });
 const WSCLIENTS = [];
 const ERR_OFFLINE = 'App is offline.';
 const RULE = 'mcp';
@@ -784,7 +784,7 @@ exports.init = function(url) {
 		}
 
 		try {
-			res.output = await ACTION(msg.name, msg.input).user(ADMIN).promise();
+			res.output = await ACTION(msg.name, msg.input).env('mcp').user(ADMIN).promise();
 		} catch (e) {
 			res.error = e.toString();
 		}
@@ -821,7 +821,7 @@ exports.proxy = function(socket) {
 	isPROXY = true;
 
 	socket.on('close', function(client) {
-		console.log('MCP edit --> disconnected:', client.ip, client.query.id);
+		Total.syslog('MCP edit --> disconnected: ' + client.ip + ' --> ' + client.query.id);
 		if (client.callbacks) {
 			for (let key in client.callbacks)
 				client.callbacks[key].invalid('Timeout');
@@ -836,7 +836,7 @@ exports.proxy = function(socket) {
 
 		if (msg.TYPE === 'init') {
 			// client.query.id --> APPID
-			console.log('MCP edit --> connected:', client.ip, client.query.id);
+			Total.syslog('MCP edit --> connected: ' + client.ip + ' --> ' + client.query.id);
 			WSCLIENTS.push(client);
 			client.send({ TYPE: 'init', name: CONF.name, version: CONF.version });
 			return;

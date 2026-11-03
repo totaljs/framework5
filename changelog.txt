@@ -39,6 +39,7 @@
 - fixed the SMTP `server` in the mail: the hostname is normalized (international names to punycode, IPv4 to the canonical form) and an invalid hostname gives the `Invalid SMTP server hostname.` error
 - note: the issue CVE-2026-105481 (unsolicited data on a reused keep-alive socket, `http.Agent`) is fixed only by updating Node.js ; the Brotli issue CVE-2026-111497 does not affect the framework (only `gzip` and `deflate` are decompressed)
 - added a new global class `User`
+- added a new action method `.env(str)` for definining environment in the action `$.env {String}`
 
 ========================
 0.0.19
