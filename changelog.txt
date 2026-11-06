@@ -40,6 +40,8 @@
 - note: the issue CVE-2026-105481 (unsolicited data on a reused keep-alive socket, `http.Agent`) is fixed only by updating Node.js ; the Brotli issue CVE-2026-111497 does not affect the framework (only `gzip` and `deflate` are decompressed)
 - added a new global class `User`
 - added a new action method `.env(str)` for definining environment in the action `$.env {String}`
+- added `$.throw(err)` method to printing error into the console
+- fixed `url` in the view engine
 
 ========================
 0.0.19
