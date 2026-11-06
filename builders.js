@@ -300,6 +300,11 @@ function $errorhandling(self) {
 	self.$callback(self.error);
 }
 
+Options.prototype.throw = function(err) {
+	DEF.onError(err, this.id, this.url);
+	return this;
+};
+
 Options.prototype.invalid = function(error, path, index) {
 	var self = this;
 	self.error.push(error, path, index);
