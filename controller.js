@@ -363,6 +363,11 @@ function $errorhandling(ctrl, err) {
 		F.stats.response[key]++;
 }
 
+Controller.prototype.throw = function(err) {
+	DEF.onError(err, this.id, this.url);
+	return this;
+};
+
 Controller.prototype.invalid = function(value) {
 
 	var ctrl = this;
@@ -379,6 +384,26 @@ Controller.prototype.invalid = function(value) {
 		err.push(value);
 	}
 
+	setTimeout($errorhandling, 1, ctrl, err);
+};
+
+Controller.prototype.invalidsafe = function(value, err) {
+
+	var ctrl = this;
+
+	if (ctrl.destroyed)
+		return;
+
+	var err;
+
+	if (value instanceof F.TBuilders.ErrorBuilder) {
+		err = value;
+	} else {
+		err = new F.TBuilders.ErrorBuilder();
+		err.push(value);
+	}
+
+	err && ctrl.throw(err);
 	setTimeout($errorhandling, 1, ctrl, err);
 };
 
@@ -564,6 +589,12 @@ Controller.prototype.file = function(path, download) {
 		send_file(ctrl, path, ext);
 
 	F.stats.response.file++;
+};
+
+Controller.prototype.touch = function(url) {
+	let ctrl = this;
+	Total.touch(url || ctrl.url);
+	return ctrl;
 };
 
 Controller.prototype.stream = function(type, stream, download) {

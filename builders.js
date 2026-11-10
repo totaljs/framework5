@@ -165,6 +165,10 @@ Options.prototype.promisify = function(fn, a, b, c) {
 	});
 };
 
+Options.prototype.debug = function(a, b, c, d) {
+	this.debug2?.call(this, a, b, c, d);
+};
+
 Options.prototype.status = function(a, b, c, d) {
 	this.status2?.call(this, a, b, c, d);
 };
@@ -305,11 +309,25 @@ Options.prototype.throw = function(err) {
 	return this;
 };
 
-Options.prototype.invalid = function(error, path, index) {
-	var self = this;
-	self.error.push(error, path, index);
+Options.prototype.invalid = function(err, path, index) {
+	let self = this;
+	self.error.push(err, path, index);
 	setTimeout($errorhandling, 1, self);
 	return self.error;
+};
+
+Options.prototype.invalidsafe = function(msg, err) {
+	let self = this;
+	self.error.push(msg, path, index);
+	err && self.throw(err);
+	setTimeout($errorhandling, 1, self);
+	return self.error;
+};
+
+Options.prototype.touch = function(url) {
+	let self = this;
+	Total.touch(url || self.url);
+	return self;
 };
 
 Options.prototype.cookie = function(name, value, expire, options) {
@@ -1371,8 +1389,8 @@ ActionCaller.prototype.config = function(value) {
 };
 
 
-ActionCaller.prototype.debug = function() {
-	this.options.debug = true;
+ActionCaller.prototype.debug = function(fn) {
+	this.options.debug = fn;
 	return this;
 };
 
@@ -1573,6 +1591,9 @@ ActionCaller.prototype.exec = function() {
 		$.payload = response.response || {};
 	} else
 		$.payload = payload;
+
+	if (self.options.debug)
+		$.debug2 = self.options.debug;
 
 	if (self.options.status)
 		$.status2 = self.options.status;
