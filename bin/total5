@@ -5,8 +5,16 @@ const ARGS = process.argv; // TEST: ['-', '-', 'CMD']
 const DIVIDER = '----------------------------------------';
 
 // The "test" command uses the framework of the tested project (if it is installed there)
-const LOCAL = ARGS[2] === 'test' ? require('path').join(DIR, 'node_modules', 'total5') : '';
-const ISLOCAL = LOCAL ? require('fs').existsSync(LOCAL) : false;
+// It is searched in the current directory and in its parent directories
+var LOCAL = '';
+
+if (ARGS[2] === 'test') {
+	try {
+		LOCAL = require('path').dirname(require.resolve('total5/package.json', { paths: [DIR] }));
+	} catch (e) {}
+}
+
+const ISLOCAL = !!LOCAL;
 
 require(ISLOCAL ? LOCAL : 'total5');
 
