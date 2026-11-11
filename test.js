@@ -5,7 +5,7 @@
 if (!global.Total)
 	require('total5');
 
-var Test = { items: [], count: 0 };
+var Test = { items: [], count: 0, fakes: {} };
 
 Test.start = function(message) {
 	var divider = '------------------------------------------------';
@@ -32,6 +32,33 @@ Test.print = function(message, err) {
 
 Test.push = function(name, fn) {
 	Test.items.push({ name: name, fn: fn });
+};
+
+// Replaces an action with a fake, the original action is kept for "Test.restore()"
+Test.fake = function(name, obj) {
+
+	if (Test.fakes[name] === undefined) {
+		Test.fakes[name] = F.actions[name] || null;
+		delete F.actions[name];
+	}
+
+	return NEWACTION(name, obj);
+};
+
+// Removes all fakes and puts the original actions back
+Test.restore = function() {
+
+	for (var name in Test.fakes) {
+
+		var action = Test.fakes[name];
+
+		F.actions[name] && F.actions[name].remove();
+
+		if (action)
+			F.actions[name] = action;
+	}
+
+	Test.fakes = {};
 };
 
 Test.run = function(callback) {
