@@ -44,6 +44,7 @@
 - added a new action and controller's method `$.touch([url])`
 - added a new action and controller's method `$.invalidsafe(msg, err)`
 - added a new command `total5 test [name1] [name2]` that runs the tests from the current directory or from its `tests` directory (it loads `config`, the optional `init.js` and the scripts; without names it runs all scripts)
+- added `Test.fake(name, action)` that replaces an action with a fake and `Test.restore()` that puts the original actions back
 - fixed `url` in the view engine
 
 ========================
