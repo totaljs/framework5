@@ -4,7 +4,11 @@ const DIR = process.cwd();
 const ARGS = process.argv; // TEST: ['-', '-', 'CMD']
 const DIVIDER = '----------------------------------------';
 
-require('total5');
+// The "test" command uses the framework of the tested project (if it is installed there)
+const LOCAL = ARGS[2] === 'test' ? require('path').join(DIR, 'node_modules', 'total5') : '';
+const ISLOCAL = LOCAL ? require('fs').existsSync(LOCAL) : false;
+
+require(ISLOCAL ? LOCAL : 'total5');
 
 function done(err) {
 	err && console.error('ERROR:', err);
@@ -42,6 +46,7 @@ FUNC.help = function() {
 	console.log('extract <filename>                    : it extracts a bundle into the current directory');
 	console.log('edit <url?id=project>                 : it opens remote editing of the current directory with the Total.js Code Editor');
 	console.log('proxy <server_endpoint> <local_port>  : It connects a local port with a remote Total.js proxy server');
+	console.log('test <name1> <name2> <...>            : it runs the tests from the current directory or from its "tests" directory (all scripts without a name)');
 	console.log('8000                                  : it starts a web server on port "8000" for the current directory');
 	done();
 };
@@ -250,4 +255,58 @@ FUNC.edit = function(url) {
 	if (!url)
 		throw new Error('Invalid URL address');
 	require('../edit').init(url);
+};
+
+FUNC.test = function() {
+
+	process.exitCode = 1;
+
+	var dir = PATH.join(DIR, 'tests');
+	var names = [];
+
+	if (!F.Fs.existsSync(dir) || !F.Fs.lstatSync(dir).isDirectory())
+		dir = DIR;
+
+	// total5 test audit channels
+	// total5 test audit, channels
+	for (let i = 0; i < arguments.length; i++) {
+		let arr = arguments[i].split(',');
+		for (let m of arr) {
+			m = m.trim().replace(/\.js$/i, '');
+			m && names.push(m);
+		}
+	}
+
+	if (!names.length) {
+		let files = F.Fs.readdirSync(dir).sort();
+		for (let m of files) {
+			if (m !== 'init.js' && (/\.js$/i).test(m))
+				names.push(m.substring(0, m.length - 3));
+		}
+	}
+
+	var filename = PATH.join(dir, 'config');
+
+	if (F.Fs.existsSync(filename))
+		LOADCONFIG(F.Fs.readFileSync(filename, 'utf8'));
+
+	require(ISLOCAL ? PATH.join(LOCAL, 'test') : 'total5/test');
+
+	// Optional preparation (e.g. a database connection), it is always loaded first
+	filename = PATH.join(dir, 'init.js');
+	F.Fs.existsSync(filename) && require(filename);
+
+	for (let m of names) {
+
+		filename = PATH.join(dir, m + '.js');
+
+		if (!F.Fs.existsSync(filename)) {
+			console.error('ERROR: the test "' + m + '" not found (' + filename + ')');
+			process.exit(1);
+		}
+
+		require(filename);
+	}
+
+	Test.run();
 };
