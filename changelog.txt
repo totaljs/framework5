@@ -47,6 +47,7 @@
 - added `Test.fake(name, action)` that replaces an action with a fake and `Test.restore()` that puts the original actions back
 - improved `total5 test`: the framework of the tested project is found from its subdirectories too (e.g. from `tests`)
 - fixed `url` in the view engine
+- fixed `$.invalidsafe(msg, err)`: in an action it threw a `ReferenceError` (the request ended in a timeout) and in a controller the error for the log was replaced by the message for the user
 
 ========================
 0.0.19
