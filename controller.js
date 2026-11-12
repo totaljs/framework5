@@ -394,17 +394,17 @@ Controller.prototype.invalidsafe = function(value, err) {
 	if (ctrl.destroyed)
 		return;
 
-	var err;
+	var builder;
 
 	if (value instanceof F.TBuilders.ErrorBuilder) {
-		err = value;
+		builder = value;
 	} else {
-		err = new F.TBuilders.ErrorBuilder();
-		err.push(value);
+		builder = new F.TBuilders.ErrorBuilder();
+		builder.push(value);
 	}
 
 	err && ctrl.throw(err);
-	setTimeout($errorhandling, 1, ctrl, err);
+	setTimeout($errorhandling, 1, ctrl, builder);
 };
 
 Controller.prototype.flush = function() {

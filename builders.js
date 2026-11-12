@@ -318,7 +318,7 @@ Options.prototype.invalid = function(err, path, index) {
 
 Options.prototype.invalidsafe = function(msg, err) {
 	let self = this;
-	self.error.push(msg, path, index);
+	self.error.push(msg);
 	err && self.throw(err);
 	setTimeout($errorhandling, 1, self);
 	return self.error;

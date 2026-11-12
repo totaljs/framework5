@@ -24,6 +24,16 @@ NEWACTION('Cached', {
 
 ROUTE('GET /cached/ --> Cached');
 
+NEWACTION('Safe', {
+	name: 'Safe',
+	action: function($) {
+		$.invalidsafe('Message for the user', new Error('Detail for the log'));
+	}
+});
+
+ROUTE('GET /safe/ --> Safe');
+ROUTE('GET /safe2/', $ => $.invalidsafe('Message for the user', new Error('Detail for the log')));
+
 F.run({ port: 8211, release: true, watcher: false });
 
 ON('ready', function() {
@@ -145,6 +155,22 @@ ON('ready', function() {
 			Test.print('Compact JSON and IP reject invalid values', bad.error ? null : 'Expected an error');
 			Test.print('Compact JSON and IP accept valid values', !good.error ? null : 'Expected no error');
 			resume();
+		});
+
+		// $.invalidsafe(): the message goes to the user and the error to the log
+		arr.push(function(resume) {
+			var logged = [];
+			var onerror = DEF.onError;
+			DEF.onError = err => logged.push(err + '');
+			RESTBuilder.GET('http://127.0.0.1:8211/safe/').exec(function(err, response, output) {
+				Test.print('$.invalidsafe() in an action answers with the message', output.status === 400 && output.response.indexOf('Message for the user') !== -1 && output.response.indexOf('Detail for the log') === -1 ? null : 'Unexpected answer: ' + output.status);
+				RESTBuilder.GET('http://127.0.0.1:8211/safe2/').exec(function(err, response, output) {
+					DEF.onError = onerror;
+					Test.print('$.invalidsafe() in a controller answers with the message', output.status === 400 && output.response.indexOf('Message for the user') !== -1 && output.response.indexOf('Detail for the log') === -1 ? null : 'Unexpected answer: ' + output.status);
+					Test.print('$.invalidsafe() logs the error and not the message', logged.length === 2 && logged.every(m => m.indexOf('Detail for the log') !== -1) ? null : 'Unexpected log: ' + logged.join(' | '));
+					resume();
+				});
+			});
 		});
 
 		arr.async(function() {
