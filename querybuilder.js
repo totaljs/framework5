@@ -11,8 +11,8 @@ var LANGUAGE_PREFIX = '';
 function QueryBuilderOptions() {}
 
 function Controller(singleton) {
-	var t = this;
 	if (!singleton) {
+		let t = this;
 		t.commands = [];
 		t.response = {};
 		t.error = null;
@@ -231,6 +231,12 @@ CTP.find = CTP.all = function(table) {
 	db.controller = t;
 	t.commands && t.commands.push(db);
 	return new QueryBuilder(db, meta.table, 'find');
+};
+
+CTP.init = function(dbengine, name, connstring, errorhandling) {
+	if (dbengine === 'postgresql' || dbengine === 'postgres' || dbengine === 'postgre')
+		dbengine = 'pg';
+	require('./querybuilder-' + dbengine).init(name, connstring, errorhandling);
 };
 
 CTP.debug = function() {
