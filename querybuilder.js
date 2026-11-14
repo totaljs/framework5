@@ -233,9 +233,10 @@ CTP.find = CTP.all = function(table) {
 	return new QueryBuilder(db, meta.table, 'find');
 };
 
-CTP.init = function(dbengine, name, connstring, errorhandling) {
-	if (dbengine === 'postgresql' || dbengine === 'postgres' || dbengine === 'postgre')
-		dbengine = 'pg';
+CTP.init = function(name, connstring, errorhandling) {
+	let dbengine = 'pg';
+	//if (connstring.includes('postgre'))
+	//	dbengine = 'pg'
 	require('./querybuilder-' + dbengine).init(name, connstring, errorhandling);
 };
 
