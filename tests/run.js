@@ -4,6 +4,7 @@ var tests = [];
 
 tests.push('aimodel.js');
 tests.push('common/request-cancellation.js');
+tests.push('common/mcp.js');
 // tests.push('bundles/run.js');
 // tests.push('common/utils.js');
 // tests.push('tms/index.js');
