@@ -19,6 +19,13 @@ const ADMIN = { id: 'ai', name: 'AI', sa: true };
 	});
 
 	// tools/call arguments: { input: {}, query: {}, params: {} }
+
+	// The tools run as the user returned by Total.mcp.auth (default: ADMIN).
+	// Total.mcp.filter decides which tools a caller sees and may call (default: all):
+	Total.mcp.filter = function(tool, $) {
+		// tool {Object} the tool from Total.mcp.tools, $.user the caller
+		return !tool.name.startsWith('Admin_') || $.user.sa;
+	};
 */
 
 Total.mcp = {};
@@ -29,6 +36,13 @@ Total.mcp.versions = ['2026-07-28', '2025-11-25', '2025-06-18', '2025-03-26'];
 Total.mcp.auth = function($) {
 	$.success(ADMIN);
 };
+
+// Optional "function(tool, $)" returning a boolean: which tools the caller sees in tools/list and may run in tools/call
+Total.mcp.filter = null;
+
+function allowed(tool, $) {
+	return !Total.mcp.filter || !!Total.mcp.filter(tool, $);
+}
 
 // Total.js schema types that are not valid JSON Schema types
 function jstype(type) {
@@ -222,7 +236,7 @@ Total.mcp.exec = async function($) {
 	if (data.method === 'tools/list') {
 		response.result = {
 			resultType: 'complete',
-			tools: Total.mcp.tools
+			tools: Total.mcp.filter ? Total.mcp.tools.filter(tool => allowed(tool, $)) : Total.mcp.tools
 		};
 		// ttlMs: 0,
 		// cacheScope: 'private'
@@ -243,7 +257,8 @@ Total.mcp.exec = async function($) {
 		let key = Total.mcp.map[params.name];
 		let action = key && Total.actions[key];
 
-		if (!action || !action.mcp) {
+		// A tool that the filter hides is answered as unknown
+		if (!action || !action.mcp || (Total.mcp.filter && !allowed(Total.mcp.tools.find(tool => tool.name === params.name) || { name: params.name }, $))) {
 			rpcerror($, response, -32602, 'Unknown tool: ' + params.name);
 			return;
 		}
@@ -264,7 +279,8 @@ Total.mcp.exec = async function($) {
 		if (args.params)
 			builder.params(args.params);
 
-		builder.user({ sa: true, name: 'AI' });
+		// The user identified by Total.mcp.auth (or by the route that calls Total.mcp.exec), ADMIN otherwise
+		builder.user($.user || ADMIN);
 
 		let errors = null;
 
