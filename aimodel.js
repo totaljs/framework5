@@ -749,7 +749,8 @@ class AIStreamParser {
 			const fn = call.function || call;
 			// Ollama can return more than one call with the same function name.
 			// The position in the tool_calls array is the stable fallback key.
-			const key = `ollama_${call.index != null ? call.index : i}`;
+			const index = call.index != null ? call.index : fn.index;
+			const key = `ollama_${index != null ? index : i}`;
 
 			const tool = this.getTool(key, call.id, fn.name);
 
@@ -1033,14 +1034,16 @@ class AIStreamParser {
 		for (let i = 0; i < calls.length; i++) {
 			const call = calls[i];
 			const fn = call.function || call;
+			const args = fn.arguments || fn.args || fn.input || {};
 
+			// Arguments as an object are a complete call, a string is a fragment of the call at the same position
 			const tool = this.getTool(
-				call.id || `generic_${i}`,
+				call.id || `generic_${typeof(args) === 'object' ? this.tools.length : i}`,
 				call.id,
 				fn.name
 			);
 
-			this.appendToolArguments(tool, fn.arguments || fn.args || fn.input || {});
+			this.appendToolArguments(tool, args);
 		}
 	}
 

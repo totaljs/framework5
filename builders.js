@@ -778,7 +778,8 @@ RESTP.delete = RESTP.DELETE = function(data) {
 };
 
 RESTP.get = RESTP.GET = function(data) {
-	this.options.method = 'GET';
+	if (!this.operation)
+		this.options.method = 'GET';
 	this.options.query = data;
 	return this;
 };
@@ -972,7 +973,7 @@ RESTP.exec = function(callback) {
 		}
 
 		self.options.body.schema = self.operation;
-		self.options.body = JSON.stringify(self.options.body, self.$compress ? exports.json2replacer : null);
+		self.options.body = JSON.stringify(self.options.body, self.$compress ? F.TUtils.json2replacer : null);
 		self.options.type = 'json';
 	}
 
@@ -1241,7 +1242,7 @@ function parseactioncache(obj, meta) {
 	return function($, value) {
 		if (value === undefined) {
 
-			let key = 'action|' + (search ? (search + '|') : '') + $.ID;
+			let key = 'action|' + (search ? (search + '|') : '') + $.id;
 			let sum = '';
 			let tmp;
 
@@ -1284,7 +1285,7 @@ function parseactioncache(obj, meta) {
 			return F.cache.read($.cachekey);
 		}
 
-		$.cachekey && F.cache.set($.cachekey, value && value.success ? CLONE(value) : value, meta.expire || '5 minutes');
+		$.cachekey && F.cache.set($.cachekey, value && typeof(value) === 'object' ? CLONE(value) : value, meta.expire || '5 minutes');
 	};
 
 }
@@ -1628,13 +1629,20 @@ ActionCaller.prototype.exec = function() {
 			}
 		}, function() {
 			action.oninput && action.oninput($);
-			action.action($, $.payload);
+			actionexec(action, $);
 		});
 	} else {
 		action.oninput && action.oninput($);
-		action.action($, $.payload);
+		actionexec(action, $);
 	}
 };
+
+// An "async" action that throws gives a rejected Promise: the action is answered with an error instead of waiting for the timeout
+function actionexec(action, $) {
+	let response = action.action($, $.payload);
+	if (response && typeof(response.catch) === 'function')
+		response.catch(err => $.$end ? $.throw(err) : $.invalidsafe(500, err));
+}
 
 ActionCaller.prototype.finish = function(value) {
 	var self = this;

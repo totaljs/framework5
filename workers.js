@@ -14,9 +14,9 @@ function process_thread() {
 	const Port = F.Worker.parentPort;
 
 	F.worker = {};
-	F.worker.data = Port ? F.Worker.workerData : {};
+	F.worker.data = Port && F.Worker.workerData != null ? F.Worker.workerData : {};
 	F.worker.message = NOOP;
-	F.worker.isfork = !!Port;
+	F.worker.isfork = !Port;
 	F.worker.is = process.argv.indexOf('--worker') !== -1;
 	F.worker.setTimeout = function(timeout) {
 		F.worker.$timeout && clearTimeout(F.worker.$timeout);
@@ -61,7 +61,7 @@ exports.createfork = function(name) {
 		return process_thread();
 
 	const filename = name[0] === '~' ? name.substring(1) : F.path.root('workers/' + name + '.js');
-	const fork = new F.Child.fork(filename, { cwd: HEADER.cwd, argv: ['--worker'] });
+	const fork = new F.Child.fork(filename, ['--worker'], { cwd: HEADER.cwd });
 	fork.postMessage = fork.send;
 	fork.terminate = () => fork.kill('SIGKILL');
 	return fork;
@@ -72,7 +72,7 @@ exports.createpool = function(name, count, isfork) {
 	const pool = {};
 	pool.workers = [];
 	pool.pending = [];
-	pool.count = pool;
+	pool.count = count;
 	pool.next = function() {
 		for (let worker of pool.workers) {
 			if (worker.$released) {
@@ -92,10 +92,13 @@ exports.createpool = function(name, count, isfork) {
 	var release = function(worker) {
 		worker.on('exit', function() {
 			const index = pool.workers.indexOf(worker);
-			pool.workers.splice(index, 1);
-			const worker = isfork ? exports.createfork(name) : exports.createthread(name);
-			worker.$pool = pool;
-			worker.release = release(worker);
+			index !== -1 && pool.workers.splice(index, 1);
+			const replacement = isfork ? exports.createfork(name) : exports.createthread(name);
+			replacement.$pool = pool;
+			replacement.$released = true;
+			replacement.release = release(replacement);
+			pool.workers.push(replacement);
+			pool.next();
 		});
 
 		return function() {

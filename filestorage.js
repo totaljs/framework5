@@ -378,8 +378,11 @@ FP.clone = function(id, newid, callback) {
 
 	if (typeof(newid) === 'function') {
 		callback = newid;
-		newid = UID();
+		newid = null;
 	}
+
+	if (!newid)
+		newid = UID();
 
 	if (callback)
 		return self._clone(id, newid, callback);
@@ -392,7 +395,7 @@ FP._clone = function(id, newid, callback) {
 	var self = this;
 
 	if (self.pause) {
-		setTimeout(self._clone, 500, id, newid, callback);
+		setTimeout(self._clone.bind(self), 500, id, newid, callback);
 		return self;
 	}
 
@@ -486,7 +489,7 @@ FP._copy = function(id, path, callback) {
 	var self = this;
 
 	if (self.pause) {
-		setTimeout(self._copy, 500, id, path, callback);
+		setTimeout(self._copy.bind(self), 500, id, path, callback);
 		return self;
 	}
 
@@ -564,7 +567,7 @@ FP._readbuffer = function(id, callback) {
 	var self = this;
 
 	if (self.pause) {
-		setTimeout(self._readbuffer, 500, id, callback);
+		setTimeout(self._readbuffer.bind(self), 500, id, callback);
 		return self;
 	}
 

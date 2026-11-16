@@ -56,7 +56,10 @@ function parseRule(selector, output) {
 	if (match) {
 		for (let m of match) {
 			let index = m.indexOf('=');
-			rule.attrs.push({ id: m.substring(1, index).trim(), value: m.substring(index + 2, m.length - 2).trim() });
+			if (index === -1)
+				rule.attrs.push({ id: m.substring(1, m.length - 1).trim(), value: '' });
+			else
+				rule.attrs.push({ id: m.substring(1, index).trim(), value: m.substring(index + 2, m.length - 2).trim() });
 		}
 		selector = selector.replace(match, '');
 	}
@@ -190,7 +193,7 @@ function compare(rule, node) {
 					let tmp = node.attrs[attr.id];
 					if (tmp) {
 						tmp = tmp.split(' ');
-						if (!tmp.includes(attr.value))
+						if (attr.value && !tmp.includes(attr.value))
 							return false;
 					} else
 						return false;

@@ -282,6 +282,17 @@ Total.mcp.exec = async function($) {
 		// The user identified by Total.mcp.auth (or by the route that calls Total.mcp.exec), ADMIN otherwise
 		builder.user($.user || ADMIN);
 
+		let exec = builder.exec;
+
+		// An exception thrown inside the action is answered as a tool error
+		builder.exec = function() {
+			try {
+				exec.call(builder);
+			} catch (e) {
+				builder.$ && builder.$.invalidsafe('Tool execution failed', e);
+			}
+		};
+
 		let errors = null;
 
 		try {

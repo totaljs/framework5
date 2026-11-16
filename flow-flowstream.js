@@ -1510,14 +1510,18 @@ function init_current(meta, callback, nested) {
 function init_worker(meta, type, callback) {
 
 	var forkargs = [F.directory, '--fork'];
+	var forkopt = { serialization: 'json', detached: false };
+	var workeropt = { workerData: meta };
 
 	if (F.config.$insecure)
 		forkargs.push('--insecure');
 
-	if (meta.memory)
-		forkargs.push('--max-old-space-size=' + meta.memory);
+	if (meta.memory) {
+		forkopt.execArgv = process.execArgv.concat('--max-old-space-size=' + meta.memory);
+		workeropt.resourceLimits = { maxOldGenerationSizeMb: +meta.memory };
+	}
 
-	var worker = type === 'worker' ? (new W.Worker(__filename, { workerData: meta })) : Fork(__filename, forkargs, { serialization: 'json', detached: false });
+	var worker = type === 'worker' ? (new W.Worker(__filename, workeropt)) : Fork(__filename, forkargs, forkopt);
 	var ischild = false;
 
 	meta.unixsocket = makeunixsocket(meta.id);
@@ -3489,7 +3493,7 @@ function makeunixsocket(id) {
 	return F.isWindows ? ('\\\\?\\pipe\\flowstream' + F.directory.makeid() + id + Date.now().toString(36)) : (F.Path.join(F.Os.tmpdir(), 'flowstream_' + F.directory.makeid() + '_' + id + '_' + Date.now().toString(36) + '.socket'));
 }
 
-if (process.argv[1].endsWith('flow-flowstream.js')) {
+if (process.argv[1] && process.argv[1].endsWith('flow-flowstream.js')) {
 
 	isFLOWSTREAMWORKER = W.workerData || process.argv.includes('--fork') ? true : false;
 

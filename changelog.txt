@@ -49,6 +49,56 @@
 - fixed `url` in the view engine
 - fixed `$.invalidsafe(msg, err)`: in an action it threw a `ReferenceError` (the request ended in a timeout) and in a controller the error for the log was replaced by the message for the user
 - added a native PostgreSQL client + QueryBuilderPG, initialization `DATA.init('connection name', 'connection string?pooling=1')`
+- fixed sending emails through the Total API with `CONF.$tapimail` (the callbacks of `MAIL()`, `HTMLMAIL()` and `LOGMAIL()` run) and the audit logs with `CONF.$tapilogger`
+- fixed the `X-Priority` and `Sensitivity` headers of `high()`, `low()` and `confidential()` in the mail sent over SMTP
+- fixed the `writer` option of `REQUEST()`, it was ignored and an empty body was sent
+- fixed `RESTBuilder.API().get()`, it switched the request to GET and failed with "write after end"
+- fixed `compress()` of `RESTBuilder.API()`, `null` values were still sent
+- fixed `U.set()` with a path that goes on after an index (`items[0].name` made `items[0]` an array)
+- fixed the `cache` option of `NEWACTION()`: actions without `id` shared one cache entry and the cached response could be changed by the caller
+- fixed the `tls` option of `U.connect()`, the socket was never upgraded
+- fixed `U.parseURI()`, `REQUEST()`, `RESTBuilder` and proxies with credentials in the URL (`user:pass@`), they failed with "user is not defined"
+- fixed the `>` and `<` prefixes of `update()` and `modify()` in the NoSQL QueryBuilder
+- fixed `scalar()` of the NoSQL QueryBuilder: `avg` returns the average and the aggregates work without a key
+- fixed `count` and `pages` of `list()` with the NoSQL QueryBuilder
+- fixed `search()` with `beg` and `end` in the PostgreSQL QueryBuilder
+- fixed the toggle `!name` of `update()` in the PostgreSQL QueryBuilder (the column is quoted)
+- fixed `fields()` before `autoquery()` and `autoqueryjson()`: later queries no longer select extra columns
+- fixed `gridfields()` with an empty or missing value
+- fixed the `memory` key of FlowStream, it did not limit the heap of forks and worker threads
+- fixed `$.send(null)` in FlowStream: `end` fired once per output and a paused output stopped the message for the next outputs
+- fixed `TRANSFORM()` without a callback: `$.invalid()` threw a `TypeError` and the Promise never settled
+- fixed `F.worker.isfork`, it was `true` in worker threads and `false` in forks
+- fixed `NEWFORK()`: `--worker` did not reach the child process, so `F.worker.is` was `false` in forks
+- fixed `NEWTHREADPOOL()`: `worker.data` was `undefined` in pool threads, `pool.count` was the pool object, and a worker that exited threw a `ReferenceError` and was not replaced
+- fixed loading the framework from `node -e` (`process.argv[1]` and `process.mainModule` are undefined there)
+- fixed the errors of JSON schema arrays whose items are objects with properties (wrong path, index and error)
+- fixed double HTML encoding of the text added by `@{title2()}`
+- fixed `@{language}` in views rendered with `F.view()`
+- fixed views with more than one `@{}` value in a `<style>` block
+- fixed the `filter` argument of `Image.miniature()` (and `.filter()`), it was placed after `-thumbnail`
+- fixed the `[attr]` selector without a value in the HTML parser
+- fixed `F.TCMS.compile()` with an object of widgets
+- fixed `$.href()` with an object or array value, a trailing `&` and lost parameters when it is called more than once
+- fixed binary WebSocket messages with compression, they were sent as compressed text frames
+- fixed WebSocket clients rejected by the authorization: they get the close code `4001` (or `4004`) instead of a dropped connection
+- fixed `fs.clone(id)` without a new id in the Promise form
+- fixed `$tms : false`, it did not remove the TMS route when `$tmsurl` stayed the same
+- fixed MCP tools whose action throws an exception: the request gets an error answer instead of waiting for the timeout
+- fixed the MCP edit proxy (`options.editmcp`): it lists the `App_*` tools, `App_mkdir` creates the folder inside the project and `App_read` returns the current revision
+- fixed `AIPARSER('ollama')` with tool calls in separate chunks, it reads `function.index`
+- fixed the generic `AIPARSER()` with tool calls without id in separate chunks, they no longer overwrite each other
+- fixed `async` actions that throw an exception: the action is answered with an error (routes and MCP tools) instead of waiting for the timeout
+- fixed the MCP edit tools: paths without the leading `/`, `App_delete` removes the revisions of the deleted file or folder and answers for `/`, `App_move` of a folder moves the revisions of its files (and not of a folder with a longer name)
+- fixed double HTML encoding of the title, description and keywords set by `@{meta(title, description, keywords)}`
+- fixed a global variable `language` created by every compiled view
+- fixed `$.href({ key: value })` and `@{href({ key: value })}`, they returned the URL without the query
+- fixed `Image.background()`: `-background` goes before `-extent` so the color is used
+- fixed the `-`, `*` and `/` prefixes of `update()` and `modify()` in the NoSQL QueryBuilder (they all added the value)
+- fixed `search()` with `beg` and `end` in the PostgreSQL QueryBuilder on columns that are not text
+- fixed the compression errors of WebSocket messages, they threw "self is not defined" instead of reaching the `error` event
+- fixed `WEBSOCKETCLIENT` losing a message that arrives together with the `101` answer
+- fixed `clone()`, `copy()` and `readbuffer()` of `FILESTORAGE` while the storage is paused
 
 ========================
 0.0.19

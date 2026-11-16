@@ -18,6 +18,12 @@ tests.push('schemas/index.js');
 tests.push('server/index.js');
 tests.push('staticfiles/index.js');
 tests.push('common/fixes.js');
+tests.push('common/http-fixes.js');
+tests.push('common/querybuilder-fixes.js');
+tests.push('common/workers-fixes.js');
+tests.push('common/views-fixes.js');
+tests.push('common/services-fixes.js');
+tests.push('common/mcp-fixes.js');
 
 console.log('==========================================');
 console.log('Total.js v5 unit tests');

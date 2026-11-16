@@ -447,7 +447,7 @@ exports.compile = function(html, widgets, used) {
 	response.tangular = [];
 
 	if (!used) {
-		for (let widget of widgets) {
+		for (let widget of (widgets instanceof Array ? widgets : Object.values(widgets))) {
 			if (widget.css)
 				response.css.push(F.TUtils.minify_css(widget.css));
 			if (widget.js)

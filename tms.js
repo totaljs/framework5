@@ -368,7 +368,7 @@ F.on('$tms', function() {
 	var endpoint = F.config.$tmsurl;
 	var is = Cache.url !== endpoint;
 
-	if (is && Cache.route) {
+	if ((is || !F.config.$tms) && Cache.route) {
 		Cache.route.remove();
 		Cache.route = null;
 	}

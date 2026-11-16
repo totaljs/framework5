@@ -493,7 +493,7 @@ Controller.prototype.parseinflate = function() {
 			ctrl.inflate.write(buf);
 		} catch (e) {
 			// invalid block
-			self.onerror(e);
+			ctrl.onerror(e);
 			return;
 		}
 
@@ -587,7 +587,7 @@ Controller.prototype.senddeflate = function() {
 			ctrl.deflate.write(buf);
 		} catch (e) {
 			// invalid block
-			self.onerror(e);
+			ctrl.onerror(e);
 			return;
 		}
 
@@ -597,7 +597,7 @@ Controller.prototype.senddeflate = function() {
 				data = data.slice(0, data.length - 4);
 				ctrl.deflatelock = false;
 				ctrl.deflatechunks = null;
-				ctrl.socket.write(getWebSocketFrame(0, data, ctrl.type === 'binary' ? 0x02 : 0x01, true, ctrl.masking));
+				ctrl.socket.write(getWebSocketFrame(0, data, ctrl.datatype === 'binary' ? 0x02 : 0x01, true, ctrl.masking));
 				ctrl.senddeflate();
 			}
 		});
@@ -656,8 +656,17 @@ Controller.prototype.close = function(code, message) {
 			}
 
 		} else if (!ctrl.closecode) {
-			ctrl.socket.end();
-			setImmediate(websocketclientdestroy, ctrl);
+			if (code) {
+				var protocol = ctrl.headers['sec-websocket-protocol'];
+				var header = protocol ? SOCKET_RESPONSE_PROTOCOL.format(ctrl.sign(ctrl), protocol.split(',')[0].trim()) : SOCKET_RESPONSE.format(ctrl.sign(ctrl));
+				ctrl.socket.write(Buffer.from(header, 'binary'));
+				ctrl.closecode = code;
+				ctrl.closemessage = message || '';
+				setTimeout(websocketclientsendfin, 1000, ctrl);
+			} else {
+				ctrl.socket.end();
+				setImmediate(websocketclientdestroy, ctrl);
+			}
 		}
 	}
 };
@@ -1320,7 +1329,7 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 
 	});
 
-	self.req.on('upgrade', function(response, socket) {
+	self.req.on('upgrade', function(response, socket, head) {
 
 		self.socket = socket;
 		self.socket.$controller = self;
@@ -1362,6 +1371,7 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 		}
 
 		self.$events.open && self.emit('open');
+		head && head.length && self.ondata(head);
 	});
 };
 

@@ -688,6 +688,9 @@ function _request(opt, callback) {
 	if (opt.onprogress)
 		options.onprogress = opt.onprogress;
 
+	if (opt.writer)
+		options.writer = opt.writer;
+
 	if (opt.proxy)
 		proxy = parseProxy(opt.proxy);
 
@@ -6134,8 +6137,10 @@ exports.connect = function(opt, callback) {
 		if (!callback)
 			return;
 
-		if (opt.tls) {
+		if (tls) {
 			if (!meta.socket2) {
+				if (tls === true)
+					tls = {};
 				tls.socket = meta.socket1;
 				meta.socket2 = F.Tls.connect(tls, done);
 				meta.socket2.on('error', error);
@@ -6585,7 +6590,7 @@ exports.set = function(obj, path, value) {
 	let builder = [];
 
 	for (let i = 0; i < arr.length - 1; i++) {
-		let type = arr[i + 1] ? (REG_ISARR.test(arr[i + 1]) ? '[]' : '{}') : '{}';
+		let type = arr[i + 1] ? (REG_ISARR.test(arr[i + 1].substring(arr[i].length)) ? '[]' : '{}') : '{}';
 		let p = 'w' + (arr[i][0] === '[' ? '' : '.') + arr[i];
 		builder.push('if(typeof(' + p + ')!==\'object\'||' + p + '==null)' + p + '=' + type + ';');
 	}
@@ -6815,7 +6820,7 @@ exports.uidr = function() {
 exports.parseURI = function(url) {
 	const uri = new URL(url);
 	return {
-		auth: (uri.username || uri.password) ? ((uri.username || '') + ':' + (user.password || '')) : '',
+		auth: (uri.username || uri.password) ? (exports.decodeURIComponent(uri.username) + ':' + exports.decodeURIComponent(uri.password)) : '',
 		port: uri.port,
 		search: uri.search,
 		hash: uri.hash,
