@@ -25,6 +25,7 @@ tests.push('common/workers-fixes.js');
 tests.push('common/views-fixes.js');
 tests.push('common/services-fixes.js');
 tests.push('common/mcp-fixes.js');
+tests.push('common/pending-requests.js');
 
 console.log('==========================================');
 console.log('Total.js v5 unit tests');
