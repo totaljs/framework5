@@ -2,6 +2,13 @@
 require('../../index'); // Total.js framework v5
 require('../../test'); // Unit test module
 
+// Removes a temporary folder; on Windows a file may still be open for a moment (EBUSY), so it retries and never throws
+function remove(path) {
+	try {
+		require('fs').rmSync(path, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+	} catch (e) {}
+}
+
 const PORT = 8481;
 const editmcp = require('../../edit-mcp');
 
@@ -75,8 +82,8 @@ ON('ready', function() {
 
 			var cleanup = function() {
 				for (let dir of [name, name + '-moved', name + '-other'])
-					F.Fs.rmSync(PATH.root(dir), { recursive: true, force: true });
-				!hasrevisions && F.Fs.rmSync(revisions, { recursive: true, force: true });
+					remove(PATH.root(dir));
+				!hasrevisions && remove(revisions);
 			};
 
 			(async function() {

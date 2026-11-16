@@ -2,6 +2,13 @@
 require('../../index'); // Total.js framework v5
 require('../../test'); // Unit test module
 
+// Removes a temporary folder; on Windows a file may still be open for a moment (EBUSY), so it retries and never throws
+function remove(path) {
+	try {
+		require('fs').rmSync(path, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+	} catch (e) {}
+}
+
 const Net = require('net');
 const PORT = 8461;
 const PORT_RAW = 8462;
@@ -139,12 +146,12 @@ ON('ready', function() {
 			fs.save('n1', 'hello.txt', Buffer.from('hello'), function(err) {
 				fs.clone('n1').then(function(meta) {
 					clearTimeout(timer);
-					F.Fs.rmSync(directory, { recursive: true, force: true });
+					remove(directory);
 					Test.print('FILESTORAGE: clone() without a new id as a promise', !err && meta && meta.id && meta.id !== 'n1' ? null : 'Expected a clone with a new id');
 					resume();
 				}, function(err) {
 					clearTimeout(timer);
-					F.Fs.rmSync(directory, { recursive: true, force: true });
+					remove(directory);
 					Test.print('FILESTORAGE: clone() without a new id as a promise', err);
 				});
 			});
@@ -206,8 +213,8 @@ ON('ready', function() {
 			var hasrevisions = F.Fs.existsSync(revisions);
 
 			var cleanup = function() {
-				F.Fs.rmSync(PATH.root(name), { recursive: true, force: true });
-				!hasrevisions && F.Fs.rmSync(revisions, { recursive: true, force: true });
+				remove(PATH.root(name));
+				!hasrevisions && remove(revisions);
 			};
 
 			(async function() {
@@ -280,7 +287,7 @@ ON('ready', function() {
 				fs.readbuffer('p1', (err, buffer) => output.readbuffer = err ? err + '' : buffer.toString());
 				setTimeout(() => fs.pause = false, 100);
 				setTimeout(function() {
-					F.Fs.rmSync(directory, { recursive: true, force: true });
+					remove(directory);
 					Test.print('FILESTORAGE: clone(), copy() and readbuffer() while paused', output.clone === 'ok' && output.copy === 'ok' && output.readbuffer === 'hello' ? null : 'Expected all three to finish, got ' + JSON.stringify(output));
 					resume();
 				}, 1500);

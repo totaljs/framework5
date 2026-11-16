@@ -2,6 +2,13 @@
 require('../../index'); // Total.js framework v5
 require('../../test'); // Unit test module
 
+// Removes a temporary folder; on Windows a file may still be open for a moment (EBUSY), so it retries and never throws
+function remove(path) {
+	try {
+		require('fs').rmSync(path, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
+	} catch (e) {}
+}
+
 // The PostgreSQL adapter runs against a fake client: the tests check the SQL text only
 var Pg = require('../../client-postgresql');
 var sqls = [];
@@ -139,7 +146,7 @@ Test.push('QueryBuilder fixes', function(next) {
 	});
 
 	arr.async(function() {
-		Total.Fs.rmSync(dir, { recursive: true, force: true });
+		remove(dir);
 		next();
 	});
 });
