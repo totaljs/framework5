@@ -125,6 +125,31 @@ function toolerror(response, message) {
 	};
 }
 
+// Identifies the caller with Total.mcp.auth (the token of "Authorization: Bearer"), then "next(true)" with $.user set
+function authorize($, next) {
+
+	if (!Total.mcp.auth) {
+		next(true);
+		return;
+	}
+
+	let auth = ($.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+	let opt = new F.TBuilders.Options($);
+	opt.TYPE = 'auth';
+	opt.query = $.query;
+	opt.next = opt.callback;
+	opt.token = opt.auth = auth;
+	opt.$callback = function(err, response) {
+		if (err) {
+			next(false);
+		} else {
+			$.user = response;
+			next(true);
+		}
+	};
+	Total.mcp.auth(opt);
+}
+
 function initroute() {
 
 	if (Total.mcp.route) {
@@ -132,40 +157,211 @@ function initroute() {
 		Total.mcp.route = null;
 	}
 
+	if (Total.mcp.routeclient) {
+		Total.mcp.routeclient.remove();
+		Total.mcp.routeclient = null;
+	}
+
 	if (!CONF.$mcp)
 		return;
 
 	Total.mcp.route = ROUTE('POST /$mcp/ <10MB <300s', function($) {
-
-		let data = $.body;
-
-
-		if (Total.mcp.auth) {
-			let auth = ($.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
-			let opt = new F.TBuilders.Options($);
-			opt.TYPE = 'auth';
-			opt.query = $.query;
-			opt.next = opt.callback;
-			opt.token = opt.auth = auth;
-			opt.$callback = function(err, response) {
-				if (err) {
-					$.response.status = 401;
-					$.json({
-						jsonrpc: '2.0',
-						id: data && data.id !== undefined ? data.id : null,
-						error: { code: -32001, message: 'Unauthorized' }
-					});
-				} else {
-					$.user = response;
-					Total.mcp.exec($);
-				}
-			};
-			Total.mcp.auth(opt);
-			return;
-		}
-
-		Total.mcp.exec($);
+		authorize($, function(is) {
+			if (is) {
+				Total.mcp.exec($);
+			} else {
+				let data = $.body;
+				$.response.status = 401;
+				$.json({
+					jsonrpc: '2.0',
+					id: data && data.id !== undefined ? data.id : null,
+					error: { code: -32001, message: 'Unauthorized' }
+				});
+			}
+		});
 	});
+
+	// Code mode: the tools of the caller as a JavaScript client ("?q=words" returns only the tools that match)
+	Total.mcp.routeclient = ROUTE('FILE /$mcp/client.js', function($) {
+		authorize($, function(is) {
+			if (is) {
+				let tools = Total.mcp.filter ? Total.mcp.tools.filter(tool => allowed(tool, $)) : Total.mcp.tools;
+				$.content(Total.mcp.client(Total.mcp.search(tools, $.query.q), $.hostname()), 'text/javascript');
+			} else {
+				$.response.status = 401;
+				$.plain('Unauthorized');
+			}
+		});
+	});
+};
+
+// The tools whose name or description contain all the words of "q"
+Total.mcp.search = function(tools, q) {
+
+	let words = (q || '').toLowerCase().split(/\s+/).filter(Boolean);
+	if (!words.length)
+		return tools;
+
+	return tools.filter(function(tool) {
+		let text = (tool.name + ' ' + (tool.description || '')).toLowerCase();
+		return words.every(word => text.includes(word));
+	});
+};
+
+function jsdoctext(value) {
+	return (value || '').replace(/\*\//g, '* /').replace(/\s*\n\s*/g, ' ').trim();
+}
+
+// JSON Schema to a JSDoc type
+function jsdoctype(schema) {
+
+	if (!schema)
+		return '*';
+
+	let type = schema.type;
+	let nullable = false;
+
+	if (type instanceof Array) {
+		nullable = type.includes('null');
+		type = type.find(t => t !== 'null');
+	}
+
+	let output;
+
+	if (schema.enum) {
+		output = '(' + schema.enum.map(value => JSON.stringify(value)).join('|') + ')';
+	} else {
+		switch (type) {
+			case 'number':
+			case 'integer':
+				output = 'Number';
+				break;
+			case 'boolean':
+				output = 'Boolean';
+				break;
+			case 'array':
+				output = 'Array<' + jsdoctype(schema.items) + '>';
+				break;
+			case 'object':
+				output = schema.properties ? ('{ ' + Object.keys(schema.properties).map(key => key + ': ' + jsdoctype(schema.properties[key])).join(', ') + ' }') : 'Object';
+				break;
+			default:
+				output = 'String';
+				break;
+		}
+	}
+
+	return nullable ? ('?' + output) : output;
+}
+
+function jsdocparam(type, name, optional, description) {
+	return ' * @param {' + type + '} ' + (optional ? ('[' + name + ']') : name) + (description ? (' ' + jsdoctext(description)) : '');
+}
+
+// One function of the client with its JSDoc
+function jsdoctool(tool) {
+
+	let lines = ['/**'];
+	let schema = tool.inputSchema || {};
+	let sections = schema.properties || {};
+	let required = schema.required || [];
+	let keys = Object.keys(sections);
+
+	lines.push(' * ' + jsdoctext(tool.description || tool.name));
+
+	if (keys.length) {
+		lines.push(jsdocparam('Object', 'args', !required.length, ''));
+		for (let key of keys) {
+			let section = sections[key];
+			let props = section.properties || {};
+			let sectionrequired = section.required || [];
+			lines.push(jsdocparam('Object', 'args.' + key, !required.includes(key), section.description));
+			for (let name in props) {
+				let prop = props[name];
+				let description = prop.description || '';
+				if (prop.format === 'date-time')
+					description = (description ? (description + ' ') : '') + '(ISO date)';
+				else if (prop.format === 'email')
+					description = (description ? (description + ' ') : '') + '(email)';
+				lines.push(jsdocparam(jsdoctype(prop), 'args.' + key + '.' + name, !sectionrequired.includes(name), description));
+			}
+		}
+	}
+
+	lines.push(' * @returns {Promise<' + (tool.outputSchema ? jsdoctype(tool.outputSchema) : '*') + '>}');
+	lines.push(' */');
+
+	let name = /^[A-Za-z_$][\w$]*$/.test(tool.name) ? ('.' + tool.name) : ('[' + JSON.stringify(tool.name) + ']');
+	lines.push('api' + name + ' = args => call(' + JSON.stringify(tool.name) + ', args);');
+
+	return lines.join('\n');
+}
+
+// The JavaScript client of the tools (code mode): an agent reads the functions, writes a script that calls them
+// and only the output of its script goes back to the model
+Total.mcp.client = function(tools, url) {
+
+	let builder = [];
+
+	builder.push('// MCP tools of "' + jsdoctext(CONF.name) + '" for scripts (Node.js 18+), generated by Total.js');
+	builder.push('//');
+	builder.push('// const api = require(\'./client.js\')(\'TOKEN\');');
+	builder.push('// const output = await api.Name_action({ input: {}, query: {}, params: {} });');
+	builder.push('//');
+	builder.push('// Each function calls the MCP tool of the same name ("tools/call" on POST /$mcp/) with the permissions of the token.');
+	builder.push('// It resolves with the output of the tool and throws an Error with the message of a tool error.');
+	builder.push('// GET /$mcp/client.js?q=words returns only the tools whose name or description contain all the words.');
+	builder.push('// Tools: ' + tools.length);
+	builder.push('');
+	builder.push('module.exports = function(token, url) {');
+
+	let header = builder.length;
+
+	builder.push('');
+	builder.push('const endpoint = (url || ' + JSON.stringify(url || '') + ').replace(/\\/+$/, \'\') + \'/$mcp/\';');
+	builder.push('const api = {};');
+	builder.push('let id = 0;');
+	builder.push('');
+	builder.push('const call = async function(name, args) {');
+	builder.push('\tconst response = await fetch(endpoint, { method: \'POST\', headers: { \'content-type\': \'application/json\', authorization: \'Bearer \' + (token || \'\') }, body: JSON.stringify({ jsonrpc: \'2.0\', id: ++id, method: \'tools/call\', params: { name: name, arguments: args || {} } }) });');
+	builder.push('\tconst body = await response.text();');
+	builder.push('\tlet data;');
+	builder.push('\ttry {');
+	builder.push('\t\tdata = JSON.parse(body);');
+	builder.push('\t} catch (e) {');
+	builder.push('\t\tthrow new Error(\'HTTP \' + response.status + \': \' + body.substring(0, 200));');
+	builder.push('\t}');
+	builder.push('\tif (data.error)');
+	builder.push('\t\tthrow new Error(data.error.message);');
+	builder.push('\tconst result = data.result || {};');
+	builder.push('\tconst text = result.content && result.content[0] ? result.content[0].text : \'\';');
+	builder.push('\tif (result.isError)');
+	builder.push('\t\tthrow new Error(text);');
+	builder.push('\tif (result.structuredContent !== undefined)');
+	builder.push('\t\treturn result.structuredContent;');
+	builder.push('\ttry {');
+	builder.push('\t\treturn JSON.parse(text);');
+	builder.push('\t} catch (e) {');
+	builder.push('\t\treturn text;');
+	builder.push('\t}');
+	builder.push('};');
+
+	for (let tool of tools) {
+		builder.push('');
+		builder.push(jsdoctool(tool));
+	}
+
+	builder.push('');
+	builder.push('return api;');
+
+	// The body of the function is indented
+	for (let i = header; i < builder.length; i++)
+		builder[i] = builder[i].split('\n').map(line => line ? ('\t' + line) : line).join('\n');
+
+	builder.push('};');
+	builder.push('');
+
+	return builder.join('\n');
 };
 
 Total.mcp.exec = async function($) {

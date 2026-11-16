@@ -7,6 +7,10 @@
 - added `mcp` module
 	- `CONF.$mcp = true` activates MCP route `POST /$mcp/`
 	- Any `NEWACTION` with the `mcp: true` property will be available in the endpoint
+- added the MCP code mode: `GET /$mcp/client.js` returns a JavaScript client of the MCP tools (one function per tool with JSDoc for its arguments and result) that calls them through `tools/call`, so an agent can write a script that uses the tools and only the output of the script goes back to the model
+	- the same `Total.mcp.auth` (`Authorization: Bearer`) and `Total.mcp.filter` apply as for `tools/list`
+	- `?q=words` returns only the tools whose name or description contain all the words
+	- it is available whenever `CONF.$mcp` is enabled; nothing runs on the server
 - added a new method `JSONSchema.toAIObject(name, [description])`
 - added a new method `JSONSchema.toAITool(name)`
 - added `QueryBuilder.autoqueryjson($, column, schema, [defsort], [maxlimit])` that works like `autoquery()` but for properties stored in a JSON(B) column ; the builder uses the neutral name `json:column:property:type` and the database adapter translates it into SQL
