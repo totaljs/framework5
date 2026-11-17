@@ -507,7 +507,7 @@ ImageProto.geometry = function(w, h, options) {
 
 
 ImageProto.filter = function(type) {
-	return this.push('-filter', type, 1, true);
+	return this.push('-filter', type, 0, true);
 };
 
 ImageProto.trim = function() {
@@ -691,7 +691,7 @@ ImageProto.colors = function(value) {
 };
 
 ImageProto.background = function(color) {
-	return this.push('-background', color, 2, true).push('-extent 0x0', null, 2);
+	return this.push('-background', color, 2, true).push('-extent 0x0', null, 3);
 };
 
 ImageProto.fill = function(color) {

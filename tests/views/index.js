@@ -1,9 +1,13 @@
 require('../../index');
 require('../../test');
 
-F.run({ port: 8000, release: false });
+F.run({ port: 8444, release: false });
 
-var url = 'http://localhost:8000';
+var url = 'http://localhost:8444';
+
+function trim(html) {
+	return html.replace(/>\s+</g, '><').trim();
+}
 ON('ready', function() {
 
 	var input,response,correct;
@@ -14,7 +18,7 @@ ON('ready', function() {
 			input = url + '/view/basic';
 			correct = '<h1>Hello world!</h1>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Without layout', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -24,7 +28,7 @@ ON('ready', function() {
 			input = url + '/view/basic?cmd=layout';
 			correct = '<h1>Hello world!</h1>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('With layout', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -34,7 +38,7 @@ ON('ready', function() {
 			input = url + '/view/basic?cmd=layout-custom';
 			correct = '<h1>Hello world!</h1>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('With layout - Custom', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -44,7 +48,7 @@ ON('ready', function() {
 			input = url + '/view/basic?cmd=nested';
 			correct = '<h1>Hello world!</h1>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Nested View', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -54,7 +58,7 @@ ON('ready', function() {
 			input = url + '/view/basic?cmd=repository';
 			correct = '<span>Name: Peter Sirka</span>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Repository - basic', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -64,7 +68,7 @@ ON('ready', function() {
 			input = url + '/view/basic?cmd=model';
 			correct = '<span>Name: Louis Bertson</span>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Model - model object', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -74,7 +78,7 @@ ON('ready', function() {
 			input = url + '/view/basic?cmd=view';
 			correct = '<span>Name: Peter Sirka</span>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Model - view(name, model))', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -84,7 +88,7 @@ ON('ready', function() {
 			input = url + '/view/basic?cmd=view-multiline';
 			correct = '<ul><li>A</li><li>B</li><li>C</li></ul>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Model - view(name, model)) multi-line', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -98,7 +102,7 @@ ON('ready', function() {
 			input = url + '/view/common?cmd=escaping';
 			correct = '<div>ESCAPED: Hello &lt;b&gt;World&lt;/b&gt;</div><div>RAW: Hello <b>World</b></div>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Escaping', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -108,7 +112,7 @@ ON('ready', function() {
 			input = url + '/view/common?cmd=conditions';
 			correct = '<div>sign up</div><br /><br /><br /><br /><div>Here is </div>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Conditions', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -118,7 +122,7 @@ ON('ready', function() {
 			input = url + '/view/common?cmd=looping-array';
 			correct = '<div>1, index: 0</div><div>2, index: 1</div><div>3, index: 2</div><div>4, index: 3</div><br /><br />';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Looping - array', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -128,7 +132,7 @@ ON('ready', function() {
 			input = url + '/view/common?cmd=looping-object';
 			correct = '<div>property: name, value: Peter</div><div>property: age, value: 32</div><br /><br />';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Looping - Object', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -136,9 +140,9 @@ ON('ready', function() {
 
 		arr.push(function(resume) {
 			input = url + '/view/common?cmd=sections';
-			correct = '<html><h1>Homepage</h1><br /> <div>THIS IS FOOTER FROM THE VIEW</div></html>';
+			correct = '<html><h1>Homepage</h1><br /><div>THIS IS FOOTER FROM THE VIEW</div></html>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Sections', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -148,7 +152,7 @@ ON('ready', function() {
 			input = url + '/view/common?cmd=assignment';
 			correct = '<h1>Peter</h1>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Assignment', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -158,7 +162,7 @@ ON('ready', function() {
 			input = url + '/view/common?cmd=config';
 			correct = '<div>CONF.name: Total.js</div><div>CONF[\'manager-url\']: postgresql://user:password@localhost:5432/database</div>';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Config', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -168,7 +172,7 @@ ON('ready', function() {
 			input = url + '/view/common?cmd=static';
 			correct = '<script src="/js/ui.js"></script><link rel="stylesheet" href="/css/ui.css" />';
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Static ', err == null && response == correct ? null : 'Expected ' + correct);
 				resume();
 			});
@@ -178,7 +182,7 @@ ON('ready', function() {
 			input = url + '/view/common?cmd=import';
 
 			RESTBuilder.GET(input).exec(function(err, res, output) {
-				response = output.response;
+				response = trim(output.response);
 				Test.print('Import And Merge ', err == null && response.indexOf('-min.js') > -1 && response.indexOf('-min.css') > -1  ? null : 'Expected ' + correct);
 				resume();
 			});

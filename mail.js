@@ -216,7 +216,7 @@ Message.prototype.send2 = function(callback) {
 		data.unsubscribe = self.$unsubscribe;
 		data.confidential = self.$confidential;
 
-		F.api('TAPI/mail', data).callback(callback || NOOP);
+		F.api('TAPI', 'mail', data).callback(callback || self.$callback || NOOP);
 		return;
 	}
 
@@ -641,8 +641,8 @@ Mailer.$writemessage = function(obj, buffer) {
 
 	message.push('Message-ID: <total5X' + dt.toString(36) + 'X' + (INDEXATTACHMENT++) + 'X' + (INDEXATTACHMENT) + Mailer.domain + '>');
 
-	self.$priority && message.push('X-Priority: ' + self.$priority);
-	self.$confidential && message.push('Sensitivity: Company-Confidential');
+	msg.$priority && message.push('X-Priority: ' + msg.$priority);
+	msg.$confidential && message.push('Sensitivity: Company-Confidential');
 
 	message.push('From: ' + (msg.email_from_name ? (unicode_encode(msg.email_from_name) + ' <' + msg.email_from + '>') : msg.email_from));
 

@@ -257,7 +257,7 @@ exports.compile = function(name, content, debug = true) {
 	if (!debug)
 		builder = builder.replace(/(\+\$EMPTY\+)/g, '+').replace(/(\$output=\$EMPTY\+)/g, '$output=').replace(/(\$output\+=\$EMPTY\+)/g, '$output+=').replace(/(\}\$output\+=\$EMPTY)/g, '}').replace(/(\{\$output\+=\$EMPTY;)/g, '{').replace(/(\+\$EMPTY\+)/g, '+').replace(/(>'\+'<)/g, '><').replace(/'\+'/g, '');
 
-	var fn = ('(function(self){var model=self.model;var config=F.config;var ctrl=self.controller;var url=ctrl?.url;var query=ctrl?.query || EMPTYOBJECT,repository=self.repository,controller=self.controller,files=ctrl?.files || EMPTYARRAY,user=ctrl?.user,session=ctrl?.session,body=ctrl?.body,helpers=F.def.helpers;language=ctrl?.language || \'\'' + (isCookie ? ',cookie=name=>ctrl?ctrl.cookie(name):\'\'' : '') + ';' + (nocompressHTML ? 'if(ctrl)ctrl.response.minify=false;' : '') + builder + ';return $output;})');
+	var fn = ('(function(self){var model=self.model;var config=F.config;var ctrl=self.controller;var url=ctrl?.url;var query=ctrl?.query || EMPTYOBJECT,repository=self.repository,controller=self.controller,files=ctrl?.files || EMPTYARRAY,user=ctrl?.user,session=ctrl?.session,body=ctrl?.body,helpers=F.def.helpers,language=self.language || \'\'' + (isCookie ? ',cookie=name=>ctrl?ctrl.cookie(name):\'\'' : '') + ';' + (nocompressHTML ? 'if(ctrl)ctrl.response.minify=false;' : '') + builder + ';return $output;})');
 	try {
 		fn = eval(fn);
 	} catch (e) {
@@ -563,7 +563,7 @@ function minify(html) {
 		if (end === -1)
 			break;
 		cache.push(html.substring(beg, end + 6));
-		html = html.substring(0, beg) + '#@' + (cache.length - 1) + '#' + html.substring(end + 6);
+		html = html.substring(0, beg) + '#V' + (cache.length - 1) + '#' + html.substring(end + 6);
 	}
 
 	while (true) {
@@ -574,11 +574,11 @@ function minify(html) {
 		if (end === -1)
 			break;
 		cache.push(html.substring(beg, end + 1));
-		html = html.substring(0, beg) + '#@' + (cache.length - 1) + '#' + html.substring(end + 1);
+		html = html.substring(0, beg) + '#V' + (cache.length - 1) + '#' + html.substring(end + 1);
 	}
 
 	html = F.TMinificators.html(html);
-	return html.replace(/#@\d+#/g, text => cache[+text.substring(2, text.length - 1)]);
+	return html.replace(/#V\d+#/g, text => cache[+text.substring(2, text.length - 1)]);
 }
 
 function View(controller) {
@@ -651,7 +651,7 @@ View.prototype.title = function(value) {
 View.prototype.title2 = function(value) {
 	var current = this.repository.title;
 	if (value)
-		this.repository.title = (current || '') + value.safehtml();
+		this.repository.title = (current || '') + value;
 	return '';
 };
 
@@ -673,13 +673,13 @@ View.prototype.meta = function() {
 		return makehtmlmeta(self);
 
 	if (arguments[0])
-		self.repository.title = arguments[0].encode();
+		self.repository.title = arguments[0];
 
 	if (arguments[1])
-		self.repository.description = arguments[1].encode();
+		self.repository.description = arguments[1];
 
 	if (arguments[2] && arguments[2].length)
-		self.repository.keywords = (arguments[2] instanceof Array ? arguments[2].join(', ') : arguments[2]).encode();
+		self.repository.keywords = arguments[2] instanceof Array ? arguments[2].join(', ') : arguments[2];
 
 	if (arguments[3])
 		self.repository.image = arguments[3];
@@ -710,6 +710,10 @@ View.prototype.href = function(key, value) {
 	if (type === 'string') {
 
 		var cachekey = 'href_' + key;
+
+		for (let i = 2; i < arguments.length; i++)
+			cachekey += '&' + arguments[i];
+
 		var str = self.repository[cachekey] || '';
 
 		if (!str) {
@@ -740,22 +744,22 @@ View.prototype.href = function(key, value) {
 		str = str.replace('\0', querystring_encode(value, query[key], key));
 
 		for (let i = 2; i < arguments.length; i++) {
-			let beg = str.indexOf(arguments[i] + '=');
+			let beg = ('&' + str).indexOf('&' + arguments[i] + '=');
 			if (beg === -1)
 				continue;
 			let end = str.indexOf('&', beg);
-			str = str.substring(0, beg) + str.substring(end === -1 ? str.length : end + 1);
+			str = end === -1 ? str.substring(0, beg ? beg - 1 : 0) : (str.substring(0, beg) + str.substring(end + 1));
 		}
 
 		return str ? ('?' + str) : '';
 	}
 
-	if (value) {
+	if (key) {
 		obj = {};
-		for (let key in query)
-			obj[key] = query[key];
-		for (let key in value)
-			obj[key] = value[key];
+		for (let m in query)
+			obj[m] = query[m];
+		for (let m in key)
+			obj[m] = key[m];
 	}
 
 	if (value != null)
@@ -775,10 +779,10 @@ function querystring_encode(value, def, key) {
 		var tmp = '';
 		for (var i = 1; i < value.length; i++)
 			tmp += (tmp ? '&' : '') + key + '=' + querystring_encode(value[i], def);
-		return querystring_encode(value[0], def) + (tmp ? tmp : '');
+		return querystring_encode(value[0], def) + (tmp ? ('&' + tmp) : '');
 	}
 
-	return value != null ? value instanceof Date ? encodeURIComponent(value.format()) : typeof(value) === 'string' ? encodeURIComponent(value) : (value + '') : def || '';
+	return value != null ? value instanceof Date ? encodeURIComponent(value.format()) : typeof(value) === 'string' ? encodeURIComponent(value) : typeof(value) === 'object' ? encodeURIComponent(JSON.stringify(value)) : (value + '') : def || '';
 }
 
 function makehtmlmeta(self) {

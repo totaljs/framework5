@@ -473,10 +473,10 @@ function check_array(meta, error, value, stop, definitions, path, partial) {
 					break;
 				case 'object':
 					var newerror = new ErrorBuilder();
-					tmp = check_object(meta.items, newerror, val, stop, definitions, currentpath, partial);
+					tmp = check_object(meta.items, newerror, val, null, stop, definitions, currentpath, partial);
 					if (newerror.length) {
 						for (var err of newerror.items)
-							error.push2(meta.$$ID + '.' + err.name, err.error, currentpath, i);
+							error.push2(meta.$$ID + '.' + err.name, err.path, i, err.error);
 					} else if (tmp != null && (!meta.uniqueItems || response.indexOf(tmp) === -1))
 						response.push(tmp);
 					break;

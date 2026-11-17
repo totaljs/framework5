@@ -161,7 +161,7 @@ NEWACTION('App_read', {
 					obj.error = 'FILE_NOT_FOUND';
 				} else {
 					obj.content = response;
-					obj.revision = REVISIONS.paths[filename]?.revision || 0;
+					obj.revision = REVISIONS.paths[normalize(filename)] || 0;
 				}
 
 				builder.push(obj);
@@ -298,6 +298,7 @@ NEWACTION('App_delete', {
 
 		if (model.path === '/') {
 			model.error = 'You can\'t delete all files.';
+			$.callback(model);
 			return;
 		}
 
@@ -316,6 +317,20 @@ NEWACTION('App_delete', {
 		}
 
 		if (stat.isDirectory()) {
+			const prefix = model.path.endsWith('/') ? model.path : (model.path + '/');
+			let is = false;
+			for (const key in REVISIONS.paths) {
+				if (key.startsWith(prefix)) {
+					for (let i = 1; i <= REVISIONS.paths[key]; i++) {
+						try {
+							await Total.FsPromises.unlink(PATH.join(backup, HASH(key, true) + '_' + i + '.rev'));
+						} catch {}
+					}
+					delete REVISIONS.paths[key];
+					is = true;
+				}
+			}
+			is && REVISIONS.save();
 			await Total.FsPromises.rm(path, { recursive: true });
 			model.deleted = true;
 			$.callback(model);
@@ -323,7 +338,7 @@ NEWACTION('App_delete', {
 		}
 
 		let rev = REVISIONS.paths[model.path];
-		let bkfilename = PATH.join(backup, HASH(model.path) + '_{0}.rev');
+		let bkfilename = PATH.join(backup, HASH(model.path, true) + '_{0}.rev');
 
 		for (let i = 1; i <= rev; i++) {
 			let target = bkfilename.format(i);
@@ -420,19 +435,21 @@ NEWACTION('App_move', {
 		if (stat.isDirectory()) {
 
 			let is = false;
+			const prefix = model.from.endsWith('/') ? model.from : (model.from + '/');
 
 			for (const key in REVISIONS.paths) {
-				if (key.startsWith(model.from)) {
+				if (key.startsWith(prefix)) {
 
 					const target = PATH.join(model.to, key.substring(model.from.length));
 					const filename1 = PATH.join(backup, HASH(key, true) + '_{0}.rev');
 					const filename2 = PATH.join(backup, HASH(target, true) + '_{0}.rev');
 
-					REVISIONS.paths[target] = REVISIONS.paths[key];
+					const count = REVISIONS.paths[key];
+					REVISIONS.paths[target] = count;
 					delete REVISIONS.paths[key];
 					is = true;
 
-					for (let i = 1; i <= REVISIONS.paths[key]; i++) {
+					for (let i = 1; i <= count; i++) {
 						try {
 							await Total.FsPromises.rename(filename1.format(i), filename2.format(i));
 						} catch {}
@@ -528,7 +545,7 @@ NEWACTION('App_mkdir', {
 		}
 
 		model.path = normalize(model.path);
-		Total.Fs.mkdir(model.path, { recursive: true }, function(err) {
+		Total.Fs.mkdir(PATH.root(model.path), { recursive: true }, function(err) {
 			if (err)
 				model.error = err.code;
 			else
@@ -725,7 +742,7 @@ function customstreamer(callback, stream, done) {
 }
 
 function normalize(path) {
-	return (path[0] !== '/' ? (path + '/') : path).replace(/\/{2,}/g, '/').replace(/\.{2,}/, 'ERROR');
+	return (path[0] !== '/' ? ('/' + path) : path).replace(/\/{2,}/g, '/').replace(/\.{2,}/, 'ERROR');
 }
 
 exports.init = function(url) {
@@ -819,6 +836,14 @@ exports.init = function(url) {
 exports.proxy = function(socket) {
 
 	isPROXY = true;
+
+	for (let key in Total.actions) {
+		let action = Total.actions[key];
+		if (action.internal === RULE)
+			action.mcp = true;
+	}
+
+	Total.mcp.refresh();
 
 	socket.on('close', function(client) {
 		Total.syslog('MCP edit --> disconnected: ' + client.ip + ' --> ' + client.query.id);

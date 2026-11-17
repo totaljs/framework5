@@ -1004,6 +1004,16 @@ Controller.prototype.free = function() {
 	ctrl.destroyed = true;
 	ctrl.payload = null;
 
+	// A finished request leaves the pending requests at once: the timeout check runs every 5 seconds, and until then
+	// the list would keep the controller, its request and its response alive (the heap grows with the traffic)
+	let pending = F.temporary.pending;
+	let index = pending.lastIndexOf(ctrl);
+	if (index !== -1) {
+		let last = pending.pop();
+		if (index < pending.length)
+			pending[index] = last;
+	}
+
 	// Potential problem
 	// ctrl.body = null;
 	// ctrl.params = null;

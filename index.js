@@ -2092,7 +2092,7 @@ function transform(items, opt, index) {
 F.transform = function(name, value, callback, controller) {
 
 	if (typeof(callback) !== 'function')
-		return new Promise((resolve, reject) => F.transform(name, value, (err, response) => err ? callback.invalid ? callback.invalid(err) : reject(err) : resolve(response), callback || controller));
+		return new Promise((resolve, reject) => F.transform(name, value, (err, response) => err ? callback && callback.invalid ? callback.invalid(err) : reject(err) : resolve(response), callback || controller));
 
 	var items = F.transformations[name];
 	if (items) {
@@ -2163,7 +2163,7 @@ F.audit = function(name, $, message, type) {
 	data.app = F.config.url || F.config.name;
 
 	if (F.config.$tapilogger && F.config.$tapi && F.config.secret_totalapi)
-		API('TAPI/logger', data).callback(ERROR('totalapi'));
+		API('TAPI', 'logger', data).callback(ERROR('totalapi'));
 	else
 		F.def.onAudit(name, data, $);
 };
@@ -3116,5 +3116,5 @@ F.on('$cors', function() {
 module.exports = F;
 
 // process.chdir() doesn't work in Node.js workers
-if (!F.Worker.parentPort)
+if (!F.Worker.parentPort && process.mainModule)
 	process.chdir(process.mainModule.path);

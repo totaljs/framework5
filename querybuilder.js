@@ -906,13 +906,15 @@ QBP.gridfields = function(fields, allowed) {
 	var count = 0;
 	var newfields = [];
 
-	fields = fields.replace(REG_FIELDS_CLEANER, '').split(',');
+	fields = (fields || '').replace(REG_FIELDS_CLEANER, '').split(',');
 
 	if (allowed)
 		allowed = allowed.split(',');
 
 	for (var i = 0; i < fields.length; i++) {
 		var field = fields[i];
+		if (!field)
+			continue;
 		var can = !allowed;
 		if (!can) {
 			for (var j = 0; j < allowed.length; j++) {
@@ -1151,8 +1153,7 @@ QBP.autoquery = function(query, schema, defsort, maxlimit) {
 	let fields = query.fields;
 	let fieldscount = 0;
 
-	if (!t.options.fields)
-		t.options.fields = [];
+	t.options.fields = t.options.fields ? t.options.fields.slice(0) : [];
 
 	if (fields) {
 		fields = fields.replace(REG_FIELDS_CLEANER, '').split(',');
@@ -1238,8 +1239,7 @@ QBP.autoqueryjson = function($, column, schema, defsort, maxlimit) {
 
 	let fieldscount = 0;
 
-	if (!t.options.fields)
-		t.options.fields = [];
+	t.options.fields = t.options.fields ? t.options.fields.slice(0) : [];
 
 	if (query.fields) {
 		for (let field of query.fields.replace(REG_FIELDS_CLEANER, '').split(',')) {

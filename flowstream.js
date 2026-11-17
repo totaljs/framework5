@@ -350,7 +350,7 @@ function timeouthandler(msg) {
 	msg.end();
 }
 
-MP.send = function(outputindex, data, clonedata, check) {
+MP.send = function(outputindex, data, clonedata, check, multiple) {
 
 	const self = this;
 
@@ -369,10 +369,14 @@ MP.send = function(outputindex, data, clonedata, check) {
 
 		if (self.instance.connections) {
 			for (let key in self.instance.connections)
-				count += self.send(key, data, clonedata);
+				count += self.send(key, data, clonedata, null, true);
 		}
 
-		if (!count)
+		if (count) {
+			self.refs.pending--;
+			if (self.refs.pending < 0)
+				self.refs.pending = 0;
+		} else
 			self.destroy();
 
 		return count;
@@ -398,7 +402,7 @@ MP.send = function(outputindex, data, clonedata, check) {
 	}
 
 	if (!self.main.$can(false, self.instance.id, outputindex)) {
-		self.destroy();
+		!multiple && self.destroy();
 		return count;
 	}
 
@@ -487,6 +491,9 @@ MP.send = function(outputindex, data, clonedata, check) {
 			}
 		}
 	}
+
+	if (multiple)
+		return count;
 
 	if (count) {
 		self.refs.pending--;

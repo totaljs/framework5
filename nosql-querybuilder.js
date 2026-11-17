@@ -97,14 +97,14 @@ function db_insertupdate(filter, insert) {
 				key = key.substring(1);
 				params[key] = val ? val : 0;
 				if (!insert)
-					query.push('doc.{0}=(doc.{0}==null?0:doc.{0})+arg.{0}'.format(key));
+					query.push(('doc.{0}=(doc.{0}==null?0:doc.{0})' + c + 'arg.{0}').format(key));
 				break;
 			case '>':
 			case '<':
 				key = key.substring(1);
 				params[key] = val ? val : 0;
 				if (!insert)
-					query.push('doc.{0}=(doc.{0}==null?arg.{0}:doc.{0}' + (c === '>' ? '<' : '>') + 'arg.{0}?arg.{0}:doc.{0})'.format(key));
+					query.push(('doc.{0}=(doc.{0}==null?arg.{0}:doc.{0}' + (c === '>' ? '<' : '>') + 'arg.{0}?arg.{0}:doc.{0})').format(key));
 				break;
 			case '!':
 				// toggle
@@ -199,6 +199,7 @@ function makefilter(db, opt, callback) {
 			db.find().assign(builder).$callback = (err, response) => callback(err, !!response);
 			break;
 		case 'list':
+			builder.paginate = true;
 			db.find().assign(builder).$callback = (err, response, meta) => callback(err, err ? null : { items: response, count: meta.count });
 			isread = true;
 			break;
@@ -232,13 +233,13 @@ function makefilter(db, opt, callback) {
 					if (opt.scalar.key2) {
 						builder.scalar = 'var k=doc.' + opt.scalar.key + '+\'\';if (arg[k]){tmp.bk=doc.' + opt.scalar.key2 + '||0;' + (opt.scalar.type === 'max' ? 'if(tmp.bk>arg[k])arg[k]=tmp.bk' : opt.scalar.type === 'min' ? 'if(tmp.bk<arg[k])arg[k]=tmp.bk' : 'arg[k]+=tmp.bk') + '}else{arg[k]=doc.' + opt.scalar.key2 + '||0}';
 					} else {
-						builder.scalar = 'if (doc.{0}!=null){tmp.val=doc.{0};arg.count+=1;arg.min=arg.min==null?tmp.val:arg.min>tmp.val?tmp.val:arg.min;arg.max=arg.max==null?tmp.val:arg.max<tmp.val?tmp.val:arg.max;if(!(tmp.val instanceof Date))arg.sum+=tmp.val}'.format(opt.scalar.key);
+						builder.scalar = 'if ({0}!=null){tmp.val={0};arg.count+=1;arg.min=arg.min==null?tmp.val:arg.min>tmp.val?tmp.val:arg.min;arg.max=arg.max==null?tmp.val:arg.max<tmp.val?tmp.val:arg.max;if(!(tmp.val instanceof Date))arg.sum+=tmp.val}'.format(opt.scalar.key === '*' ? '1' : ('doc.' + opt.scalar.key));
 						builder.scalararg = { count: 0, sum: 0 };
 					}
 					db.find().assign(builder).$callback = function(err, response) {
 						var output = {};
 						if (response)
-							output.value = opt.scalar.type === 'avg' ? ((response.min + response.max) / 2) : response[opt.scalar.type];
+							output.value = opt.scalar.type === 'avg' ? (opt.scalar.key2 ? ((response.min + response.max) / 2) : response.count ? (response.sum / response.count) : null) : response[opt.scalar.type];
 						callback(err, output);
 					};
 					break;

@@ -204,10 +204,10 @@ function pg_where(where, opt, filter, operator) {
 
 				tmp = item.value ? item.value.replace(/%/g, '') : '';
 
-				if (item.operator === 'beg')
-					where.push(name + ' ILIKE ' + PG_ESCAPE('%' + tmp));
-				else if (item.operator === 'end')
-					where.push(name + ' ILIKE ' + PG_ESCAPE(tmp + '%'));
+				if (item.comparer === 'beg')
+					where.push(name + '::text ILIKE ' + PG_ESCAPE(tmp + '%'));
+				else if (item.comparer === 'end')
+					where.push(name + '::text ILIKE ' + PG_ESCAPE('%' + tmp));
 				else
 					where.push(name + '::text ILIKE ' + PG_ESCAPE('%' + tmp + '%'));
 				break;
@@ -293,7 +293,7 @@ function pg_insertupdate(filter, insert) {
 					fields.push('"' + key + '"');
 					query.push('FALSE');
 				} else
-					query.push('"' + key + '"=NOT ' + key);
+					query.push('"' + key + '"=NOT "' + key + '"');
 				break;
 			case '=':
 			case '#':
