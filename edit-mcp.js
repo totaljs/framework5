@@ -440,7 +440,8 @@ NEWACTION('App_move', {
 			for (const key in REVISIONS.paths) {
 				if (key.startsWith(prefix)) {
 
-					const target = PATH.join(model.to, key.substring(model.from.length));
+					// The key is a project path with "/" (PATH.join() uses a backslash on Windows, so the moved revisions were not found)
+					const target = normalize(model.to + key.substring(model.from.length));
 					const filename1 = PATH.join(backup, HASH(key, true) + '_{0}.rev');
 					const filename2 = PATH.join(backup, HASH(target, true) + '_{0}.rev');
 

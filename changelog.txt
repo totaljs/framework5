@@ -95,6 +95,7 @@
 - fixed the generic `AIPARSER()` with tool calls without id in separate chunks, they no longer overwrite each other
 - fixed `async` actions that throw an exception: the action is answered with an error (routes and MCP tools) instead of waiting for the timeout
 - fixed the MCP edit tools: paths without the leading `/`, `App_delete` removes the revisions of the deleted file or folder and answers for `/`, `App_move` of a folder moves the revisions of its files (and not of a folder with a longer name)
+- fixed `App_move` of a folder in the MCP edit tools on Windows: the moved revisions were saved with `\` in their path and `App_read` did not find them
 - fixed double HTML encoding of the title, description and keywords set by `@{meta(title, description, keywords)}`
 - fixed a global variable `language` created by every compiled view
 - fixed `$.href({ key: value })` and `@{href({ key: value })}`, they returned the URL without the query
