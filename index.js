@@ -1288,6 +1288,9 @@ F.loadservices = function() {
 				if (F.timeouts.push((NOW = new Date()).toJSON() + ' ' + ctrl.url) > 5)
 					F.timeouts.shift();
 
+				// The request leaves the list here: "ctrl.free()" called by the answer must not move the last request
+				// to this index (the loop would skip it and the request would never get the timeout answer)
+				pending[index] = null;
 				ctrl.fallback(408);
 				continue;
 			}

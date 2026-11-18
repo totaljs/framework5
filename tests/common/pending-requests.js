@@ -24,6 +24,7 @@ ON('ready', function() {
 	ROUTE('GET /plain/', $ => $.plain('hello'));
 	ROUTE('GET /missing/', $ => $.invalid(404));
 	ROUTE('GET /slow/ <5s', $ => {});
+	ROUTE('GET /slower/ <10s', $ => {});
 
 	Test.push('Pending requests', function(next) {
 
@@ -54,6 +55,24 @@ ON('ready', function() {
 					resume();
 				});
 			}, 500);
+		});
+
+		// The timeout answer of one request must not remove another request without an answer from the list
+		arr.push(async function(resume) {
+			var started = Date.now();
+			var first = get('/slow/');
+			await new Promise(resolve => setTimeout(resolve, 200));
+			var second = get('/slower/');
+			var timer = setTimeout(function() {
+				Test.print('The timeout of one request keeps the other requests pending', 'The second request got no answer in 25 s (pending: ' + F.temporary.pending.length + ')');
+				process.exit(1);
+			}, 25000);
+			var statuses = await Promise.all([first, second]);
+			clearTimeout(timer);
+			var seconds = (Date.now() - started) / 1000;
+			var ok = statuses.every(status => status === 408 || status === 503) && F.temporary.pending.length === 0;
+			Test.print('The timeout of one request keeps the other requests pending', ok ? null : 'Expected two timeout answers, got ' + statuses.join(', ') + ' after ' + seconds + ' s');
+			resume();
 		});
 
 		arr.async(next);

@@ -28,6 +28,7 @@
 - fixed `QueryBuilder.gridfields()`: the accepted fields are applied
 - fixed the handling of the pending requests (a single pass instead of `splice()` for each finished request)
 - fixed the memory under load: a finished request leaves the pending requests at once (the list kept every request with its `req` and `res` until the next 5-second timeout check, so the heap grew with the traffic)
+- fixed the timeout check of the pending requests: the timeout answer of one request no longer removes another request without an answer from the list (it never got the timeout answer)
 - fixed `LDAP()`: a bind with a status other than 0 gives an error even when the server sends no text
 - added support for the `cache` option of `NEWACTION()` (the response is kept for the same `query`, `params`, `input`, `user` or `language`)
 - added the compact schema types `json` and `ip` (the values are validated)
