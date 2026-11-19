@@ -1378,7 +1378,8 @@ WebSocketClient.prototype.connectforce = function(self, url, protocol, origin) {
 WebSocketClient.prototype.ping = function(timeout) {
 	var self = this;
 	self.$ping = Date.now();
-	if (!self.isclosed && !self.timeout) {
+	// The client has no socket while it is connecting (or reconnecting)
+	if (!self.isclosed && !self.timeout && self.socket) {
 		self.timeout = setTimeout(wsclient_timeout, timeout || 3000, self);
 		self.socket.write(getWebSocketFrame(0, 'PING', 0x09, false, self.options.masking));
 	}
@@ -1679,6 +1680,14 @@ WebSocketClient.prototype.onerror = function(err) {
 	if (!self.isclosed) {
 		self.$api && wsclient_closecallbacks(self, err);
 		self.isclosed = true;
+
+		// "onclose()" removes the listeners of the socket, so its "close" event never comes:
+		// an open connection is closed here (otherwise the "close" event of the client is not emitted)
+		if (self.closed === false) {
+			self.$events.close && self.emit('close', self.closecode, self.closemessage);
+			self.closed = true;
+		}
+
 		self.onclose();
 	}
 
