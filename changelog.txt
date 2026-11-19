@@ -11,6 +11,7 @@
 	- the same `Total.mcp.auth` (`Authorization: Bearer`) and `Total.mcp.filter` apply as for `tools/list`
 	- `?q=words` returns only the tools whose name or description contain all the words
 	- it is available whenever `CONF.$mcp` is enabled; nothing runs on the server
+- added `Total.mcp.instructions` (a string or `function($)`), sent as `instructions` in the answer of `initialize`, so an AI knows how to use the tools (for example the MCP code mode) as soon as it connects
 - added the compact schema type `email2`: it works like `email` and removes the tag of the address (`name+tag@domain.com` is changed to `name@domain.com`)
 - added a new method `JSONSchema.toAIObject(name, [description])`
 - added a new method `JSONSchema.toAITool(name)`
