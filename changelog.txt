@@ -65,6 +65,7 @@
 - fixed `compress()` of `RESTBuilder.API()`, `null` values were still sent
 - fixed `U.set()` with a path that goes on after an index (`items[0].name` made `items[0]` an array)
 - fixed the `cache` option of `NEWACTION()`: actions without `id` shared one cache entry and the cached response could be changed by the caller
+- fixed the key of the `cache` option of `NEWACTION()`: it names each `query`, `params`, `input` and `user` value (`?project=x` and `?version=x` shared one cached response)
 - fixed the `tls` option of `U.connect()`, the socket was never upgraded
 - fixed `U.parseURI()`, `REQUEST()`, `RESTBuilder` and proxies with credentials in the URL (`user:pass@`), they failed with "user is not defined"
 - fixed the `>` and `<` prefixes of `update()` and `modify()` in the NoSQL QueryBuilder
