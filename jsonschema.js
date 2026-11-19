@@ -57,7 +57,11 @@ function check_string(meta, error, value, errplus, path) {
 			case 'text':
 				break;
 			case 'email':
+			case 'email2':
 				value = value.replace(/\s/g, '').toLowerCase();
+				// "email2" removes the tag of the address: "name+tag@domain.com" -> "name@domain.com"
+				if (meta.subtype === 'email2')
+					value = value.replace(/\+[^@]*(?=@)/, '');
 				if (value && !value.isEmail()) {
 					error.push2(errplus + meta.$$ID, path);
 					return;

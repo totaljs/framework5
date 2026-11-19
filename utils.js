@@ -6405,6 +6405,7 @@ SP.toJSONSchema = SP.parseSchema = function(name, url) {
 			case 'uid':
 			case 'guid':
 			case 'email':
+			case 'email2':
 			case 'phone':
 			case 'name':
 			case 'url':

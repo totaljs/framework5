@@ -157,6 +157,18 @@ ON('ready', function() {
 			resume();
 		});
 
+		// Compact type Email2: like Email, and the tag of the address ("+tag") is removed
+		arr.push(function(resume) {
+			var js = 'email:Email2,plain:Email,list:[Email2]'.toJSONSchema();
+			var good = js.transform({ email: ' John.Doe+Newsletter@Example.com ', plain: 'john+tag@example.com', list: ['a+b+c@example.com', 'd@example.com'] }, false, new ErrorBuilder());
+			var value = good.response || {};
+			var ok = !good.error && value.email === 'john.doe@example.com' && value.plain === 'john+tag@example.com' && value.list && value.list[0] === 'a@example.com' && value.list[1] === 'd@example.com';
+			Test.print('Compact Email2 removes the tag of the address', ok ? null : 'Unexpected output: ' + JSON.stringify(good));
+			Test.print('Compact Email2 rejects an invalid address', js.transform({ email: 'not_email' }, false, new ErrorBuilder()).error ? null : 'Expected an error');
+			Test.print('Compact Email2 rejects an address with the tag only', js.transform({ email: '+tag@example.com' }, false, new ErrorBuilder()).error ? null : 'Expected an error');
+			resume();
+		});
+
 		// $.invalidsafe(): the message goes to the user and the error to the log
 		arr.push(function(resume) {
 			var logged = [];

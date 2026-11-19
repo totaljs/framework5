@@ -70,7 +70,7 @@ function convert(schema, forceString) {
 		if (!forceString) {
 			if (prop.type === 'date')
 				tmp.format = 'date-time';
-			else if (prop.subtype === 'email')
+			else if (prop.subtype === 'email' || prop.subtype === 'email2')
 				tmp.format = 'email';
 		}
 
