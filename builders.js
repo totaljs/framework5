@@ -1253,7 +1253,7 @@ function parseactioncache(obj, meta) {
 				for (let key of query) {
 					tmp = $.query[key];
 					if (tmp)
-						sum += '|' + tmp;
+						sum += '|q.' + key + '=' + encodeURIComponent(tmp);
 				}
 			}
 
@@ -1261,7 +1261,7 @@ function parseactioncache(obj, meta) {
 				for (let key of params) {
 					tmp = $.params[key];
 					if (tmp)
-						sum += '|' + tmp;
+						sum += '|p.' + key + '=' + encodeURIComponent(tmp);
 				}
 			}
 
@@ -1269,7 +1269,7 @@ function parseactioncache(obj, meta) {
 				for (let key of input) {
 					tmp = $.model[key];
 					if (tmp)
-						sum += '|' + tmp;
+						sum += '|i.' + key + '=' + encodeURIComponent(tmp);
 				}
 			}
 
@@ -1277,7 +1277,7 @@ function parseactioncache(obj, meta) {
 				for (let key of user) {
 					tmp = $.user[key];
 					if (tmp)
-						sum += '|' + tmp;
+						sum += '|u.' + key + '=' + encodeURIComponent(tmp);
 				}
 			}
 

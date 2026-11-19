@@ -108,6 +108,14 @@ NEWACTION('HttpFixCacheC', {
 	action: $ => $.callback({ items: [1] })
 });
 
+// The cache key names each value: ?project=x and ?version=x are two different calls
+NEWACTION('HttpFixCacheKey', {
+	name: 'Cache key',
+	query: 'project:String,version:String',
+	cache: { expire: '1 minute', query: true },
+	action: $ => $.callback({ project: $.query.project || '', version: $.query.version || '' })
+});
+
 ON('ready', function() {
 
 	Test.push('HTTP fixes', function(next) {
@@ -187,6 +195,22 @@ ON('ready', function() {
 						c1.items.push(2);
 						ACTION('HttpFixCacheC').callback(function(err, c2) {
 							done(a.name === 'A' && b.name === 'B' && c2.items.length === 1 ? null : 'Responses: ' + JSON.stringify([a, b, c2]));
+						});
+					});
+				});
+			});
+		}));
+
+		// The "cache" option of NEWACTION(): the key names each value, so different queries never share a response
+		arr.push(check('NEWACTION() "cache" keeps apart queries with the same values', function(done) {
+			ACTION('HttpFixCacheKey').query({ project: 'x' }).callback(function(err, a) {
+				ACTION('HttpFixCacheKey').query({ version: 'x' }).callback(function(err, b) {
+					ACTION('HttpFixCacheKey').query({ project: 'x|q.version=y' }).callback(function(err, c) {
+						ACTION('HttpFixCacheKey').query({ project: 'x', version: 'y' }).callback(function(err, d) {
+							ACTION('HttpFixCacheKey').query({ project: 'x' }).callback(function(err, e) {
+								var ok = a.project === 'x' && !a.version && b.version === 'x' && !b.project && c.project === 'x|q.version=y' && d.project === 'x' && d.version === 'y' && e.project === 'x' && !e.version;
+								done(ok ? null : 'Responses: ' + JSON.stringify([a, b, c, d, e]));
+							});
 						});
 					});
 				});
