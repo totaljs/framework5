@@ -29,6 +29,9 @@ Total.mcp.filter = function(tool, $) {
 	return !tool.name.startsWith('CodeAdmin_') || $.user.sa;
 };
 
+// The instructions for the AI in "initialize": a function gets the request of the caller
+Total.mcp.instructions = $ => 'Use the code mode, ' + $.user.name + '.';
+
 NEWACTION('CodeNotes|create', {
 	name: 'Creates a note',
 	mcp: true,
@@ -87,6 +90,13 @@ ON('ready', function() {
 		var arr = [];
 
 		arr.push(resume => setTimeout(resume, 500));
+
+		arr.push(async function(resume) {
+			var response = await fetch('http://127.0.0.1:' + PORT + '/$mcp/', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer user' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18' } }) });
+			var data = await response.json();
+			Test.print('initialize sends Total.mcp.instructions', data.result && data.result.instructions === 'Use the code mode, User.' ? null : JSON.stringify(data));
+			resume();
+		});
 
 		arr.push(async function(resume) {
 			var response = await download('', '');

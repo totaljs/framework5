@@ -26,6 +26,9 @@ const ADMIN = { id: 'ai', name: 'AI', sa: true };
 		// tool {Object} the tool from Total.mcp.tools, $.user the caller
 		return !tool.name.startsWith('Admin_') || $.user.sa;
 	};
+
+	// Total.mcp.instructions is sent to the AI in "initialize" (a string or a function($) returning a string):
+	Total.mcp.instructions = 'Search with Docs_search first. If you can run Node.js, use the code mode: GET /$mcp/client.js';
 */
 
 Total.mcp = {};
@@ -39,6 +42,9 @@ Total.mcp.auth = function($) {
 
 // Optional "function(tool, $)" returning a boolean: which tools the caller sees in tools/list and may run in tools/call
 Total.mcp.filter = null;
+
+// Optional instructions for the AI, sent in the answer of "initialize": a string or "function($)" returning a string
+Total.mcp.instructions = null;
 
 function allowed(tool, $) {
 	return !Total.mcp.filter || !!Total.mcp.filter(tool, $);
@@ -401,6 +407,9 @@ Total.mcp.exec = async function($) {
 				version: (CONF.version) + ''
 			}
 		};
+		let instructions = typeof(Total.mcp.instructions) === 'function' ? Total.mcp.instructions($) : Total.mcp.instructions;
+		if (instructions)
+			response.result.instructions = instructions + '';
 		$.json(response);
 		return;
 	}
