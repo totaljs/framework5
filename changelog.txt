@@ -111,6 +111,7 @@
 - fixed the compression errors of WebSocket messages, they threw "self is not defined" instead of reaching the `error` event
 - fixed `WEBSOCKETCLIENT` losing a message that arrives together with the `101` answer
 - fixed `clone()`, `copy()` and `readbuffer()` of `FILESTORAGE` while the storage is paused
+- fixed `edit.js` browsing: the skipped folders are tested on the paths inside the app (an app inside a folder called `tmp`, `logs` or `databases`, e.g. `/tmp/shop/`, was listed without any file)
 
 ========================
 0.0.19
