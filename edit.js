@@ -221,8 +221,14 @@ function browse($, model) {
 
 	if (m.type === 'localization')
 		validator = ((path, dir) => dir ? (path.endsWith('/databases') || path.endsWith('/node_modules') || path.endsWith('/tmp') || path.endsWith('/.git') || path.endsWith('/.src') || path.endsWith('/logs')) ? false : true : true);
-	else
-		validator = n => !SKIP.test(n) && (!skip || !skip.test(n));
+	else {
+		// The rules are tested on the path inside the app: on the absolute one, an app inside a folder called tmp, logs
+		// or databases (/tmp/shop/, /home/user/logs/app/) skipped all of its files
+		validator = function(n) {
+			n = n.substring(path.length);
+			return !SKIP.test(n) && (!skip || !skip.test(n));
+		};
+	}
 
 	F.TUtils.ls(path, function(files, directories) {
 
