@@ -112,6 +112,7 @@
 - fixed `WEBSOCKETCLIENT` losing a message that arrives together with the `101` answer
 - fixed `clone()`, `copy()` and `readbuffer()` of `FILESTORAGE` while the storage is paused
 - fixed `edit.js` browsing: the skipped folders are tested on the paths inside the app (an app inside a folder called `tmp`, `logs` or `databases`, e.g. `/tmp/shop/`, was listed without any file)
+- updated Tangular to `v5.0.6`
 
 ========================
 0.0.19
