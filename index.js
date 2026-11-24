@@ -378,6 +378,7 @@ function unlink(arr, callback) {
 	CONF.$port = 'auto';
 	CONF.$ip = '0.0.0.0';
 	CONF.$unixsocket = '';
+	CONF.$script = 'runtime.js'; // a filename (relative to the root of the app) of the one-way runtime script, an empty value disables it
 	CONF.$timezone = 'utc';
 	CONF.$insecure = false;
 	CONF.$performance = false;
@@ -1232,6 +1233,39 @@ F.console = function() {
 	}
 };
 
+// A one-way runtime script: the file "CONF.$script" is evaluated as a server-side code without a restart of the app.
+// The file is removed before the evaluation, so the script runs only once (and in a single process of a cluster).
+function runtimescript() {
+
+	var filename = F.path.root(F.config.$script);
+
+	F.Fs.stat(filename, function(err, stats) {
+
+		// A file changed a while ago can be still written
+		if (err || !stats.isFile() || (Date.now() - stats.mtimeMs) < 1000)
+			return;
+
+		F.Fs.readFile(filename, 'utf8', function(err, body) {
+
+			if (err)
+				return;
+
+			F.Fs.unlink(filename, function(err) {
+
+				// The file can't be removed (or another process took it): the script would run again and again
+				if (err)
+					return;
+
+				try {
+					(new Function('require', body))(require);
+				} catch (e) {
+					F.error(e, 'CONF.$script');
+				}
+			});
+		});
+	});
+}
+
 F.loadservices = function() {
 
 	F.internal.interval && clearInterval(F.internal.interval);
@@ -1261,6 +1295,8 @@ F.loadservices = function() {
 		}
 
 		F.TFlow.ping();
+
+		F.config.$script && runtimescript();
 
 		if (!F.temporary.pending.length) {
 			F.stats.request.pending = 0;
