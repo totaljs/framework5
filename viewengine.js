@@ -313,6 +313,8 @@ function prepare(command, dcommand, functions) {
 			return '';
 
 		case 'section':
+		case '!section':
+			// A section holds rendered HTML, so "!" (raw output) changes nothing
 			tmp = command.indexOf('(');
 			return tmp === -1 ? '' : '(repository[\'section_' + command.substring(tmp + 1, command.length - 1).replace(/'|"/g, '') + '\'] || \'\')';
 

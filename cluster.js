@@ -126,7 +126,7 @@ function master(opt) {
 
 		counter++;
 
-		if (counter % 10 === 0) {
+		if (counter % 10 === 0 && process.mainModule) {
 			main.date = new Date();
 			main.threads = THREADS;
 			var memory = process.memoryUsage();

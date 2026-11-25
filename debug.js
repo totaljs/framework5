@@ -6,8 +6,11 @@
 
 require('./index');
 
+// No entry script (e.g. `node -e`, `node -p` or REPL), the watcher has nothing to fork, so the app runs in the current process
+const NOSCRIPT = !process.argv[1] || process.execArgv.some(arg => (/^(-e|--eval|-p|--print|-pe|-ep)$/).test(arg) || arg.startsWith('--eval=') || arg.startsWith('--print='));
+
 var Meta = {
-	isWatcher: process.connected !== true,
+	isWatcher: process.connected !== true && !NOSCRIPT,
 	callback: null, // watcher callback
 	delay: null
 };

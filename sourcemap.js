@@ -155,7 +155,7 @@ exports.create = function() {
 
 exports.refresh = function() {
 
-	if (!F.isLoaded || !F.config.$sourcemap || F.id)
+	if (!F.isLoaded || !F.config.$sourcemap || F.id || !process.mainModule)
 		return;
 
 	timeout && clearTimeout(timeout);

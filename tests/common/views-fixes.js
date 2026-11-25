@@ -138,6 +138,20 @@ ON('ready', function() {
 			});
 		});
 
+		// Views: @{!section('name')} in a layout
+		arr.push(function(resume) {
+			F.temporary.views.vf33layout_ = F.TViewEngine.compile('vf33layout', '<head>@{!section(\'head\')}|@{section(\'head\')}</head>@{body}', false);
+			F.temporary.views.vf33_ = F.TViewEngine.compile('vf33', '@{layout(\'vf33layout\')}@{section head}<title>@{model.t}</title>@{end}<p>x</p>', false);
+			var html;
+			try {
+				html = F.view('vf33', { t: 'A<b>' });
+			} catch (e) {
+				html = e.message;
+			}
+			Test.print('Views: @{!section(\'name\')} in a layout', html === '<head><title>A&lt;b&gt;</title>|<title>A&lt;b&gt;</title></head><p>x</p>' ? null : 'Unexpected output: ' + html);
+			resume();
+		});
+
 		arr.async(next);
 	});
 
