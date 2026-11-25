@@ -36,6 +36,9 @@ const EXECUTE = Buffer.from([68, 0, 0, 0, 6, 80, 0, 69, 0, 0, 0, 9, 0, 0, 0, 0, 
 
 // Cache of parsed connection strings
 const OPTIONS = new Map();
+
+// Shared pools created via "connect()" with the pooling enabled (e.g. "?pooling=5")
+const POOLS = new Map();
 const REG_DATE = /^(\d+)-(\d\d)-(\d\d)(?:[ T](\d\d):(\d\d):(\d\d)(\.\d+)?)?(?:([+-])(\d\d)(?::?(\d\d))?(?::?(\d\d))?)?( BC)?$/;
 const REG_ARR_ESCAPE = /(\\|")/g;
 const ERROR_FIELDS = { S: 'severity', C: 'code', D: 'detail', H: 'hint', P: 'position', W: 'where', s: 'schema', t: 'table', c: 'column', d: 'datatype', n: 'constraint', R: 'routine' };
@@ -580,7 +583,7 @@ function parseoptions(opt) {
 	}
 
 	// "types" is a cache of types of parameters (SQL -> OID Array) and "scram" is a cache of SCRAM salted password
-	output = { $parsed: true, host: 'localhost', port: 5432, user: '', password: '', database: '', ssl: false, sslprefer: false, tls: null, timeout: 0, name: '', types: new Map(), scram: null };
+	output = { $parsed: true, host: 'localhost', port: 5432, user: '', password: '', database: '', ssl: false, sslprefer: false, tls: null, timeout: 0, name: '', pooling: 0, types: new Map(), scram: null };
 	var connstring = typeof(opt) === 'string' ? opt : opt ? (opt.connectionString || opt.connstring) : null;
 	var sslmode;
 
@@ -626,13 +629,17 @@ function parseoptions(opt) {
 				case 'application_name':
 					output.name = val;
 					break;
+				case 'pooling':
+					// A max. count of connections, "true" means the default count
+					output.pooling = +val || (val === 'true' ? 2 : 0);
+					break;
 			}
 		}
 	}
 
 	if (opt && typeof(opt) === 'object') {
 
-		for (var key of ['host', 'port', 'user', 'password', 'database', 'timeout', 'name']) {
+		for (var key of ['host', 'port', 'user', 'password', 'database', 'timeout', 'name', 'pooling']) {
 			if (opt[key] != null)
 				output[key] = opt[key];
 		}
@@ -1353,8 +1360,10 @@ function NOOP() {}
 function Pool(opt, max) {
 	var t = this;
 	t.opt = parseoptions(opt);
-	t.max = max || (opt && opt.max) || 10;
-	t.timeout = (opt && opt.idle) || 10000; // idle timeout
+	// "opt" can be a connection string and Total.js extends the String prototype (e.g. "String.prototype.max")
+	var obj = opt && typeof(opt) === 'object' ? opt : null;
+	t.max = max || (obj && obj.max) || t.opt.pooling || 4;
+	t.timeout = (obj && obj.idle) || 10000; // idle timeout
 	t.clients = [];
 	t.idle = [];
 	t.pending = [];
@@ -1535,11 +1544,48 @@ exports.types = TYPES;
 
 // Creates a new connection
 // callback(err, client)
+// With the pooling enabled (e.g. "?pooling=5" in the connection string), the connection is taken from a shared pool,
+// "client.close()" returns it to the pool and the method returns the pool
 exports.connect = function(opt, callback) {
-	return new Client(opt).connect(callback);
+
+	var options = parseoptions(opt);
+	if (!options.pooling)
+		return new Client(options).connect(callback);
+
+	var key = typeof(opt) === 'string' ? opt : (options.user + '@' + options.host + ':' + options.port + '/' + options.database + '#' + options.pooling);
+	var pool = POOLS.get(key);
+
+	if (!pool || pool.ended) {
+		pool = new Pool(opt);
+		POOLS.set(key, pool);
+	}
+
+	callback && pool.connect(callback);
+	return pool;
 };
 
 // Creates a pool of connections
 exports.pool = function(opt, max) {
 	return new Pool(opt, max);
+};
+
+// Closes all shared pools created via "connect()" with the pooling enabled
+exports.end = function(callback) {
+
+	var pools = Array.from(POOLS.values());
+	var count = pools.length;
+
+	POOLS.clear();
+
+	if (!count) {
+		callback && process.nextTick(callback);
+		return;
+	}
+
+	for (var pool of pools) {
+		pool.end(function() {
+			if (!(--count))
+				callback && callback();
+		});
+	}
 };

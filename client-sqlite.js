@@ -663,8 +663,10 @@ CP.destroy = function(err) {
 function Pool(opt, max) {
 	var t = this;
 	t.opt = parseoptions(opt);
-	t.max = max || (opt && opt.max) || 10;
-	t.timeout = (opt && opt.idle) || 10000; // idle timeout
+	// "opt" can be a connection string and Total.js extends the String prototype (e.g. "String.prototype.max")
+	var obj = opt && typeof(opt) === 'object' ? opt : null;
+	t.max = max || (obj && obj.max) || 4;
+	t.timeout = (obj && obj.idle) || 10000; // idle timeout
 	t.clients = [];
 	t.idle = [];
 	t.pending = [];

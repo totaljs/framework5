@@ -29,6 +29,12 @@
 	- options: `?pooling=1` (count of connections), `?schema=name`, `?wal=1`, `?readonly=1`, `?foreignkeys=0`, `?timeout=5000`
 	- arrays and objects are stored as JSON (declare their columns as `JSON`), dates are stored as ISO 8601 text in UTC
 - `DATA.init(name, null)` closes the connections of the removed database
+- added pooling via the connection string to the PostgreSQL client `client-postgresql.js`: `?pooling=5` (max. count of connections, `?pooling=true` means 2 connections)
+	- `connect('postgresql://...?pooling=5', callback)` takes the connection from a shared pool, `client.close()` returns it to the pool
+	- `pool('postgresql://...?pooling=5')` takes the count of connections from the connection string
+	- `end([callback])` closes the shared pools
+- changed the default count of connections of `pool()` in the PostgreSQL and SQLite clients from `10` to `4`
+- fixed `pool(connstring)` without the `max` argument in the PostgreSQL and SQLite clients, the pool created no connection inside the framework (`String.prototype.max`)
 - added a new method `JSONSchema.toAIObject(name, [description])`
 - added a new method `JSONSchema.toAITool(name)`
 - added `QueryBuilder.autoqueryjson($, column, schema, [defsort], [maxlimit])` that works like `autoquery()` but for properties stored in a JSON(B) column ; the builder uses the neutral name `json:column:property:type` and the database adapter translates it into SQL
