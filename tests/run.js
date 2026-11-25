@@ -28,6 +28,8 @@ tests.push('common/mcp-fixes.js');
 tests.push('common/pending-requests.js');
 tests.push('common/websocketclient-ping.js');
 tests.push('common/runtime-script.js');
+tests.push('common/client-sqlite.js');
+tests.push('common/querybuilder-sqlite.js');
 
 console.log('==========================================');
 console.log('Total.js v5 unit tests');

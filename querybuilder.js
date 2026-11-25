@@ -5,6 +5,9 @@
 const REG_JSONKEY = /[^a-z0-9_]/i;
 const REG_FIELDS_CLEANER = /"|`|\||'|\s/g;
 
+// Database engines of the connections initialized with DATA.init(): name -> "pg" or "sqlite"
+const ENGINES = {};
+
 var LANGUAGE_SKIP = '_';
 var LANGUAGE_PREFIX = '';
 
@@ -233,11 +236,28 @@ CTP.find = CTP.all = function(table) {
 	return new QueryBuilder(db, meta.table, 'find');
 };
 
+// DATA.init('name', 'postgresql://user:password@localhost:5432/database');
+// DATA.init('name', 'sqlite://databases/app.db');
+// DATA.init('name', null); removes the connection
 CTP.init = function(name, connstring, errorhandling) {
-	let dbengine = 'pg';
-	//if (connstring.includes('postgre'))
-	//	dbengine = 'pg'
-	require('./querybuilder-' + dbengine).init(name, connstring, errorhandling);
+
+	// The database engine is chosen according to the connection string
+	let dbengine = connstring ? ((/^sqlite:/i).test(connstring) ? 'sqlite' : 'pg') : '';
+	let key = name || 'default';
+	let previous = ENGINES[key];
+
+	// The connection is removed or replaced by another engine: the previous engine closes its connections
+	if (previous && previous !== dbengine)
+		require('./querybuilder-' + previous).init(name, null);
+
+	if (dbengine) {
+		ENGINES[key] = dbengine;
+		require('./querybuilder-' + dbengine).init(name, connstring, errorhandling);
+	} else {
+		delete ENGINES[key];
+		// The connection could be created outside of DATA.init()
+		!previous && require('./querybuilder-pg').init(name, null);
+	}
 };
 
 CTP.debug = function() {

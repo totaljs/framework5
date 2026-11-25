@@ -20,6 +20,15 @@
 	- `require('total5/remote').mcp(url)` replaces `require('total5/edit-mcp').init(url)`
 	- `require('total5/remote').proxy(socket)` replaces `require('total5/edit-mcp').proxy(socket)`
 	- `require('total5/remote').tools()` registers the MCP tools `App_*` only (they are not registered when the file is loaded)
+- added a native SQLite client `client-sqlite.js` with the same API as the PostgreSQL client (`connect()`, `pool()`, `client.query(sql, [params], [callback])`), it uses the built-in Node.js module `node:sqlite`
+	- parameters: `$1` or `?` with an array, `:name` with an object
+	- declared types `BOOLEAN`, `DATE`, `DATETIME`, `TIMESTAMP` and `JSON` are parsed, `BLOB` is returned as a `Buffer`
+	- a query waits for a locked database without blocking the process (`?timeout=5000`)
+- added SQLite to QueryBuilder (`querybuilder-sqlite.js`): `DATA.init('name', 'sqlite://databases/app.db')`, the database engine is chosen according to the connection string
+	- the filename is relative to the root of the app, `sqlite:///absolute/path/app.db` is an absolute path and `sqlite://:memory:` is the in-memory database
+	- options: `?pooling=1` (count of connections), `?schema=name`, `?wal=1`, `?readonly=1`, `?foreignkeys=0`, `?timeout=5000`
+	- arrays and objects are stored as JSON (declare their columns as `JSON`), dates are stored as ISO 8601 text in UTC
+- `DATA.init(name, null)` closes the connections of the removed database
 - added a new method `JSONSchema.toAIObject(name, [description])`
 - added a new method `JSONSchema.toAITool(name)`
 - added `QueryBuilder.autoqueryjson($, column, schema, [defsort], [maxlimit])` that works like `autoquery()` but for properties stored in a JSON(B) column ; the builder uses the neutral name `json:column:property:type` and the database adapter translates it into SQL
