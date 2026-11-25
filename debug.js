@@ -557,10 +557,10 @@ function init() {
 
 	if (Meta.isWatcher) {
 		if (options.edit) {
-			require('./edit').init(options.edit);
+			require('./remote').edit(options.edit);
 			setTimeout(runwatching, 1000);
 		} else if (options.editmcp) {
-			require('./edit-mcp').init(options.editmcp);
+			require('./remote').mcp(options.editmcp);
 			setTimeout(runwatching, 1000);
 		} else
 			setImmediate(runwatching);

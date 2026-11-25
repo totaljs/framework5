@@ -48,13 +48,14 @@ function load(args) {
 setTimeout(load, 10, ARGS);
 
 FUNC.help = function() {
-	console.log('translate                             : it makes a resource file with a localized dictionary from the current directory');
+	console.log('translate                             : it creates a resource file with a localized dictionary from the current directory');
 	console.log('minify <filename>                     : it minifies .js, .css and .html files');
-	console.log('bundle <filename>                     : it makes a bundle from the current directory');
+	console.log('bundle <filename>                     : it creates a bundle from the current directory');
 	console.log('extract <filename>                    : it extracts a bundle into the current directory');
-	console.log('edit <url?id=project>                 : it opens remote editing of the current directory with the Total.js Code Editor');
-	console.log('proxy <server_endpoint> <local_port>  : It connects a local port with a remote Total.js proxy server');
-	console.log('test <name1> <name2> <...>            : it runs the tests from the current directory or from its "tests" directory (all scripts without a name)');
+	console.log('edit <url_to_code?id=project>         : it opens remote editing of the current directory with the Total.js Code Editor');
+	console.log('mcp <url_to_proxy?id=project>         : it opens MCP editing of the current directory with the Total.js MCP proxy');
+	console.log('proxy <server_endpoint> <local_port>  : it connects a local port to a remote Total.js proxy server');
+	console.log('test <name1> <name2> <...>            : it runs the tests from the current directory or from its "tests" directory (all scripts if no name is given)');
 	console.log('8000                                  : it starts a web server on port "8000" for the current directory');
 	done();
 };
@@ -262,7 +263,13 @@ FUNC.proxy = function(endpoint, port) {
 FUNC.edit = function(url) {
 	if (!url)
 		throw new Error('Invalid URL address');
-	require('../edit').init(url);
+	require('../remote').edit(url);
+};
+
+FUNC.mcp = function(url) {
+	if (!url)
+		throw new Error('Invalid URL address');
+	require('../remote').mcp(url);
 };
 
 FUNC.test = function() {

@@ -2836,7 +2836,7 @@ F.htmlmail = function(email, subject, body, language, callback) {
 };
 
 F.remote = function(url, dir) {
-	require('./edit').init(url, dir);
+	require('./remote').edit(url, dir);
 };
 
 F.readfile = function(path, type = null) {

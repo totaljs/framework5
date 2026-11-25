@@ -15,6 +15,11 @@
 - added the compact schema type `email2`: it works like `email` and removes the tag of the address (`name+tag@domain.com` is changed to `name@domain.com`)
 - added the one-way runtime script: the file `runtime.js` in the root of the app is checked every 5 seconds, removed and evaluated as a server-side code without a restart of the app
 	- `CONF.$script = 'filename'` changes the filename (relative to the root of the app), an empty value disables it
+- merged `edit.js` (Total.js Code Editor) and `edit-mcp.js` (MCP tools `App_*`) into `remote.js`:
+	- `require('total5/remote').edit(url, [dir])` replaces `require('total5/edit').init(url, [dir])`
+	- `require('total5/remote').mcp(url)` replaces `require('total5/edit-mcp').init(url)`
+	- `require('total5/remote').proxy(socket)` replaces `require('total5/edit-mcp').proxy(socket)`
+	- `require('total5/remote').tools()` registers the MCP tools `App_*` only (they are not registered when the file is loaded)
 - added a new method `JSONSchema.toAIObject(name, [description])`
 - added a new method `JSONSchema.toAITool(name)`
 - added `QueryBuilder.autoqueryjson($, column, schema, [defsort], [maxlimit])` that works like `autoquery()` but for properties stored in a JSON(B) column ; the builder uses the neutral name `json:column:property:type` and the database adapter translates it into SQL

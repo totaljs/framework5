@@ -204,10 +204,12 @@ ON('ready', function() {
 			resume();
 		});
 
-		// #29 edit-mcp: App_mkdir in the project, App_read with the revision, the proxy lists the tools
+		// #29 remote (MCP tools): App_mkdir in the project, App_read with the revision, the proxy lists the tools
 		arr.push(function(resume) {
 
-			var editmcp = require('../../edit-mcp');
+			var remote = require('../../remote');
+			remote.tools();
+
 			var name = 'tmp-services-fixes-' + Date.now();
 			var revisions = PATH.root('revisions');
 			var hasrevisions = F.Fs.existsSync(revisions);
@@ -223,15 +225,15 @@ ON('ready', function() {
 					var created = F.Fs.existsSync(PATH.root(name));
 					await ACTION('App_write', { path: '/' + name + '/file.txt', content: 'x' }).promise();
 					var read = await ACTION('App_read', { paths: ['/' + name + '/file.txt'] }).promise();
-					editmcp.proxy({ on: NOOP });
+					remote.proxy({ on: NOOP });
 					Total.mcp.refreshforce();
 					var listed = Total.mcp.tools.filter(tool => tool.name.startsWith('App_')).length;
 					cleanup();
-					Test.print('edit-mcp: App_mkdir, App_read revision and the tools of the proxy', created && read.items[0].revision === 1 && listed === 12 ? null : 'Expected the folder in the project, revision 1 and 12 tools, got ' + created + ', ' + read.items[0].revision + ', ' + listed);
+					Test.print('remote (MCP tools): App_mkdir, App_read revision and the tools of the proxy', created && read.items[0].revision === 1 && listed === 12 ? null : 'Expected the folder in the project, revision 1 and 12 tools, got ' + created + ', ' + read.items[0].revision + ', ' + listed);
 					resume();
 				} catch (e) {
 					cleanup();
-					Test.print('edit-mcp: App_mkdir, App_read revision and the tools of the proxy', e);
+					Test.print('remote (MCP tools): App_mkdir, App_read revision and the tools of the proxy', e);
 				}
 			})();
 		});

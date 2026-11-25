@@ -10,7 +10,8 @@ function remove(path) {
 }
 
 const PORT = 8481;
-const editmcp = require('../../edit-mcp');
+// The MCP tools "App_*" of the remote access
+require('../../remote').tools();
 
 CONF.$imprint = false;
 
@@ -73,7 +74,7 @@ ON('ready', function() {
 			});
 		});
 
-		// edit-mcp: paths without "/", revisions of deleted and moved files and folders, App_delete of "/"
+		// remote (MCP tools): paths without "/", revisions of deleted and moved files and folders, App_delete of "/"
 		arr.push(function(resume) {
 
 			var name = 'tmp-mcp-fixes-' + Date.now();
@@ -132,7 +133,7 @@ ON('ready', function() {
 				}
 
 				cleanup();
-				Test.print('edit-mcp: paths, revisions of deleted and moved files, App_delete of "/"', errors.length ? errors.join('; ') : null);
+				Test.print('remote (MCP tools): paths, revisions of deleted and moved files, App_delete of "/"', errors.length ? errors.join('; ') : null);
 				resume();
 			})();
 		});

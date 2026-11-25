@@ -158,7 +158,7 @@ function init() {
 	}, 4000);
 
 	if (!process.connected && options.edit) {
-		require('./edit').init(options.edit.replace(/^http/, 'ws'));
+		require('./remote').edit(options.edit);
 		setTimeout(run, 1000);
 	} else
 		setImmediate(run);
