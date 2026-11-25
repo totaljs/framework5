@@ -90,6 +90,11 @@ ON('ready', function() {
 			(async function() {
 				var errors = [];
 				try {
+					// App_info answers without the file with the stats of the app
+					var info = await ACTION('App_info').promise();
+					if (!info || !info.framework || info.node !== process.version)
+						errors.push('App_info: ' + JSON.stringify(info));
+
 					// A path without the leading "/"
 					var write = await ACTION('App_write', { path: name + '/a.txt', content: 'a' }).promise();
 					if (write.path !== '/' + name + '/a.txt' || !F.Fs.existsSync(PATH.root(name + '/a.txt')))

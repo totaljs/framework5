@@ -782,12 +782,13 @@ general framework knowledge.`,
 				stats = (await Total.readfile(process.mainModule.filename + '.json', 'utf8')).parseJSON(true);
 			} catch {}
 
-			let app = stats?.stats[0]?.app;
+			// The file with the stats doesn't exist when the tools run without the app (e.g. "total5 mcp")
+			let app = stats?.stats?.[0]?.app;
 
 			let response = {};
 			response.documentation = 'https://github.com/totaljs/aicontext/blob/main/readme.md';
 			response.name = app?.name;
-			response.version = stats?.stats[0]?.version?.app;
+			response.version = stats?.stats?.[0]?.version?.app;
 			response.hostname = app?.url;
 			response.framework = 'Total.js v' + Total.version_header + ' (build ' + Total.version + ')';
 			response.node = process.version;

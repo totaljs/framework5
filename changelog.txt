@@ -50,6 +50,7 @@
 - fixed the timeout check of the pending requests: the timeout answer of one request no longer removes another request without an answer from the list (it never got the timeout answer)
 - fixed `WebSocketClient.ping()` while the client is reconnecting: it threw `Cannot read properties of null (reading 'write')`
 - fixed the `close` event of `WebSocketClient`: it is emitted when the connection ends with an error (a ping without an answer, an error of the socket)
+- fixed the MCP tool `App_info` without the file with the stats of the app (e.g. `total5 mcp`), it threw `Cannot read properties of undefined (reading '0')`
 - fixed `LDAP()`: a bind with a status other than 0 gives an error even when the server sends no text
 - added support for the `cache` option of `NEWACTION()` (the response is kept for the same `query`, `params`, `input`, `user` or `language`)
 - added the compact schema types `json` and `ip` (the values are validated)
