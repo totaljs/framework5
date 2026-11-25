@@ -2946,7 +2946,7 @@ F.loadstats = function() {
 				CLUSTER_STATS.data = stats;
 				process.send(CLUSTER_STATS);
 			}
-		} else if (F.config.$stats) {
+		} else if (F.config.$stats && process.mainModule) {
 			try {
 				F.Fs.writeFile(process.mainModule.filename + '.json', JSON.stringify(main, null, '\t'), NOOP);
 			} catch (e) {

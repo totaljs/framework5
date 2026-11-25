@@ -28,6 +28,7 @@
 - added a new event `reset` in the FlowStream
 - fixed `CRON()` with the step form (`*/15`, `5/20`): it matches the values of the step and not every value
 - fixed the `limit` argument of `setTimeout2()`
+- fixed `Total.run()` started without an entry script (`node -e`, `node -p` or REPL): the watcher is skipped and the app runs in the current process, and `stats` and `sourcemap` don't read `process.mainModule`
 - fixed `AJAX()` for the answers with `application/xml` and `text/xml`
 - fixed `F.python()` without a callback (the promise resolves with the output) and `F.pipinstall()` without a callback
 - fixed `LOGMAIL()` with an object as the body
