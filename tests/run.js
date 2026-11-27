@@ -31,6 +31,7 @@ tests.push('common/runtime-script.js');
 tests.push('common/client-sqlite.js');
 tests.push('common/querybuilder-sqlite.js');
 tests.push('common/client-postgresql-pooling.js');
+tests.push('common/memorize-exit.js');
 
 console.log('==========================================');
 console.log('Total.js v5 unit tests');

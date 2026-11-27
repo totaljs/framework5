@@ -2020,6 +2020,9 @@ F.view = function(name, model, prepare) {
 	return view.render(name, model);
 };
 
+// MEMORIZE() instances with changes that wait for writing
+const MEMORIZE_PENDING = new Set();
+
 F.memorize = function(name, delay, skip) {
 
 	if (!name)
@@ -2051,11 +2054,29 @@ F.memorize = function(name, delay, skip) {
 		replacer = (key, value) => ignore[key] ? undefined : value;
 	}
 
-	var save = () => F.Fs.writeFile(filename, replacer ? JSON.stringify(data, replacer, '\t') : JSON.stringify(data, null, '\t'), ERROR('MEMORIZE(\'' + name + '\').save()'));
+	var serialize = () => replacer ? JSON.stringify(data, replacer, '\t') : JSON.stringify(data, null, '\t');
+
+	var save = function() {
+		timeout = null;
+		MEMORIZE_PENDING.delete(flush);
+		F.Fs.writeFile(filename, serialize(), ERROR('MEMORIZE(\'' + name + '\').save()'));
+	};
+
+	// Writes pending changes immediately, it's called when the app is exiting
+	var flush = function() {
+		timeout && clearTimeout(timeout);
+		timeout = null;
+		try {
+			F.Fs.writeFileSync(filename, serialize());
+		} catch (e) {
+			F.error(e, 'MEMORIZE(\'' + name + '\').save()');
+		}
+	};
 
 	data.save = function() {
 		timeout && clearTimeout(timeout);
 		timeout = setTimeout(save, delay || 10000);
+		MEMORIZE_PENDING.add(flush);
 	};
 
 	data.set = function(key, value) {
@@ -2668,6 +2689,12 @@ F.exit = function(signal = 15) {
 	let key = 'exit';
 
 	F.$events[key] && F.emit(key, signal);
+
+	// Writes changes of MEMORIZE() that wait for writing
+	for (let flush of MEMORIZE_PENDING)
+		flush();
+
+	MEMORIZE_PENDING.clear();
 
 	if (!F.isWorker && process.send && process.connected) {
 		try {

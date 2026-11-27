@@ -33,6 +33,7 @@
 	- `connect('postgresql://...?pooling=5', callback)` takes the connection from a shared pool, `client.close()` returns it to the pool
 	- `pool('postgresql://...?pooling=5')` takes the count of connections from the connection string
 	- `end([callback])` closes the shared pools
+- improved `MEMORIZE()`, changes that wait for writing are written when the app is exiting
 - changed the default count of connections of `pool()` in the PostgreSQL and SQLite clients from `10` to `4`
 - fixed `pool(connstring)` without the `max` argument in the PostgreSQL and SQLite clients, the pool created no connection inside the framework (`String.prototype.max`)
 - added a new method `JSONSchema.toAIObject(name, [description])`
